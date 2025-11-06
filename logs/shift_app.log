@@ -6751,3 +6751,6 @@ django.template.exceptions.TemplateSyntaxError: Invalid filter: 'add_class'
 [2025-11-06 13:21:59] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
 [2025-11-06 13:27:13] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
 [2025-11-06 13:29:54] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-06 13:39:45] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-06 13:41:02] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-06 13:42:12] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
