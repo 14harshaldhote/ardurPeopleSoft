@@ -6,7 +6,7 @@ import json
 import re
 import socket
 import ipaddress
-from user_agents import parse as ua_parse
+# from user_agents import parse as ua_parse
 
 # Set up logging
 logger = logging.getLogger(__name__)

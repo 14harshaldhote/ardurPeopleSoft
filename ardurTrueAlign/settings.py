@@ -115,11 +115,10 @@ INSTALLED_APPS = [
     'trueAlign.notes',
     'trueAlign.support',
     'rest_framework',
-    'crispy_forms',
-    'crispy_tailwind',
-    'mathfilters',
     'django_cron',
     'django_celery_beat',
+    'crispy_forms',
+    'crispy_tailwind',
 ]
 
 # Crispy Forms Settings
