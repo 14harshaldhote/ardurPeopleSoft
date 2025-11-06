@@ -50,7 +50,7 @@ class TicketCreateForm(CrispyFormMixin, forms.ModelForm):
             'location',
             'asset_id'
         ]
-        
+
         labels = {
             'issue_type': 'Type of Issue',
             'subject': 'Subject',
