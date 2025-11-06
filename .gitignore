@@ -159,3 +159,10 @@ logs/
 
 # Media files (optional - comment out if you want to track media files)
 media/
+
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
