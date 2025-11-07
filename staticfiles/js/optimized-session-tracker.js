@@ -164,7 +164,7 @@ class OptimizedSessionTracker {
 
       // If no parent session ID exists, generate one for this browser session
       if (!this.state.parentSessionId) {
-        this.state.parentSessionId = this.generateTabId(); // Reuse the UUID generator
+        this.state.parentSessionId = this.generateParentSessionId();
         this.log(
           "Generated new parent session ID: " + this.state.parentSessionId,
           "info",
@@ -626,7 +626,7 @@ class OptimizedSessionTracker {
         location_timestamp: this.state.location?.timestamp || null,
         browser: this.state.browser || 'unknown',
         os: this.state.os || 'unknown',
-        device_type: this.deviceInfo?.device || 'desktop',
+        device_type: this.getDeviceType(),
         fingerprint: this.state.fingerprint || this.generateFingerprint(),
         screen_resolution: this.getScreenResolution(),
         timezone_offset: this.getTimezoneOffset(),
@@ -1289,6 +1289,10 @@ class OptimizedSessionTracker {
     return "tab_" + Math.random().toString(36).substr(2, 9) + "_" + Date.now();
   }
 
+  generateParentSessionId() {
+    return "parent_" + Math.random().toString(36).substr(2, 9) + "_" + Date.now();
+  }
+
   // Session storage methods
   storeSessionData() {
     try {
@@ -1343,64 +1347,37 @@ class OptimizedSessionTracker {
     const now = Date.now();
     if (now - this.state.lastHeartbeat < this.config.heartbeatInterval) return;
 
-    try {
-      const heartbeatData = {
-        tab_id: this.state.tabId,
-        is_idle: this.state.isIdle,
-        is_visible: this.state.isVisible,
-        url: window.location.href,
-        title: document.title,
-        timestamp: new Date().toISOString(),
-        productivity_score: this.calculateProductivityScore(),
-        engagement_score: this.calculateEngagementScore(),
-        location: this.state.location || null,
-        location_latitude: this.state.location?.latitude || null,
-        location_longitude: this.state.location?.longitude || null,
-        location_accuracy: this.state.location?.accuracy || null,
-        location_timestamp: this.state.location?.timestamp || null,
-        browser: this.state.browser,
-        os: this.state.os,
-        fingerprint: this.state.fingerprint,
-        screen_resolution: this.getScreenResolution(),
-        timezone_offset: this.getTimezoneOffset(),
-        csrf_token: this.getCSRFToken(),
-      };
+    const heartbeatData = {
+      tab_id: this.state.tabId,
+      is_idle: this.state.isIdle,
+      is_visible: this.state.isVisible,
+      url: window.location.href,
+      title: document.title,
+      timestamp: new Date().toISOString(),
+      productivity_score: this.calculateProductivityScore(),
+      engagement_score: this.calculateEngagementScore(),
+      location: this.state.location || null,
+      location_latitude: this.state.location?.latitude || null,
+      location_longitude: this.state.location?.longitude || null,
+      location_accuracy: this.state.location?.accuracy || null,
+      location_timestamp: this.state.location?.timestamp || null,
+      browser: this.state.browser,
+      os: this.state.os,
+      fingerprint: this.state.fingerprint,
+      screen_resolution: `${screen.width}x${screen.height}`,
+      timezone_offset: new Date().getTimezoneOffset(),
+      csrf_token: this.getCSRFToken(),
+    };
 
-      // Validate required fields
-      if (!heartbeatData.tab_id || !heartbeatData.session_fingerprint) {
-        this.log('Missing required heartbeat data, regenerating...', 'warning');
-        heartbeatData.tab_id = heartbeatData.tab_id || this.generateTabId();
-        heartbeatData.session_fingerprint = heartbeatData.session_fingerprint || this.generateFingerprint();
-        
-        // Update state with generated values
-        this.state.tabId = heartbeatData.tab_id;
-        this.state.fingerprint = heartbeatData.session_fingerprint;
-        this.storeSessionData();
-      }
-
-      this.makeRequest(this.config.heartbeatUrl, heartbeatData)
-        .then((response) => {
-          this.state.lastHeartbeat = now;
-          this.handleHeartbeatResponse(response);
-        })
-        .catch((error) => {
-          // Fallback to legacy endpoint if optimized endpoint fails
-          this.makeRequest("/session/heartbeat/", heartbeatData)
-            .then((response) => {
-              this.state.lastHeartbeat = now;
-              this.handleHeartbeatResponse(response);
-            })
-            .catch((retryError) => {
-              this.addToRetryQueue("heartbeat", heartbeatData);
-              this.log(
-                "Heartbeat failed on both endpoints: " + error.message,
-                "error",
-              );
-            });
-        });
-    } catch (error) {
-      this.log("Error in sendHeartbeat: " + error.message, "error");
-    }
+    // Send the heartbeat
+    this.makeRequest(this.config.heartbeatUrl, heartbeatData)
+      .then(() => {
+        this.state.lastHeartbeat = now;
+        this.log('Heartbeat sent successfully', 'debug');
+      })
+      .catch((error) => {
+        this.log('Failed to send heartbeat: ' + error.message, 'error');
+      });
   }
 
   getCSRFToken() {
@@ -1531,6 +1508,17 @@ class OptimizedSessionTracker {
     return "other";
   }
 
+  getDeviceType() {
+    const userAgent = navigator.userAgent;
+    if (/tablet|ipad|playbook|silk/i.test(userAgent)) {
+      return "tablet";
+    }
+    if (/mobile|iphone|ipod|android|blackberry|opera|mini|windows\sce|palm|smartphone|iemobile/i.test(userAgent)) {
+      return "mobile";
+    }
+    return "desktop";
+  }
+
   log(message, level = "info") {
     if (typeof console !== "undefined") {
       const timestamp = new Date().toISOString();
@@ -1550,110 +1538,6 @@ class OptimizedSessionTracker {
           console.log(logMessage);
       }
     }
-  }
-
-  // Public API methods
-  getMetrics() {
-    return {
-      sessionId: this.state.sessionId,
-      sessionDuration: Date.now() - this.state.sessionStartTime,
-      totalClicks: this.state.totalClicks,
-      totalScrolls: this.state.totalScrolls,
-      totalKeystrokes: this.state.totalKeystrokes,
-      totalMouseMoves: this.state.totalMouseMoves,
-      pageViews: this.state.pageViews,
-      tabSwitches: this.state.tabSwitches,
-      productivityScore: this.state.productivityScore,
-      engagementScore: this.state.engagementScore,
-      isIdle: this.state.isIdle,
-      isActive: this.state.isActive,
-      retryQueueLength: this.retryQueue.length,
-      bufferSize: this.getTotalBufferSize(),
-    };
-  }
-
-  getBufferStatus() {
-    return {
-      totalSize: this.getTotalBufferSize(),
-      clicks: this.buffers.clicks.length,
-      scrolls: this.buffers.scrolls.length,
-      keystrokes: this.buffers.keystrokes.length,
-      mouseMoves: this.buffers.mouseMoves.length,
-      pageViews: this.buffers.pageViews.length,
-      tabVisibility: this.buffers.tabVisibility.length,
-      idleStates: this.buffers.idleStates.length,
-      performance: this.buffers.performance.length,
-      heartbeats: this.buffers.heartbeats.length,
-      retryQueue: this.retryQueue.length,
-    };
-  }
-
-  manualFlush() {
-    this.log("Manual flush requested", "info");
-    this.flushBuffers(true);
-  }
-
-  setThrottleInterval(type, interval) {
-    if (type === "heartbeat") {
-      this.config.heartbeatInterval = interval;
-
-      // Restart heartbeat timer
-      if (this.timers.heartbeat) {
-        clearInterval(this.timers.heartbeat);
-        this.timers.heartbeat = setInterval(() => {
-          this.sendHeartbeat();
-        }, this.config.heartbeatInterval);
-      }
-    } else if (type === "batch") {
-      this.config.batchFlushInterval = interval;
-
-      // Restart batch timer
-      if (this.timers.batchFlush) {
-        clearInterval(this.timers.batchFlush);
-        this.timers.batchFlush = setInterval(() => {
-          this.flushBuffers();
-        }, this.config.batchFlushInterval);
-      }
-    }
-  }
-
-  // Session management methods
-  extendSession() {
-    this.updateLastActivity();
-    this.hideSessionWarning();
-
-    // Send heartbeat to extend session
-    this.sendHeartbeat();
-  }
-
-  getSessionStatus() {
-    return {
-      sessionId: this.state.sessionId,
-      tabId: this.state.tabId,
-      userId: this.state.userId,
-      isActive: this.state.isActive,
-      isIdle: this.state.isIdle,
-      sessionDuration: Date.now() - this.state.sessionStartTime,
-      lastActivity: this.state.lastActivity,
-      productivityScore: this.state.productivityScore,
-      engagementScore: this.state.engagementScore,
-      warningShown: this.state.warningShown,
-    };
-  }
-
-  destroy() {
-    this.log("Destroying session tracker", "info");
-
-    // Force final sync
-    this.forceSync();
-
-    // End session
-    this.endSession("destroy");
-
-    // Cleanup
-    this.cleanup();
-
-    this.log("Session tracker destroyed", "info");
   }
 
   // Data validation methods
@@ -1788,6 +1672,110 @@ class OptimizedSessionTracker {
       this.log('Error getting connection type: ' + error.message, 'warning');
       return 'unknown';
     }
+  }
+
+  // Public API methods
+  getMetrics() {
+    return {
+      sessionId: this.state.sessionId,
+      sessionDuration: Date.now() - this.state.sessionStartTime,
+      totalClicks: this.state.totalClicks,
+      totalScrolls: this.state.totalScrolls,
+      totalKeystrokes: this.state.totalKeystrokes,
+      totalMouseMoves: this.state.totalMouseMoves,
+      pageViews: this.state.pageViews,
+      tabSwitches: this.state.tabSwitches,
+      productivityScore: this.state.productivityScore,
+      engagementScore: this.state.engagementScore,
+      isIdle: this.state.isIdle,
+      isActive: this.state.isActive,
+      retryQueueLength: this.retryQueue.length,
+      bufferSize: this.getTotalBufferSize(),
+    };
+  }
+
+  getBufferStatus() {
+    return {
+      totalSize: this.getTotalBufferSize(),
+      clicks: this.buffers.clicks.length,
+      scrolls: this.buffers.scrolls.length,
+      keystrokes: this.buffers.keystrokes.length,
+      mouseMoves: this.buffers.mouseMoves.length,
+      pageViews: this.buffers.pageViews.length,
+      tabVisibility: this.buffers.tabVisibility.length,
+      idleStates: this.buffers.idleStates.length,
+      performance: this.buffers.performance.length,
+      heartbeats: this.buffers.heartbeats.length,
+      retryQueue: this.retryQueue.length,
+    };
+  }
+
+  manualFlush() {
+    this.log("Manual flush requested", "info");
+    this.flushBuffers(true);
+  }
+
+  setThrottleInterval(type, interval) {
+    if (type === "heartbeat") {
+      this.config.heartbeatInterval = interval;
+
+      // Restart heartbeat timer
+      if (this.timers.heartbeat) {
+        clearInterval(this.timers.heartbeat);
+        this.timers.heartbeat = setInterval(() => {
+          this.sendHeartbeat();
+        }, this.config.heartbeatInterval);
+      }
+    } else if (type === "batch") {
+      this.config.batchFlushInterval = interval;
+
+      // Restart batch timer
+      if (this.timers.batchFlush) {
+        clearInterval(this.timers.batchFlush);
+        this.timers.batchFlush = setInterval(() => {
+          this.flushBuffers();
+        }, this.config.batchFlushInterval);
+      }
+    }
+  }
+
+  // Session management methods
+  extendSession() {
+    this.updateLastActivity();
+    this.hideSessionWarning();
+
+    // Send heartbeat to extend session
+    this.sendHeartbeat();
+  }
+
+  getSessionStatus() {
+    return {
+      sessionId: this.state.sessionId,
+      tabId: this.state.tabId,
+      userId: this.state.userId,
+      isActive: this.state.isActive,
+      isIdle: this.state.isIdle,
+      sessionDuration: Date.now() - this.state.sessionStartTime,
+      lastActivity: this.state.lastActivity,
+      productivityScore: this.state.productivityScore,
+      engagementScore: this.state.engagementScore,
+      warningShown: this.state.warningShown,
+    };
+  }
+
+  destroy() {
+    this.log("Destroying session tracker", "info");
+
+    // Force final sync
+    this.forceSync();
+
+    // End session
+    this.endSession("destroy");
+
+    // Cleanup
+    this.cleanup();
+
+    this.log("Session tracker destroyed", "info");
   }
 }
 

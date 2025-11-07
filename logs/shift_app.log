@@ -6861,3 +6861,14 @@ django.template.exceptions.TemplateDoesNotExist: attendance/search.html
 [2025-11-07 11:45:58] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
 [2025-11-07 11:46:29] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/services.py changed, reloading.
 [2025-11-07 11:46:31] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:09:38] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:13:00] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py changed, reloading.
+[2025-11-07 12:13:01] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:13:34] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py changed, reloading.
+[2025-11-07 12:13:51] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:14:16] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py changed, reloading.
+[2025-11-07 12:14:19] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:14:39] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py changed, reloading.
+[2025-11-07 12:14:41] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:14:58] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py changed, reloading.
+[2025-11-07 12:14:59] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader

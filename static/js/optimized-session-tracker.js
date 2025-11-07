@@ -1369,7 +1369,19 @@ class OptimizedSessionTracker {
       csrf_token: this.getCSRFToken(),
     };
 
-  getCSRFToken() {
+    // Send the heartbeat
+    this.makeRequest(this.config.heartbeatUrl, heartbeatData)
+      .then(() => {
+        this.state.lastHeartbeat = now;
+        this.log('Heartbeat sent successfully', 'debug');
+      })
+      .catch((error) => {
+        this.log('Failed to send heartbeat: ' + error.message, 'error');
+      });
+  }
+
+  getCSRFToken() 
+  {
     // First try to get from cookies
     const cookies = document.cookie.split(";");
     for (let cookie of cookies) {

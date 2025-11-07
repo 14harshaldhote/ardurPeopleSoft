@@ -311,7 +311,7 @@ def attendance_calendar(request, year=None, month=None):
                 if record.clock_out_time
                 else None,
                 "total_hours": float(record.total_hours or 0),
-                "late_minutes": record.late_minutes or 0,
+                "late_minutes": max(0, record.late_minutes or 0),  # Ensure non-negative
                 "can_regularize": record.regularization_status
                 not in ["Approved", "Rejected"],
             }
@@ -860,14 +860,18 @@ def get_attendance_data(request):
         start_date_str = request.GET.get("start_date")
         end_date_str = request.GET.get("end_date")
 
-        # Parse dates
-        if start_date_str and end_date_str:
-            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
-            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
-        else:
-            today = timezone.now().astimezone(IST).date()
-            start_date = today - timedelta(days=30)
-            end_date = today
+        # Parse dates with better error handling
+        try:
+            if start_date_str and end_date_str:
+                start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+                end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+            else:
+                today = timezone.now().astimezone(IST).date()
+                start_date = today - timedelta(days=30)
+                end_date = today
+        except ValueError as e:
+            logger.error(f"Date parsing error in get_attendance_data: {e}")
+            return JsonResponse({"success": False, "error": "Invalid date format. Use YYYY-MM-DD"}, status=400)
 
         # Build queryset
         queryset = Attendance.objects.filter(date__range=[start_date, end_date])
@@ -894,7 +898,7 @@ def get_attendance_data(request):
                     if attendance.clock_out_time
                     else None,
                     "total_hours": float(attendance.total_hours or 0),
-                    "late_minutes": attendance.late_minutes or 0,
+                    "late_minutes": max(0, attendance.late_minutes or 0),  # Ensure non-negative
                     "location": attendance.location or "",
                 }
             )
@@ -936,7 +940,7 @@ def get_monthly_attendance_data(request):
                 if record.clock_out_time
                 else None,
                 "total_hours": float(record.total_hours or 0),
-                "late_minutes": record.late_minutes or 0,
+                "late_minutes": max(0, record.late_minutes or 0),  # Ensure non-negative
                 "can_regularize": record.regularization_status
                 not in ["Approved", "Rejected"],
             }
@@ -1007,7 +1011,7 @@ def attendance_summary_api(request):
                     if attendance.clock_out_time
                     else None,
                     "total_hours": float(attendance.total_hours or 0),
-                    "late_minutes": attendance.late_minutes or 0,
+                    "late_minutes": max(0, attendance.late_minutes or 0),  # Ensure non-negative
                 }
             except Attendance.DoesNotExist:
                 summary = {"status": "Not Marked"}
@@ -1167,7 +1171,7 @@ def _get_user_current_shift(user, target_date):
     try:
         return (
             ShiftAssignment.objects.filter(
-                user=user, start_date__lte=target_date, end_date__gte=target_date
+                user=user, effective_from__lte=target_date, effective_to__gte=target_date
             )
             .select_related("shift")
             .first()
@@ -1211,7 +1215,10 @@ def _calculate_attendance_status(attendance):
 
                     clock_in_datetime = attendance.clock_in_time.astimezone(IST)
                     late_delta = clock_in_datetime - shift_start_datetime
-                    attendance.late_minutes = int(late_delta.total_seconds() / 60)
+                    late_minutes_calc = int(late_delta.total_seconds() / 60)
+                    
+                    # Ensure late_minutes is never negative (if clocked in early)
+                    attendance.late_minutes = max(0, late_minutes_calc)
                     attendance.status = "Present & Late"
                 else:
                     attendance.status = "Present"
