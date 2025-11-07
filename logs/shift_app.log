@@ -6857,3 +6857,7 @@ django.template.exceptions.TemplateDoesNotExist: attendance/search.html
 [2025-11-07 11:33:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
 [2025-11-07 11:34:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
 [2025-11-07 11:34:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:45:55] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/services.py changed, reloading.
+[2025-11-07 11:45:58] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 11:46:29] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/services.py changed, reloading.
+[2025-11-07 11:46:31] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
