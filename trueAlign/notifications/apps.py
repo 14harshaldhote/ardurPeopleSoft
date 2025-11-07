@@ -21,16 +21,12 @@ class NotificationsConfig(AppConfig):
 
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'trueAlign.notifications'
-    verbose_name = 'Real-Time Notification System'
+    label = 'truealign_notifications'  # Custom label to avoid conflict
+    verbose_name = 'TrueAlign Notifications'
 
     def ready(self):
         """
         Called when the app is ready.
         Import signal handlers here to ensure they are registered.
         """
-        try:
-            # Import signals to register them
-            from . import signals
-        except ImportError:
-            # Signals module doesn't exist yet, that's okay
-            pass
+        from . import signals  # Register signals

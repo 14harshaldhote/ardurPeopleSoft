@@ -5314,3 +5314,48 @@ class TicketAttachment(models.Model):
                 return f"{size:.1f} {unit}"
             size /= 1024.0
         return f"{size:.1f} TB"
+
+
+
+from django.db import models
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+class Notification(models.Model):
+    """A notification model to store system notifications for users"""
+
+    NOTIFICATION_TYPES = (
+        ('support', 'Support'),
+        ('attendance', 'Attendance'),
+        ('leave', 'Leave'),
+        ('shift', 'Shift'),
+        ('system', 'System')
+    )
+
+    recipient = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='truealign_notifications'
+    )
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    module = models.CharField(max_length=50, choices=NOTIFICATION_TYPES)
+    read = models.BooleanField(default=False)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    reference_id = models.CharField(max_length=50, null=True, blank=True)
+    url = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['-timestamp']),
+            models.Index(fields=['recipient', 'read']),
+        ]
+
+    def __str__(self):
+        return f"{self.module} - {self.title} for {self.recipient.username}"
+
+    def mark_as_read(self):
+        self.read = True
+        self.save()
