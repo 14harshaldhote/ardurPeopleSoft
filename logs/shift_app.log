@@ -6872,3 +6872,9 @@ django.template.exceptions.TemplateDoesNotExist: attendance/search.html
 [2025-11-07 12:14:41] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
 [2025-11-07 12:14:58] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py changed, reloading.
 [2025-11-07 12:14:59] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:19:54] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py changed, reloading.
+[2025-11-07 12:20:04] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:20:54] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py changed, reloading.
+[2025-11-07 12:20:55] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:25:49] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py changed, reloading.
+[2025-11-07 12:25:51] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader

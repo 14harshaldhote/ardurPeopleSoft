@@ -4055,6 +4055,7 @@ class Attendance(models.Model):
         cache_keys = [
             f'attendance:{self.user_id}:{self.date}',
             f'user_attendance_today:{self.user_id}',
+            f'dashboard_context_{self.user_id}',  # Phase 4: Dashboard cache
         ]
         cache.delete_many(cache_keys)
         
