@@ -3841,8 +3841,17 @@ class Attendance(models.Model):
 
     # Basic fields
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='attendance_records')
-    date = models.DateField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Not Marked')
+    date = models.DateField(db_index=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Not Marked', db_index=True)
+
+    # Concurrency control fields
+    version = models.IntegerField(default=0, help_text="Version number for optimistic locking")
+    is_being_processed = models.BooleanField(default=False, db_index=True, 
+                                             help_text="Flag to prevent concurrent processing")
+    last_processed_at = models.DateTimeField(null=True, blank=True, 
+                                             help_text="Last time this record was processed")
+    processing_lock_expires = models.DateTimeField(null=True, blank=True,
+                                                   help_text="Expiration time for processing lock")
 
     # Time tracking fields
     clock_in_time = models.DateTimeField(null=True, blank=True)
@@ -3973,6 +3982,9 @@ class Attendance(models.Model):
             models.Index(fields=['clock_in_time']),
             models.Index(fields=['clock_out_time']),
             models.Index(fields=['is_weekend', 'is_holiday']),
+            models.Index(fields=['is_being_processed', 'date']),
+            models.Index(fields=['version', 'user', 'date']),
+            models.Index(fields=['last_modified']),
         ]
         ordering = ['-date', 'user__username']
 
@@ -4004,22 +4016,49 @@ class Attendance(models.Model):
 
     def save(self, *args, **kwargs):
         """
-        Simplified save method to prevent race conditions
+        Enhanced save method with version control and concurrency protection
         """
         # Store original values for audit trail
         if self.pk:
             try:
-                original = Attendance.objects.get(pk=self.pk)
+                original = Attendance.objects.only('status', 'version', 'original_status').get(pk=self.pk)
+                
+                # Optimistic locking check (unless explicitly skipped)
+                if 'skip_version_check' not in kwargs and self.version != original.version:
+                    raise ValidationError(
+                        f"Attendance record was modified by another process. "
+                        f"Expected version {self.version}, found {original.version}. "
+                        f"Please refresh and try again."
+                    )
+                
+                # Store original status if not already stored
                 if not self.original_status:
                     self.original_status = original.status
+                
+                # Increment version
+                self.version = original.version + 1
+                
             except Attendance.DoesNotExist:
                 pass
+        
+        # Remove skip_version_check from kwargs if present
+        kwargs.pop('skip_version_check', None)
 
         # Run basic validations
         self.full_clean()
 
         # Save the record
         super().save(*args, **kwargs)
+        
+        # Invalidate cache after save
+        from django.core.cache import cache
+        cache_keys = [
+            f'attendance:{self.user_id}:{self.date}',
+            f'user_attendance_today:{self.user_id}',
+        ]
+        cache.delete_many(cache_keys)
+        
+        logger.debug(f"Saved attendance for {self.user.username} on {self.date}, version {self.version}")
 
     def _initialize_attendance_defaults(self):
         """Initialize default values for new attendance records"""
@@ -4459,7 +4498,8 @@ class Attendance(models.Model):
                     if not attendance.clock_out_time or session.logout_time > attendance.clock_out_time:
                         attendance.clock_out_time = session.logout_time
 
-                attendance.save()
+                # Use skip_version_check for signal-triggered updates
+                attendance.save(skip_version_check=True)
                 logger.info(f"Updated session data for {user.username} on {date}")
             else:
                 # Use atomic transaction if not already in one
@@ -4525,7 +4565,8 @@ class Attendance(models.Model):
                             if not attendance.clock_out_time or session.logout_time > attendance.clock_out_time:
                                 attendance.clock_out_time = session.logout_time
 
-                        attendance.save()
+                        # Use skip_version_check for signal-triggered updates
+                        attendance.save(skip_version_check=True)
                         logger.info(f"Updated session data for {user.username} on {date}")
 
                     except Exception as e:
@@ -4681,6 +4722,108 @@ class Attendance(models.Model):
         days_diff = (timezone.now().date() - self.date).days
         return days_diff <= 7
 
+    # ============= CONCURRENCY CONTROL METHODS =============
+    
+    def acquire_processing_lock(self, lock_duration_minutes=30):
+        """
+        Acquire a processing lock to prevent concurrent modifications.
+        Returns True if lock acquired, False otherwise.
+        
+        Usage in cron jobs:
+            if attendance.acquire_processing_lock():
+                try:
+                    # Process attendance
+                    attendance.calculate_all_fields()
+                    attendance.save(skip_version_check=True)
+                finally:
+                    attendance.release_processing_lock()
+        """
+        if self.is_being_processed:
+            # Check if lock expired
+            if self.processing_lock_expires and self.processing_lock_expires < timezone.now():
+                pass  # Lock expired, we can take it
+            else:
+                logger.warning(f"Attendance {self.id} already being processed (expires: {self.processing_lock_expires})")
+                return False
+        
+        from django.db import transaction
+        with transaction.atomic():
+            try:
+                # Use select_for_update to ensure atomicity
+                att = Attendance.objects.select_for_update(nowait=True).get(pk=self.pk)
+                att.is_being_processed = True
+                att.processing_lock_expires = timezone.now() + timedelta(minutes=lock_duration_minutes)
+                att.save(update_fields=['is_being_processed', 'processing_lock_expires'])
+                
+                # Update self
+                self.is_being_processed = True
+                self.processing_lock_expires = att.processing_lock_expires
+                logger.debug(f"Acquired lock for attendance {self.id}")
+                return True
+            except Exception as e:
+                logger.error(f"Failed to acquire processing lock for {self.id}: {e}")
+                return False
+    
+    def release_processing_lock(self):
+        """
+        Release the processing lock and record processing time.
+        """
+        if not self.is_being_processed:
+            return
+        
+        from django.db import transaction
+        try:
+            with transaction.atomic():
+                att = Attendance.objects.select_for_update().get(pk=self.pk)
+                att.is_being_processed = False
+                att.processing_lock_expires = None
+                att.last_processed_at = timezone.now()
+                att.save(update_fields=['is_being_processed', 'processing_lock_expires', 'last_processed_at'])
+                
+                self.is_being_processed = False
+                self.processing_lock_expires = None
+                self.last_processed_at = att.last_processed_at
+                logger.debug(f"Released lock for attendance {self.id}")
+        except Exception as e:
+            logger.error(f"Error releasing lock for {self.id}: {e}")
+    
+    @classmethod
+    def get_locked_records(cls):
+        """
+        Get all currently locked records (for monitoring).
+        """
+        return cls.objects.filter(
+            is_being_processed=True,
+            processing_lock_expires__gt=timezone.now()
+        ).select_related('user')
+    
+    @classmethod
+    def release_expired_locks(cls):
+        """
+        Release all expired locks (safety mechanism for crashed processes).
+        Call this before starting cron jobs.
+        """
+        expired = cls.objects.filter(
+            is_being_processed=True,
+            processing_lock_expires__lt=timezone.now()
+        )
+        count = expired.count()
+        if count > 0:
+            expired.update(
+                is_being_processed=False,
+                processing_lock_expires=None,
+                last_processed_at=timezone.now()
+            )
+            logger.warning(f"Released {count} expired processing locks")
+        return count
+    
+    def calculate_all_fields(self):
+        """
+        Convenience method to calculate all time-related fields and update status.
+        Safe to call from cron jobs.
+        """
+        self._calculate_time_fields()
+        self._update_status_logic()
 
 
 class GlobalUpdate(models.Model):

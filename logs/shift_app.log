@@ -6759,3 +6759,59 @@ django.template.exceptions.TemplateSyntaxError: Invalid filter: 'add_class'
 [2025-11-06 14:13:51] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
 [2025-11-06 14:52:39] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
 [2025-11-06 16:18:23] INFO - trueAlign.core.middleware - _cleanup_old_buffers:546 - Cleaned up 1 old buffers
+[2025-11-07 10:20:03] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 10:20:25] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 10:38:34] ERROR - django.request - log_response:241 - Internal Server Error: /attendance/search/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 1062, in search_attendance
+    return render(request, "attendance/search.html", context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: attendance/search.html
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/decorators.py", line 167, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 1067, in search_attendance
+    return render(request, "attendance/search.html", {})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: attendance/search.html
+[2025-11-07 11:12:04] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py changed, reloading.
+[2025-11-07 11:12:06] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 11:12:15] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py changed, reloading.
+[2025-11-07 11:12:17] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 11:12:30] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py changed, reloading.
+[2025-11-07 11:12:32] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 11:13:04] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py changed, reloading.
+[2025-11-07 11:13:47] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 11:14:24] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py changed, reloading.
+[2025-11-07 11:14:26] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 11:14:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:14:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:14:40] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py changed, reloading.
+[2025-11-07 11:14:41] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 11:15:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:15:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:16:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:16:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:17:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:17:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:18:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:18:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/

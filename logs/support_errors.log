@@ -10277,3 +10277,56 @@ Traceback (most recent call last):
     raise TemplateSyntaxError("Invalid filter: '%s'" % filter_name)
 django.template.exceptions.TemplateSyntaxError: Invalid filter: 'add_class'
 [2025-11-06 13:18:08] ERROR - django.server - log_message:212 - "GET /support/create/ HTTP/1.1" 500 240795
+[2025-11-07 10:38:34] ERROR - django.request - log_response:241 - Internal Server Error: /attendance/search/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 1062, in search_attendance
+    return render(request, "attendance/search.html", context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: attendance/search.html
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/decorators.py", line 167, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 1067, in search_attendance
+    return render(request, "attendance/search.html", {})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: attendance/search.html
+[2025-11-07 10:38:34] ERROR - django.server - log_message:212 - "GET /attendance/search/ HTTP/1.1" 500 143013
+[2025-11-07 11:14:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:14:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:14:31] ERROR - django.server - log_message:212 - "POST /api/attendance/verify-session-status/ HTTP/1.1" 500 107
+[2025-11-07 11:14:31] ERROR - django.server - log_message:212 - "POST /api/attendance/verify-session-status/ HTTP/1.1" 500 107
+[2025-11-07 11:15:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:15:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:15:31] ERROR - django.server - log_message:212 - "POST /api/attendance/verify-session-status/ HTTP/1.1" 500 107
+[2025-11-07 11:15:31] ERROR - django.server - log_message:212 - "POST /api/attendance/verify-session-status/ HTTP/1.1" 500 107
+[2025-11-07 11:16:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:16:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:16:31] ERROR - django.server - log_message:212 - "POST /api/attendance/verify-session-status/ HTTP/1.1" 500 107
+[2025-11-07 11:16:31] ERROR - django.server - log_message:212 - "POST /api/attendance/verify-session-status/ HTTP/1.1" 500 107
+[2025-11-07 11:17:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:17:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:17:31] ERROR - django.server - log_message:212 - "POST /api/attendance/verify-session-status/ HTTP/1.1" 500 107
+[2025-11-07 11:17:31] ERROR - django.server - log_message:212 - "POST /api/attendance/verify-session-status/ HTTP/1.1" 500 107
+[2025-11-07 11:18:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:18:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:18:31] ERROR - django.server - log_message:212 - "POST /api/attendance/verify-session-status/ HTTP/1.1" 500 107
+[2025-11-07 11:18:31] ERROR - django.server - log_message:212 - "POST /api/attendance/verify-session-status/ HTTP/1.1" 500 107
