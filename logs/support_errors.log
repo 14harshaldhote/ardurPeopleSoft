@@ -11958,3 +11958,27 @@ Traceback (most recent call last):
     raise NoReverseMatch(msg)
 django.urls.exceptions.NoReverseMatch: Reverse for 'calendar_month' with arguments '('', '')' not found. 1 pattern(s) tried: ['attendance/calendar/(?P<year>[0-9]+)/(?P<month>[0-9]+)/\\Z']
 [2025-11-07 13:52:49] ERROR - django.server - log_message:212 - "GET /attendance/calendar/ HTTP/1.1" 500 330387
+[2025-11-07 17:10:07] ERROR - django.request - log_response:241 - Internal Server Error: /conference/bookings/create/1/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/confrence/views.py", line 390, in booking_create
+    if form.is_valid():
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/forms/forms.py", line 197, in is_valid
+    return self.is_bound and not self.errors
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/forms/forms.py", line 192, in errors
+    self.full_clean()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/forms/forms.py", line 329, in full_clean
+    self._post_clean()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/forms/models.py", line 496, in _post_clean
+    self.instance.full_clean(exclude=exclude, validate_unique=False)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/base.py", line 1527, in full_clean
+    self.clean()
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py", line 407, in clean
+    if self.start_time < timezone.now():
+TypeError: '<' not supported between instances of 'NoneType' and 'datetime.datetime'
+[2025-11-07 17:10:07] ERROR - django.server - log_message:212 - "POST /conference/bookings/create/1/ HTTP/1.1" 500 129302

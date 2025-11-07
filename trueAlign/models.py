@@ -189,6 +189,311 @@ class OfficeLocation(models.Model):
         """Return working hours in a readable format."""
         return f"{self.working_hours_start.strftime('%H:%M')} - {self.working_hours_end.strftime('%H:%M')}"  # type: ignore
 
+
+'''------------------------- CONFERENCE ROOM --------------------'''
+
+
+class ConferenceRoom(models.Model):
+    """
+    Model to manage conference rooms in different office locations.
+    Admin can create, edit, delete and manage room availability.
+    """
+    # Basic Information
+    name = models.CharField(max_length=100, help_text="Room name (e.g., 'Board Room', 'Meeting Room A')")
+    office_location = models.ForeignKey(
+        OfficeLocation, 
+        on_delete=models.CASCADE, 
+        related_name='conference_rooms',
+        help_text="Office location where this room is located"
+    )
+    
+    # Room Details
+    floor = models.CharField(max_length=20, help_text="Floor number or name (e.g., '2nd Floor', 'Ground')")
+    capacity = models.PositiveIntegerField(help_text="Maximum number of people the room can accommodate")
+    
+    # Amenities - stored as JSON for flexibility
+    amenities = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of amenities (e.g., ['Projector', 'Whiteboard', 'Video Conference'])"
+    )
+    
+    # Booking Rules
+    buffer_time_minutes = models.PositiveIntegerField(
+        default=15,
+        help_text="Buffer time between bookings (in minutes) for cleaning/setup"
+    )
+    min_lead_time_minutes = models.PositiveIntegerField(
+        default=15,
+        help_text="Minimum lead time required before booking start (in minutes)"
+    )
+    max_booking_duration_hours = models.PositiveIntegerField(
+        default=3,
+        help_text="Maximum duration for a single booking (in hours)"
+    )
+    
+    # Status
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Is this room available for booking? Inactive rooms cannot be booked."
+    )
+    
+    # Additional Information
+    description = models.TextField(blank=True, help_text="Additional room description or special instructions")
+    image = models.ImageField(upload_to='conference_rooms/', blank=True, null=True, help_text="Room image")
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        related_name='created_rooms',
+        help_text="Admin who created this room"
+    )
+    
+    class Meta:
+        ordering = ['office_location', 'floor', 'name']
+        verbose_name = "Conference Room"
+        verbose_name_plural = "Conference Rooms"
+        unique_together = [['office_location', 'name']]  # Unique room name per office
+        
+    def __str__(self):
+        return f"{self.name} - {self.office_location.code} (Floor: {self.floor})"
+    
+    @property
+    def capacity_display(self):
+        """Return capacity in readable format."""
+        return f"{self.capacity} people"
+    
+    @property
+    def amenities_display(self):
+        """Return amenities as comma-separated string."""
+        if self.amenities and isinstance(self.amenities, list):
+            return ", ".join(self.amenities)
+        return "No amenities listed"
+    
+    def clean(self):
+        """Validate room data before saving."""
+        from django.core.exceptions import ValidationError
+        
+        if self.capacity < 1:
+            raise ValidationError("Room capacity must be at least 1 person")
+        
+        if self.buffer_time_minutes < 0:
+            raise ValidationError("Buffer time cannot be negative")
+        
+        if self.min_lead_time_minutes < 0:
+            raise ValidationError("Lead time cannot be negative")
+        
+        if self.max_booking_duration_hours < 1:
+            raise ValidationError("Maximum booking duration must be at least 1 hour")
+
+
+class RoomBooking(models.Model):
+    """
+    Model to manage conference room bookings.
+    Employees can create, view, and cancel their bookings.
+    """
+    
+    # Booking Status Choices
+    STATUS_PENDING = 'PENDING'
+    STATUS_CONFIRMED = 'CONFIRMED'
+    STATUS_CANCELLED = 'CANCELLED'
+    
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'Pending'),
+        (STATUS_CONFIRMED, 'Confirmed'),
+        (STATUS_CANCELLED, 'Cancelled'),
+    ]
+    
+    # Core Booking Information
+    room = models.ForeignKey(
+        ConferenceRoom,
+        on_delete=models.CASCADE,
+        related_name='bookings',
+        help_text="Conference room being booked"
+    )
+    booked_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='room_bookings',
+        help_text="User who made the booking"
+    )
+    
+    # Booking Details
+    title = models.CharField(max_length=200, help_text="Meeting title or purpose")
+    purpose = models.TextField(help_text="Detailed purpose of the meeting")
+    attendees = models.TextField(
+        help_text="List of attendees (names or emails, one per line or comma-separated)"
+    )
+    attendee_count = models.PositiveIntegerField(help_text="Number of attendees")
+    
+    # Time Information
+    start_time = models.DateTimeField(help_text="Booking start date and time")
+    end_time = models.DateTimeField(help_text="Booking end date and time")
+    
+    # Status
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_PENDING,
+        help_text="Current booking status"
+    )
+    
+    # Additional Information
+    special_requirements = models.TextField(
+        blank=True,
+        help_text="Any special requirements or setup needed"
+    )
+    
+    # Cancellation
+    cancelled_at = models.DateTimeField(null=True, blank=True, help_text="When the booking was cancelled")
+    cancellation_reason = models.TextField(blank=True, help_text="Reason for cancellation")
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-start_time']
+        verbose_name = "Room Booking"
+        verbose_name_plural = "Room Bookings"
+        indexes = [
+            models.Index(fields=['room', 'start_time', 'end_time']),
+            models.Index(fields=['booked_by', 'status']),
+            models.Index(fields=['status', 'start_time']),
+        ]
+    
+    def __str__(self):
+        return f"{self.title} - {self.room.name} ({self.start_time.strftime('%Y-%m-%d %H:%M')})"  # type: ignore
+    
+    @property
+    def duration_hours(self):
+        """Calculate booking duration in hours."""
+        duration = self.end_time - self.start_time
+        return duration.total_seconds() / 3600
+    
+    @property
+    def is_upcoming(self):
+        """Check if booking is in the future."""
+        from django.utils import timezone
+        return self.start_time > timezone.now() and self.status != self.STATUS_CANCELLED
+    
+    @property
+    def is_past(self):
+        """Check if booking is in the past."""
+        from django.utils import timezone
+        return self.end_time < timezone.now()
+    
+    @property
+    def is_active(self):
+        """Check if booking is currently active."""
+        from django.utils import timezone
+        now = timezone.now()
+        return self.start_time <= now <= self.end_time and self.status == self.STATUS_CONFIRMED
+    
+    def clean(self):
+        """Validate booking data before saving."""
+        from django.core.exceptions import ValidationError
+        from django.utils import timezone
+        
+        # Skip validation if essential fields are not set
+        # (form validation will handle these)
+        if not self.start_time or not self.end_time or not self.room:
+            return
+        
+        # Check if room is active
+        if not self.room.is_active:
+            raise ValidationError("This conference room is currently inactive and cannot be booked.")
+        
+        # Check if booking is in the past
+        if self.start_time < timezone.now():
+            raise ValidationError("Cannot book a room in the past.")
+        
+        # Check if end time is after start time
+        if self.end_time <= self.start_time:
+            raise ValidationError("End time must be after start time.")
+        
+        # Check lead time requirement
+        time_until_start = (self.start_time - timezone.now()).total_seconds() / 60
+        if time_until_start < self.room.min_lead_time_minutes:
+            raise ValidationError(
+                f"Booking must be made at least {self.room.min_lead_time_minutes} minutes in advance. "
+                f"Current lead time is {int(time_until_start)} minutes."
+            )
+        
+        # Check maximum booking duration
+        duration_hours = (self.end_time - self.start_time).total_seconds() / 3600
+        if duration_hours > self.room.max_booking_duration_hours:
+            raise ValidationError(
+                f"Booking duration ({duration_hours:.1f} hours) exceeds maximum allowed "
+                f"duration of {self.room.max_booking_duration_hours} hours."
+            )
+        
+        # Check attendee count vs room capacity
+        if self.attendee_count > self.room.capacity:
+            raise ValidationError(
+                f"Number of attendees ({self.attendee_count}) exceeds room capacity "
+                f"({self.room.capacity})."
+            )
+        
+        # Check for overlapping bookings (including buffer time)
+        from datetime import timedelta
+        
+        # Calculate buffer times
+        buffer = timedelta(minutes=self.room.buffer_time_minutes)
+        check_start = self.start_time - buffer
+        check_end = self.end_time + buffer
+        
+        # Query for overlapping bookings
+        overlapping_bookings = RoomBooking.objects.filter(
+            room=self.room,
+            status__in=[self.STATUS_PENDING, self.STATUS_CONFIRMED]
+        ).exclude(
+            pk=self.pk  # Exclude current booking when updating
+        ).filter(
+            start_time__lt=check_end,
+            end_time__gt=check_start
+        )
+        
+        if overlapping_bookings.exists():
+            conflicting_booking = overlapping_bookings.first()
+            raise ValidationError(
+                f"This time slot conflicts with another booking: '{conflicting_booking.title}' "
+                f"({conflicting_booking.start_time.strftime('%H:%M')} - {conflicting_booking.end_time.strftime('%H:%M')}). "  # type: ignore
+                f"Please note the {self.room.buffer_time_minutes}-minute buffer time between bookings."
+            )
+    
+    def save(self, *args, **kwargs):
+        """Override save to run clean validation."""
+        # Only validate if not cancelled (to allow cancellation without validation)
+        if self.status != self.STATUS_CANCELLED:
+            self.clean()
+        
+        # Auto-confirm pending bookings (can be modified for approval workflow)
+        if self.status == self.STATUS_PENDING and not self.pk:
+            self.status = self.STATUS_CONFIRMED
+        
+        super().save(*args, **kwargs)
+    
+    def cancel(self, reason=""):
+        """Cancel this booking."""
+        from django.utils import timezone
+        
+        if self.status == self.STATUS_CANCELLED:
+            raise ValidationError("This booking is already cancelled.")
+        
+        if self.is_past:
+            raise ValidationError("Cannot cancel a past booking.")
+        
+        self.status = self.STATUS_CANCELLED
+        self.cancelled_at = timezone.now()
+        self.cancellation_reason = reason
+        self.save(update_fields=['status', 'cancelled_at', 'cancellation_reason', 'updated_at'])
+
+
 '''------------------------- CLINET PROFILE --------------------'''
 class ClientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='client_profile')
@@ -5508,3 +5813,8 @@ class Notification(models.Model):
     def mark_as_read(self):
         self.read = True
         self.save()
+
+
+
+
+'''-------------------------------------------- CONFRENCE BOOK AREA ---------------------------------------'''
