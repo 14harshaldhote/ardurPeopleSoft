@@ -125,7 +125,7 @@ class EnhancedSessionLogger:
             'session_id': str(session_id),
             'tab_id': tab_id,
             'duration_ms': duration_ms,
-            'created': created,
+            'was_created': created,  # Renamed from 'created' to avoid LogRecord conflict
             'race_condition': race_condition,
             'timestamp': timezone.now().isoformat()
         }

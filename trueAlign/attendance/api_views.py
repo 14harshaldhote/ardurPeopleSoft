@@ -1857,19 +1857,53 @@ def optimized_heartbeat(request):
         except json.JSONDecodeError:
             return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
-        # Update or create active session
-        user_session, created = UserSession.objects.update_or_create(
-            user=request.user,
-            is_active=True,
-            defaults={
-                'last_activity': timezone.now(),
-                'session_key': request.session.session_key or '',
-            }
-        )
+        # Get tab_id and parent_session_id from request
+        tab_id = data.get('tab_id')
+        parent_session_id = data.get('parent_session_id')
+
+        # Try to find specific session by tab_id first, then by parent_session_id
+        user_session = None
+        if tab_id:
+            user_session = UserSession.objects.filter(
+                user=request.user,
+                tab_id=tab_id,
+                is_active=True
+            ).first()
+        
+        if not user_session and parent_session_id:
+            user_session = UserSession.objects.filter(
+                user=request.user,
+                parent_session_id=parent_session_id,
+                is_active=True
+            ).first()
+        
+        # If still not found, get the most recent active session
+        if not user_session:
+            user_session = UserSession.objects.filter(
+                user=request.user,
+                is_active=True
+            ).order_by('-last_activity').first()
+        
+        # Update or create session
+        if user_session:
+            user_session.last_activity = timezone.now()
+            user_session.save(update_fields=['last_activity'])
+            created = False
+        else:
+            # Create new session
+            user_session = UserSession.objects.create(
+                user=request.user,
+                session_key=request.session.session_key or '',
+                tab_id=tab_id,
+                parent_session_id=parent_session_id,
+                is_active=True
+            )
+            created = True
 
         return JsonResponse({
             'status': 'success',
-            'session_id': user_session.id,
+            'session_id': str(user_session.id),
+            'created': created,
             'timestamp': timezone.now().isoformat(),
         })
 

@@ -311,22 +311,52 @@ def attendance_calendar(request, year=None, month=None):
             .order_by("date")
         )
 
-        # Create calendar data
+        # Create calendar data - convert times to IST
         calendar_data = {}
         for record in attendance_records:
+            # Convert times to IST explicitly
+            clock_in_ist = record.clock_in_time.astimezone(IST) if record.clock_in_time else None
+            clock_out_ist = record.clock_out_time.astimezone(IST) if record.clock_out_time else None
+            
             calendar_data[record.date.day] = {
                 "status": record.status,
-                "clock_in": record.clock_in_time.strftime("%H:%M")
-                if record.clock_in_time
-                else None,
-                "clock_out": record.clock_out_time.strftime("%H:%M")
-                if record.clock_out_time
-                else None,
+                "clock_in": clock_in_ist.strftime("%H:%M") if clock_in_ist else None,
+                "clock_out": clock_out_ist.strftime("%H:%M") if clock_out_ist else None,
                 "total_hours": float(record.total_hours or 0),
-                "late_minutes": max(0, record.late_minutes or 0),  # Ensure non-negative
-                "can_regularize": record.regularization_status
-                not in ["Approved", "Rejected"],
+                "late_minutes": max(0, record.late_minutes or 0),
+                "can_regularize": record.regularization_status not in ["Approved", "Rejected"],
+                "id": record.id,
             }
+
+        # Generate calendar grid using Python's calendar module
+        import calendar as cal
+        month_calendar = cal.monthcalendar(year, month)
+        
+        calendar_weeks = []
+        for week in month_calendar:
+            week_data = []
+            for day in week:
+                if day == 0:  # Empty day (padding)
+                    week_data.append({'date': None})
+                else:
+                    day_date = date(year, month, day)
+                    is_weekend = day_date.weekday() >= 5  # Saturday=5, Sunday=6
+                    
+                    week_data.append({
+                        'date': day_date,
+                        'day': day,
+                        'is_today': day_date == today,
+                        'is_weekend': is_weekend,
+                        'attendance': calendar_data.get(day),
+                    })
+            calendar_weeks.append(week_data)
+        
+        # Calculate monthly statistics
+        present_count = sum(1 for d in calendar_data.values() if d['status'] in ['Present', 'Present & Late'])
+        absent_count = sum(1 for d in calendar_data.values() if d['status'] == 'Absent')
+        late_count = sum(1 for d in calendar_data.values() if 'Late' in d['status'])
+        total_days = len(calendar_data)
+        attendance_rate = round((present_count / total_days * 100) if total_days > 0 else 0, 1)
 
         context = {
             "year": year,
@@ -337,7 +367,16 @@ def attendance_calendar(request, year=None, month=None):
             "next_year": next_month.year,
             "next_month": next_month.month,
             "calendar_data": calendar_data,
+            "calendar_weeks": calendar_weeks,
             "today": today,
+            "weekdays": ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            "monthly_stats": {
+                "present_days": present_count,
+                "absent_days": absent_count,
+                "late_days": late_count,
+                "total_days": total_days,
+                "attendance_rate": attendance_rate,
+            },
         }
 
         return render(request, "attendance/calendar.html", context)

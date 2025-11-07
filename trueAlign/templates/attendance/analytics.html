@@ -1,32 +1,55 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Attendance Analytics - TrueAlign{% endblock %}
+{% block title %}Attendance Analytics - Ardur Home{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-sky-50" x-data="attendanceAnalytics()">
-    <!-- Header -->
-    <div class="bg-white shadow-xl border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-6 py-8">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">Attendance Analytics</h1>
-                    <p class="text-gray-600 mt-2 text-lg">Comprehensive insights and trends analysis</p>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <select x-model="analyticsFilter" @change="updateAnalytics()" 
-                            class="bg-white border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-sky-500 focus:border-transparent shadow-sm hover:border-gray-400 transition-colors duration-200 font-medium">
-                        <option value="7days">Last 7 Days</option>
-                        <option value="30days">Last 30 Days</option>
-                        <option value="90days">Last 90 Days</option>
-                        <option value="1year">Last Year</option>
-                    </select>
-                    <button @click="refreshData()" 
-                            class="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white px-6 py-2.5 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all duration-200">
-                        <i class="ri-refresh-line mr-2"></i>Refresh
-                    </button>
-                </div>
-            </div>
+<div class="mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl">
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="flex mb-6 text-sm">
+        <a href="{% url 'dashboard' %}" class="text-blue-600 hover:text-blue-800 transition-colors">
+            <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg>
+            Home
+        </a>
+        <span class="mx-2 text-gray-400">/</span>
+        <a href="{% url 'attendance:hr_dashboard' %}" class="text-blue-600 hover:text-blue-800 transition-colors">HR Dashboard</a>
+        <span class="mx-2 text-gray-400">/</span>
+        <span class="text-gray-700 font-medium">Analytics</span>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <h1 class="text-3xl font-extrabold text-gray-900 flex items-center">
+                <svg class="w-8 h-8 mr-3 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                Attendance Analytics
+            </h1>
+            <p class="mt-2 text-sm text-gray-600">
+                Comprehensive insights and attendance trends for the organization
+            </p>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap gap-3">
+            <button onclick="window.location.reload()" 
+                    class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:scale-105 transition-all duration-200 shadow-md">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Refresh
+            </button>
+            <a href="{% url 'attendance:export_csv' %}" 
+               class="inline-flex items-center px-4 py-2 backdrop-blur-sm bg-white/30 rounded-lg border border-gray-300 hover:bg-white/50 transition-all">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                Export Report
+            </a>
         </div>
     </div>
 
