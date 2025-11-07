@@ -114,53 +114,81 @@ class AttendanceAutoMarkingService(BaseAttendanceService):
 
     def run_auto_marking(self, target_date: Optional[date] = None) -> ServiceResult:
         """
-        Enhanced automatic attendance marking with real-time session integration
+        OPTIMIZED automatic attendance marking with incremental processing
+        
+        Features:
+        - Incremental processing (only changed records since last run)
+        - Uses processing locks to prevent concurrent modifications
+        - Batch processing with per-record error handling
+        - Cache-aware with last run time tracking
         """
         if not target_date:
             target_date = self.today
 
         self._log_operation("AUTO_MARKING_START", details=f"Date: {target_date}")
-
+        
+        # Check for last run time (for incremental processing)
+        last_run_key = f'last_auto_marking_{target_date}'
+        last_run = cache.get(last_run_key)
+        
         try:
-            with transaction.atomic():
-                results = {
-                    'date': str(target_date),
-                    'created': 0,
-                    'updated': 0,
-                    'processed': 0,
-                    'calculated': 0,
-                    'errors': []
-                }
+            results = {
+                'date': str(target_date),
+                'created': 0,
+                'updated': 0,
+                'processed': 0,
+                'calculated': 0,
+                'skipped': 0,
+                'errors': [],
+                'processing_mode': 'incremental' if last_run else 'full'
+            }
 
-                # Step 1: Create missing attendance records for all active users
-                created_count = self._create_missing_records(target_date)
-                results['created'] = created_count
+            # Step 1: Create missing attendance records for all active users
+            created_count = self._create_missing_records(target_date)
+            results['created'] = created_count
 
-                # Step 2: Update records with current and historical session data
-                updated_count = self._update_with_sessions(target_date)
-                results['updated'] = updated_count
+            # Step 2: INCREMENTAL - Get records to process
+            if last_run:
+                # Only process records modified since last run
+                records_to_process = Attendance.objects.filter(
+                    date=target_date,
+                    last_modified__gte=last_run
+                ).select_related('user', 'shift', 'first_session', 'last_session')
+                
+                logger.info(f"Incremental processing: {records_to_process.count()} modified records")
+            else:
+                # Full processing - First run of the day
+                records_to_process = Attendance.objects.filter(
+                    date=target_date
+                ).select_related('user', 'shift', 'first_session', 'last_session')
+                
+                logger.info(f"Full processing: {records_to_process.count()} total records")
 
-                # Step 3: Process pending statuses based on business rules
-                processed_count = self._process_pending_statuses(target_date)
-                results['processed'] = processed_count
+            # Step 3: Process records in batches with locking
+            update_count, process_count, skip_count = self._process_records_batch(
+                records_to_process, target_date
+            )
+            results['updated'] = update_count
+            results['processed'] = process_count
+            results['skipped'] = skip_count
 
-                # Step 4: Calculate final statuses for all records
-                calculated_count = self._recalculate_all_statuses(target_date)
-                results['calculated'] = calculated_count
+            # Step 4: Handle real-time updates for current day
+            if target_date == self.today:
+                self._update_real_time_attendance()
 
-                # Step 5: Handle real-time updates for current day
-                if target_date == self.today:
-                    self._update_real_time_attendance()
+            # Update last run time for next incremental processing
+            cache.set(last_run_key, timezone.now(), 86400)  # 24 hours
 
-                self._log_operation("AUTO_MARKING_COMPLETE",
-                                  details=f"Created: {created_count}, Updated: {updated_count}, "
-                                         f"Processed: {processed_count}, Calculated: {calculated_count}")
+            self._log_operation("AUTO_MARKING_COMPLETE",
+                              details=f"Mode: {results['processing_mode']}, Created: {created_count}, "
+                                     f"Updated: {update_count}, Processed: {process_count}, "
+                                     f"Skipped: {skip_count}")
 
-                return ServiceResult(
-                    success=True,
-                    message=f"Enhanced auto marking completed for {target_date}",
-                    data=results
-                )
+            return ServiceResult(
+                success=True,
+                message=f"Optimized auto marking completed for {target_date}",
+                data=results
+            )
 
         except Exception as e:
             return self._handle_exception("AUTO_MARKING", e)
@@ -269,6 +297,63 @@ class AttendanceAutoMarkingService(BaseAttendanceService):
             logger.warning(f"Could not set shift for {user.username}: {e}")
 
         return defaults
+
+    def _process_records_batch(self, records_queryset, target_date: date) -> tuple:
+        """
+        Process attendance records in batches with locking mechanism
+        
+        Returns: (updated_count, processed_count, skipped_count)
+        """
+        updated_count = 0
+        processed_count = 0
+        skipped_count = 0
+        batch_size = 100  # Process 100 records at a time
+        
+        # Convert queryset to list for batching
+        total_records = records_queryset.count()
+        
+        for batch_start in range(0, total_records, batch_size):
+            batch = list(records_queryset[batch_start:batch_start + batch_size])
+            
+            for attendance in batch:
+                try:
+                    # Acquire processing lock
+                    if not attendance.acquire_processing_lock(lock_duration_minutes=5):
+                        # Already being processed, skip
+                        skipped_count += 1
+                        logger.debug(f"Skipping {attendance.id} - already being processed")
+                        continue
+                    
+                    try:
+                        # Process the attendance record
+                        original_status = attendance.status
+                        
+                        # Initialize defaults if needed
+                        if attendance.status in ['Not Marked', 'Yet to Clock In']:
+                            attendance.initialize_defaults()
+                        
+                        # Calculate all fields (hours, status, etc.)
+                        attendance.calculate_all_fields()
+                        
+                        # Save with skip_version_check to avoid conflicts
+                        attendance.save(skip_version_check=True)
+                        
+                        if attendance.status != original_status:
+                            updated_count += 1
+                        processed_count += 1
+                        
+                    except Exception as e:
+                        logger.error(f"Error processing attendance {attendance.id}: {e}")
+                    finally:
+                        # Always release lock
+                        attendance.release_processing_lock()
+                        
+                except Exception as e:
+                    logger.error(f"Error in batch processing for record {attendance.id if hasattr(attendance, 'id') else 'unknown'}: {e}")
+                    skipped_count += 1
+        
+        logger.info(f"Batch processing: Updated={updated_count}, Processed={processed_count}, Skipped={skipped_count}")
+        return updated_count, processed_count, skipped_count
 
     def _update_with_sessions(self, target_date: date) -> int:
         """Update attendance records with session data"""

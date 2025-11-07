@@ -6,7 +6,15 @@ import json
 import re
 import socket
 import ipaddress
-# from user_agents import parse as ua_parse
+
+# User agent parsing - import with fallback
+try:
+    from user_agents import parse as ua_parse
+    UA_PARSER_AVAILABLE = True
+except ImportError:
+    UA_PARSER_AVAILABLE = False
+    logger = logging.getLogger(__name__)
+    logger.warning("user-agents library not installed. User agent parsing will return defaults.")
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -88,6 +96,20 @@ def parse_user_agent(user_agent_string):
             'is_bot': False
         }
 
+    # Check if parser is available
+    if not UA_PARSER_AVAILABLE:
+        return {
+            'browser': 'Unknown',
+            'browser_version': 'Unknown',
+            'os': 'Unknown',
+            'os_version': 'Unknown',
+            'device': 'Unknown',
+            'is_mobile': False,
+            'is_tablet': False,
+            'is_pc': True,
+            'is_bot': False
+        }
+    
     try:
         user_agent = ua_parse(user_agent_string)
 
@@ -103,7 +125,7 @@ def parse_user_agent(user_agent_string):
             'is_bot': user_agent.is_bot
         }
     except Exception as e:
-        logger.error(f"Error parsing user agent: {e}")
+        logger.warning(f"Error parsing user agent: {e}")
         return {
             'browser': 'Parse Error',
             'browser_version': 'Unknown',

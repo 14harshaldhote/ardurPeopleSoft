@@ -54,4 +54,8 @@ urlpatterns = [
     # Session verification endpoints
     path('verify-session-status/', api_views.verify_session_status, name='verify_session_status'),
     path('update-activity/', api_views.update_activity, name='update_activity'),
+    
+    # Optimized session tracking endpoints (for JavaScript tracker)
+    path('optimized-heartbeat/', api_views.optimized_heartbeat, name='optimized_heartbeat'),
+    path('optimized-batch-activity/', api_views.optimized_batch_activity, name='optimized_batch_activity'),
 ]

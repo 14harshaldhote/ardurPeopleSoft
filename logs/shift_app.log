@@ -6759,3 +6759,1763 @@ django.template.exceptions.TemplateSyntaxError: Invalid filter: 'add_class'
 [2025-11-06 14:13:51] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
 [2025-11-06 14:52:39] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
 [2025-11-06 16:18:23] INFO - trueAlign.core.middleware - _cleanup_old_buffers:546 - Cleaned up 1 old buffers
+[2025-11-07 10:20:03] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 10:20:25] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 10:38:34] ERROR - django.request - log_response:241 - Internal Server Error: /attendance/search/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 1062, in search_attendance
+    return render(request, "attendance/search.html", context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: attendance/search.html
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/decorators.py", line 167, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 1067, in search_attendance
+    return render(request, "attendance/search.html", {})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: attendance/search.html
+[2025-11-07 11:12:04] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py changed, reloading.
+[2025-11-07 11:12:06] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 11:12:15] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py changed, reloading.
+[2025-11-07 11:12:17] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 11:12:30] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py changed, reloading.
+[2025-11-07 11:12:32] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 11:13:04] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py changed, reloading.
+[2025-11-07 11:13:47] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 11:14:24] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py changed, reloading.
+[2025-11-07 11:14:26] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 11:14:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:14:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:14:40] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py changed, reloading.
+[2025-11-07 11:14:41] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 11:15:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:15:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:16:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:16:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:17:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:17:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:18:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:18:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:19:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:19:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:20:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:20:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:21:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:21:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:22:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:22:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:23:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:23:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:24:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:24:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:25:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:25:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:26:26] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:26:26] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:26:26] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/update-activity/
+[2025-11-07 11:26:45] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:26:45] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:27:14] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:27:14] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:27:56] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:27:56] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:27:57] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/update-activity/
+[2025-11-07 11:28:47] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:28:49] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:29:38] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:29:38] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:29:38] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/update-activity/
+[2025-11-07 11:29:44] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:29:44] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:30:32] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:30:32] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:30:32] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/update-activity/
+[2025-11-07 11:31:44] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:31:44] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:32:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:32:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:33:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:33:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:34:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:34:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
+[2025-11-07 11:45:55] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/services.py changed, reloading.
+[2025-11-07 11:45:58] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 11:46:29] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/services.py changed, reloading.
+[2025-11-07 11:46:31] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:09:38] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:13:00] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py changed, reloading.
+[2025-11-07 12:13:01] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:13:34] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py changed, reloading.
+[2025-11-07 12:13:51] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:14:16] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py changed, reloading.
+[2025-11-07 12:14:19] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:14:39] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py changed, reloading.
+[2025-11-07 12:14:41] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:14:58] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py changed, reloading.
+[2025-11-07 12:14:59] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:19:54] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py changed, reloading.
+[2025-11-07 12:20:04] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:20:54] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py changed, reloading.
+[2025-11-07 12:20:55] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:25:49] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py changed, reloading.
+[2025-11-07 12:25:51] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:34:07] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:34:07] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-batch-activity/
+[2025-11-07 12:34:10] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:34:10] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:34:10] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-batch-activity/
+[2025-11-07 12:34:10] ERROR - django.request - log_response:241 - Internal Server Error: /session/update-activity/
+[2025-11-07 12:34:10] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:34:10] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-batch-activity/
+[2025-11-07 12:34:41] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:34:41] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:35:11] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:35:11] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:35:40] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:35:40] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:35:54] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/api_urls.py changed, reloading.
+[2025-11-07 12:35:55] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:36:34] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/api_views.py changed, reloading.
+[2025-11-07 12:36:35] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:36:41] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:36:41] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:36:58] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:36:58] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:36:58] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-batch-activity/
+[2025-11-07 12:36:58] ERROR - django.request - log_response:241 - Internal Server Error: /session/update-activity/
+[2025-11-07 12:36:59] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:36:59] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-batch-activity/
+[2025-11-07 12:37:04] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/urls.py changed, reloading.
+[2025-11-07 12:37:06] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:37:24] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/urls.py changed, reloading.
+[2025-11-07 12:37:24] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:37:34] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/urls.py changed, reloading.
+[2025-11-07 12:37:43] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:37:57] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:37:57] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:37:57] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-batch-activity/
+[2025-11-07 12:37:57] ERROR - django.request - log_response:241 - Internal Server Error: /session/update-activity/
+[2025-11-07 12:37:57] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:37:57] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-batch-activity/
+[2025-11-07 12:38:25] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/ardurTrueAlign/urls.py changed, reloading.
+[2025-11-07 12:38:26] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:38:28] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:38:34] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:38:34] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:38:34] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:39:04] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:40:05] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:41:05] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:41:35] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:42:32] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:43:05] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:43:35] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:44:05] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:44:35] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:45:35] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:46:02] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/core/utils.py changed, reloading.
+[2025-11-07 12:46:03] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:46:14] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/core/utils.py changed, reloading.
+[2025-11-07 12:46:15] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:46:35] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:46:36] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py changed, reloading.
+[2025-11-07 12:46:38] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:46:55] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py changed, reloading.
+[2025-11-07 12:46:56] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:47:10] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:47:10] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:47:35] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:47:48] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/core/enhanced_logger.py changed, reloading.
+[2025-11-07 12:47:49] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:48:00] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/ardurTrueAlign/urls.py changed, reloading.
+[2025-11-07 12:48:01] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:48:13] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/api_views.py changed, reloading.
+[2025-11-07 12:48:15] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:48:45] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:48:58] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'created' in LogRecord"
+[2025-11-07 12:49:25] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:49:55] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:50:39] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:50:49] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'created' in LogRecord"
+[2025-11-07 12:51:20] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:51:50] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:52:20] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:52:47] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/core/enhanced_logger.py changed, reloading.
+[2025-11-07 12:52:48] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:53:16] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/api_views.py changed, reloading.
+[2025-11-07 12:53:17] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:55:35] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:55:39] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Created session ff331f94-a99d-4616-86ce-9fae3a9fd951 for user testEmployee (tab: tab_yrfys553h_1762500339802, parent: parent_0w5hgupxv_1762500339814)
+[2025-11-07 12:56:09] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session ff331f94-a99d-4616-86ce-9fae3a9fd951 for user testEmployee (tab: tab_5n9xv5jpi_1762500369496, parent: parent_yfptt2xi1_1762500369500)
+[2025-11-07 12:56:14] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session ff331f94-a99d-4616-86ce-9fae3a9fd951 for user testEmployee (tab: tab_f5ih4h791_1762500374802, parent: parent_3a9053c4p_1762500374810)
+[2025-11-07 13:09:07] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Created session 9c334c57-56bd-4126-ab11-b426b42fb88d for user testEmployee (tab: tab_s8oyqy0u5_1762501147623, parent: parent_l85qyrj66_1762501147635)
+[2025-11-07 13:12:09] ERROR - django.request - log_response:241 - Internal Server Error: /attendance/search/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 1078, in search_attendance
+    return render(request, "attendance/search.html", context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'dashboard' not found. 'dashboard' is not a valid view function or pattern name.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/decorators.py", line 167, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 1083, in search_attendance
+    return render(request, "attendance/search.html", {})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'dashboard' not found. 'dashboard' is not a valid view function or pattern name.
+[2025-11-07 13:12:33] ERROR - django.request - log_response:241 - Internal Server Error: /attendance/search/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 1078, in search_attendance
+    return render(request, "attendance/search.html", context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'dashboard' not found. 'dashboard' is not a valid view function or pattern name.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/decorators.py", line 167, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 1083, in search_attendance
+    return render(request, "attendance/search.html", {})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'dashboard' not found. 'dashboard' is not a valid view function or pattern name.
+[2025-11-07 13:12:35] ERROR - django.request - log_response:241 - Internal Server Error: /attendance/search/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 1078, in search_attendance
+    return render(request, "attendance/search.html", context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'dashboard' not found. 'dashboard' is not a valid view function or pattern name.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/decorators.py", line 167, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 1083, in search_attendance
+    return render(request, "attendance/search.html", {})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'dashboard' not found. 'dashboard' is not a valid view function or pattern name.
+[2025-11-07 13:12:36] ERROR - django.request - log_response:241 - Internal Server Error: /attendance/search/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 1078, in search_attendance
+    return render(request, "attendance/search.html", context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'dashboard' not found. 'dashboard' is not a valid view function or pattern name.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/decorators.py", line 167, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 1083, in search_attendance
+    return render(request, "attendance/search.html", {})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'dashboard' not found. 'dashboard' is not a valid view function or pattern name.
+[2025-11-07 13:12:37] ERROR - django.request - log_response:241 - Internal Server Error: /attendance/search/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 1078, in search_attendance
+    return render(request, "attendance/search.html", context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'dashboard' not found. 'dashboard' is not a valid view function or pattern name.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/decorators.py", line 167, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 1083, in search_attendance
+    return render(request, "attendance/search.html", {})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'dashboard' not found. 'dashboard' is not a valid view function or pattern name.
+[2025-11-07 13:12:44] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 9c334c57-56bd-4126-ab11-b426b42fb88d for user testEmployee (tab: tab_sy94vrq96_1762501364111, parent: parent_fre431dde_1762501364120)
+[2025-11-07 13:13:11] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 9c334c57-56bd-4126-ab11-b426b42fb88d for user testEmployee (tab: tab_trnor1rcr_1762501390724, parent: parent_d7kt9gpe8_1762501390733)
+[2025-11-07 13:13:18] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 9c334c57-56bd-4126-ab11-b426b42fb88d for user testEmployee (tab: tab_jcak119nl_1762501398121, parent: parent_xsi4o0j7x_1762501398126)
+[2025-11-07 13:13:28] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 9c334c57-56bd-4126-ab11-b426b42fb88d for user testEmployee (tab: tab_0l6t3jtal_1762501408042, parent: parent_53yesl513_1762501408049)
+[2025-11-07 13:13:36] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 9c334c57-56bd-4126-ab11-b426b42fb88d for user testEmployee (tab: tab_83obk1d87_1762501416280, parent: parent_yn4bfkv76_1762501416286)
+[2025-11-07 13:13:41] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 9c334c57-56bd-4126-ab11-b426b42fb88d for user testEmployee (tab: tab_mwbemuyah_1762501421692, parent: parent_d5osffqqk_1762501421698)
+[2025-11-07 13:18:42] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Created session bdf4a12a-38f0-4489-a452-906ff1fc85d4 for user testEmployee (tab: tab_mwbemuyah_1762501421692, parent: parent_d5osffqqk_1762501421698)
+[2025-11-07 13:19:41] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session bdf4a12a-38f0-4489-a452-906ff1fc85d4 for user testEmployee (tab: tab_79o6lb44n_1762501781266, parent: parent_akj423y82_1762501781277)
+[2025-11-07 13:19:44] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session bdf4a12a-38f0-4489-a452-906ff1fc85d4 for user testEmployee (tab: tab_tlkfav5gv_1762501783972, parent: parent_5wjaka4q7_1762501783976)
+[2025-11-07 13:22:34] ERROR - django.request - log_response:241 - Internal Server Error: /attendance/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 98, in attendance_dashboard
+    return render(request, "attendance/dashboard.html", context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'dashboard' not found. 'dashboard' is not a valid view function or pattern name.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/decorators.py", line 167, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 103, in attendance_dashboard
+    return render(request, "attendance/dashboard.html", {})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'dashboard' not found. 'dashboard' is not a valid view function or pattern name.
+[2025-11-07 13:22:52] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session bdf4a12a-38f0-4489-a452-906ff1fc85d4 for user testEmployee (tab: tab_5btnx0efn_1762501971951, parent: parent_1u22kymw8_1762501971959)
+[2025-11-07 13:23:02] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session bdf4a12a-38f0-4489-a452-906ff1fc85d4 for user testEmployee (tab: tab_gzqig713z_1762501982342, parent: parent_hicb2rdmp_1762501982347)
+[2025-11-07 13:23:04] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session bdf4a12a-38f0-4489-a452-906ff1fc85d4 for user testEmployee (tab: tab_0rou7rjfx_1762501984866, parent: parent_775kxmt43_1762501984872)
+[2025-11-07 13:23:35] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session bdf4a12a-38f0-4489-a452-906ff1fc85d4 for user testEmployee (tab: None, parent: None)
+[2025-11-07 13:23:35] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session bdf4a12a-38f0-4489-a452-906ff1fc85d4 for user testEmployee (tab: None, parent: None)
+[2025-11-07 13:24:29] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Created session 31fef11e-e599-49da-9dbe-3db8817c415f for user testEmployee (tab: tab_qwmfbadwp_1762502069713, parent: parent_53gfj11uu_1762502069722)
+[2025-11-07 13:24:31] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 31fef11e-e599-49da-9dbe-3db8817c415f for user testEmployee (tab: tab_q0jdxcucf_1762502071514, parent: parent_6kc43l7s7_1762502071518)
+[2025-11-07 13:24:33] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 31fef11e-e599-49da-9dbe-3db8817c415f for user testEmployee (tab: tab_u0vjvvvl9_1762502072841, parent: parent_0ls7upxd6_1762502072848)
+[2025-11-07 13:25:49] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 31fef11e-e599-49da-9dbe-3db8817c415f for user testEmployee (tab: tab_02vpvb105_1762502149116, parent: parent_4x21x7mm9_1762502149126)
+[2025-11-07 13:25:57] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 31fef11e-e599-49da-9dbe-3db8817c415f for user testEmployee (tab: tab_41c7ujx7l_1762502157316, parent: parent_5mphlqhmh_1762502157322)
+[2025-11-07 13:27:52] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 31fef11e-e599-49da-9dbe-3db8817c415f for user testEmployee (tab: tab_xhpxi0w3r_1762502262718, parent: parent_98jxd4dz6_1762502262740)
+[2025-11-07 13:28:05] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 31fef11e-e599-49da-9dbe-3db8817c415f for user testEmployee (tab: tab_02y9ps2kl_1762502284689, parent: parent_dv9jfnkxg_1762502284705)
+[2025-11-07 13:28:19] ERROR - django.request - log_response:241 - Internal Server Error: /attendance/calendar/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 343, in attendance_calendar
+    return render(request, "attendance/calendar.html", context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'calendar_month' with arguments '('', '')' not found. 1 pattern(s) tried: ['attendance/calendar/(?P<year>[0-9]+)/(?P<month>[0-9]+)/\\Z']
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/decorators.py", line 167, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 348, in attendance_calendar
+    return render(request, "attendance/calendar.html", {})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'calendar_month' with arguments '('', '')' not found. 1 pattern(s) tried: ['attendance/calendar/(?P<year>[0-9]+)/(?P<month>[0-9]+)/\\Z']
+[2025-11-07 13:28:52] ERROR - django.request - log_response:241 - Internal Server Error: /attendance/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 98, in attendance_dashboard
+    return render(request, "attendance/dashboard.html", context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 481, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 479, in parse
+    filter_expression = self.compile_filter(token.contents)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 597, in compile_filter
+    return FilterExpression(token, self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 693, in __init__
+    filter_func = parser.find_filter(filter_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 603, in find_filter
+    raise TemplateSyntaxError("Invalid filter: '%s'" % filter_name)
+django.template.exceptions.TemplateSyntaxError: Invalid filter: 'subtract'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/decorators.py", line 167, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 103, in attendance_dashboard
+    return render(request, "attendance/dashboard.html", {})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 481, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 479, in parse
+    filter_expression = self.compile_filter(token.contents)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 597, in compile_filter
+    return FilterExpression(token, self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 693, in __init__
+    filter_func = parser.find_filter(filter_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 603, in find_filter
+    raise TemplateSyntaxError("Invalid filter: '%s'" % filter_name)
+django.template.exceptions.TemplateSyntaxError: Invalid filter: 'subtract'
+[2025-11-07 13:29:20] ERROR - django.request - log_response:241 - Internal Server Error: /attendance/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 98, in attendance_dashboard
+    return render(request, "attendance/dashboard.html", context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 481, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 479, in parse
+    filter_expression = self.compile_filter(token.contents)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 597, in compile_filter
+    return FilterExpression(token, self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 693, in __init__
+    filter_func = parser.find_filter(filter_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 603, in find_filter
+    raise TemplateSyntaxError("Invalid filter: '%s'" % filter_name)
+django.template.exceptions.TemplateSyntaxError: Invalid filter: 'subtract'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/decorators.py", line 167, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 103, in attendance_dashboard
+    return render(request, "attendance/dashboard.html", {})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 481, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 479, in parse
+    filter_expression = self.compile_filter(token.contents)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 597, in compile_filter
+    return FilterExpression(token, self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 693, in __init__
+    filter_func = parser.find_filter(filter_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 603, in find_filter
+    raise TemplateSyntaxError("Invalid filter: '%s'" % filter_name)
+django.template.exceptions.TemplateSyntaxError: Invalid filter: 'subtract'
+[2025-11-07 13:30:35] ERROR - django.request - log_response:241 - Internal Server Error: /attendance/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endif'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 98, in attendance_dashboard
+    return render(request, "attendance/dashboard.html", context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 535: 'endif', expected 'endblock'. Did you forget to register or load this tag?
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endif'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/decorators.py", line 167, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 103, in attendance_dashboard
+    return render(request, "attendance/dashboard.html", {})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 535: 'endif', expected 'endblock'. Did you forget to register or load this tag?
+[2025-11-07 13:37:04] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Created session a46b7a82-b7ad-40cd-b44a-1dbebe572d81 for user testEmployee (tab: tab_fo0teb818_1762502823510, parent: parent_zdfj1zk9d_1762502823526)
+[2025-11-07 13:37:11] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session a46b7a82-b7ad-40cd-b44a-1dbebe572d81 for user testEmployee (tab: tab_m54zqjuwu_1762502831233, parent: parent_martlos0z_1762502831240)
+[2025-11-07 13:37:26] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session a46b7a82-b7ad-40cd-b44a-1dbebe572d81 for user testEmployee (tab: tab_1vocbbdfe_1762502846091, parent: parent_oq2rx5b54_1762502846094)
+[2025-11-07 13:37:42] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session a46b7a82-b7ad-40cd-b44a-1dbebe572d81 for user testEmployee (tab: tab_bj59xig9t_1762502862015, parent: parent_1iv9hm7w2_1762502862024)
+[2025-11-07 13:37:49] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session a46b7a82-b7ad-40cd-b44a-1dbebe572d81 for user testEmployee (tab: tab_ydx3p3mv6_1762502868736, parent: parent_qf7el77gv_1762502868741)
+[2025-11-07 13:37:56] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session a46b7a82-b7ad-40cd-b44a-1dbebe572d81 for user testEmployee (tab: tab_8mff44yb3_1762502876655, parent: parent_lsgwd6s9c_1762502876660)
+[2025-11-07 13:37:59] ERROR - django.request - log_response:241 - Internal Server Error: /attendance/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 98, in attendance_dashboard
+    return render(request, "attendance/dashboard.html", context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: attendance/dashboard.html
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/decorators.py", line 167, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 103, in attendance_dashboard
+    return render(request, "attendance/dashboard.html", {})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: attendance/dashboard.html
+[2025-11-07 13:39:37] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session a46b7a82-b7ad-40cd-b44a-1dbebe572d81 for user testEmployee (tab: tab_cc3cnsmt4_1762502977618, parent: parent_nrjos4kg7_1762502977622)
+[2025-11-07 13:39:40] ERROR - django.request - log_response:241 - Internal Server Error: /attendance/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 98, in attendance_dashboard
+    return render(request, "attendance/dashboard.html", context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: attendance/dashboard.html
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/decorators.py", line 167, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 103, in attendance_dashboard
+    return render(request, "attendance/dashboard.html", {})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: attendance/dashboard.html
+[2025-11-07 13:39:53] ERROR - django.request - log_response:241 - Internal Server Error: /attendance/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endif'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 98, in attendance_dashboard
+    return render(request, "attendance/dashboard.html", context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 536: 'endif', expected 'endblock'. Did you forget to register or load this tag?
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endif'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/decorators.py", line 167, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 103, in attendance_dashboard
+    return render(request, "attendance/dashboard.html", {})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 536: 'endif', expected 'endblock'. Did you forget to register or load this tag?
+[2025-11-07 13:44:50] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Created session 29ab188e-81cc-411b-8acf-c2dbb6cb78fa for user testEmployee (tab: None, parent: None)
+[2025-11-07 13:44:51] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 29ab188e-81cc-411b-8acf-c2dbb6cb78fa for user testEmployee (tab: tab_n7lj9469b_1762503290869, parent: parent_vnc94o2m8_1762503290885)
+[2025-11-07 13:45:16] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 13:45:20] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Created session 42ae0691-a8ef-4c3b-8b2e-513353cc7d0c for user testEmployee (tab: tab_n7lj9469b_1762503290869, parent: parent_vnc94o2m8_1762503290885)
+[2025-11-07 13:45:20] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 42ae0691-a8ef-4c3b-8b2e-513353cc7d0c for user testEmployee (tab: tab_n7lj9469b_1762503290869, parent: parent_vnc94o2m8_1762503290885)
+[2025-11-07 13:45:21] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 42ae0691-a8ef-4c3b-8b2e-513353cc7d0c for user testEmployee (tab: tab_64kdx5t6i_1762503321693, parent: parent_t4sdzubb9_1762503321707)
+[2025-11-07 13:48:55] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 42ae0691-a8ef-4c3b-8b2e-513353cc7d0c for user testEmployee (tab: tab_49lmnb945_1762503535146, parent: parent_2xz4zn83o_1762503535155)
+[2025-11-07 13:49:30] ERROR - django.request - log_response:241 - Internal Server Error: /attendance/calendar/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 343, in attendance_calendar
+    return render(request, "attendance/calendar.html", context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'calendar_month' with arguments '('', '')' not found. 1 pattern(s) tried: ['attendance/calendar/(?P<year>[0-9]+)/(?P<month>[0-9]+)/\\Z']
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/decorators.py", line 167, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 348, in attendance_calendar
+    return render(request, "attendance/calendar.html", {})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'calendar_month' with arguments '('', '')' not found. 1 pattern(s) tried: ['attendance/calendar/(?P<year>[0-9]+)/(?P<month>[0-9]+)/\\Z']
+[2025-11-07 13:50:26] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: cannot unpack non-iterable NoneType object
+[2025-11-07 13:50:26] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Created session 58372049-2d41-4c36-8d47-658c1a552bf7 for user testEmployee (tab: None, parent: None)
+[2025-11-07 13:50:26] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 58372049-2d41-4c36-8d47-658c1a552bf7 for user testEmployee (tab: None, parent: None)
+[2025-11-07 13:50:33] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 58372049-2d41-4c36-8d47-658c1a552bf7 for user testEmployee (tab: tab_e3knsjyrc_1762503633767, parent: parent_6nhunprb7_1762503633777)
+[2025-11-07 13:50:38] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 58372049-2d41-4c36-8d47-658c1a552bf7 for user testEmployee (tab: tab_vn7eh6pj2_1762503638113, parent: parent_ajyjwfu9k_1762503638125)
+[2025-11-07 13:50:50] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 58372049-2d41-4c36-8d47-658c1a552bf7 for user testEmployee (tab: tab_m1jepbni9_1762503649417, parent: parent_jrfxa12ce_1762503649441)
+[2025-11-07 13:51:18] ERROR - django.request - log_response:241 - Internal Server Error: /attendance/calendar/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 343, in attendance_calendar
+    return render(request, "attendance/calendar.html", context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'calendar_month' with arguments '('', '')' not found. 1 pattern(s) tried: ['attendance/calendar/(?P<year>[0-9]+)/(?P<month>[0-9]+)/\\Z']
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/decorators.py", line 167, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 348, in attendance_calendar
+    return render(request, "attendance/calendar.html", {})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'calendar_month' with arguments '('', '')' not found. 1 pattern(s) tried: ['attendance/calendar/(?P<year>[0-9]+)/(?P<month>[0-9]+)/\\Z']
+[2025-11-07 13:52:49] ERROR - django.request - log_response:241 - Internal Server Error: /attendance/calendar/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 343, in attendance_calendar
+    return render(request, "attendance/calendar.html", context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'calendar_month' with arguments '('', '')' not found. 1 pattern(s) tried: ['attendance/calendar/(?P<year>[0-9]+)/(?P<month>[0-9]+)/\\Z']
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/decorators.py", line 167, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 348, in attendance_calendar
+    return render(request, "attendance/calendar.html", {})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'calendar_month' with arguments '('', '')' not found. 1 pattern(s) tried: ['attendance/calendar/(?P<year>[0-9]+)/(?P<month>[0-9]+)/\\Z']
+[2025-11-07 13:54:05] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 58372049-2d41-4c36-8d47-658c1a552bf7 for user testEmployee (tab: tab_yauinyy9k_1762503845070, parent: parent_e8bx1xoyp_1762503845091)
+[2025-11-07 13:54:19] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 58372049-2d41-4c36-8d47-658c1a552bf7 for user testEmployee (tab: tab_neis8q1uc_1762503859024, parent: parent_1c21dx54o_1762503859027)
+[2025-11-07 13:54:31] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 58372049-2d41-4c36-8d47-658c1a552bf7 for user testEmployee (tab: tab_jsqd2lx5i_1762503871360, parent: parent_cqf52iif6_1762503871363)
+[2025-11-07 13:54:32] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 58372049-2d41-4c36-8d47-658c1a552bf7 for user testEmployee (tab: tab_pcugs6iwz_1762503872779, parent: parent_1yg9xuwj0_1762503872783)
+[2025-11-07 13:54:39] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 58372049-2d41-4c36-8d47-658c1a552bf7 for user testEmployee (tab: tab_4ug83ub9b_1762503879554, parent: parent_ar7bdf6js_1762503879559)
+[2025-11-07 13:54:41] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 58372049-2d41-4c36-8d47-658c1a552bf7 for user testEmployee (tab: tab_smgghkctz_1762503881657, parent: parent_mqc4f6ake_1762503881664)
+[2025-11-07 13:55:06] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 58372049-2d41-4c36-8d47-658c1a552bf7 for user testEmployee (tab: tab_7sekl0r6v_1762503906031, parent: parent_mcwptlpa6_1762503906035)
+[2025-11-07 13:55:11] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 58372049-2d41-4c36-8d47-658c1a552bf7 for user testEmployee (tab: tab_bi16ixnjf_1762503911581, parent: parent_mpq0urt37_1762503911584)
+[2025-11-07 13:55:12] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 58372049-2d41-4c36-8d47-658c1a552bf7 for user testEmployee (tab: tab_v54db63cy_1762503912856, parent: parent_6pm8u1lh7_1762503912859)
+[2025-11-07 13:55:45] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Created session 4c3cefa9-200f-4015-bd2d-05a22b493533 for user testEmployee (tab: None, parent: None)
+[2025-11-07 13:55:45] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 4c3cefa9-200f-4015-bd2d-05a22b493533 for user testEmployee (tab: tab_bbnzfwzqm_1762503945684, parent: parent_phl1stqlb_1762503945688)
+[2025-11-07 13:55:48] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 4c3cefa9-200f-4015-bd2d-05a22b493533 for user testEmployee (tab: tab_oeuw3na9y_1762503948338, parent: parent_qzm7xalg7_1762503948341)
+[2025-11-07 13:55:52] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 4c3cefa9-200f-4015-bd2d-05a22b493533 for user testEmployee (tab: tab_ohwtc7myd_1762503952012, parent: parent_2s7phm3x0_1762503952015)
+[2025-11-07 13:55:57] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 4c3cefa9-200f-4015-bd2d-05a22b493533 for user testEmployee (tab: tab_882yzhh48_1762503957530, parent: parent_rv1zrrqak_1762503957533)
+[2025-11-07 13:56:49] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 4c3cefa9-200f-4015-bd2d-05a22b493533 for user testEmployee (tab: tab_glex6szj2_1762504009335, parent: parent_ls886k1j2_1762504009345)
+[2025-11-07 13:58:03] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 4c3cefa9-200f-4015-bd2d-05a22b493533 for user testEmployee (tab: tab_t3yt8dmcq_1762504083375, parent: parent_d8n616scg_1762504083384)
+[2025-11-07 13:59:05] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py changed, reloading.
+[2025-11-07 13:59:06] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 13:59:47] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Created session 45c1c130-29e4-4c9b-9751-b7792179ef29 for user testEmployee (tab: tab_yt4um6hqo_1762504187508, parent: parent_v6skggcvu_1762504187517)
+[2025-11-07 14:02:30] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 45c1c130-29e4-4c9b-9751-b7792179ef29 for user testEmployee (tab: tab_hk2c9l0jl_1762504349859, parent: parent_kwjv2ld6d_1762504349878)
+[2025-11-07 14:02:54] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 45c1c130-29e4-4c9b-9751-b7792179ef29 for user testEmployee (tab: tab_33zj4q900_1762504374664, parent: parent_0rfaogx51_1762504374667)
+[2025-11-07 14:05:54] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Created session bebe9489-4229-463d-a356-75a5a6aebd72 for user testEmployee (tab: tab_q2v24xuy1_1762504554144, parent: parent_gxwewb6nq_1762504554154)
+[2025-11-07 14:06:31] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session bebe9489-4229-463d-a356-75a5a6aebd72 for user testEmployee (tab: tab_4f8h79lvh_1762504591750, parent: parent_abj1jsima_1762504591753)
+[2025-11-07 14:06:45] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session bebe9489-4229-463d-a356-75a5a6aebd72 for user testEmployee (tab: tab_s7eo58m86_1762504604884, parent: parent_zmnxtkssm_1762504604888)
+[2025-11-07 14:06:47] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session bebe9489-4229-463d-a356-75a5a6aebd72 for user testEmployee (tab: tab_v5rwph3l1_1762504607451, parent: parent_jtvyy883l_1762504607454)
+[2025-11-07 14:06:50] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session bebe9489-4229-463d-a356-75a5a6aebd72 for user testEmployee (tab: tab_44qo6gd9i_1762504610321, parent: parent_iydmpbrpd_1762504610327)

@@ -1838,3 +1838,152 @@ def update_activity(request):
     except Exception as e:
         logger.error(f"Update activity error: {e}")
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@login_required
+@csrf_exempt
+def optimized_heartbeat(request):
+    """
+    Optimized heartbeat endpoint for session tracker
+    Handles heartbeat pings from JavaScript session tracker
+    """
+    try:
+        if request.method != 'POST':
+            return JsonResponse({'error': 'Only POST method allowed'}, status=405)
+
+        # Parse JSON body
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+        # Get tab_id and parent_session_id from request
+        tab_id = data.get('tab_id')
+        parent_session_id = data.get('parent_session_id')
+
+        # Try to find specific session by tab_id first, then by parent_session_id
+        user_session = None
+        if tab_id:
+            user_session = UserSession.objects.filter(
+                user=request.user,
+                tab_id=tab_id,
+                is_active=True
+            ).first()
+        
+        if not user_session and parent_session_id:
+            user_session = UserSession.objects.filter(
+                user=request.user,
+                parent_session_id=parent_session_id,
+                is_active=True
+            ).first()
+        
+        # If still not found, get the most recent active session
+        if not user_session:
+            user_session = UserSession.objects.filter(
+                user=request.user,
+                is_active=True
+            ).order_by('-last_activity').first()
+        
+        # Update or create session
+        if user_session:
+            user_session.last_activity = timezone.now()
+            user_session.save(update_fields=['last_activity'])
+            created = False
+        else:
+            # Create new session
+            user_session = UserSession.objects.create(
+                user=request.user,
+                session_key=request.session.session_key or '',
+                tab_id=tab_id,
+                parent_session_id=parent_session_id,
+                is_active=True
+            )
+            created = True
+
+        return JsonResponse({
+            'status': 'success',
+            'session_id': str(user_session.id),
+            'created': created,
+            'timestamp': timezone.now().isoformat(),
+        })
+
+    except Exception as e:
+        logger.error(f"Optimized heartbeat error: {e}")
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@login_required
+@csrf_exempt
+def optimized_batch_activity(request):
+    """
+    Optimized batch activity endpoint for session tracker
+    Handles batched activity data from JavaScript
+    """
+    try:
+        if request.method != 'POST':
+            return JsonResponse({'error': 'Only POST method allowed'}, status=405)
+
+        # Parse JSON body
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+        # Update session with activity data
+        user_session = UserSession.objects.filter(
+            user=request.user,
+            is_active=True
+        ).first()
+
+        if user_session:
+            user_session.last_activity = timezone.now()
+            user_session.save()
+
+        return JsonResponse({
+            'status': 'success',
+            'activities_received': len(data.get('activities', [])),
+            'timestamp': timezone.now().isoformat(),
+        })
+
+    except Exception as e:
+        logger.error(f"Optimized batch activity error: {e}")
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@login_required
+@csrf_exempt
+def optimized_end_session(request):
+    """
+    Optimized end session endpoint for session tracker
+    Handles session termination from JavaScript
+    """
+    try:
+        if request.method != 'POST':
+            return JsonResponse({'error': 'Only POST method allowed'}, status=405)
+
+        # Parse JSON body
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+        reason = data.get('reason', 'manual')
+
+        # End all active sessions for user
+        UserSession.objects.filter(
+            user=request.user,
+            is_active=True
+        ).update(
+            is_active=False,
+            logout_time=timezone.now()
+        )
+
+        return JsonResponse({
+            'status': 'success',
+            'reason': reason,
+            'timestamp': timezone.now().isoformat(),
+        })
+
+    except Exception as e:
+        logger.error(f"Optimized end session error: {e}")
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)

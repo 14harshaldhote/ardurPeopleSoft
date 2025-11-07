@@ -1,6 +1,6 @@
 # attendance/urls.py
 from django.urls import path, include
-from . import views
+from . import views, api_views
 
 app_name = 'attendance'
 
@@ -40,6 +40,10 @@ urlpatterns = [
 
     path('api/verify-session-status/', views.verify_session_status, name='verify_session_status'),
     path('api/update-activity/', views.update_activity, name='update_activity'),
+    
+    # Optimized session tracker endpoints (root level for JavaScript)
+    path('optimized-heartbeat/', api_views.optimized_heartbeat, name='optimized_heartbeat'),
+    path('optimized-batch-activity/', api_views.optimized_batch_activity, name='optimized_batch_activity'),
 
     # Include new API endpoints
     path('api/', include('trueAlign.attendance.api_urls')),
