@@ -237,7 +237,7 @@ class UserSession(models.Model):
     # Session identification
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sessions')
-    parent_session_id = models.UUIDField(null=True, blank=True)
+    parent_session_id = models.CharField(max_length=100, null=True, blank=True)  # Changed from UUID to CharField for JS-generated tokens
     tab_id = models.CharField(max_length=100, null=True, blank=True)
     is_primary_tab = models.BooleanField(default=False)
     session_fingerprint = models.CharField(max_length=255, null=True, blank=True)
@@ -1474,7 +1474,12 @@ class UserSession(models.Model):
 
         # Generate parent_session_id if not set (this becomes the primary session)
         if not self.parent_session_id and not self.pk:
-            self.parent_session_id = uuid.uuid4()
+            # Generate token format matching JavaScript: parent_<random>_<timestamp>
+            import random
+            import string
+            random_str = ''.join(random.choices(string.ascii_lowercase + string.digits, k=9))
+            timestamp = int(timezone.now().timestamp() * 1000)
+            self.parent_session_id = f"parent_{random_str}_{timestamp}"
             self.is_primary_tab = True
             logger.info(f"Auto-generating parent_session_id in save(): {self.parent_session_id}")
 

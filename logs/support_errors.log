@@ -10414,3 +10414,41 @@ django.template.exceptions.TemplateDoesNotExist: attendance/search.html
 [2025-11-07 11:34:31] ERROR - django.request - log_response:241 - Internal Server Error: /api/attendance/verify-session-status/
 [2025-11-07 11:34:31] ERROR - django.server - log_message:212 - "POST /api/attendance/verify-session-status/ HTTP/1.1" 500 107
 [2025-11-07 11:34:31] ERROR - django.server - log_message:212 - "POST /api/attendance/verify-session-status/ HTTP/1.1" 500 107
+[2025-11-07 12:34:07] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-batch-activity/
+[2025-11-07 12:34:07] ERROR - django.server - log_message:212 - "POST /optimized-batch-activity/ HTTP/1.1" 500 34
+[2025-11-07 12:34:10] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-batch-activity/
+[2025-11-07 12:34:10] ERROR - django.server - log_message:212 - "POST /optimized-batch-activity/ HTTP/1.1" 500 34
+[2025-11-07 12:34:10] ERROR - django.request - log_response:241 - Internal Server Error: /session/update-activity/
+[2025-11-07 12:34:10] ERROR - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 500 34
+[2025-11-07 12:34:10] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-batch-activity/
+[2025-11-07 12:34:10] ERROR - django.server - log_message:212 - "POST /optimized-batch-activity/ HTTP/1.1" 500 34
+[2025-11-07 12:34:41] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:34:41] ERROR - django.server - log_message:212 - "POST /optimized-heartbeat/ HTTP/1.1" 500 34
+[2025-11-07 12:35:11] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:35:11] ERROR - django.server - log_message:212 - "POST /optimized-heartbeat/ HTTP/1.1" 500 34
+[2025-11-07 12:35:40] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:35:40] ERROR - django.server - log_message:212 - "POST /optimized-heartbeat/ HTTP/1.1" 500 34
+[2025-11-07 12:36:41] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:36:41] ERROR - django.server - log_message:212 - "POST /optimized-heartbeat/ HTTP/1.1" 500 34
+[2025-11-07 12:36:58] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-batch-activity/
+[2025-11-07 12:36:58] ERROR - django.server - log_message:212 - "POST /optimized-batch-activity/ HTTP/1.1" 500 34
+[2025-11-07 12:36:58] ERROR - django.request - log_response:241 - Internal Server Error: /session/update-activity/
+[2025-11-07 12:36:58] ERROR - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 500 34
+[2025-11-07 12:36:59] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-batch-activity/
+[2025-11-07 12:36:59] ERROR - django.server - log_message:212 - "POST /optimized-batch-activity/ HTTP/1.1" 500 34
+[2025-11-07 12:37:57] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-batch-activity/
+[2025-11-07 12:37:57] ERROR - django.server - log_message:212 - "POST /optimized-batch-activity/ HTTP/1.1" 500 34
+[2025-11-07 12:37:57] ERROR - django.request - log_response:241 - Internal Server Error: /session/update-activity/
+[2025-11-07 12:37:57] ERROR - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 500 34
+[2025-11-07 12:37:57] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-batch-activity/
+[2025-11-07 12:37:57] ERROR - django.server - log_message:212 - "POST /optimized-batch-activity/ HTTP/1.1" 500 34
+[2025-11-07 12:47:10] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:47:10] ERROR - django.server - log_message:212 - "POST /optimized-heartbeat/ HTTP/1.1" 500 92
+[2025-11-07 12:47:35] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:47:35] ERROR - django.server - log_message:212 - "POST /optimized-heartbeat/ HTTP/1.1" 500 92
+[2025-11-07 12:48:45] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:48:45] ERROR - django.server - log_message:212 - "POST /optimized-heartbeat/ HTTP/1.1" 500 92
+[2025-11-07 12:49:25] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:49:25] ERROR - django.server - log_message:212 - "POST /optimized-heartbeat/ HTTP/1.1" 500 92
+[2025-11-07 12:49:55] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:49:55] ERROR - django.server - log_message:212 - "POST /optimized-heartbeat/ HTTP/1.1" 500 92

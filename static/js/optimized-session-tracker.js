@@ -1782,6 +1782,12 @@ class OptimizedSessionTracker {
 
 // Auto-initialize when DOM is ready
 document.addEventListener("DOMContentLoaded", function () {
+  // Skip if already initialized
+  if (window.optimizedSessionTracker) {
+    console.log("OptimizedSessionTracker already initialized, skipping auto-init");
+    return;
+  }
+  
   // Only initialize if user is authenticated
   if (
     document.body.getAttribute("data-authenticated") === "true" ||

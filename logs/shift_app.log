@@ -6878,3 +6878,79 @@ django.template.exceptions.TemplateDoesNotExist: attendance/search.html
 [2025-11-07 12:20:55] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
 [2025-11-07 12:25:49] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py changed, reloading.
 [2025-11-07 12:25:51] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:34:07] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:34:07] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-batch-activity/
+[2025-11-07 12:34:10] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:34:10] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:34:10] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-batch-activity/
+[2025-11-07 12:34:10] ERROR - django.request - log_response:241 - Internal Server Error: /session/update-activity/
+[2025-11-07 12:34:10] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:34:10] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-batch-activity/
+[2025-11-07 12:34:41] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:34:41] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:35:11] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:35:11] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:35:40] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:35:40] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:35:54] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/api_urls.py changed, reloading.
+[2025-11-07 12:35:55] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:36:34] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/api_views.py changed, reloading.
+[2025-11-07 12:36:35] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:36:41] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:36:41] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:36:58] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:36:58] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:36:58] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-batch-activity/
+[2025-11-07 12:36:58] ERROR - django.request - log_response:241 - Internal Server Error: /session/update-activity/
+[2025-11-07 12:36:59] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:36:59] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-batch-activity/
+[2025-11-07 12:37:04] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/urls.py changed, reloading.
+[2025-11-07 12:37:06] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:37:24] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/urls.py changed, reloading.
+[2025-11-07 12:37:24] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:37:34] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/urls.py changed, reloading.
+[2025-11-07 12:37:43] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:37:57] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:37:57] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:37:57] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-batch-activity/
+[2025-11-07 12:37:57] ERROR - django.request - log_response:241 - Internal Server Error: /session/update-activity/
+[2025-11-07 12:37:57] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:37:57] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-batch-activity/
+[2025-11-07 12:38:25] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/ardurTrueAlign/urls.py changed, reloading.
+[2025-11-07 12:38:26] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:38:28] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:38:34] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:38:34] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:38:34] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:39:04] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:40:05] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:41:05] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:41:35] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:42:32] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:43:05] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:43:35] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:44:05] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:44:35] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:45:35] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:46:02] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/core/utils.py changed, reloading.
+[2025-11-07 12:46:03] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:46:14] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/core/utils.py changed, reloading.
+[2025-11-07 12:46:15] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:46:35] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:46:36] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py changed, reloading.
+[2025-11-07 12:46:38] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:46:55] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py changed, reloading.
+[2025-11-07 12:46:56] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:47:10] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-11-07 12:47:10] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:47:35] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:47:48] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/core/enhanced_logger.py changed, reloading.
+[2025-11-07 12:47:49] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:48:00] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/ardurTrueAlign/urls.py changed, reloading.
+[2025-11-07 12:48:01] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:48:13] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/api_views.py changed, reloading.
+[2025-11-07 12:48:15] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 12:48:45] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:48:58] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'created' in LogRecord"
+[2025-11-07 12:49:25] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/
+[2025-11-07 12:49:55] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-heartbeat/

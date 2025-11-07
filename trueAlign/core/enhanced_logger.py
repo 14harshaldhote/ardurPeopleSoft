@@ -277,7 +277,7 @@ class EnhancedSessionLogger:
         event_data = {
             'event_type': 'error',
             'error_type': error_type,
-            'message': message,
+            'error_detail': message,  # Renamed from 'message' to avoid LogRecord conflict
             'user_id': user.id if user else None,
             'username': user.username if user else None,
             'session_id': str(session_id) if session_id else None,
@@ -419,7 +419,7 @@ class EnhancedSessionLogger:
             self._generate_alert(
                 f'error_spike_{error_type}',
                 f"Error spike detected: {error_type} occurred {len(recent_errors)} times in 5 minutes",
-                {'error_type': error_type, 'error_count': len(recent_errors), 'message': message}
+                {'error_type': error_type, 'error_count': len(recent_errors), 'error_detail': message}  # Renamed from 'message'
             )
 
     def _generate_alert(self, alert_type, message, data=None):
@@ -431,7 +431,7 @@ class EnhancedSessionLogger:
         alert = {
             'id': alert_id,
             'type': alert_type,
-            'message': message,
+            'alert_message': message,  # Renamed from 'message' to avoid LogRecord conflict
             'data': data or {},
             'timestamp': timezone.now().isoformat(),
             'resolved': False
@@ -636,7 +636,7 @@ class SessionLogFormatter(logging.Formatter):
             'timestamp': datetime.fromtimestamp(record.created).isoformat(),
             'level': record.levelname,
             'logger': record.name,
-            'message': record.getMessage(),
+            'log_message': record.getMessage(),  # Renamed from 'message' to avoid LogRecord conflict
         }
 
         # Add extra fields

@@ -134,6 +134,7 @@ class AttendanceMonitoringService:
             'cache_connectivity': self._check_cache_connectivity,
             'signal_processing': self._check_signal_processing,
             'notification_system': self._check_notification_system,
+            'concurrency_control': self._check_concurrency_control,  # Phase 1: Track locks/versions
             'system_resources': self._check_system_resources,
             'data_consistency': self._check_data_consistency,
         }
@@ -145,6 +146,9 @@ class AttendanceMonitoringService:
             'session_processing_rate': 0,
             'database_response_time': 0,
             'cache_hit_rate': 0,
+            'dashboard_cache_hit_rate': 0,  # Phase 4: Track dashboard caching
+            'cron_efficiency': 0,  # Phase 1: Track cron performance
+            'version_conflicts': 0,  # Phase 1: Track optimistic locking failures
             'error_rate': 0,
             'active_users': 0,
             'pending_regularizations': 0,
@@ -705,6 +709,70 @@ class AttendanceMonitoringService:
                 name="notification_system",
                 status=HealthStatus.ERROR,
                 message=f"Notification system check failed: {str(e)}"
+            )
+
+    def _check_concurrency_control(self) -> HealthCheckResult:
+        """
+        Check concurrency control health (Phase 1 & 2 optimizations)
+        Monitors version conflicts, processing locks, and lock expiration
+        """
+        try:
+            from trueAlign.models import Attendance
+            
+            # Check for stuck processing locks
+            stuck_locks = Attendance.objects.filter(
+                is_being_processed=True,
+                processing_lock_expires__lt=timezone.now()
+            ).count()
+            
+            # Check for currently locked records
+            active_locks = Attendance.objects.filter(
+                is_being_processed=True,
+                processing_lock_expires__gte=timezone.now()
+            ).count()
+            
+            # Check version distribution (high versions might indicate conflicts)
+            high_version_records = Attendance.objects.filter(version__gt=10).count()
+            
+            # Get total attendance count for context
+            total_records = Attendance.objects.count()
+            
+            issues = []
+            
+            if stuck_locks > 0:
+                issues.append(f"{stuck_locks} stuck processing locks detected")
+            
+            if active_locks > 50:
+                issues.append(f"High number of active locks: {active_locks}")
+            
+            if high_version_records > total_records * 0.1:  # More than 10% have high versions
+                issues.append(f"{high_version_records} records with high version numbers (potential conflicts)")
+            
+            if issues:
+                status = HealthStatus.WARNING if stuck_locks == 0 else HealthStatus.CRITICAL
+                message = f"Concurrency issues: {', '.join(issues)}"
+            else:
+                status = HealthStatus.HEALTHY
+                message = "Concurrency control is healthy"
+            
+            return HealthCheckResult(
+                name="concurrency_control",
+                status=status,
+                message=message,
+                details={
+                    'stuck_locks': stuck_locks,
+                    'active_locks': active_locks,
+                    'high_version_records': high_version_records,
+                    'total_records': total_records,
+                    'lock_percentage': round((active_locks / total_records * 100), 2) if total_records > 0 else 0
+                }
+            )
+        
+        except Exception as e:
+            return HealthCheckResult(
+                name="concurrency_control",
+                status=HealthStatus.ERROR,
+                message=f"Concurrency control check failed: {str(e)}"
             )
 
     def _check_system_resources(self) -> HealthCheckResult:
