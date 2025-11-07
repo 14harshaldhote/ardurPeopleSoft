@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Cancel Booking - {{ booking.title }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="mb-8">
+            <a href="{% url 'conference:booking_detail' booking.id %}" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4">
+                <svg class="w-4 h-4 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Booking
+            </a>
+            <h1 class="text-3xl font-bold text-gray-900">Cancel Booking</h1>
+        </div>
+
+        <!-- Warning Box -->
+        <div class="bg-red-50 border-l-4 border-red-500 p-6 mb-6 rounded-lg">
+            <div class="flex">
+                <svg class="w-6 h-6 text-red-600 mr-3" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div>
+                    <h3 class="text-lg font-semibold text-red-900 mb-2">Are you sure you want to cancel this booking?</h3>
+                    <p class="text-sm text-red-800">This action cannot be undone. The room will become available for others to book.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Booking Summary -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Booking Summary</h3>
+            <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Meeting Title:</span>
+                    <span class="font-medium text-gray-900">{{ booking.title }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Room:</span>
+                    <span class="font-medium text-gray-900">{{ booking.room.name }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Location:</span>
+                    <span class="font-medium text-gray-900">{{ booking.room.office_location.name }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Date:</span>
+                    <span class="font-medium text-gray-900">{{ booking.start_time|date:"F d, Y" }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Time:</span>
+                    <span class="font-medium text-gray-900">{{ booking.start_time|date:"g:i A" }} - {{ booking.end_time|date:"g:i A" }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Attendees:</span>
+                    <span class="font-medium text-gray-900">{{ booking.attendee_count }} people</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cancellation Form -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="mb-6">
+                    <label for="{{ form.cancellation_reason.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Cancellation Reason
+                        <span class="text-gray-400 font-normal">(Optional)</span>
+                    </label>
+                    {{ form.cancellation_reason }}
+                    {% if form.cancellation_reason.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.cancellation_reason.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="flex justify-end gap-4">
+                    <a href="{% url 'conference:booking_detail' booking.id %}" 
+                       class="px-6 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                        Keep Booking
+                    </a>
+                    <button type="submit" 
+                            class="px-6 py-3 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition">
+                        <span class="flex items-center">
+                            <svg class="w-5 h-5 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Confirm Cancellation
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}

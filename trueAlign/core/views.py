@@ -758,18 +758,22 @@ def dashboard_view(request):
         }
 
         # Get conference booking context
-        # conference_context = {}
-        # try:
-        #     from trueAlign.conf_booking.views import conference_booking_context
-        #     conference_context = conference_booking_context(user)
-        # except Exception as conf_error:
-        #     logger.warning(f"Error loading conference booking context: {conf_error}")
-        #     conference_context = {
-        #         'conference_form': None,
-        #         'user_bookings': [],
-        #         'user_analytics': None,
-        #         'available_rooms': [],
-        #     }
+        conference_context = {}
+        try:
+            from trueAlign.confrence.views import get_dashboard_conference_context
+            conference_context = get_dashboard_conference_context(user)
+        except Exception as conf_error:
+            logger.warning(f"Error loading conference booking context: {conf_error}")
+            conference_context = {
+                'featured_room': None,
+                'current_booking': None,
+                'next_booking': None,
+                'is_currently_free': True,
+                'free_until': None,
+                'todays_bookings_count': 0,
+                'user_upcoming_bookings': 0,
+                'total_active_rooms': 0,
+            }
 
         # Get user role information
         user_groups = user.groups.all()
@@ -793,7 +797,7 @@ def dashboard_view(request):
             'is_employee': is_employee,
             'is_client': is_client,
             # Conference booking context
-            # **conference_context
+            **conference_context
         }
 
         return render(request, 'dashboard.html', context)
@@ -1343,14 +1347,14 @@ def configurations_view(request):
             'color': 'bg-blue-500',
             'hover_color': 'hover:bg-blue-600'
         },
-        # {
-        #     'name': 'Conference Room Management',
-        #     'description': 'Add, edit, and manage conference rooms across all locations',
-        #     'icon': 'ri-door-open-line',
-        #     'url': 'conf_booking:manage_rooms',
-        #     'color': 'bg-purple-500',
-        #     'hover_color': 'hover:bg-purple-600'
-        # },
+        {
+            'name': 'Conference Room Management',
+            'description': 'Add, edit, and manage conference rooms across all locations',
+            'icon': 'ri-door-open-line',
+            'url': 'conference:admin_room_list',
+            'color': 'bg-purple-500',
+            'hover_color': 'hover:bg-purple-600'
+        },
         # {
         #     'name': 'Attendance Dashboard',
         #     'description': 'View and manage employee attendance tracking',

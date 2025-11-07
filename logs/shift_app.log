@@ -8519,3 +8519,95 @@ django.urls.exceptions.NoReverseMatch: Reverse for 'calendar_month' with argumen
 [2025-11-07 14:06:45] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session bebe9489-4229-463d-a356-75a5a6aebd72 for user testEmployee (tab: tab_s7eo58m86_1762504604884, parent: parent_zmnxtkssm_1762504604888)
 [2025-11-07 14:06:47] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session bebe9489-4229-463d-a356-75a5a6aebd72 for user testEmployee (tab: tab_v5rwph3l1_1762504607451, parent: parent_jtvyy883l_1762504607454)
 [2025-11-07 14:06:50] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session bebe9489-4229-463d-a356-75a5a6aebd72 for user testEmployee (tab: tab_44qo6gd9i_1762504610321, parent: parent_iydmpbrpd_1762504610327)
+[2025-11-07 15:10:07] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 15:10:13] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Created session 465b33ea-0ddb-4fb3-a1b8-f68668b43ec4 for user testEmployee (tab: None, parent: None)
+[2025-11-07 15:10:19] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Created session 5654a758-f6b4-4d7e-b91d-87c83873c1c0 for user testAdmin (tab: None, parent: None)
+[2025-11-07 15:10:20] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 5654a758-f6b4-4d7e-b91d-87c83873c1c0 for user testAdmin (tab: tab_pw8jr3q6o_1762508419732, parent: parent_4w3329e9d_1762508419744)
+[2025-11-07 15:10:25] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 5654a758-f6b4-4d7e-b91d-87c83873c1c0 for user testAdmin (tab: tab_p1d0nb8nx_1762508425190, parent: parent_vxnw4a0qe_1762508425268)
+[2025-11-07 15:10:27] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 5654a758-f6b4-4d7e-b91d-87c83873c1c0 for user testAdmin (tab: tab_vmt9car96_1762508427552, parent: parent_1im1bart2_1762508427555)
+[2025-11-07 15:10:29] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 5654a758-f6b4-4d7e-b91d-87c83873c1c0 for user testAdmin (tab: tab_4d62c98r8_1762508429504, parent: parent_wcjv3dc4h_1762508429508)
+[2025-11-07 15:11:19] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 5654a758-f6b4-4d7e-b91d-87c83873c1c0 for user testAdmin (tab: tab_5vb1b3edn_1762508478856, parent: parent_4txhebnm1_1762508478864)
+[2025-11-07 15:11:20] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 5654a758-f6b4-4d7e-b91d-87c83873c1c0 for user testAdmin (tab: tab_87n8sa0at_1762508480421, parent: parent_62x4wof38_1762508480424)
+[2025-11-07 15:12:32] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 5654a758-f6b4-4d7e-b91d-87c83873c1c0 for user testAdmin (tab: tab_8tzzcdcp5_1762508552495, parent: parent_6wt7xmsao_1762508552505)
+[2025-11-07 15:12:38] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 5654a758-f6b4-4d7e-b91d-87c83873c1c0 for user testAdmin (tab: tab_38w9l7l0w_1762508558718, parent: parent_sfqug88qj_1762508558721)
+[2025-11-07 15:13:00] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 5654a758-f6b4-4d7e-b91d-87c83873c1c0 for user testAdmin (tab: tab_ocu0qndjt_1762508580286, parent: parent_tnu8jsozk_1762508580291)
+[2025-11-07 15:13:10] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 5654a758-f6b4-4d7e-b91d-87c83873c1c0 for user testAdmin (tab: tab_tgc8tiqcg_1762508590771, parent: parent_5xqkluj41_1762508590826)
+[2025-11-07 15:15:48] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py changed, reloading.
+[2025-11-07 15:15:49] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 15:27:26] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py changed, reloading.
+[2025-11-07 15:27:28] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 15:37:06] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Created session 24158ce0-fef0-4774-b834-3daa2782f145 for user testAdmin (tab: tab_v07tg5ru8_1762510026085, parent: parent_fe0udm477_1762510026097)
+[2025-11-07 15:37:14] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 24158ce0-fef0-4774-b834-3daa2782f145 for user testAdmin (tab: tab_p5vun5vhx_1762510034636, parent: parent_gdizygycy_1762510034640)
+[2025-11-07 15:39:53] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/ardurTrueAlign/settings.py changed, reloading.
+[2025-11-07 15:39:54] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 15:40:07] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/urls.py changed, reloading.
+[2025-11-07 15:40:08] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 15:44:39] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Created session ba8fc88a-1e63-44f7-b9d9-9eeb50af5cbb for user testAdmin (tab: None, parent: None)
+[2025-11-07 15:44:39] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session ba8fc88a-1e63-44f7-b9d9-9eeb50af5cbb for user testAdmin (tab: tab_g55vmdtkg_1762510479761, parent: parent_zkqa3al1t_1762510479770)
+[2025-11-07 15:49:39] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Created session e3678a96-3a8d-4dae-be67-e15d6ed27a1d for user testAdmin (tab: tab_g55vmdtkg_1762510479761, parent: parent_zkqa3al1t_1762510479770)
+[2025-11-07 15:49:39] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session e3678a96-3a8d-4dae-be67-e15d6ed27a1d for user testAdmin (tab: tab_g55vmdtkg_1762510479761, parent: parent_zkqa3al1t_1762510479770)
+[2025-11-07 15:54:47] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/confrence/views.py changed, reloading.
+[2025-11-07 15:54:48] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 15:55:06] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/confrence/views.py changed, reloading.
+[2025-11-07 15:55:07] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 15:55:18] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/core/views.py changed, reloading.
+[2025-11-07 15:55:19] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 15:55:29] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/core/views.py changed, reloading.
+[2025-11-07 15:55:30] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 16:10:12] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Created session 6fa6589e-cad3-4759-ac8b-b17a8a2e95a1 for user testAdmin (tab: tab_sg3pwryqs_1762512012450, parent: parent_646nymsh6_1762512012470)
+[2025-11-07 16:10:21] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 6fa6589e-cad3-4759-ac8b-b17a8a2e95a1 for user testAdmin (tab: tab_zt3s2bf8d_1762512021353, parent: parent_aje8a0utj_1762512021359)
+[2025-11-07 16:17:59] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Created session 2554e945-929a-410d-95f3-45a367fa3672 for user testAdmin (tab: None, parent: None)
+[2025-11-07 16:17:59] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 2554e945-929a-410d-95f3-45a367fa3672 for user testAdmin (tab: tab_g8cml05nd_1762512479302, parent: parent_5f3xv8bql_1762512479310)
+[2025-11-07 16:18:02] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 2554e945-929a-410d-95f3-45a367fa3672 for user testAdmin (tab: tab_mcq35uyfh_1762512482155, parent: parent_ki8nbw0qj_1762512482159)
+[2025-11-07 16:19:01] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 2554e945-929a-410d-95f3-45a367fa3672 for user testAdmin (tab: tab_cwenmpodj_1762512541452, parent: parent_e7hevrowl_1762512541456)
+[2025-11-07 16:19:35] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 2554e945-929a-410d-95f3-45a367fa3672 for user testAdmin (tab: tab_tay7fk37m_1762512575839, parent: parent_w165crk5x_1762512575843)
+[2025-11-07 16:19:39] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 2554e945-929a-410d-95f3-45a367fa3672 for user testAdmin (tab: tab_fwuuwwn96_1762512578741, parent: parent_1mv5ssota_1762512578744)
+[2025-11-07 16:19:44] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 2554e945-929a-410d-95f3-45a367fa3672 for user testAdmin (tab: tab_alp3f4ndk_1762512584372, parent: parent_vm11fvqju_1762512584376)
+[2025-11-07 16:19:59] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 2554e945-929a-410d-95f3-45a367fa3672 for user testAdmin (tab: tab_9ndbjdfsh_1762512599893, parent: parent_692etdajp_1762512599897)
+[2025-11-07 16:20:09] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/core/views.py changed, reloading.
+[2025-11-07 16:20:10] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 16:20:12] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Created session 9393975a-6bf2-45ca-9858-0289625b325d for user testAdmin (tab: None, parent: None)
+[2025-11-07 16:20:14] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 9393975a-6bf2-45ca-9858-0289625b325d for user testAdmin (tab: tab_npgafxh7z_1762512613592, parent: parent_6hbgr4tmb_1762512613615)
+[2025-11-07 16:20:20] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 9393975a-6bf2-45ca-9858-0289625b325d for user testAdmin (tab: tab_2d6hrsegt_1762512620216, parent: parent_awnzzqw40_1762512620220)
+[2025-11-07 16:20:23] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 9393975a-6bf2-45ca-9858-0289625b325d for user testAdmin (tab: tab_dgzqa8s82_1762512623596, parent: parent_t09ilb78s_1762512623600)
+[2025-11-07 16:20:47] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 9393975a-6bf2-45ca-9858-0289625b325d for user testAdmin (tab: tab_wyi6gaerb_1762512647414, parent: parent_kv5r4vxrm_1762512647418)
+[2025-11-07 16:20:50] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 9393975a-6bf2-45ca-9858-0289625b325d for user testAdmin (tab: tab_adltjlw4n_1762512650754, parent: parent_0x1is5fk2_1762512650757)
+[2025-11-07 16:20:54] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 9393975a-6bf2-45ca-9858-0289625b325d for user testAdmin (tab: tab_sd5i5mych_1762512654140, parent: parent_qmu7ctrk5_1762512654144)
+[2025-11-07 16:21:00] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 9393975a-6bf2-45ca-9858-0289625b325d for user testAdmin (tab: tab_1h2kctzmg_1762512660659, parent: parent_3z705bg0e_1762512660662)
+[2025-11-07 16:21:02] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 9393975a-6bf2-45ca-9858-0289625b325d for user testAdmin (tab: tab_oe40d5g62_1762512662465, parent: parent_qmp970ytx_1762512662468)
+[2025-11-07 17:08:57] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Created session 856ae812-55ca-4bc3-9eea-8fd333a8b5af for user testAdmin (tab: tab_1t13sgqfb_1762515530255, parent: parent_6a16vr76l_1762515530283)
+[2025-11-07 17:09:07] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 856ae812-55ca-4bc3-9eea-8fd333a8b5af for user testAdmin (tab: tab_fuvbsrfic_1762515547320, parent: parent_4rdor7ycs_1762515547328)
+[2025-11-07 17:10:07] ERROR - django.request - log_response:241 - Internal Server Error: /conference/bookings/create/1/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/confrence/views.py", line 390, in booking_create
+    if form.is_valid():
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/forms/forms.py", line 197, in is_valid
+    return self.is_bound and not self.errors
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/forms/forms.py", line 192, in errors
+    self.full_clean()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/forms/forms.py", line 329, in full_clean
+    self._post_clean()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/forms/models.py", line 496, in _post_clean
+    self.instance.full_clean(exclude=exclude, validate_unique=False)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/base.py", line 1527, in full_clean
+    self.clean()
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py", line 407, in clean
+    if self.start_time < timezone.now():
+TypeError: '<' not supported between instances of 'NoneType' and 'datetime.datetime'
+[2025-11-07 17:11:12] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py changed, reloading.
+[2025-11-07 17:11:14] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 17:11:27] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py changed, reloading.
+[2025-11-07 17:11:28] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-07 17:11:49] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Created session 36ab844b-56d0-4ce4-a8e1-9e1d3aa636d5 for user testAdmin (tab: tab_3xp6817fj_1762515708818, parent: parent_avyuavnku_1762515708832)
+[2025-11-07 17:11:51] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 36ab844b-56d0-4ce4-a8e1-9e1d3aa636d5 for user testAdmin (tab: tab_6cu9j5i5r_1762515711693, parent: parent_4s2endd50_1762515711696)
+[2025-11-07 17:11:55] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 36ab844b-56d0-4ce4-a8e1-9e1d3aa636d5 for user testAdmin (tab: tab_ffbhj4mj8_1762515715039, parent: parent_c0ilzpvqm_1762515715042)
+[2025-11-07 17:11:57] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 36ab844b-56d0-4ce4-a8e1-9e1d3aa636d5 for user testAdmin (tab: tab_0t0j60t2l_1762515717166, parent: parent_871mvla9m_1762515717169)
+[2025-11-07 17:12:34] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 36ab844b-56d0-4ce4-a8e1-9e1d3aa636d5 for user testAdmin (tab: tab_j62zuclda_1762515754149, parent: parent_gcp1bfnkh_1762515754154)
+[2025-11-07 17:12:38] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 36ab844b-56d0-4ce4-a8e1-9e1d3aa636d5 for user testAdmin (tab: tab_j7xun90a2_1762515758183, parent: parent_jz0fn3ueh_1762515758187)
+[2025-11-07 17:12:40] INFO - trueAlign.core.middleware - _create_new_session_throttled:279 - Reused existing session 36ab844b-56d0-4ce4-a8e1-9e1d3aa636d5 for user testAdmin (tab: tab_9rr5ey8cn_1762515760652, parent: parent_6wm5251o5_1762515760655)
