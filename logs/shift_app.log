@@ -6754,3 +6754,8 @@ django.template.exceptions.TemplateSyntaxError: Invalid filter: 'add_class'
 [2025-11-06 13:39:45] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
 [2025-11-06 13:41:02] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
 [2025-11-06 13:42:12] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-06 13:56:13] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-06 14:13:50] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/notifications/signals.py changed, reloading.
+[2025-11-06 14:13:51] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-06 14:52:39] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-11-06 16:18:23] INFO - trueAlign.core.middleware - _cleanup_old_buffers:546 - Cleaned up 1 old buffers

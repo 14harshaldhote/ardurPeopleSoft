@@ -31,7 +31,7 @@
         <div class="relative p-3 sm:p-6 md:p-8 lg:p-12 z-10 w-full">
             <!-- Top Navigation -->
             <nav
-                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-md p-2 sm:p-3 mb-3 sm:mb-6 flex flex-col sm:flex-row gap-3 sm:gap-0 justify-between items-center"
+                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-md p-2 sm:p-3 mb-3 sm:mb-6 flex flex-col sm:flex-row gap-3 sm:gap-0 justify-between items-center relative z-[10000]"
             >
                 <!-- Time -->
                 <div
@@ -62,23 +62,61 @@
                         >
                     </span>
 
-                    <button
-                        class="p-2 sm:p-3 backdrop-blur-sm bg-white/20 rounded-lg sm:rounded-xl border border-white/10 hover:bg-white/30 hover:scale-105 transition"
-                    >
-                        <svg
-                            class="w-4 h-4 sm:w-5 sm:h-5 text-zinc-700"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                            />
-                        </svg>
-                    </button>
+                    <!-- Notification Button -->
+                   <!-- Notification Button + Dropdown -->
+<div class="relative z-[9999] overflow-visible">
+  <!-- Button -->
+  <button id="notificationButton"
+          class="peer p-2 sm:p-3 backdrop-blur-sm bg-white/30 rounded-lg sm:rounded-xl border border-white/20
+                 hover:bg-white/40 hover:scale-105 transition-all duration-200 focus:outline-none">
+      <div class="relative">
+          <!-- Bell Icon -->
+          <svg class="w-5 h-5 sm:w-6 sm:h-6 text-zinc-700"
+               fill="none"
+               stroke="currentColor"
+               viewBox="0 0 24 24">
+              <path stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+          </svg>
+          <!-- Badge -->
+          <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center shadow-md">
+              3
+          </span>
+      </div>
+  </button>
+
+  <!-- Dropdown -->
+  <div class="absolute right-0 mt-3 w-80 bg-white/95 backdrop-blur-lg rounded-xl shadow-2xl border border-gray-100
+              z-[99999] max-h-96 overflow-y-auto opacity-0 scale-95 pointer-events-none
+              peer-focus:opacity-100 peer-focus:scale-100 peer-focus:pointer-events-auto
+              transition-all duration-200">
+      <!-- Header -->
+      <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+          <h3 class="text-base font-semibold text-gray-800">Notifications</h3>
+          <a href="#" class="text-sm text-blue-600 hover:text-blue-800">Mark all</a>
+      </div>
+
+      <!-- List -->
+      <div class="divide-y divide-gray-100 bg-white">
+          <div class="p-3 hover:bg-gray-50 cursor-pointer">
+              <p class="font-medium text-gray-800">New Ticket Assigned</p>
+              <p class="text-sm text-gray-600">You’ve got ticket #124 assigned.</p>
+              <p class="text-xs text-gray-400 mt-1">2 min ago</p>
+          </div>
+          <div class="p-3 hover:bg-gray-50 cursor-pointer">
+              <p class="font-medium text-gray-800">Leave Approved</p>
+              <p class="text-sm text-gray-600">Your leave for Nov 10–12 was approved.</p>
+              <p class="text-xs text-gray-400 mt-1">1 hr ago</p>
+          </div>
+          NOT DYNMACIC YET
+      </div>
+  </div>
+</div>
+
+
+
                 </div>
             </nav>
 
@@ -459,11 +497,155 @@
         }, 5000);
     };
 
-    function formatAsLocalDateTime(date) {
-        const pad = (num) => num.toString().padStart(2, "0");
-        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
-            date.getHours(),
-        )}:${pad(date.getMinutes())}`;
+    let notifications = [];
+    const notificationSound = document.getElementById('notificationSound');
+    const badge = document.getElementById('notification-badge');
+    const dropdown = document.getElementById('notificationDropdown');
+
+    function toggleNotifications() {
+        dropdown.classList.toggle('hidden');
     }
+
+    function updateNotificationBadge() {
+        const unreadCount = notifications.filter(n => !n.is_read).length;
+        badge.textContent = unreadCount;
+        badge.classList.toggle('hidden', unreadCount === 0);
+    }
+
+    function markAllAsRead() {
+        notifications.forEach(notification => {
+            notification.is_read = true;
+        });
+        updateNotificationList();
+        updateNotificationBadge();
+
+        fetch('/api/notifications/mark-all-read/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+        });
+    }
+
+    function updateNotificationList() {
+        const notificationList = document.getElementById('notificationList');
+        notificationList.innerHTML = '';
+
+        if (notifications.length === 0) {
+            notificationList.innerHTML = `
+                <div class="p-4 text-center text-gray-500">
+                    No notifications
+                </div>
+            `;
+            return;
+        }
+
+        notifications.forEach(notification => {
+            const element = document.createElement('div');
+            element.className = `p-4 ${notification.is_read ? 'bg-white' : 'bg-blue-50'}`;
+            element.innerHTML = `
+                <div class="flex items-start">
+                    <div class="flex-1">
+                        <p class="font-semibold text-gray-900">${notification.title}</p>
+                        <p class="text-sm text-gray-600">${notification.message}</p>
+                        <p class="text-xs text-gray-400 mt-1">${timeAgo(notification.created_at)}</p>
+                    </div>
+                    ${!notification.is_read ? `
+                        <button onclick="markAsRead('${notification.id}')"
+                                class="text-blue-600 hover:text-blue-800 text-sm">
+                            Mark as read
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+            notificationList.appendChild(element);
+        });
+    }
+
+    function markAsRead(notificationId) {
+        const notification = notifications.find(n => n.id === notificationId);
+        if (notification) {
+            notification.is_read = true;
+            updateNotificationList();
+            updateNotificationBadge();
+
+            fetch(`/api/notifications/${notificationId}/mark-read/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                },
+            });
+        }
+    }
+
+    function timeAgo(dateString) {
+        const date = new Date(dateString);
+        const seconds = Math.floor((new Date() - date) / 1000);
+
+        let interval = seconds / 31536000;
+        if (interval > 1) return Math.floor(interval) + " years ago";
+        interval = seconds / 2592000;
+        if (interval > 1) return Math.floor(interval) + " months ago";
+        interval = seconds / 86400;
+        if (interval > 1) return Math.floor(interval) + " days ago";
+        interval = seconds / 3600;
+        if (interval > 1) return Math.floor(interval) + " hours ago";
+        interval = seconds / 60;
+        if (interval > 1) return Math.floor(interval) + " minutes ago";
+        return Math.floor(seconds) + " seconds ago";
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Fetch notifications periodically
+    function fetchNotifications() {
+        fetch('/api/notifications/')
+            .then(response => response.json())
+            .then(data => {
+                const newNotifications = data.filter(
+                    newNotif => !notifications.some(
+                        existing => existing.id === newNotif.id
+                    )
+                );
+
+                if (newNotifications.length > 0) {
+                    notifications = [...newNotifications, ...notifications];
+                    updateNotificationList();
+                    updateNotificationBadge();
+                    notificationSound.play().catch(e => console.log('Sound play failed:', e));
+                }
+            });
+    }
+
+    // Initial fetch and setup polling
+    fetchNotifications();
+    setInterval(fetchNotifications, 30000); // Poll every 30 seconds
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('#notificationButton') &&
+            !event.target.closest('#notificationDropdown')) {
+            dropdown.classList.add('hidden');
+        }
+    });
 </script>
+
+<!-- Notification Sound -->
+<audio id="notificationSound" src="/static/sounds/notification.mp3" preload="auto"></audio>
+
 {% endblock %}
