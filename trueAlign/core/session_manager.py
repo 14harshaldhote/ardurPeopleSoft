@@ -450,6 +450,7 @@ class EnhancedSessionManager:
             'parent_session_id': parent_session_id or uuid.uuid4(),
             'session_key': UserSession.generate_session_key(),
             'is_primary_tab': True,
+            'is_active': True,  # 🔥 CRITICAL FIX: Sessions MUST be active when created!
             'login_time': timezone.now(),
             'last_activity': timezone.now(),
             **kwargs

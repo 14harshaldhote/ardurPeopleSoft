@@ -219,11 +219,12 @@ class SMSNotificationChannel(NotificationChannel):
         if not self.enabled or not self.api_key:
             return False
 
-        # Get phone number from user profile
-        phone_number = getattr(recipient.profile, 'phone_number', None) if hasattr(recipient, 'profile') else None
+        # Phone number would need to be stored in User model or custom profile
+        # For now, SMS notifications are disabled
+        phone_number = None
 
         if not phone_number:
-            return False
+            return False  # SMS not configured
 
         try:
             # Implement SMS API integration here
@@ -276,7 +277,7 @@ class AttendanceNotificationService:
             hr_users = User.objects.filter(
                 groups__name='HR',
                 is_active=True
-            ).select_related('profile')
+            )
 
             if not hr_users.exists():
                 return NotificationResult(
@@ -530,7 +531,7 @@ class AttendanceNotificationService:
                 date=target_date,
                 status__in=['Present & Late', 'Late'],
                 late_minutes__gte=threshold_minutes
-            ).select_related('user', 'user__profile', 'shift')
+            ).select_related('user', 'shift')
 
             if not late_attendances.exists():
                 return NotificationResult(
@@ -541,47 +542,51 @@ class AttendanceNotificationService:
                     recipient_count=0
                 )
 
-            # Group by manager
-            manager_notifications = defaultdict(list)
+            # Send to HR users (no manager tracking in system)
+            hr_users = User.objects.filter(groups__name='HR', is_active=True)
+            
+            if not hr_users.exists():
+                return NotificationResult(
+                    success=False,
+                    message="No HR users found to notify",
+                    channels_sent=[],
+                    failed_channels=[],
+                    recipient_count=0
+                )
 
-            for attendance in late_attendances:
-                manager = getattr(attendance.user.profile, 'manager', None) if hasattr(attendance.user, 'profile') else None
-                if manager:
-                    manager_notifications[manager].append(attendance)
-
-            # Send notifications to managers
+            # Send notifications to HR users
             successful_channels = []
             failed_channels = []
-            total_managers = len(manager_notifications)
+            
+            subject = f"Late Arrival Alert - {target_date}"
+            
+            late_employees = []
+            for att in late_attendances:
+                late_employees.append({
+                    'name': att.user.get_full_name(),
+                    'username': att.user.username,
+                    'late_minutes': att.late_minutes,
+                    'clock_in_time': att.clock_in_time
+                })
 
-            for manager, attendances in manager_notifications.items():
-                subject = f"Late Arrival Alert - {target_date}"
+            message = (f"{late_attendances.count()} employees arrived late today "
+                      f"(more than {threshold_minutes} minutes)")
 
-                late_employees = []
-                for att in attendances:
-                    late_employees.append({
-                        'name': att.user.get_full_name(),
-                        'username': att.user.username,
-                        'late_minutes': att.late_minutes,
-                        'clock_in_time': att.clock_in_time
-                    })
-
+            # Send to all HR users
+            for hr_user in hr_users:
                 context = {
                     'template': 'late_arrival_alert',
                     'notification_type': 'late_arrival',
-                    'manager': manager,
+                    'recipient': hr_user,
                     'date': target_date,
                     'late_employees': late_employees,
                     'threshold_minutes': threshold_minutes
                 }
 
-                message = (f"{len(attendances)} team members arrived late today "
-                          f"(more than {threshold_minutes} minutes)")
-
                 for channel_name, channel in self.channels.items():
                     if channel.enabled:
                         try:
-                            success = channel.send(manager, subject, message, context)
+                            success = channel.send(hr_user, subject, message, context)
                             if success and channel_name not in successful_channels:
                                 successful_channels.append(channel_name)
                         except Exception as e:
@@ -591,10 +596,10 @@ class AttendanceNotificationService:
 
             return NotificationResult(
                 success=len(successful_channels) > 0,
-                message=f"Late arrival notifications sent to {total_managers} managers",
+                message=f"Late arrival notifications sent to {hr_users.count()} HR users",
                 channels_sent=successful_channels,
                 failed_channels=failed_channels,
-                recipient_count=total_managers
+                recipient_count=hr_users.count()
             )
 
         except Exception as e:

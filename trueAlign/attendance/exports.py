@@ -57,13 +57,13 @@ class AttendanceExportService:
             # Employees can only see their own data
             return queryset.filter(user=self.user)
 
-    def export_to_excel(self, start_date, end_date, user_ids=None, departments=None, include_charts=False):
+    def export_to_excel(self, start_date, end_date, user_ids=None, include_charts=False):
         """
         Export attendance data to Excel with advanced formatting and optional charts
         """
         try:
             # Filter queryset
-            queryset = self._filter_queryset(start_date, end_date, user_ids, departments)
+            queryset = self._filter_queryset(start_date, end_date, user_ids)
 
             # Create workbook
             wb = openpyxl.Workbook()
@@ -78,11 +78,6 @@ class AttendanceExportService:
             # Create summary sheet
             ws_summary = wb.create_sheet("Summary")
             self._create_summary_sheet(ws_summary, queryset, start_date, end_date)
-
-            # Create department breakdown (if HR/Admin)
-            if self.user_role in ['HR', 'Admin']:
-                ws_dept = wb.create_sheet("Department Breakdown")
-                self._create_department_sheet(ws_dept, queryset, start_date, end_date)
 
             # Add charts if requested
             if include_charts and self.user_role in ['HR', 'Admin', 'Manager']:
@@ -112,7 +107,7 @@ class AttendanceExportService:
         """Create main data sheet with attendance records"""
         # Headers
         headers = [
-            'Date', 'Day', 'Employee ID', 'Employee Name', 'Department', 'Designation',
+            'Date', 'Day', 'Employee ID', 'Employee Name',
             'Status', 'Clock In', 'Clock Out', 'Total Hours', 'Expected Hours',
             'Overtime Hours', 'Late Minutes', 'Early Departure', 'Break Time',
             'Shift', 'Regularization Status', 'Comments'
@@ -141,8 +136,6 @@ class AttendanceExportService:
                 attendance.date.strftime('%A'),
                 attendance.user.username,
                 f"{attendance.user.first_name} {attendance.user.last_name}".strip(),
-                getattr(attendance.user.profile, 'department', 'Unknown') if hasattr(attendance.user, 'profile') else 'Unknown',
-                getattr(attendance.user.profile, 'designation', 'Unknown') if hasattr(attendance.user, 'profile') else 'Unknown',
                 attendance.status,
                 attendance.clock_in_time.strftime('%H:%M:%S') if attendance.clock_in_time else '',
                 attendance.clock_out_time.strftime('%H:%M:%S') if attendance.clock_out_time else '',
@@ -277,65 +270,6 @@ class AttendanceExportService:
             adjusted_width = min(max_length + 2, 20)
             ws.column_dimensions[column[0].column_letter].width = adjusted_width
 
-    def _create_department_sheet(self, ws, queryset, start_date, end_date):
-        """Create department-wise breakdown sheet (HR/Admin only)"""
-        ws.cell(row=1, column=1, value="Department-wise Breakdown").font = Font(bold=True, size=14)
-        ws.cell(row=2, column=1, value=f"Period: {start_date} to {end_date}")
-
-        # Get department-wise data
-        dept_data = {}
-        for attendance in queryset.select_related('user__profile'):
-            dept = getattr(attendance.user.profile, 'department', 'Unknown') if hasattr(attendance.user, 'profile') else 'Unknown'
-            if dept not in dept_data:
-                dept_data[dept] = {
-                    'total': 0, 'present': 0, 'absent': 0, 'late': 0, 'leave': 0
-                }
-            dept_data[dept]['total'] += 1
-            if 'Present' in attendance.status:
-                dept_data[dept]['present'] += 1
-                if 'Late' in attendance.status:
-                    dept_data[dept]['late'] += 1
-            elif attendance.status == 'Absent':
-                dept_data[dept]['absent'] += 1
-            elif attendance.status == 'On Leave':
-                dept_data[dept]['leave'] += 1
-
-        # Headers
-        headers = ['Department', 'Total Records', 'Present', 'Absent', 'Late', 'On Leave', 'Attendance %']
-        for col, header in enumerate(headers, 1):
-            cell = ws.cell(row=4, column=col, value=header)
-            cell.font = Font(bold=True)
-            cell.fill = PatternFill(start_color='CCCCCC', end_color='CCCCCC', fill_type='solid')
-
-        # Data
-        row = 5
-        for dept, data in dept_data.items():
-            attendance_rate = (data['present'] / data['total'] * 100) if data['total'] > 0 else 0
-            dept_row = [
-                dept,
-                data['total'],
-                data['present'],
-                data['absent'],
-                data['late'],
-                data['leave'],
-                f'{attendance_rate:.2f}%'
-            ]
-            for col, value in enumerate(dept_row, 1):
-                ws.cell(row=row, column=col, value=value)
-            row += 1
-
-        # Auto-adjust column widths
-        for column in ws.columns:
-            max_length = 0
-            column = list(column)
-            for cell in column:
-                try:
-                    if len(str(cell.value)) > max_length:
-                        max_length = len(str(cell.value))
-                except:
-                    pass
-            adjusted_width = min(max_length + 2, 20)
-            ws.column_dimensions[column[0].column_letter].width = adjusted_width
 
     def _add_charts(self, wb, queryset):
         """Add charts to workbook"""
@@ -372,11 +306,11 @@ class AttendanceExportService:
         except Exception as e:
             logger.warning(f"Failed to add charts: {e}")
 
-    def export_to_csv(self, start_date, end_date, user_ids=None, departments=None):
+    def export_to_csv(self, start_date, end_date, user_ids=None):
         """Export attendance data to CSV"""
         try:
             # Filter queryset
-            queryset = self._filter_queryset(start_date, end_date, user_ids, departments)
+            queryset = self._filter_queryset(start_date, end_date, user_ids)
 
             # Create CSV response
             response = HttpResponse(content_type='text/csv')
@@ -387,20 +321,19 @@ class AttendanceExportService:
 
             # Headers
             headers = [
-                'Date', 'Day', 'Employee ID', 'Employee Name', 'Department',
+                'Date', 'Day', 'Employee ID', 'Employee Name',
                 'Status', 'Clock In', 'Clock Out', 'Total Hours', 'Expected Hours',
                 'Overtime Hours', 'Late Minutes', 'Shift', 'Regularization Status'
             ]
             writer.writerow(headers)
 
             # Data rows
-            for attendance in queryset.select_related('user', 'user__profile', 'shift').order_by('date', 'user__username'):
+            for attendance in queryset.select_related('user', 'shift').order_by('date', 'user__username'):
                 row = [
                     attendance.date.strftime('%Y-%m-%d'),
                     attendance.date.strftime('%A'),
                     attendance.user.username,
                     f"{attendance.user.first_name} {attendance.user.last_name}".strip(),
-                    getattr(attendance.user.profile, 'department', 'Unknown') if hasattr(attendance.user, 'profile') else 'Unknown',
                     attendance.status,
                     attendance.clock_in_time.strftime('%H:%M:%S') if attendance.clock_in_time else '',
                     attendance.clock_out_time.strftime('%H:%M:%S') if attendance.clock_out_time else '',
@@ -420,7 +353,7 @@ class AttendanceExportService:
             logger.error(f"CSV export error for user {self.user.username}: {e}")
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
-    def export_to_pdf(self, start_date, end_date, user_ids=None, departments=None):
+    def export_to_pdf(self, start_date, end_date, user_ids=None):
         """Export attendance data to PDF (basic implementation)"""
         try:
             # For now, return a message about PDF implementation
@@ -432,15 +365,12 @@ class AttendanceExportService:
             logger.error(f"PDF export error for user {self.user.username}: {e}")
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
-    def _filter_queryset(self, start_date, end_date, user_ids=None, departments=None):
+    def _filter_queryset(self, start_date, end_date, user_ids=None):
         """Apply filters to the base queryset"""
         queryset = self.base_queryset.filter(date__range=[start_date, end_date])
 
         if user_ids:
             queryset = queryset.filter(user_id__in=user_ids)
-
-        if departments:
-            queryset = queryset.filter(user__profile__department__in=departments)
 
         return queryset
 
@@ -463,17 +393,9 @@ class AttendanceExportService:
                 'available_formats': ['excel', 'csv'],
                 'features': {
                     'charts': self.user_role in ['HR', 'Admin', 'Manager'],
-                    'department_breakdown': self.user_role in ['HR', 'Admin'],
                     'employee_summary': self.user_role in ['HR', 'Admin', 'Manager']
                 }
             }
-
-            if self.user_role in ['HR', 'Admin']:
-                # Add department list for HR/Admin
-                departments = queryset.values_list(
-                    'user__profile__department', flat=True
-                ).distinct().exclude(user__profile__department__isnull=True)
-                summary['available_departments'] = list(departments)
 
             return summary
 

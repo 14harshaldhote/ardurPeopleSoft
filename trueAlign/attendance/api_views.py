@@ -1103,17 +1103,26 @@ def approve_regularization(request):
             return JsonResponse({'error': 'Only POST method allowed'}, status=405)
 
         data = json.loads(request.body)
-        attendance_id = data.get('attendance_id')
+        attendance_id = data.get('attendance_id') or data.get('request_id')  # Support both
         comments = data.get('comments', '')
+
+        if not attendance_id:
+            return JsonResponse({'error': 'attendance_id is required'}, status=400)
 
         attendance = get_object_or_404(Attendance, id=attendance_id)
 
-        # Update attendance record
-        attendance.status = attendance.requested_status
+        # Update attendance record using correct model fields
+        if attendance.requested_status:
+            attendance.status = attendance.requested_status
+        else:
+            # If no requested_status, default to Present
+            attendance.status = 'Present'
+        
         attendance.regularization_status = 'Approved'
-        attendance.regularization_comments = comments
-        attendance.regularization_processed_by = request.user
-        attendance.regularization_processed_at = timezone.now()
+        if comments:
+            attendance.remarks = comments
+        attendance.modified_by = request.user
+        # last_modified is auto-updated by auto_now=True
         attendance.save()
 
         # Send notification
@@ -1130,7 +1139,7 @@ def approve_regularization(request):
                 'attendance_id': attendance.id,
                 'new_status': attendance.status,
                 'processed_by': request.user.username,
-                'processed_at': attendance.regularization_processed_at.isoformat()
+                'processed_at': attendance.last_modified.isoformat()
             }
         })
 
@@ -1151,13 +1160,17 @@ def reject_regularization(request):
         attendance_id = data.get('attendance_id')
         comments = data.get('comments', '')
 
+        if not attendance_id:
+            return JsonResponse({'error': 'attendance_id is required'}, status=400)
+
         attendance = get_object_or_404(Attendance, id=attendance_id)
 
-        # Update regularization status
+        # Update regularization status using correct model fields
         attendance.regularization_status = 'Rejected'
-        attendance.regularization_comments = comments
-        attendance.regularization_processed_by = request.user
-        attendance.regularization_processed_at = timezone.now()
+        if comments:
+            attendance.remarks = comments
+        attendance.modified_by = request.user
+        # last_modified is auto-updated by auto_now=True
         attendance.save()
 
         # Send notification

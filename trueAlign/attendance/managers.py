@@ -410,14 +410,14 @@ class AttendanceManager(models.Manager):
             logger.error(f"Error getting users without attendance: {e}")
             return User.objects.none()
 
-    def get_attendance_summary(self, date=None, department=None, manager=None):
+    def get_attendance_summary(self, date=None, users=None):
         """
         Get comprehensive attendance summary for a specific date
         """
         if not date:
             date = timezone.now().astimezone(IST).date()
 
-        cache_key = f"attendance_summary_{date}_{department}_{manager.id if manager else 'all'}"
+        cache_key = f"attendance_summary_{date}_{hash(str(users)) if users else 'all'}"
         cached_result = cache.get(cache_key)
 
         if cached_result:
@@ -426,13 +426,9 @@ class AttendanceManager(models.Manager):
         try:
             queryset = self.for_date(date)
 
-            # Apply filters
-            if department:
-                queryset = queryset.filter(user__profile__department=department)
-
-            if manager:
-                team_members = User.objects.filter(profile__manager=manager)
-                queryset = queryset.filter(user__in=team_members)
+            # Apply user filter
+            if users:
+                queryset = queryset.filter(user__in=users)
 
             summary = queryset.get_summary_stats()
 
@@ -521,11 +517,11 @@ class AttendanceManager(models.Manager):
             logger.error(f"Error getting team attendance for {manager_user.username}: {e}")
             return self.none()
 
-    def get_attendance_analytics(self, start_date, end_date, users=None, department=None):
+    def get_attendance_analytics(self, start_date, end_date, users=None):
         """
         Get optimized attendance analytics for given period with caching
         """
-        cache_key = f"attendance_analytics_{start_date}_{end_date}_{department}_{hash(str(users)) if users else 'all'}"
+        cache_key = f"attendance_analytics_{start_date}_{end_date}_{hash(str(users)) if users else 'all'}"
         cached_result = cache.get(cache_key)
 
         if cached_result:
@@ -536,9 +532,6 @@ class AttendanceManager(models.Manager):
 
             if users:
                 queryset = queryset.for_users(users)
-
-            if department:
-                queryset = queryset.filter(user__profile__department=department)
 
             # Get comprehensive analytics
             analytics = {
@@ -589,11 +582,11 @@ class AttendanceManager(models.Manager):
             'total_overtime': float(summary['overtime_hours'] or 0)
         }
 
-    def get_regularization_requests(self, status='Pending', manager=None, department=None):
+    def get_regularization_requests(self, status='Pending', users=None):
         """
         Get regularization requests with efficient filtering
         """
-        cache_key = f"regularization_requests_{status}_{manager.id if manager else 'all'}_{department}"
+        cache_key = f"regularization_requests_{status}_{hash(str(users)) if users else 'all'}"
         cached_result = cache.get(cache_key)
 
         if cached_result is not None:
@@ -602,13 +595,8 @@ class AttendanceManager(models.Manager):
         try:
             queryset = self.get_queryset().filter(regularization_status=status).select_optimized()
 
-            if manager and not manager.is_superuser:
-                # Filter by team members
-                team_members = User.objects.filter(profile__manager=manager)
-                queryset = queryset.filter(user__in=team_members)
-
-            if department:
-                queryset = queryset.filter(user__profile__department=department)
+            if users:
+                queryset = queryset.filter(user__in=users)
 
             queryset = queryset.order_by('-last_regularization_date', '-date')
             request_ids = list(queryset.values_list('id', flat=True))

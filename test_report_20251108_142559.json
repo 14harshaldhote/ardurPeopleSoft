@@ -1,0 +1,16 @@
+{
+  "timestamp": "2025-11-08T14:25:59.957333",
+  "duration_seconds": 12.952965,
+  "test_result": "FAILED",
+  "failures_count": 18,
+  "database_stats": {
+    "attendance_records": 10,
+    "user_sessions": 70,
+    "shift_assignments": 0
+  },
+  "data_quality": {
+    "ip_populated": 0,
+    "device_populated": 0,
+    "non_office_locations": 0
+  }
+}
