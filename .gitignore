@@ -168,3 +168,8 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# Python caches & logs
+__pycache__/
+*.pyc
+logs/*.log
