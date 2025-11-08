@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add Attendance Record - TrueAlign{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <!-- Header -->
+    <div class="bg-white shadow-md border-b border-gray-200">
+        <div class="max-w-5xl mx-auto px-6 py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Add Attendance Record</h1>
+                    <p class="text-gray-600 mt-1">Manually add or update attendance for employees</p>
+                </div>
+                <a href="{% url 'attendance:hr_dashboard' %}" 
+                   class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors duration-200">
+                    <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="max-w-5xl mx-auto px-6 py-8">
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                {% if messages %}
+                    <div class="space-y-2">
+                        {% for message in messages %}
+                            <div class="px-4 py-3 rounded-lg {% if message.tags == 'error' %}bg-red-50 border border-red-200 text-red-800{% elif message.tags == 'success' %}bg-green-50 border border-green-200 text-green-800{% else %}bg-blue-50 border border-blue-200 text-blue-800{% endif %}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% if form.errors %}
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <h3 class="text-red-800 font-semibold mb-2">Please correct the following errors:</h3>
+                        <ul class="list-disc list-inside text-red-700">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    <li>{{ field }}: {{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <!-- Form Fields -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Employee Selection -->
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Employee *
+                        </label>
+                        {{ form.user }}
+                        {% if form.user.help_text %}
+                            <p class="text-sm text-gray-500 mt-1">{{ form.user.help_text }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Date -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Date *
+                        </label>
+                        {{ form.date }}
+                        {% if form.date.help_text %}
+                            <p class="text-sm text-gray-500 mt-1">{{ form.date.help_text }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Status -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Status *
+                        </label>
+                        {{ form.status }}
+                        {% if form.status.help_text %}
+                            <p class="text-sm text-gray-500 mt-1">{{ form.status.help_text }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Clock In Time -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Clock In Time
+                        </label>
+                        {{ form.clock_in_time }}
+                        {% if form.clock_in_time.help_text %}
+                            <p class="text-sm text-gray-500 mt-1">{{ form.clock_in_time.help_text }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Clock Out Time -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Clock Out Time
+                        </label>
+                        {{ form.clock_out_time }}
+                        {% if form.clock_out_time.help_text %}
+                            <p class="text-sm text-gray-500 mt-1">{{ form.clock_out_time.help_text }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Shift -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Shift
+                        </label>
+                        {{ form.shift }}
+                        {% if form.shift.help_text %}
+                            <p class="text-sm text-gray-500 mt-1">{{ form.shift.help_text }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Location -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Location
+                        </label>
+                        {{ form.location }}
+                        {% if form.location.help_text %}
+                            <p class="text-sm text-gray-500 mt-1">{{ form.location.help_text }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Remarks/Reason -->
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Remarks/Reason *
+                        </label>
+                        {{ form.remarks }}
+                        {% if form.remarks.help_text %}
+                            <p class="text-sm text-gray-500 mt-1">{{ form.remarks.help_text }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
+                    <a href="{% url 'attendance:hr_dashboard' %}" 
+                       class="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200">
+                        Cancel
+                    </a>
+                    <button type="submit" 
+                            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-200">
+                        <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Add Attendance Record
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Help Section -->
+        <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 class="text-blue-900 font-semibold mb-2 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Guidelines
+            </h3>
+            <ul class="text-blue-800 text-sm space-y-1 ml-7">
+                <li>• Select employee from the dropdown</li>
+                <li>• Choose the date for which you want to add/update attendance</li>
+                <li>• Select appropriate status (Present, Absent, On Leave, etc.)</li>
+                <li>• Clock times are optional but recommended for accuracy</li>
+                <li>• Always provide a reason in remarks for manual entries</li>
+                <li>• This will override any existing attendance for the selected date</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Form field styling */
+select, input[type="text"], input[type="date"], input[type="time"], textarea {
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+select:focus, input:focus, textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    ring: 2px;
+    ring-color: #3b82f680;
+}
+
+textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+</style>
+{% endblock %}

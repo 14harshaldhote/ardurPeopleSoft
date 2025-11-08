@@ -911,16 +911,13 @@ class AttendanceAnalyticsService(BaseAttendanceService):
     """Service for attendance analytics and reporting"""
 
     def get_attendance_trends(self, start_date: date, end_date: date,
-                            users: Optional[List[User]] = None, department: Optional[str] = None) -> ServiceResult:
+                            users: Optional[List[User]] = None) -> ServiceResult:
         """Get attendance trends for date range"""
         try:
             queryset = Attendance.objects.filter(date__range=[start_date, end_date])
 
             if users:
                 queryset = queryset.filter(user__in=users)
-
-            if department:
-                queryset = queryset.filter(user__profile__department=department)
 
             # Calculate trends
             trends = queryset.values('date').annotate(
@@ -935,26 +932,30 @@ class AttendanceAnalyticsService(BaseAttendanceService):
         except Exception as e:
             return self._handle_exception("GET_ATTENDANCE_TRENDS", e)
 
-    def get_department_analytics(self, target_date: Optional[date] = None) -> ServiceResult:
-        """Get department-wise attendance analytics"""
+    def get_status_analytics(self, target_date: Optional[date] = None) -> ServiceResult:
+        """Get overall status-wise attendance analytics"""
         try:
             if not target_date:
                 target_date = self.today
 
-            analytics = Attendance.objects.filter(date=target_date).values(
-                'user__profile__department'
-            ).annotate(
-                total_employees=Count('id'),
-                present_count=Count('id', filter=Q(status__in=PRESENT_STATUSES)),
-                absent_count=Count('id', filter=Q(status='Absent')),
-                late_count=Count('id', filter=Q(status__contains='Late')),
-                on_leave_count=Count('id', filter=Q(status='On Leave'))
-            ).order_by('user__profile__department')
+            queryset = Attendance.objects.filter(date=target_date)
+            
+            analytics = {
+                'date': str(target_date),
+                'total_records': queryset.count(),
+                'present_on_time': queryset.filter(status='Present').exclude(status__contains='Late').count(),
+                'present_late': queryset.filter(status='Present & Late').count(),
+                'work_from_home': queryset.filter(status='Work From Home').count(),
+                'on_leave': queryset.filter(status='On Leave').count(),
+                'absent': queryset.filter(status='Absent').count(),
+                'not_marked': queryset.filter(status='Not Marked').count(),
+                'half_day': queryset.filter(is_half_day=True).count(),
+            }
 
-            return ServiceResult(success=True, data=list(analytics))
+            return ServiceResult(success=True, data=analytics)
 
         except Exception as e:
-            return self._handle_exception("GET_DEPARTMENT_ANALYTICS", e)
+            return self._handle_exception("GET_STATUS_ANALYTICS", e)
 
     def get_late_arrival_analysis(self, start_date: date, end_date: date) -> ServiceResult:
         """Analyze late arrival patterns"""
@@ -1051,17 +1052,16 @@ class AttendanceReportService(BaseAttendanceService):
         except Exception as e:
             return self._handle_exception("GENERATE_USER_SUMMARY", e, user.username)
 
-    def generate_monthly_report(self, year: int, month: int, department: Optional[str] = None) -> ServiceResult:
+    def generate_monthly_report(self, year: int, month: int, users: Optional[List[User]] = None) -> ServiceResult:
         """Generate monthly attendance report"""
         try:
             queryset = Attendance.objects.filter(date__year=year, date__month=month)
 
-            if department:
-                queryset = queryset.filter(user__profile__department=department)
+            if users:
+                queryset = queryset.filter(user__in=users)
 
             report_data = {
                 'period': f"{year}-{month:02d}",
-                'department': department or 'All Departments',
                 'summary': {
                     'total_records': queryset.count(),
                     'present_count': queryset.filter(status__in=PRESENT_STATUSES).count(),
@@ -1113,6 +1113,20 @@ class AttendanceIntegrationService(BaseAttendanceService):
             if not attendance.clock_in_time:
                 attendance.clock_in_time = session.login_time
 
+            # 🔥 CRITICAL FIX: Mark as Present when user logs in!
+            # This is the core of attendance tracking - if user logged in, they're PRESENT!
+            # This includes Weekend/Holiday - if they login, they're working!
+            if attendance.status in ['Not Marked', None, '', 'Weekend', 'Holiday', 'Yet to Clock In']:
+                old_status = attendance.status
+                attendance.status = 'Present'
+                # If it was weekend/holiday, note they worked on non-working day
+                if old_status in ['Weekend', 'Holiday']:
+                    attendance.is_weekend = False  # Override since they're working
+                    attendance.is_holiday = False
+                    logger.info(f"✅ MARKED {user.username} as PRESENT on {old_status} - Working on non-working day!")
+                else:
+                    logger.info(f"✅ MARKED {user.username} as PRESENT on login at {login_time}")
+            
             # Determine location from IP
             location = self._determine_location_from_ip(session.ip_address)
             if location and hasattr(attendance, 'location'):

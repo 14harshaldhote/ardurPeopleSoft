@@ -404,15 +404,30 @@ def request_regularization(request, attendance_id=None):
                 date_str = request.POST.get("date")
                 if date_str:
                     target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-                    attendance = get_object_or_404(
-                        Attendance, user=request.user, date=target_date
-                    )
+                    try:
+                        attendance = Attendance.objects.get(
+                            user=request.user, date=target_date
+                        )
+                    except Attendance.DoesNotExist:
+                        # Create attendance record if it doesn't exist
+                        attendance = Attendance.objects.create(
+                            user=request.user,
+                            date=target_date,
+                            status="Not Marked"
+                        )
 
             if attendance:
-                requested_status = request.POST.get("requested_status")
+                # Get form fields
+                regularization_type = request.POST.get("regularization_type")
                 reason = request.POST.get("reason")
+                requested_check_in = request.POST.get("requested_check_in")
+                requested_check_out = request.POST.get("requested_check_out")
+                comments = request.POST.get("comments", "")
+                
+                # Build requested_status based on regularization_type
+                requested_status = f"{regularization_type}|{requested_check_in or ''}|{requested_check_out or ''}|{comments}"
 
-                if requested_status and reason:
+                if regularization_type and reason:
                     regularization_service = AttendanceRegularizationService()
                     result = regularization_service.submit_regularization_request(
                         attendance=attendance,
@@ -512,9 +527,14 @@ def hr_attendance_dashboard(request):
     try:
         today = timezone.now().astimezone(IST).date()
 
-        # Get overall statistics
-        all_users = User.objects.filter(is_active=True)
-        today_attendance = Attendance.objects.filter(date=today)
+        # Get overall statistics - only count employees (not HR/Admin who don't track attendance)
+        all_users = User.objects.filter(is_active=True, groups__name='Employee')
+        
+        # Get or create attendance records for today using integration service
+        integration_service = AttendanceIntegrationService()
+        integration_service.create_daily_attendance_records(today)
+        
+        today_attendance = Attendance.objects.filter(date=today).select_related('user')
 
         # Calculate statistics
         total_employees = all_users.count()
@@ -527,40 +547,86 @@ def hr_attendance_dashboard(request):
         pending_regularizations = (
             Attendance.objects.filter(regularization_status="Pending")
             .select_related("user")
-            .order_by("-regularization_requested_at")[:10]
+            .order_by("-last_regularization_date")[:10]
         )
 
-        # Get analytics services
-        analytics_service = AttendanceAnalyticsService()
+        # Calculate percentages for today's stats
+        present_percentage = (present_today / total_employees * 100) if total_employees > 0 else 0
+        absent_percentage = (absent_today / total_employees * 100) if total_employees > 0 else 0
 
-        # Get recent trends
+        # Get detailed status breakdown
+        status_breakdown = {
+            'present_on_time': today_attendance.filter(status='Present').exclude(status__contains='Late').count(),
+            'present_late': today_attendance.filter(status='Present & Late').count(),
+            'work_from_home': today_attendance.filter(status='Work From Home').count(),
+            'on_leave': on_leave_today,
+            'absent': absent_today,
+            'not_marked': today_attendance.filter(status='Not Marked').count(),
+            'half_day': today_attendance.filter(is_half_day=True).count(),
+        }
+
+        # Get weekly trends (last 7 days)
         week_ago = today - timedelta(days=7)
-        trends_result = analytics_service.get_attendance_trends(week_ago, today)
+        weekly_data = []
+        for i in range(7):
+            date = today - timedelta(days=6-i)
+            day_attendance = Attendance.objects.filter(date=date)
+            weekly_data.append({
+                'date': date.strftime('%Y-%m-%d'),
+                'day': date.strftime('%a'),
+                'present': day_attendance.filter(status__in=PRESENT_STATUSES).count(),
+                'absent': day_attendance.filter(status='Absent').count(),
+                'late': day_attendance.filter(status__contains='Late').count(),
+            })
+        
+        # Format weekly stats for chart
+        import json
+        weekly_stats_json = {
+            'present': json.dumps([day['present'] for day in weekly_data]),
+            'absent': json.dumps([day['absent'] for day in weekly_data]),
+            'late': json.dumps([day['late'] for day in weekly_data]),
+            'labels': json.dumps([day['day'] for day in weekly_data]),
+        }
 
-        # Get department analytics
-        department_result = analytics_service.get_department_analytics(today)
+        # Get recent activity/changes
+        recent_activity = Attendance.objects.filter(
+            last_modified__gte=today - timedelta(days=1)
+        ).select_related('user', 'modified_by').order_by('-last_modified')[:10]
 
         context = {
-            "overview": {
-                "total_employees": total_employees,
-                "present_today": present_today,
-                "absent_today": absent_today,
-                "late_today": late_today,
-                "on_leave_today": on_leave_today,
-                "attendance_rate": round(
-                    (present_today / total_employees * 100)
-                    if total_employees > 0
-                    else 0,
-                    1,
-                ),
-                "pending_regularizations": pending_regularizations.count(),
-            },
-            "recent_regularizations": pending_regularizations,
-            "trends_data": trends_result.data if trends_result.success else [],
-            "department_data": department_result.data
-            if department_result.success
-            else [],
+            # Top-level stats
+            "total_employees": total_employees,
+            "present_today": present_today,
+            "absent_today": absent_today,
+            "late_today": late_today,
+            "on_leave_today": on_leave_today,
+            "pending_requests": pending_regularizations.count(),
             "today": today,
+            
+            # Detailed status breakdown
+            "status_breakdown": status_breakdown,
+            
+            # Today's stats with percentages
+            "today_stats": {
+                "present": present_today,
+                "absent": absent_today,
+                "late": late_today,
+                "on_leave": on_leave_today,
+                "present_percentage": round(present_percentage, 1),
+                "absent_percentage": round(absent_percentage, 1),
+                "attendance_rate": round(present_percentage, 1),
+            },
+            
+            # Weekly trends (JSON for chart)
+            "weekly_stats": weekly_stats_json,
+            "weekly_data": weekly_data,
+            
+            # Regularizations
+            "recent_regularizations": pending_regularizations,
+            "pending_regularizations_count": pending_regularizations.count(),
+            
+            # Recent activity
+            "recent_activity": recent_activity,
         }
 
         return render(request, "attendance/hr_dashboard.html", context)
@@ -576,23 +642,45 @@ def hr_attendance_dashboard(request):
 def hr_regularization_requests(request):
     """HR view for processing regularization requests"""
     try:
-        regularization_service = AttendanceRegularizationService()
-        result = regularization_service.get_pending_regularizations()
-
-        if result.success:
-            pending_requests = result.data
+        # Get all regularization requests with different statuses
+        all_pending = Attendance.objects.filter(regularization_status='Pending').select_related('user')
+        all_approved = Attendance.objects.filter(regularization_status='Approved').select_related('user')
+        all_rejected = Attendance.objects.filter(regularization_status='Rejected').select_related('user')
+        
+        # Get filter from request
+        filter_status = request.GET.get('status', 'all')
+        
+        # Filter based on status
+        if filter_status == 'pending':
+            filtered_requests = all_pending
+        elif filter_status == 'approved':
+            filtered_requests = all_approved
+        elif filter_status == 'rejected':
+            filtered_requests = all_rejected
         else:
-            pending_requests = []
-            messages.error(request, "Error loading regularization requests.")
+            # Get all regularization requests
+            filtered_requests = Attendance.objects.filter(
+                regularization_status__in=['Pending', 'Approved', 'Rejected']
+            ).select_related('user').order_by('-last_regularization_date')
 
         # Pagination
-        paginator = Paginator(pending_requests, 25)
+        paginator = Paginator(filtered_requests, 25)
         page_number = request.GET.get("page")
         page_obj = paginator.get_page(page_number)
 
+        # Calculate summary statistics
+        summary_stats = {
+            'pending': all_pending.count(),
+            'approved': all_approved.count(),
+            'rejected': all_rejected.count(),
+            'total': all_pending.count() + all_approved.count() + all_rejected.count(),
+        }
+
         context = {
             "page_obj": page_obj,
-            "total_requests": len(pending_requests),
+            "total_requests": filtered_requests.count(),
+            "summary_stats": summary_stats,
+            "filter_status": filter_status,
         }
 
         return render(request, "attendance/hr_regularization_requests.html", context)
