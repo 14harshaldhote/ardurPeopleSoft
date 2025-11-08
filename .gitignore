@@ -156,6 +156,8 @@ Thumbs.db
 # Logs
 logs/
 *.log
+logs/*.log
+
 
 # Media files (optional - comment out if you want to track media files)
 media/

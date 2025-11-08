@@ -226,6 +226,26 @@ class AttendanceAutoMarkingService(BaseAttendanceService):
 
     def _get_attendance_defaults(self, user: 'UserType', target_date: date) -> Dict[str, Any]:
         """Get default attendance values based on business rules"""
+        
+        # FIX #14: CHECK FOR EXISTING SESSIONS FIRST!
+        existing_sessions = UserSession.objects.filter(
+            user=user,
+            login_time__date=target_date
+        )
+        
+        if existing_sessions.exists():
+            # User has sessions, create with present status and session data
+            first_session = existing_sessions.order_by('login_time').first()
+            defaults: Dict[str, Any] = {
+                'status': 'Present',
+                'clock_in_time': first_session.login_time,
+                'first_session': first_session,
+                'regularization_reason': 'Auto-created from existing session'
+            }
+            logger.info(f"Creating attendance with session data for {user.username} on {target_date}")
+            return defaults
+        
+        # No sessions, continue with standard defaults
         defaults: Dict[str, Any] = {
             'status': 'Not Marked',
             'regularization_reason': 'Auto-created attendance record'
@@ -287,12 +307,15 @@ class AttendanceAutoMarkingService(BaseAttendanceService):
                 end_date__gte=target_date
             ).select_related('shift').first()
 
-            if shift:
+            if shift and shift.shift:
+                # FIX #8: Use actual shift duration instead of hardcoded value
+                expected_hrs = shift.shift.shift_duration if hasattr(shift.shift, 'shift_duration') else Decimal('8.0')
                 shift_update: Dict[str, Any] = {
                     'shift': shift.shift,
-                    'expected_hours': Decimal('8.0')  # Default expected hours
+                    'expected_hours': expected_hrs
                 }
                 defaults.update(shift_update)
+                logger.debug(f"Set expected_hours to {expected_hrs} from shift")
         except Exception as e:
             logger.warning(f"Could not set shift for {user.username}: {e}")
 
@@ -399,6 +422,11 @@ class AttendanceAutoMarkingService(BaseAttendanceService):
             first_session = sessions[0]
             last_session = sessions[-1]
 
+            # Preserve weekend/holiday flags if they were set
+            original_is_weekend = attendance.is_weekend
+            original_is_holiday = attendance.is_holiday
+            original_holiday_name = attendance.holiday_name
+
             # Get the latest logout time from all sessions
             latest_logout = None
             for session in sessions:
@@ -430,20 +458,79 @@ class AttendanceAutoMarkingService(BaseAttendanceService):
                 if session.logout_time:
                     total_session_time += session.logout_time - session.login_time
 
-            # Set location from most recent session
+            # FIX #3: Populate IP address from first session
+            if first_session and hasattr(first_session, 'ip_address') and first_session.ip_address:
+                if not attendance.ip_address:  # Only set if not already set
+                    attendance.ip_address = first_session.ip_address
+                    updated = True
+                    logger.debug(f"Populated IP address: {attendance.ip_address}")
+
+            # FIX #4: Populate device information from first session
+            if first_session and not attendance.device_info:
+                device_data = {}
+                
+                # Safely collect device information
+                if hasattr(first_session, 'user_agent') and first_session.user_agent:
+                    device_data['user_agent'] = first_session.user_agent
+                if hasattr(first_session, 'browser') and first_session.browser:
+                    device_data['browser'] = first_session.browser
+                if hasattr(first_session, 'os') and first_session.os:
+                    device_data['os'] = first_session.os
+                if hasattr(first_session, 'device_type') and first_session.device_type:
+                    device_data['device_type'] = first_session.device_type
+                if hasattr(first_session, 'screen_resolution') and first_session.screen_resolution:
+                    device_data['screen_resolution'] = first_session.screen_resolution
+                
+                if device_data:  # Only set if we have at least some data
+                    attendance.device_info = device_data
+                    updated = True
+                    logger.debug(f"Populated device info: {device_data.get('browser', 'N/A')} on {device_data.get('os', 'N/A')}")
+
+            # FIX #5: Calculate total idle time from all sessions
+            total_idle = timedelta(0)
+            for session in sessions:
+                # Try both possible field names
+                session_idle = getattr(session, 'total_idle_time', None) or getattr(session, 'idle_time', None)
+                if session_idle:
+                    total_idle += session_idle
+            
+            if total_idle > timedelta(0):
+                attendance.idle_time = total_idle
+                updated = True
+                logger.debug(f"Populated idle time: {total_idle}")
+
+            # FIX #1: Set location from most recent session - CORRECTED FIELD NAME
             if sessions:
-                # Handle location attribute safely - may not exist on UserSession model
-                session_location = getattr(sessions[-1], 'location', None)
-                attendance.location = session_location or 'Office'
+                # FIXED: Use 'location_type' instead of 'location'
+                last_session_ref = sessions[-1]
+                if hasattr(last_session_ref, 'location_type') and last_session_ref.location_type:
+                    # Use title() instead of capitalize() to handle multi-word locations
+                    attendance.location = last_session_ref.location_type.title()
+                    updated = True
+                    logger.debug(f"Set location to: {attendance.location}")
+                elif hasattr(last_session_ref, 'location_city') and last_session_ref.location_city:
+                    # If location_type not set but has city, consider it Remote
+                    attendance.location = 'Remote'
+                    updated = True
+                else:
+                    attendance.location = 'Office'
 
             # Auto-determine status based on sessions
             if attendance.status in ['Not Marked', 'Yet to Clock In']:
                 attendance.status = self._determine_status_from_sessions(attendance, sessions)
                 updated = True
 
+            # Restore weekend/holiday flags if they were set
+            if original_is_weekend:
+                attendance.is_weekend = True
+            if original_is_holiday:
+                attendance.is_holiday = True
+                if original_holiday_name:
+                    attendance.holiday_name = original_holiday_name
+
             if updated:
                 attendance.save()
-                self._invalidate_user_cache(attendance.user.pk, target_date)
+                self._invalidate_user_cache(attendance.user.pk, attendance.date)
 
             return updated
 
@@ -579,14 +666,14 @@ class AttendanceAutoMarkingService(BaseAttendanceService):
             return False
 
     def _determine_status_from_sessions(self, attendance: Attendance, sessions: List[UserSession]) -> str:
-        """Determine attendance status from session data"""
+        """Determine attendance status from session data - FIX #6: Calculate late_minutes BEFORE determining status"""
         if not sessions:
             return 'Absent' if self._should_mark_absent(attendance) else 'Yet to Clock In'
 
         # Has sessions, determine presence status
         first_session = min(sessions, key=lambda s: s.login_time)
 
-        # Check if late based on shift
+        # Check if late based on shift - CALCULATE late_minutes FIRST!
         if attendance.shift:
             shift_start_time = attendance.shift.start_time
             login_time = first_session.login_time.astimezone(self.ist).time()
@@ -598,9 +685,16 @@ class AttendanceAutoMarkingService(BaseAttendanceService):
             shift_start_minutes = shift_start_time.hour * 60 + shift_start_time.minute
             login_minutes = login_time.hour * 60 + login_time.minute
 
+            # FIX #6: Calculate late_minutes BEFORE returning status
             if login_minutes > (shift_start_minutes + grace_minutes):
+                attendance.late_minutes = login_minutes - shift_start_minutes
+                logger.debug(f"User late by {attendance.late_minutes} minutes")
                 return 'Present & Late'
+            else:
+                attendance.late_minutes = 0  # Not late
 
+        # Not late or no shift, just present
+        attendance.late_minutes = 0
         return 'Present'
 
     def _determine_presence_status(self, attendance: Attendance) -> str:
@@ -636,19 +730,23 @@ class AttendanceAutoMarkingService(BaseAttendanceService):
                 total_hours = duration.total_seconds() / 3600
                 attendance.total_hours = Decimal(str(round(total_hours, 2)))
 
-                # Calculate overtime if applicable
+                # FIX #2: Calculate overtime if applicable - CORRECTED FIELD NAME
                 if attendance.shift:
-                    # Handle duration attribute safely - may not exist on ShiftMaster model
-                    shift_duration = getattr(attendance.shift, 'duration', None)
-                    if shift_duration:
-                        shift_hours = shift_duration.total_seconds() / 3600
+                    # FIXED: Use 'shift_duration' instead of 'duration' (it's already in hours as Decimal)
+                    if hasattr(attendance.shift, 'shift_duration') and attendance.shift.shift_duration:
+                        shift_hours = float(attendance.shift.shift_duration)
                         if total_hours > shift_hours:
                             attendance.overtime_hours = Decimal(str(round(total_hours - shift_hours, 2)))
+                            logger.debug(f"Calculated overtime: {attendance.overtime_hours} hours")
+                        else:
+                            attendance.overtime_hours = Decimal('0.00')
                     else:
-                        # Fallback to default 8-hour shift if duration not available
+                        # Fallback to default 8-hour shift if shift_duration not available
                         default_shift_hours = 8.0
                         if total_hours > default_shift_hours:
                             attendance.overtime_hours = Decimal(str(round(total_hours - default_shift_hours, 2)))
+                        else:
+                            attendance.overtime_hours = Decimal('0.00')
 
         except Exception as e:
             logger.error(f"Error calculating time metrics for attendance {attendance.id}: {e}")
@@ -664,11 +762,10 @@ class AttendanceRegularizationService(BaseAttendanceService):
             with transaction.atomic():
                 attendance.regularization_status = 'Pending'
                 attendance.regularization_reason = reason
-                # These fields may not exist in the model, handle gracefully
-                if hasattr(attendance, 'regularization_requested_by'):
-                    attendance.regularization_requested_by = requested_by
-                if hasattr(attendance, 'regularization_requested_at'):
-                    attendance.regularization_requested_at = timezone.now()
+                attendance.regularization_requested_status = requested_status
+                # FIX #7: Now these fields exist in the model
+                attendance.regularization_requested_by = requested_by
+                attendance.regularization_requested_at = timezone.now()
                 attendance.save()
 
                 # Send notification to HR
@@ -690,23 +787,20 @@ class AttendanceRegularizationService(BaseAttendanceService):
             with transaction.atomic():
                 if action == 'approve':
                     attendance.regularization_status = 'Approved'
-                    # Handle regularization_requested_status safely - may not exist in model
-                    requested_status = getattr(attendance, 'regularization_requested_status', None)
-                    attendance.status = requested_status or attendance.status
+                    # FIX #7: Use the field directly now that it exists
+                    if attendance.regularization_requested_status:
+                        attendance.status = attendance.regularization_requested_status
                 elif action == 'reject':
                     attendance.regularization_status = 'Rejected'
 
-                # Handle regularization fields that may not exist in the model
-                if hasattr(attendance, 'regularization_processed_by'):
-                    attendance.regularization_processed_by = processed_by
-                if hasattr(attendance, 'regularization_processed_at'):
-                    attendance.regularization_processed_at = timezone.now()
-                if hasattr(attendance, 'regularization_remarks'):
-                    attendance.regularization_remarks = remarks
+                # FIX #7: Now these fields exist in the model
+                attendance.regularization_processed_by = processed_by
+                attendance.regularization_processed_at = timezone.now()
+                attendance.regularization_remarks = remarks
                 attendance.save()
 
                 # Notify employee
-                self._notify_employee_regularization_status(attendance, action)
+                self._notify_employee_regularization_status(attendance, action, processed_by)
 
                 return ServiceResult(
                     success=True,
@@ -731,20 +825,16 @@ class AttendanceRegularizationService(BaseAttendanceService):
 
             data = []
             for attendance in pending_requests:
-                # Handle regularization attributes safely - may not exist in model
-                requested_status = getattr(attendance, 'regularization_requested_status', None)
-                requested_by = getattr(attendance, 'regularization_requested_by', None)
-                requested_at = getattr(attendance, 'regularization_requested_at', None)
-
+                # FIX #7: Fields now exist in model, use directly
                 data.append({
                     'id': attendance.pk,
                     'user': attendance.user.get_full_name(),
                     'date': attendance.date,
                     'current_status': attendance.status,
-                    'requested_status': requested_status,
+                    'requested_status': attendance.regularization_requested_status,
                     'reason': attendance.regularization_reason,
-                    'requested_by': requested_by.get_full_name() if requested_by and hasattr(requested_by, 'get_full_name') else '',
-                    'requested_at': requested_at
+                    'requested_by': attendance.regularization_requested_by.get_full_name() if attendance.regularization_requested_by else '',
+                    'requested_at': attendance.regularization_requested_at
                 })
 
             return ServiceResult(success=True, data=data)
@@ -756,6 +846,7 @@ class AttendanceRegularizationService(BaseAttendanceService):
         """Notify HR about regularization request"""
         try:
             hr_users = User.objects.filter(groups__name='HR', is_active=True)
+            notification_sent = False
 
             for hr_user in hr_users:
                 subject = f"Attendance Regularization Request - {attendance.user.get_full_name()}"
@@ -776,6 +867,13 @@ class AttendanceRegularizationService(BaseAttendanceService):
                     recipient_list=[hr_user.email],
                     fail_silently=True
                 )
+                notification_sent = True
+            
+            # FIX #11: Set notification flag after successful send
+            if notification_sent:
+                attendance.is_hr_notified = True
+                attendance.save(update_fields=['is_hr_notified'])
+                
         except Exception as e:
             logger.error(f"Error sending HR notification: {e}")
 
@@ -783,13 +881,14 @@ class AttendanceRegularizationService(BaseAttendanceService):
         """Notify employee about regularization status"""
         try:
             subject = f"Attendance Regularization {action.title()} - {attendance.date}"
-            remarks = getattr(attendance, 'regularization_remarks', None)
+            # FIX #7: Use field directly now that it exists
             message = f"""
             Your attendance regularization request has been {action}d.
 
             Date: {attendance.date}
             Status: {attendance.status}
-            Remarks: {remarks or 'None'}
+            Remarks: {attendance.regularization_remarks or 'None'}
+            Processed by: {processed_by.get_full_name() if processed_by else 'HR'}
             """
 
             send_mail(
@@ -799,6 +898,11 @@ class AttendanceRegularizationService(BaseAttendanceService):
                 recipient_list=[attendance.user.email],
                 fail_silently=True
             )
+            
+            # FIX #11: Set notification flag after successful send
+            attendance.is_employee_notified = True
+            attendance.save(update_fields=['is_employee_notified'])
+            
         except Exception as e:
             logger.error(f"Error sending employee notification: {e}")
 

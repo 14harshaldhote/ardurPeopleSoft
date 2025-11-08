@@ -3951,6 +3951,46 @@ class Attendance(models.Model):
     )
     last_regularization_date = models.DateTimeField(null=True, blank=True)
 
+    # FIX #7: Additional regularization tracking fields
+    regularization_requested_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='regularization_requests_made',
+        help_text="User who requested the regularization"
+    )
+    regularization_requested_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When the regularization was requested"
+    )
+    regularization_processed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='regularization_requests_processed',
+        help_text="User who processed the regularization"
+    )
+    regularization_processed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When the regularization was processed"
+    )
+    regularization_remarks = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Admin remarks on regularization decision"
+    )
+    regularization_requested_status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        null=True,
+        blank=True,
+        help_text="Status requested during regularization"
+    )
+
     # Original values for audit trail
     original_clock_in_time = models.DateTimeField(null=True, blank=True)
     original_clock_out_time = models.DateTimeField(null=True, blank=True)
@@ -4026,7 +4066,10 @@ class Attendance(models.Model):
         # Store original values for audit trail
         if self.pk:
             try:
-                original = Attendance.objects.only('status', 'version', 'original_status').get(pk=self.pk)
+                original = Attendance.objects.only(
+                    'status', 'version', 'original_status', 
+                    'clock_in_time', 'clock_out_time'
+                ).get(pk=self.pk)
                 
                 # Optimistic locking check (unless explicitly skipped)
                 if 'skip_version_check' not in kwargs and self.version != original.version:
@@ -4039,6 +4082,13 @@ class Attendance(models.Model):
                 # Store original status if not already stored
                 if not self.original_status:
                     self.original_status = original.status
+                
+                # FIX #13: Store original timestamps if not already stored
+                if not self.original_clock_in_time and original.clock_in_time:
+                    self.original_clock_in_time = original.clock_in_time
+                
+                if not self.original_clock_out_time and original.clock_out_time:
+                    self.original_clock_out_time = original.clock_out_time
                 
                 # Increment version
                 self.version = original.version + 1
