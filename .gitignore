@@ -173,3 +173,12 @@ __pycache__/
 __pycache__/
 *.pyc
 logs/*.log
+__pycache__/
+*.pyc
+logs/*.log
+__pycache__/
+*.pyc
+logs/*.log
+__pycache__/
+*.pyc
+logs/*.log
