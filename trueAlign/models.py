@@ -4305,9 +4305,21 @@ class Attendance(models.Model):
         """Validate attendance data"""
         errors = {}
 
-        # Validate clock times
+        # Validate clock times (handle timezone-aware comparison)
         if self.clock_in_time and self.clock_out_time:
-            if self.clock_out_time <= self.clock_in_time:
+            # Ensure both are timezone-aware for comparison
+            clock_in = self.clock_in_time
+            clock_out = self.clock_out_time
+            
+            # If one is naive and one is aware, make both aware in IST
+            IST = pytz.timezone('Asia/Kolkata')
+            if timezone.is_naive(clock_in):
+                clock_in = timezone.make_aware(clock_in, IST)
+            if timezone.is_naive(clock_out):
+                clock_out = timezone.make_aware(clock_out, IST)
+            
+            # Now compare in the same timezone
+            if clock_out <= clock_in:
                 errors['clock_out_time'] = "Clock out time must be after clock in time"
 
         # Validate dates (allow today, prevent future dates)

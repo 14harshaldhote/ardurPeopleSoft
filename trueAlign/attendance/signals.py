@@ -118,20 +118,24 @@ def invalidate_signal_cache(user_id: int, target_date: Optional[date] = None):
 
 def _defer_session_processing(instance: UserSession, created: bool) -> bool:
     """Handle session processing deferral when in transaction. Returns True if deferred."""
-    if not transaction.get_connection().in_atomic_block:
-        return False
-
-    user = instance.user  # type: ignore
-    username = getattr(user, 'username', 'unknown')
-    logger.debug(f"Deferring session processing for {username} - in transaction")
-
-    deferred_key = f'deferred_session_{instance.id}'
-    cache.set(deferred_key, {
-        'instance_id': instance.id,
-        'created': created,
-        'timestamp': timezone.now().isoformat()
-    }, 300)
-    return True
+    # 🔥 FIX: DISABLE DEFERRAL - Process signals immediately!
+    # The deferral was preventing attendance from being marked on login
+    # Sessions are created in transactions, but we need immediate processing
+    return False
+    
+    # OLD DEFERRAL LOGIC (DISABLED):
+    # if not transaction.get_connection().in_atomic_block:
+    #     return False
+    # user = instance.user
+    # username = getattr(user, 'username', 'unknown')
+    # logger.debug(f"Deferring session processing for {username} - in transaction")
+    # deferred_key = f'deferred_session_{instance.id}'
+    # cache.set(deferred_key, {
+    #     'instance_id': instance.id,
+    #     'created': created,
+    #     'timestamp': timezone.now().isoformat()
+    # }, 300)
+    # return True
 
 
 def _setup_session_processing(instance: UserSession, operation_type: str, start_time) -> Optional[str]:
@@ -165,7 +169,8 @@ def _process_session_login(integration_service, user, instance: UserSession, ope
 
 def _process_session_logout(integration_service, user, instance: UserSession):
     """Process session logout if applicable."""
-    if not (instance.logout_time and instance.ended_at):
+    # 🔥 FIX: Only check logout_time, not ended_at (ended_at might be NULL)
+    if not instance.logout_time:
         return
 
     try:

@@ -1269,15 +1269,36 @@ def initialize_attendance_system() -> ServiceResult:
     def process_session_logout(self, user: User, session: UserSession) -> ServiceResult:
         """Process session logout and update attendance"""
         try:
-            logout_date = session.logout_time.astimezone(self.ist).date() if session.logout_time else self.today
+            # 🔥 FIX: Normalize logout_time to IST timezone
+            logout_time_ist = session.logout_time.astimezone(self.ist) if session.logout_time else None
+            logout_date = logout_time_ist.date() if logout_time_ist else self.today
 
             try:
                 attendance = Attendance.objects.get(user=user, date=logout_date)
 
-                # Update logout time if this is the last session or later than current
-                if not attendance.last_session or (session.logout_time and session.logout_time > attendance.clock_out_time):
-                    attendance.last_session = session
-                    attendance.clock_out_time = session.logout_time
+                # 🔥 FIX: Normalize both times to IST before comparison
+                if logout_time_ist:
+                    clock_in_ist = attendance.clock_in_time.astimezone(self.ist) if attendance.clock_in_time else None
+                    clock_out_ist = attendance.clock_out_time.astimezone(self.ist) if attendance.clock_out_time else None
+                    
+                    # Update logout time if no last_session OR no clock_out OR this logout is later
+                    if not attendance.last_session or not clock_out_ist or logout_time_ist > clock_out_ist:
+                        attendance.last_session = session
+                        attendance.clock_out_time = logout_time_ist  # Store in IST
+                        logger.info(f"✅ UPDATED clock_out for {user.username} to {logout_time_ist.strftime('%Y-%m-%d %H:%M:%S %Z')}")
+
+                    # Calculate total hours if we have both clock_in and clock_out
+                    if clock_in_ist and attendance.clock_out_time:
+                        clock_out_normalized = attendance.clock_out_time.astimezone(self.ist)
+                        time_diff = clock_out_normalized - clock_in_ist
+                        total_seconds = time_diff.total_seconds()
+                        
+                        # Only set positive hours
+                        if total_seconds > 0:
+                            attendance.total_hours = Decimal(str(round(total_seconds / 3600, 2)))
+                            logger.info(f"✅ CALCULATED total_hours for {user.username}: {attendance.total_hours}h")
+                        else:
+                            logger.warning(f"⚠️ Negative time difference for {user.username}: {total_seconds}s - skipping total_hours")
 
                 attendance.save()
                 self._invalidate_user_cache(user.pk, logout_date)

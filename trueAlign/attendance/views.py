@@ -265,9 +265,22 @@ def _handle_automatic_attendance_update(user, attendance_today):
 def _update_attendance_from_sessions(attendance):
     """Update attendance record automatically from session data"""
     try:
-        # Get all sessions for this user on this date
+        # 🔥 FIX: Use timezone-aware date range instead of login_time__date
+        from datetime import datetime
+        import pytz
+        
+        IST = pytz.timezone('Asia/Kolkata')
+        target_date = attendance.date
+        
+        # Create IST date range for the target date
+        start_of_day = IST.localize(datetime.combine(target_date, datetime.min.time()))
+        end_of_day = IST.localize(datetime.combine(target_date, datetime.max.time()))
+        
+        # Get all sessions for this user on this date (timezone-aware)
         user_sessions = UserSession.objects.filter(
-            user=attendance.user, login_time__date=attendance.date
+            user=attendance.user,
+            login_time__gte=start_of_day,
+            login_time__lte=end_of_day
         ).order_by("login_time")
 
         if user_sessions.exists():
@@ -277,8 +290,10 @@ def _update_attendance_from_sessions(attendance):
             auto_service._update_attendance_with_sessions(
                 attendance, list(user_sessions)
             )
+            logger.info(f"Updated attendance from {user_sessions.count()} sessions for {attendance.user.username}")
             return True
 
+        logger.debug(f"No sessions found for {attendance.user.username} on {target_date}")
         return False
     except Exception as e:
         logger.error(f"Error updating attendance from sessions: {e}")

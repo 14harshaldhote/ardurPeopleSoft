@@ -1,479 +1,223 @@
 {% extends 'base.html' %}
 {% load static %}
-
 {% block title %}My Attendance - Ardur Home{% endblock %}
 
 {% block content %}
-<div class="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-6 w-full max-w-full overflow-x-hidden" x-data="attendanceDashboard()" x-init="init()">
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6" x-data="attendanceDashboard()" x-init="init()">
     
-    <!-- Glassmorphism Header with Gradient Orbs -->
-    <div class="relative overflow-hidden mb-6 rounded-[16px] sm:rounded-[20px] lg:rounded-[28px] bg-white/10 border border-white/40 shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:scale-[1.005] transition-all duration-500">
-        
-        <!-- Gradient Background -->
-        <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-white/10 rounded-[28px]"></div>
-        
-        <!-- Soft Orbs -->
-        <div class="absolute inset-0 overflow-hidden">
-            <div class="absolute -top-8 sm:-top-16 -left-8 sm:-left-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-br from-teal-300/30 to-teal-400/10 rounded-full"></div>
-            <div class="absolute -bottom-8 sm:-bottom-16 -right-8 sm:-right-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-tr from-rose-400/30 to-rose-500/10 rounded-full"></div>
-            <div class="absolute top-1/2 left-1/2 w-24 h-24 sm:w-48 sm:h-48 bg-gradient-to-br from-sky-300/30 to-sky-400/10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+    <!-- Header -->
+    <div class="relative overflow-hidden rounded-2xl bg-white/20 backdrop-blur-xl border border-white/30 shadow-lg mb-8 transition-all">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-white/10"></div>
+
+        <div class="relative p-6 sm:p-8">
+           
+
+            <!-- Welcome -->
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+               <!-- Left Section -->
+    <div class="space-y-3">
+        <!-- Title + Username -->
+        <div>
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight">
+                Attendance
+            </h1>
+            <p class="text-lg sm:text-xl font-semibold text-gray-700 mt-1">
+                <span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    {{ user.get_full_name|default:user.username }}
+                </span>
+            </p>
         </div>
 
-        <!-- Header Content -->
-        <div class="relative p-4 sm:p-6 md:p-8 lg:p-12 z-10 w-full">
-            
-            <!-- Breadcrumb -->
-            <nav class="flex mb-4 text-xs sm:text-sm backdrop-blur-sm bg-white/20 rounded-lg px-3 py-2 w-fit">
-                <a href="{% url 'core:dashboard' %}" class="text-blue-700 hover:text-blue-900 transition-colors font-medium">
-                    <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                    </svg>
-                    Home
-                </a>
-                <span class="mx-2 text-zinc-500">/</span>
-                <span class="text-zinc-900 font-semibold">My Attendance</span>
-            </nav>
+        <!-- Info Tags -->
+        <div class="flex flex-wrap items-center gap-3 text-sm font-medium text-gray-800">
+            <!-- Department -->
+            <div class="flex items-center gap-2 bg-white/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20 shadow-sm hover:bg-white/60 transition-all">
+                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2H6a2 2 0 00-2 2v2"/>
+                </svg>
+                <span>{{ user.profile.department|default:"Employee" }}</span>
+            </div>
 
-            <!-- Welcome Section -->
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                <div>
-                    <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-zinc-900 mb-2 tracking-tight">
-                        <span x-text="greeting === 'morning' ? 'Good Morning' : greeting === 'afternoon' ? 'Good Afternoon' : 'Good Evening'"></span>, 
-                        <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{{ user.get_full_name|default:user.username }}</span>!
-                    </h1>
-                    
-                    <div class="flex flex-wrap items-center gap-4 text-xs sm:text-sm">
-                        <div class="flex items-center gap-2 backdrop-blur-sm bg-white/20 px-3 py-1.5 rounded-lg border border-white/10">
-                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                            </svg>
-                            <span class="font-medium text-zinc-800">{{ user.profile.department|default:"Employee" }}</span>
-                        </div>
-                        
-                        <div class="flex items-center gap-2 backdrop-blur-sm bg-white/20 px-3 py-1.5 rounded-lg border border-white/10">
-                            <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                            <span class="font-medium text-zinc-800">Active Session</span>
-                        </div>
-                        
-                        <div class="flex items-center gap-2 backdrop-blur-sm bg-white/20 px-3 py-1.5 rounded-lg border border-white/10">
-                            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                            <span class="font-medium text-zinc-800" x-text="currentDate"></span>
-                        </div>
-                    </div>
-                </div>
+            <!-- Active Session -->
+            <div class="flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100 shadow-sm hover:bg-emerald-100 transition-all">
+                <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                <span class="text-emerald-700">Active Session</span>
+            </div>
 
-                <!-- Quick Actions -->
-                <div class="flex flex-wrap gap-3">
-                    <a href="{% url 'attendance:calendar' %}" 
-                       class="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:scale-105 transition-all duration-200 shadow-md font-medium">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
-                        Calendar
-                    </a>
-                    
-                    <a href="{% url 'attendance:search' %}" 
-                       class="inline-flex items-center px-4 py-2.5 backdrop-blur-sm bg-white/30 rounded-lg border border-white/20 hover:bg-white/50 transition-all font-medium text-zinc-800">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                        Search
-                    </a>
-                </div>
+            <!-- Current Date -->
+            <div class="flex items-center gap-2 bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-100 shadow-sm hover:bg-purple-100 transition-all">
+                <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14V7H5v14z"/>
+                </svg>
+                <span x-text="currentDate" class="text-purple-800"></span>
             </div>
         </div>
     </div>
 
-    <!-- Main Content Grid -->
-    <div class="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6">
-        
-        <!-- LEFT: Today's Status - Large Interactive Card -->
-        <div class="xl:col-span-8 space-y-4 sm:space-y-6">
-            
-            <!-- Live Status Card with Real-time Clock -->
-            <div class="relative overflow-hidden rounded-[20px] bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-[2px] shadow-2xl">
-                <div class="relative bg-white rounded-[18px] p-6 sm:p-8 h-full backdrop-blur-xl">
-                    
-                    <!-- Header with Live Clock -->
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-                        <div>
-                            <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-1">Today's Session</h2>
-                            <p class="text-sm text-gray-600">{{ today|date:"l, F d, Y" }}</p>
-                        </div>
-                        
-                        <!-- Live Clock Display -->
-                        <div class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl px-6 py-4 border-2 border-blue-100">
-                            <div class="text-center">
-                                <div class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent" x-text="currentTime"></div>
-                                <div class="text-xs font-medium text-gray-600 mt-1">Live Time</div>
-                            </div>
-                        </div>
-                    </div>
+    <!-- Right Buttons -->
+    <div class="flex flex-wrap gap-3">
+        <a href="{% url 'attendance:calendar' %}"
+           class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow hover:scale-105 transition-all duration-200 font-medium">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M5 21h14V7H5v14z"/>
+            </svg>
+            Calendar
+        </a>
 
-                    {% if attendance_today %}
-                    <!-- Session Timeline Visualization -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                        
-                        <!-- Check In -->
-                        <div class="relative bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-5 border-2 border-green-200 hover:shadow-lg transition-all duration-300">
-                            <div class="absolute top-3 right-3">
-                                <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                            </div>
-                            <svg class="w-10 h-10 text-green-600 mb-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
-                            </svg>
-                            <div class="text-sm font-semibold text-green-800 mb-1">Session Started</div>
-                            <div class="text-2xl font-bold text-green-900">
-                                {% if attendance_today.clock_in_time %}
-                                    {{ attendance_today.clock_in_time|time:"g:i A" }}
-                                {% else %}
-                                    <span class="text-gray-400 text-lg">Not Started</span>
-                                {% endif %}
-                            </div>
-                        </div>
+        <a href="{% url 'attendance:search' %}"
+           class="inline-flex items-center px-5 py-2.5 backdrop-blur-md bg-white/40 text-gray-900 rounded-lg border border-white/30 hover:bg-white/60 shadow-sm transition-all font-medium">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0z"/>
+            </svg>
+            Search
+        </a>
+    </div>
+            </div>
+        </div>
+    </div>
 
-                        <!-- Duration -->
-                        <div class="relative bg-gradient-to-br from-blue-50 to-sky-50 rounded-2xl p-5 border-2 border-blue-200 hover:shadow-lg transition-all duration-300">
-                            <svg class="w-10 h-10 text-blue-600 mb-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <div class="text-sm font-semibold text-blue-800 mb-1">Total Hours</div>
-                            <div class="text-2xl font-bold text-blue-900">
-                                {% if attendance_today.total_hours %}
-                                    {{ attendance_today.total_hours|floatformat:1 }}h
-                                {% else %}
-                                    <span class="text-gray-400 text-lg">—</span>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <!-- Check Out -->
-                        <div class="relative bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-5 border-2 border-purple-200 hover:shadow-lg transition-all duration-300">
-                            <svg class="w-10 h-10 text-purple-600 mb-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                            </svg>
-                            <div class="text-sm font-semibold text-purple-800 mb-1">Session Ends</div>
-                            <div class="text-2xl font-bold text-purple-900">
-                                {% if attendance_today.clock_out_time %}
-                                    {{ attendance_today.clock_out_time|time:"g:i A" }}
-                                {% else %}
-                                    <span class="text-amber-600 text-lg">Active</span>
-                                {% endif %}
-                            </div>
-                        </div>
+    <!-- Content Grid -->
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        <!-- Left Section -->
+        <div class="xl:col-span-8 space-y-6">
+            <!-- Today's Session -->
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-extrabold text-gray-900">Today's Session</h2>
+                        <p class="text-gray-500 text-sm">{{ today|date:"l, F d, Y" }}</p>
                     </div>
-
-                    <!-- Status Badge & Quick Actions -->
-                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 rounded-2xl border-2 border-blue-100">
-                        <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md">
-                                {% if attendance_today.status == 'Present' %}
-                                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                                {% elif attendance_today.status == 'Absent' %}
-                                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                                {% else %}
-                                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                                {% endif %}
-                            </div>
-                            <div>
-                                <div class="text-sm font-medium text-gray-600">Current Status</div>
-                                <div class="text-lg font-bold text-gray-900">{{ attendance_today.status|default:"Not Marked" }}</div>
-                            </div>
-                        </div>
-                        
-                        <a href="{% url 'attendance:request_regularization_specific' attendance_today.id %}" 
-                           class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl hover:scale-105 transition-all duration-200 shadow-lg font-semibold">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                            </svg>
-                            Request Correction
-                        </a>
+                    <div class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl px-5 py-3 border border-blue-100 text-center">
+                        <div class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent" x-text="currentTime"></div>
+                        <div class="text-xs text-gray-600 mt-1">Live Time</div>
                     </div>
-                    {% else %}
-                    <!-- No Attendance Today -->
-                    <div class="text-center py-12">
-                        <svg class="w-20 h-20 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <h3 class="text-xl font-bold text-gray-900 mb-2">No Attendance Record</h3>
-                        <p class="text-gray-600">Your attendance will be automatically tracked when you log in.</p>
-                    </div>
-                    {% endif %}
                 </div>
+
+                {% if attendance_today %}
+                <!-- Simple 3-column Session Summary -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+                        <p class="text-sm text-green-800 font-semibold mb-1">Session Started</p>
+                        <p class="text-2xl font-bold text-green-900">
+                            {{ attendance_today.clock_in_time|time:"g:i A"|default:"—" }}
+                        </p>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
+                        <p class="text-sm text-blue-800 font-semibold mb-1">Total Hours</p>
+                        <p class="text-2xl font-bold text-blue-900">
+                            {{ attendance_today.total_hours|floatformat:1 }}h
+                        </p>
+                    </div>
+                    <div class="bg-purple-50 border border-purple-200 rounded-xl p-4 text-center">
+                        <p class="text-sm text-purple-800 font-semibold mb-1">Session Ends</p>
+                        <p class="text-2xl font-bold text-purple-900">
+                            {{ attendance_today.clock_out_time|time:"g:i A"|default:"Active" }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Status + Correction Button -->
+                <div class="flex flex-col sm:flex-row justify-between items-center mt-6 bg-blue-50 rounded-xl p-4 border border-blue-100">
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium">Current Status</p>
+                        <p class="text-lg font-bold text-gray-900">{{ attendance_today.status|default:"Not Marked" }}</p>
+                    </div>
+                    <a href="{% url 'attendance:request_regularization_specific' attendance_today.id %}"
+                       class="mt-3 sm:mt-0 inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:scale-105 transition shadow">
+                        Request Correction
+                    </a>
+                </div>
+                {% else %}
+                <div class="text-center py-10 text-gray-600">
+                    <svg class="w-16 h-16 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0z"/>
+                    </svg>
+                    <p>No attendance record yet today.</p>
+                </div>
+                {% endif %}
             </div>
 
-            <!-- Recent Attendance - Card Grid (Not Table!) -->
-            <div class="bg-white rounded-[20px] shadow-lg border border-gray-200 p-6 sm:p-8">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-xl sm:text-2xl font-extrabold text-gray-900 flex items-center gap-2">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                        </svg>
-                        Last 7 Days
-                    </h3>
-                    <a href="{% url 'attendance:calendar' %}" class="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors">
-                        View All →
-                    </a>
+            <!-- Last 7 Days -->
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-gray-900">Last 7 Days</h3>
+                    <a href="{% url 'attendance:calendar' %}" class="text-sm text-blue-600 hover:underline">View All →</a>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {% for record in recent_attendance %}
-                    <div class="relative group bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 border-2 border-gray-100 hover:border-blue-300 hover:shadow-lg transition-all duration-300">
-                        <!-- Date Badge -->
-                        <div class="absolute -top-3 -right-3 bg-gradient-to-br from-blue-500 to-purple-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
-                            {{ record.date|date:"M d" }}
+                    <div class="bg-gradient-to-br from-gray-50 to-white border border-gray-100 rounded-xl p-4 hover:shadow-md transition">
+                        <div class="flex justify-between items-center mb-2">
+                            <p class="font-semibold text-gray-700">{{ record.date|date:"l" }}</p>
+                            <span class="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">{{ record.date|date:"M d" }}</span>
                         </div>
-                        
-                        <!-- Status Icon -->
-                        <div class="mb-3">
-                            {% if record.status == 'Present' %}
-                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                                </svg>
-                            </div>
-                            {% elif record.status == 'Absent' %}
-                            <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                                </svg>
-                            </div>
-                            {% elif 'Late' in record.status %}
-                            <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
-                                <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                                </svg>
-                            </div>
-                            {% else %}
-                            <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                </svg>
-                            </div>
-                            {% endif %}
-                        </div>
-
-                        <!-- Day Name -->
-                        <div class="text-sm font-semibold text-gray-500 mb-1">{{ record.date|date:"l" }}</div>
-                        
-                        <!-- Status -->
-                        <div class="text-lg font-bold text-gray-900 mb-3">{{ record.status }}</div>
-                        
-                        <!-- Time Details -->
-                        <div class="space-y-1 text-xs text-gray-600">
-                            <div class="flex justify-between">
-                                <span>In:</span>
-                                <span class="font-semibold">{{ record.clock_in_time|time:"g:i A"|default:"—" }}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span>Out:</span>
-                                <span class="font-semibold">{{ record.clock_out_time|time:"g:i A"|default:"—" }}</span>
-                            </div>
+                        <p class="text-lg font-bold text-gray-900">{{ record.status }}</p>
+                        <div class="text-sm text-gray-600 mt-2 space-y-1">
+                            <div class="flex justify-between"><span>In:</span><span>{{ record.clock_in_time|time:"g:i A"|default:"—" }}</span></div>
+                            <div class="flex justify-between"><span>Out:</span><span>{{ record.clock_out_time|time:"g:i A"|default:"—" }}</span></div>
                             {% if record.total_hours %}
-                            <div class="flex justify-between pt-1 border-t border-gray-200">
-                                <span>Total:</span>
-                                <span class="font-bold text-blue-600">{{ record.total_hours|floatformat:1 }}h</span>
-                            </div>
+                            <div class="flex justify-between border-t border-gray-200 pt-1"><span>Total:</span><span class="text-blue-600 font-semibold">{{ record.total_hours|floatformat:1 }}h</span></div>
                             {% endif %}
                         </div>
                     </div>
                     {% empty %}
-                    <div class="col-span-full text-center py-8">
-                        <svg class="w-16 h-16 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        <p class="text-gray-500 font-medium">No recent attendance records</p>
-                    </div>
+                    <p class="col-span-full text-center text-gray-500 py-8">No recent attendance records.</p>
                     {% endfor %}
                 </div>
             </div>
         </div>
-        
-        <!-- RIGHT: Monthly Stats & Quick Actions -->
-        <div class="xl:col-span-4 space-y-4 sm:space-y-6">
-            
-            <!-- Monthly Performance Card with Circular Progress -->
-            <div class="bg-white rounded-[20px] shadow-lg border border-gray-200 p-6 sm:p-8">
-                <h3 class="text-xl font-extrabold text-gray-900 mb-6 flex items-center gap-2">
-                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                    </svg>
-                    This Month
-                </h3>
 
-                <!-- Circular Progress Indicator -->
-                <div class="relative flex items-center justify-center mb-8">
-                    <svg class="transform -rotate-90 w-40 h-40">
-                        <circle cx="80" cy="80" r="70" stroke="#E5E7EB" stroke-width="12" fill="none"/>
-                        <circle cx="80" cy="80" r="70" stroke="url(#gradient)" stroke-width="12" fill="none" 
-                                stroke-dasharray="440" 
-                                style="stroke-dashoffset: calc(440 - (440 * {{ monthly_stats.attendance_rate|default:0 }} / 100));" 
-                                stroke-linecap="round" class="transition-all duration-1000"/>
-                        <defs>
-                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
-                                <stop offset="100%" style="stop-color:#8B5CF6;stop-opacity:1" />
-                            </linearGradient>
-                        </defs>
-                    </svg>
-                    <div class="absolute text-center">
-                        <div class="text-4xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                            {{ monthly_stats.attendance_rate|floatformat:0 }}%
-                        </div>
-                        <div class="text-xs font-medium text-gray-600 mt-1">Attendance</div>
+        <!-- Right Section -->
+        <div class="xl:col-span-4 space-y-6">
+            <!-- Monthly Stats -->
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">This Month</h3>
+                <div class="text-center mb-6">
+                    <div class="text-4xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                        {{ monthly_stats.attendance_rate|floatformat:0 }}%
                     </div>
+                    <p class="text-xs text-gray-500 mt-1">Attendance Rate</p>
                 </div>
-
-                <!-- Stats Grid -->
-                <div class="grid grid-cols-2 gap-3 mb-6">
-                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border-2 border-green-200">
-                        <svg class="w-8 h-8 text-green-600 mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <div class="text-2xl font-bold text-green-900">{{ monthly_stats.present_days }}</div>
-                        <div class="text-xs font-medium text-green-700">Present Days</div>
+                <div class="grid grid-cols-2 gap-3 text-center">
+                    <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+                        <p class="text-green-900 font-bold text-lg">{{ monthly_stats.present_days }}</p>
+                        <p class="text-xs text-green-700">Present</p>
                     </div>
-                    
-                    <div class="bg-gradient-to-br from-red-50 to-rose-50 rounded-xl p-4 border-2 border-red-200">
-                        <svg class="w-8 h-8 text-red-600 mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <div class="text-2xl font-bold text-red-900">{{ monthly_stats.absent_days }}</div>
-                        <div class="text-xs font-medium text-red-700">Absent Days</div>
+                    <div class="bg-red-50 border border-red-200 rounded-xl p-4">
+                        <p class="text-red-900 font-bold text-lg">{{ monthly_stats.absent_days }}</p>
+                        <p class="text-xs text-red-700">Absent</p>
                     </div>
-                    
-                    <div class="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-xl p-4 border-2 border-yellow-200">
-                        <svg class="w-8 h-8 text-yellow-600 mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <div class="text-2xl font-bold text-yellow-900">{{ monthly_stats.late_days }}</div>
-                        <div class="text-xs font-medium text-yellow-700">Late Arrivals</div>
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                        <p class="text-yellow-900 font-bold text-lg">{{ monthly_stats.late_days }}</p>
+                        <p class="text-xs text-yellow-700">Late</p>
                     </div>
-                    
-                    <div class="bg-gradient-to-br from-blue-50 to-sky-50 rounded-xl p-4 border-2 border-blue-200">
-                        <svg class="w-8 h-8 text-blue-600 mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <div class="text-2xl font-bold text-blue-900">{{ monthly_stats.total_hours|floatformat:0 }}h</div>
-                        <div class="text-xs font-medium text-blue-700">Total Hours</div>
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                        <p class="text-blue-900 font-bold text-lg">{{ monthly_stats.total_hours|floatformat:0 }}h</p>
+                        <p class="text-xs text-blue-700">Hours</p>
                     </div>
-                </div>
-
-                <!-- View Report Button -->
-                <a href="{% url 'attendance:report' %}" 
-                   class="w-full inline-flex items-center justify-center px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:scale-105 transition-all duration-200 shadow-lg font-semibold">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    View Full Report
-                </a>
-            </div>
-
-            <!-- Pending Regularizations Alert -->
-            {% if pending_regularizations > 0 %}
-            <div class="relative overflow-hidden bg-gradient-to-br from-amber-400 via-orange-500 to-red-500 rounded-[20px] shadow-xl p-6">
-                <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-                <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
-                
-                <div class="relative">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h4 class="text-white font-bold text-lg">Pending Requests</h4>
-                            <p class="text-white/80 text-sm">Needs your attention</p>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white/20 backdrop-blur-sm rounded-xl p-4 mb-4">
-                        <div class="text-5xl font-extrabold text-white mb-1">{{ pending_regularizations }}</div>
-                        <div class="text-white/90 text-sm font-medium">
-                            Regularization {% if pending_regularizations == 1 %}request{% else %}requests{% endif %} awaiting approval
-                        </div>
-                    </div>
-                    
-                    <button onclick="window.location.href='{% url 'attendance:request_regularization' %}'" 
-                            class="w-full bg-white text-orange-600 px-4 py-3 rounded-xl font-bold hover:scale-105 transition-all duration-200 shadow-lg">
-                        View Requests
-                    </button>
                 </div>
             </div>
-            {% endif %}
 
-            <!-- Smart Quick Actions -->
-            <div class="bg-white rounded-[20px] shadow-lg border border-gray-200 p-6">
-                <h3 class="text-lg font-extrabold text-gray-900 mb-4 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                    </svg>
-                    Quick Actions
-                </h3>
-
-                <div class="space-y-2">
-                    <a href="{% url 'attendance:request_regularization' %}" 
-                       class="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-sky-50 rounded-lg hover:shadow-md transition-all duration-200 border border-blue-100 group">
-                        <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                            </svg>
-                        </div>
-                        <div class="flex-1">
-                            <div class="font-semibold text-gray-900 text-sm">Request Correction</div>
-                            <div class="text-xs text-gray-600">Fix attendance errors</div>
-                        </div>
-                        <svg class="w-5 h-5 text-blue-600 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-                        </svg>
+            <!-- Quick Actions -->
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
+                <div class="space-y-3">
+                    <a href="{% url 'attendance:request_regularization' %}" class="block px-4 py-3 bg-blue-50 border border-blue-100 rounded-lg hover:shadow transition text-blue-700 font-medium">
+                        Request Correction
                     </a>
-
-                    <a href="{% url 'attendance:export_csv' %}" 
-                       class="flex items-center gap-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg hover:shadow-md transition-all duration-200 border border-green-100 group">
-                        <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                        </div>
-                        <div class="flex-1">
-                            <div class="font-semibold text-gray-900 text-sm">Download Report</div>
-                            <div class="text-xs text-gray-600">Export as CSV</div>
-                        </div>
-                        <svg class="w-5 h-5 text-green-600 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-                        </svg>
+                    <a href="{% url 'attendance:export_csv' %}" class="block px-4 py-3 bg-green-50 border border-green-100 rounded-lg hover:shadow transition text-green-700 font-medium">
+                        Download Report
                     </a>
-
-                    <a href="{% url 'attendance:search' %}" 
-                       class="flex items-center gap-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg hover:shadow-md transition-all duration-200 border border-purple-100 group">
-                        <div class="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                            </svg>
-                        </div>
-                        <div class="flex-1">
-                            <div class="font-semibold text-gray-900 text-sm">Search Records</div>
-                            <div class="text-xs text-gray-600">Find attendance</div>
-                        </div>
-                        <svg class="w-5 h-5 text-purple-600 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-                        </svg>
+                    <a href="{% url 'attendance:search' %}" class="block px-4 py-3 bg-purple-50 border border-purple-100 rounded-lg hover:shadow transition text-purple-700 font-medium">
+                        Search Records
                     </a>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
 <!-- Javascript -->
 <script>
     function getCookie(name) {
