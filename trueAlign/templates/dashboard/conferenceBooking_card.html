@@ -1,14 +1,14 @@
 <!-- Conference Room Booking Dashboard Card - Real-time Data -->
 {% if featured_room %}
 <div
-    class="backdrop-blur-xl bg-white/20 p-3 sm:p-4 lg:p-6 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner hover:bg-white/25 transition-all duration-300"
+    class="backdrop-blur-xl bg-white/20 p-4 rounded-[16px] border border-white/10 shadow-inner hover:bg-white/25 transition-all duration-300"
 >
     <div
-        class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 sm:mb-4 lg:mb-6 gap-3 sm:gap-0"
+        class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2"
     >
         <div class="flex items-center gap-2 sm:gap-3">
             <div
-                class="p-2 sm:p-3 backdrop-blur-sm bg-white/30 rounded-lg sm:rounded-xl border border-white/20"
+                class="p-2 backdrop-blur-sm bg-white/30 rounded-lg border border-white/20"
             >
                 <svg
                     class="h-6 w-6 text-blue-700"
@@ -26,7 +26,7 @@
             </div>
             <div>
                 <h3
-                    class="text-sm sm:text-base lg:text-lg font-bold text-zinc-900 mb-0"
+                    class="text-base font-bold text-zinc-900 mb-0"
                 >
                     Conference Rooms
                 </h3>
@@ -59,15 +59,15 @@
     </div>
 
     <!-- Current Status Section -->
-    <div class="mb-3 sm:mb-4 lg:mb-6">
+    <div class="mb-3">
         <h4 class="text-xs sm:text-sm font-bold text-zinc-700 mb-2 sm:mb-3">
             Current Status
         </h4>
         <div
-            class="backdrop-blur-sm bg-white/30 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-white/20 hover:bg-white/40 transition-all duration-200"
+            class="backdrop-blur-sm bg-white/30 p-3 rounded-lg border border-white/20 hover:bg-white/40 transition-all duration-200"
         >
             <div
-                class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 sm:mb-3 gap-2 sm:gap-0"
+                class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-2 sm:gap-0"
             >
                 <div class="flex items-center gap-1 sm:gap-2">
                     {% if is_currently_free %}
@@ -110,7 +110,7 @@
                 <span class="text-xs text-zinc-500">Until {{ free_until|date:"g:i A" }}</span>
                 {% endif %}
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+            <div class="grid grid-cols-2 gap-2">
                 <div class="text-center">
                     <div
                         class="flex items-center justify-center gap-0.5 sm:gap-1 mb-1"
@@ -167,14 +167,14 @@
 
     <!-- Next Booking Section -->
     {% if next_booking %}
-    <div class="mb-3 sm:mb-4 lg:mb-6">
+    <div class="mb-3">
         <h4 class="text-xs sm:text-sm font-bold text-zinc-700 mb-2 sm:mb-3">
             Next Booking
         </h4>
         <div
-            class="backdrop-blur-sm bg-amber-500/20 border border-amber-500/30 p-3 sm:p-4 rounded-lg sm:rounded-xl hover:bg-amber-500/30 transition-all duration-200"
+            class="backdrop-blur-sm bg-amber-500/20 border border-amber-500/30 p-3 rounded-lg hover:bg-amber-500/30 transition-all duration-200"
         >
-            <div class="flex items-start gap-2 sm:gap-3">
+            <div class="flex items-start gap-2">
                 <div
                     class="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center flex-shrink-0"
                 >
@@ -218,12 +218,12 @@
         </div>
     </div>
     {% else %}
-    <div class="mb-3 sm:mb-4 lg:mb-6">
+    <div class="mb-3">
         <h4 class="text-xs sm:text-sm font-bold text-zinc-700 mb-2 sm:mb-3">
             Next Booking
         </h4>
         <div
-            class="backdrop-blur-sm bg-blue-500/10 border border-blue-500/20 p-3 sm:p-4 rounded-lg sm:rounded-xl text-center"
+            class="backdrop-blur-sm bg-blue-500/10 border border-blue-500/20 p-2.5 rounded-lg text-center"
         >
             <p class="text-xs sm:text-sm text-zinc-600 mb-0">
                 No upcoming bookings for this room
@@ -233,10 +233,10 @@
     {% endif %}
 
     <!-- Action Buttons -->
-    <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+    <div class="flex flex-col sm:flex-row gap-2">
         <a
             href="{% url 'conference:booking_create_room' featured_room.id %}"
-            class="flex-1 inline-flex items-center justify-center px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-lg hover:scale-105 text-sm"
+            class="flex-1 inline-flex items-center justify-center px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-md text-sm"
         >
             <svg
                 class="w-4 h-4 mr-2"
@@ -255,7 +255,7 @@
         </a>
         <a
             href="{% url 'conference:room_detail' featured_room.id %}"
-            class="inline-flex items-center justify-center px-3 sm:px-4 py-2 sm:py-3 backdrop-blur-sm bg-white/30 text-zinc-700 rounded-lg hover:bg-white/40 transition-all duration-200 font-medium border border-white/20"
+            class="inline-flex items-center justify-center px-4 py-2 backdrop-blur-sm bg-white/30 text-zinc-700 rounded-lg hover:bg-white/40 transition-all duration-200 font-medium border border-white/20"
             title="View Room Details"
         >
             <svg
@@ -281,7 +281,7 @@
 
     <!-- Footer Info -->
     <div
-        class="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-white/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0"
+        class="mt-3 pt-3 border-t border-white/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0"
     >
         <div class="text-xs text-zinc-600">
             <span>Today's bookings: </span>
@@ -311,7 +311,7 @@
 {% else %}
 <!-- No Room Available -->
 <div
-    class="backdrop-blur-xl bg-white/20 p-3 sm:p-4 lg:p-6 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner text-center"
+    class="backdrop-blur-xl bg-white/20 p-4 rounded-[16px] border border-white/10 shadow-inner text-center"
 >
     <svg
         class="w-12 h-12 mx-auto text-gray-400 mb-3"

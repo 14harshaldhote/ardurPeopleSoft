@@ -1,8 +1,9 @@
 <div
-    class="backdrop-blur-xl bg-white/20 p-3 sm:p-4 lg:p-6 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner hover:bg-white/25 transition-all duration-300"
+    class="backdrop-blur-xl bg-white/20 p-4 rounded-[16px] border border-white/10 shadow-inner hover:bg-white/25 transition-all duration-300"
 >
+    <!-- Header -->
     <div
-        class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 sm:mb-4 lg:mb-6 gap-3 sm:gap-0"
+        class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2"
     >
         <div class="flex items-center gap-2 sm:gap-3">
             <div
@@ -32,17 +33,32 @@
                 <div
                     class="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2 mt-1"
                 >
-                    <span
-                        class="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-700 border border-emerald-500/30"
-                    >
-                        Present
-                    </span>
-                    <span class="text-xs text-zinc-600">Active Session</span>
+                    {% if attendance_today %}
+                    {% if attendance_today.status == 'Present' or attendance_today.status == 'Present & Late' %}
+                        <span class="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-700 border border-emerald-500/30">
+                            {{ attendance_today.status }}
+                        </span>
+                    {% elif attendance_today.status == 'Absent' %}
+                        <span class="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-700 border border-red-500/30">
+                            {{ attendance_today.status }}
+                        </span>
+                    {% elif attendance_today.status == 'Weekend' or attendance_today.status == 'Holiday' %}
+                        <span class="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-700 border border-purple-500/30">
+                            {{ attendance_today.status }}
+                        </span>
+                    {% else %}
+                        <span class="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-gray-500/20 text-gray-700 border border-gray-500/30">
+                            {{ attendance_today.status }}
+                        </span>
+                    {% endif %}
+                {% else %}
+                    <span class="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-gray-500/20 text-gray-700 border border-gray-500/30">Not Marked</span>
+                {% endif %}
                 </div>
             </div>
         </div>
         <a
-            href="#"
+            href="{% url 'attendance:dashboard' %}"
             class="text-xs sm:text-sm text-blue-700 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1 mt-2 sm:mt-0"
         >
             Details
@@ -64,7 +80,7 @@
 
     <!-- Time In/Out Section -->
     <div
-        class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-4 lg:mb-6"
+        class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3"
     >
         <div
             class="backdrop-blur-sm bg-white/30 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-white/20 hover:bg-white/40 transition-all duration-200"
@@ -93,9 +109,19 @@
             <p
                 class="text-sm sm:text-base lg:text-lg font-bold text-zinc-800 mb-0"
             >
-                09:15 AM
+                {% if attendance_today and attendance_today.clock_in_time %}
+                    {{ attendance_today.clock_in_time|time:"g:i A" }}
+                {% else %}
+                    <span class="text-gray-400">Not Started</span>
+                {% endif %}
             </p>
-            <p class="text-xs text-zinc-500">On time</p>
+            <p class="text-xs text-zinc-500">
+                {% if attendance_today.late_minutes > 0 %}
+                    {{ attendance_today.late_minutes }} min late
+                {% else %}
+                    On time
+                {% endif %}
+            </p>
         </div>
         <div
             class="backdrop-blur-sm bg-white/30 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-white/20 hover:bg-white/40 transition-all duration-200"
@@ -124,29 +150,39 @@
             <p
                 class="text-sm sm:text-base lg:text-lg font-bold text-zinc-800 mb-0"
             >
-                --:-- --
+                {% if attendance_today and attendance_today.clock_out_time %}
+                    {{ attendance_today.clock_out_time|time:"g:i A" }}
+                {% else %}
+                    <span class="text-gray-400">--:-- --</span>
+                {% endif %}
             </p>
-            <p class="text-xs text-zinc-500">In progress</p>
+            <p class="text-xs text-zinc-500">
+                {% if attendance_today.clock_out_time %}
+                    Completed
+                {% else %}
+                    In progress
+                {% endif %}
+            </p>
         </div>
     </div>
 
     <!-- Monthly Stats -->
-    <div class="mb-3 sm:mb-4 lg:mb-6">
+    <div class="mb-3">
         <div
-            class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 sm:mb-3 lg:mb-4 gap-2 sm:gap-0"
+            class="flex justify-between items-center mb-2"
         >
-            <h4 class="text-xs sm:text-sm font-bold text-zinc-700 mb-0">
+            <h4 class="text-sm font-semibold text-zinc-700 mb-0">
                 Monthly Overview
             </h4>
             <span
                 class="px-2 py-0.5 sm:py-1 text-xs font-medium bg-emerald-500/20 text-emerald-700 rounded-md border border-emerald-500/30"
             >
-                95% Present
+                {{ attendance_percentage|floatformat:0 }}% Present
             </span>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+        <div class="grid grid-cols-3 gap-2">
             <div
-                class="backdrop-blur-sm bg-emerald-500/20 border border-emerald-500/30 rounded-lg sm:rounded-xl p-3 sm:p-4 text-center hover:bg-emerald-500/30 transition-all duration-200"
+                class="backdrop-blur-sm bg-emerald-500/20 border border-emerald-500/30 rounded-lg p-2.5 text-center hover:bg-emerald-500/30 transition-all duration-200"
             >
                 <div
                     class="flex items-center justify-center gap-1 mb-1 sm:mb-2"
@@ -171,14 +207,14 @@
                     </p>
                 </div>
                 <p
-                    class="text-lg sm:text-xl lg:text-2xl font-bold text-emerald-700 mb-0"
+                    class="text-xl font-bold text-emerald-700 mb-0"
                 >
-                    20
+                    {{ present_days|default:0 }}
                 </p>
                 <p class="text-xs text-emerald-600">days</p>
             </div>
             <div
-                class="backdrop-blur-sm bg-amber-500/20 border border-amber-500/30 rounded-lg sm:rounded-xl p-3 sm:p-4 text-center hover:bg-amber-500/30 transition-all duration-200"
+                class="backdrop-blur-sm bg-amber-500/20 border border-amber-500/30 rounded-lg p-2.5 text-center hover:bg-amber-500/30 transition-all duration-200"
             >
                 <div
                     class="flex items-center justify-center gap-1 mb-1 sm:mb-2"
@@ -203,14 +239,14 @@
                     </p>
                 </div>
                 <p
-                    class="text-lg sm:text-xl lg:text-2xl font-bold text-amber-700 mb-0"
+                    class="text-xl font-bold text-amber-700 mb-0"
                 >
-                    2
+                    {{ monthly_stats.late_days|default:0 }}
                 </p>
                 <p class="text-xs text-amber-600">times</p>
             </div>
             <div
-                class="backdrop-blur-sm bg-violet-500/20 border border-violet-500/30 rounded-lg sm:rounded-xl p-3 sm:p-4 text-center hover:bg-violet-500/30 transition-all duration-200"
+                class="backdrop-blur-sm bg-violet-500/20 border border-violet-500/30 rounded-lg p-2.5 text-center hover:bg-violet-500/30 transition-all duration-200"
             >
                 <div
                     class="flex items-center justify-center gap-1 mb-1 sm:mb-2"
@@ -235,38 +271,38 @@
                     </p>
                 </div>
                 <p
-                    class="text-lg sm:text-xl lg:text-2xl font-bold text-violet-700 mb-0"
+                    class="text-xl font-bold text-violet-700 mb-0"
                 >
-                    1
+                    {{ monthly_stats.leave_days|default:0 }}
                 </p>
-                <p class="text-xs text-violet-600">day</p>
+                <p class="text-xs text-violet-600">day{% if monthly_stats.leave_days != 1 %}s{% endif %}</p>
             </div>
         </div>
     </div>
 
     <!-- Summary Stats -->
-    <div class="pt-3 sm:pt-4 border-t border-white/20">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 lg:gap-4">
+    <div class="pt-3 border-t border-white/20">
+        <div class="grid grid-cols-2 gap-2">
             <div class="flex justify-between items-center">
                 <span class="text-xs sm:text-sm text-zinc-600"
                     >Working Days</span
                 >
                 <span class="text-xs sm:text-sm font-bold text-zinc-800"
-                    >22</span
+                    >{{ total_days|default:0 }}</span
                 >
             </div>
             <div class="flex justify-between items-center">
                 <span class="text-xs sm:text-sm text-zinc-600">Efficiency</span>
                 <span class="text-xs sm:text-sm font-bold text-emerald-700"
-                    >95%</span
+                    >{{ attendance_percentage|floatformat:0 }}%</span
                 >
             </div>
         </div>
-        <div class="mt-2 sm:mt-3">
+        <div class="mt-2">
             <div class="flex justify-between items-center mb-1">
                 <span class="text-xs text-zinc-600">Attendance Rate</span>
                 <span class="text-xs font-medium text-zinc-700"
-                    >20/21 days</span
+                    >{{ present_days|default:0 }}/{{ total_days|default:0 }} days</span
                 >
             </div>
             <div
@@ -274,7 +310,7 @@
             >
                 <div
                     class="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-1000"
-                    style="width: 95%"
+                    style="width: {{ attendance_percentage|default:0 }}%"
                 ></div>
             </div>
         </div>

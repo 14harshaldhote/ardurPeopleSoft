@@ -775,6 +775,34 @@ def dashboard_view(request):
                 'total_active_rooms': 0,
             }
 
+        # Get attendance context for the card
+        attendance_context = {}
+        try:
+            from trueAlign.attendance.views import _get_or_create_today_attendance, _calculate_monthly_stats
+            import pytz
+            IST = pytz.timezone('Asia/Kolkata')
+            today = timezone.now().astimezone(IST).date()
+            
+            attendance_today = _get_or_create_today_attendance(user, today)
+            monthly_stats = _calculate_monthly_stats(user, today)
+            
+            attendance_context = {
+                'attendance_today': attendance_today,
+                'monthly_stats': monthly_stats,
+                'present_days': monthly_stats.get('present_days', 0),
+                'total_days': monthly_stats.get('total_days', 0),
+                'attendance_percentage': monthly_stats.get('percentage', 0),
+            }
+        except Exception as att_error:
+            logger.warning(f"Error loading attendance context: {att_error}")
+            attendance_context = {
+                'attendance_today': None,
+                'monthly_stats': {},
+                'present_days': 0,
+                'total_days': 0,
+                'attendance_percentage': 0,
+            }
+
         # Get user role information
         user_groups = user.groups.all()
         is_admin = user.is_superuser or user_groups.filter(name='Admin').exists()
@@ -797,7 +825,9 @@ def dashboard_view(request):
             'is_employee': is_employee,
             'is_client': is_client,
             # Conference booking context
-            **conference_context
+            **conference_context,
+            # Attendance context for the card
+            **attendance_context
         }
 
         return render(request, 'dashboard.html', context)
