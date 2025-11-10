@@ -132,7 +132,8 @@ TrueAlign Portal{% endblock %} {% block content %}
         </div>
 
         <!-- Profile Content -->
-        {% if user_profile or user_detail %} {% with profile=user_profile|default:user_detail %}
+        {% if user_profile or user_detail %}
+        {% with profile=user_profile|default:user_detail %}
         <!-- Profile Card -->
         <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
             <!-- Header Section with Background -->

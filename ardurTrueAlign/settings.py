@@ -114,6 +114,7 @@ INSTALLED_APPS = [
     'trueAlign.notifications',
     'trueAlign.notes',
     'trueAlign.support',
+    'trueAlign.apprisal',
     'trueAlign.confrence',  # Conference Room Booking System
     'rest_framework',
     'django_cron',
