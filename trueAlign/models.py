@@ -5830,3 +5830,319 @@ class Notification(models.Model):
 
 
 '''-------------------------------------------- CONFRENCE BOOK AREA ---------------------------------------'''
+
+
+'''------------------------- APPRAISAL SYSTEM --------------------'''
+
+
+class Appraisal(models.Model):
+    """
+    Main appraisal model for employee performance reviews
+    """
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('submitted', 'Submitted'),
+        ('manager_review', 'Manager Review'),
+        ('hr_review', 'HR Review'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    # Basic Information
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='appraisals',
+        help_text="Employee being appraised"
+    )
+    manager = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='managed_appraisals',
+        help_text="Manager responsible for this appraisal"
+    )
+
+    # Appraisal Details
+    title = models.CharField(max_length=200, help_text="Appraisal title")
+    overview = models.TextField(help_text="Overall performance overview")
+    period_start = models.DateField(help_text="Appraisal period start date")
+    period_end = models.DateField(help_text="Appraisal period end date")
+
+    # Status and Workflow
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='draft',
+        help_text="Current appraisal status"
+    )
+
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    submitted_at = models.DateTimeField(null=True, blank=True, help_text="When employee submitted")
+    approved_at = models.DateTimeField(null=True, blank=True, help_text="When finally approved")
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Appraisal"
+        verbose_name_plural = "Appraisals"
+        indexes = [
+            models.Index(fields=['user', 'status']),
+            models.Index(fields=['manager', 'status']),
+            models.Index(fields=['status', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.title} - {self.user.get_full_name()} ({self.status})"
+
+    @property
+    def is_editable(self):
+        """Check if appraisal can be edited"""
+        return self.status == 'draft'
+
+    @property
+    def can_be_submitted(self):
+        """Check if appraisal can be submitted"""
+        return self.status == 'draft' and self.items.exists()
+
+    @property
+    def average_employee_rating(self):
+        """Calculate average employee self-rating"""
+        items = self.items.filter(employee_rating__isnull=False)
+        if items.exists():
+            return sum(item.employee_rating for item in items) / items.count()
+        return None
+
+    @property
+    def average_manager_rating(self):
+        """Calculate average manager rating"""
+        items = self.items.filter(manager_rating__isnull=False)
+        if items.exists():
+            return sum(item.manager_rating for item in items) / items.count()
+        return None
+
+    @property
+    def average_hr_rating(self):
+        """Calculate average HR rating"""
+        items = self.items.filter(hr_rating__isnull=False)
+        if items.exists():
+            return sum(item.hr_rating for item in items) / items.count()
+        return None
+
+    @property
+    def overall_rating(self):
+        """Calculate overall rating (average of all available ratings)"""
+        ratings = []
+        if self.average_employee_rating:
+            ratings.append(self.average_employee_rating)
+        if self.average_manager_rating:
+            ratings.append(self.average_manager_rating)
+        if self.average_hr_rating:
+            ratings.append(self.average_hr_rating)
+        
+        if ratings:
+            return sum(ratings) / len(ratings)
+        return None
+
+    def clean(self):
+        """Validate appraisal data"""
+        from django.core.exceptions import ValidationError
+
+        if self.period_end and self.period_start:
+            if self.period_end <= self.period_start:
+                raise ValidationError("Period end date must be after start date")
+
+        if self.status == 'submitted' and not self.manager:
+            raise ValidationError("Cannot submit appraisal without assigned manager")
+
+
+class AppraisalItem(models.Model):
+    """
+    Individual items/achievements in an appraisal
+    """
+    CATEGORY_CHOICES = [
+        ('achievement', 'Achievement'),
+        ('project', 'Project Completion'),
+        ('skill', 'Skill Development'),
+        ('initiative', 'Initiative'),
+        ('teamwork', 'Teamwork'),
+        ('leadership', 'Leadership'),
+        ('other', 'Other'),
+    ]
+
+    RATING_CHOICES = [
+        (1, 'Needs Improvement'),
+        (2, 'Below Expectations'),
+        (3, 'Meets Expectations'),
+        (4, 'Exceeds Expectations'),
+        (5, 'Outstanding'),
+    ]
+
+    # Relationships
+    appraisal = models.ForeignKey(
+        Appraisal,
+        on_delete=models.CASCADE,
+        related_name='items',
+        help_text="Parent appraisal"
+    )
+
+    # Item Details
+    category = models.CharField(
+        max_length=20,
+        choices=CATEGORY_CHOICES,
+        help_text="Category of this achievement/item"
+    )
+    title = models.CharField(max_length=200, help_text="Item title")
+    description = models.TextField(help_text="Detailed description")
+    date = models.DateField(null=True, blank=True, help_text="Date of achievement/completion")
+
+    # Ratings
+    employee_rating = models.IntegerField(
+        choices=RATING_CHOICES,
+        null=True,
+        blank=True,
+        help_text="Employee self-rating"
+    )
+    manager_rating = models.IntegerField(
+        choices=RATING_CHOICES,
+        null=True,
+        blank=True,
+        help_text="Manager rating"
+    )
+    manager_comments = models.TextField(
+        blank=True,
+        help_text="Manager's comments on this item"
+    )
+    hr_rating = models.IntegerField(
+        choices=RATING_CHOICES,
+        null=True,
+        blank=True,
+        help_text="HR rating"
+    )
+    hr_comments = models.TextField(
+        blank=True,
+        help_text="HR's comments on this item"
+    )
+
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['category', '-date', '-created_at']
+        verbose_name = "Appraisal Item"
+        verbose_name_plural = "Appraisal Items"
+
+    def __str__(self):
+        return f"{self.category}: {self.title}"
+
+    @property
+    def employee_rating_display(self):
+        """Get display text for employee rating"""
+        return dict(self.RATING_CHOICES).get(self.employee_rating, 'Not Rated')
+
+    @property
+    def manager_rating_display(self):
+        """Get display text for manager rating"""
+        return dict(self.RATING_CHOICES).get(self.manager_rating, 'Not Rated')
+
+    @property
+    def hr_rating_display(self):
+        """Get display text for HR rating"""
+        return dict(self.RATING_CHOICES).get(self.hr_rating, 'Not Rated')
+
+
+class AppraisalAttachment(models.Model):
+    """
+    File attachments for appraisals (certificates, project documents, etc.)
+    """
+    appraisal = models.ForeignKey(
+        Appraisal,
+        on_delete=models.CASCADE,
+        related_name='attachments',
+        help_text="Parent appraisal"
+    )
+    file = models.FileField(
+        upload_to='appraisals/attachments/%Y/%m/',
+        help_text="Attachment file"
+    )
+    title = models.CharField(max_length=200, help_text="Attachment title/description")
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='uploaded_appraisal_attachments'
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-uploaded_at']
+        verbose_name = "Appraisal Attachment"
+        verbose_name_plural = "Appraisal Attachments"
+
+    def __str__(self):
+        return f"{self.title} - {self.appraisal}"
+
+    @property
+    def file_size_display(self):
+        """Return human readable file size"""
+        try:
+            size = self.file.size
+            for unit in ['B', 'KB', 'MB', 'GB']:
+                if size < 1024.0:
+                    return f"{size:.1f} {unit}"
+                size /= 1024.0
+            return f"{size:.1f} TB"
+        except Exception:
+            return "Unknown"
+
+
+class AppraisalWorkflow(models.Model):
+    """
+    Track workflow history for appraisals (status changes, approvals, rejections)
+    """
+    appraisal = models.ForeignKey(
+        Appraisal,
+        on_delete=models.CASCADE,
+        related_name='workflow_history',
+        help_text="Parent appraisal"
+    )
+    from_status = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        help_text="Previous status"
+    )
+    to_status = models.CharField(
+        max_length=20,
+        help_text="New status"
+    )
+    action_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        help_text="User who performed this action"
+    )
+    comments = models.TextField(blank=True, help_text="Comments/notes for this action")
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+        verbose_name = "Appraisal Workflow"
+        verbose_name_plural = "Appraisal Workflows"
+
+    def __str__(self):
+        return f"{self.appraisal} - {self.from_status} → {self.to_status}"
+
+    @property
+    def action_display(self):
+        """Get human-readable action description"""
+        if self.from_status is None:
+            return "Created"
+        elif self.to_status == 'rejected':
+            return "Rejected"
+        elif self.to_status == 'approved':
+            return "Approved"
+        else:
+            return f"Moved to {self.to_status.replace('_', ' ').title()}"

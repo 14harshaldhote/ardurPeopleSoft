@@ -1,0 +1,292 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Review Appraisal - TrueAlign{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Navigation -->
+    <div class="mb-6">
+        <a href="{% url 'appraisal:appraisal_list' %}" class="text-indigo-600 hover:text-indigo-800 flex items-center gap-2 hover:gap-3 transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            <span>Back to List</span>
+        </a>
+    </div>
+
+    <!-- Header -->
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">Review Appraisal</h1>
+        <p class="text-gray-600 mt-1">{{ appraisal.title }}</p>
+    </div>
+
+    <!-- Review Form -->
+    <form method="POST" action="{% url 'appraisal:appraisal_review' appraisal.id %}">
+        {% csrf_token %}
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main Content -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Appraisal Info Card -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">Appraisal Information</h2>
+                    
+                    <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-600">Employee</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.user.get_full_name|default:appraisal.user.username }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-600">Manager</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.manager.get_full_name|default:appraisal.manager.username }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-600">Period</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.period_start|date:"M d, Y" }} - {{ appraisal.period_end|date:"M d, Y" }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-600">Status</dt>
+                            <dd class="mt-1">
+                                <span class="px-3 py-1 inline-flex text-xs font-semibold rounded-full 
+                                    {% if appraisal.status == 'submitted' %}bg-blue-100 text-blue-800
+                                    {% elif appraisal.status == 'hr_review' %}bg-purple-100 text-purple-800
+                                    {% elif appraisal.status == 'finance_review' %}bg-yellow-100 text-yellow-800
+                                    {% endif %}">
+                                    {{ appraisal.get_status_display }}
+                                </span>
+                            </dd>
+                        </div>
+                    </dl>
+                    
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <p class="text-sm font-medium text-gray-600 mb-2">Overview</p>
+                        <p class="text-gray-700 whitespace-pre-line">{{ appraisal.overview }}</p>
+                    </div>
+                </div>
+
+                <!-- Review Items -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-xl font-bold text-gray-900">Review Achievements</h2>
+                        {% if can_rate_items %}
+                        <p class="text-sm text-gray-600 mt-1">Rate each achievement and provide feedback</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="p-6 space-y-6">
+                        {% for item in items %}
+                        <div class="border border-gray-200 rounded-lg p-5">
+                            <!-- Item Header -->
+                            <div class="mb-4">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <span class="px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">
+                                        {{ item.get_category_display }}
+                                    </span>
+                                    {% if item.date %}
+                                    <span class="text-sm text-gray-500">
+                                        <i class="ri-calendar-line"></i> {{ item.date|date:"M d, Y" }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-900">{{ item.title }}</h3>
+                            </div>
+                            
+                            <p class="text-gray-700 mb-4 whitespace-pre-line">{{ item.description }}</p>
+                            
+                            <!-- Employee Self-Rating -->
+                            <div class="mb-4 p-4 bg-yellow-50 rounded-lg">
+                                <p class="text-sm font-medium text-gray-700 mb-2">Employee Self-Rating</p>
+                                <div class="flex items-center gap-2">
+                                    <div class="flex items-center gap-1">
+                                        {% for i in "12345" %}
+                                            <i class="ri-star-{% if forloop.counter <= item.employee_rating %}fill text-yellow-400{% else %}line text-gray-300{% endif %} text-lg"></i>
+                                        {% endfor %}
+                                    </div>
+                                    <span class="text-sm text-gray-600">({{ item.employee_rating_display }})</span>
+                                </div>
+                            </div>
+                            
+                            {% if can_rate_items %}
+                            <!-- Manager Rating Input -->
+                            <div class="p-4 bg-indigo-50 rounded-lg">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Your Rating <span class="text-red-500">*</span>
+                                </label>
+                                <div class="flex items-center gap-4 mb-3">
+                                    {% for rating_value, rating_label in ratings.items %}
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" 
+                                               name="items[{{ item.id }}][manager_rating]" 
+                                               value="{{ rating_value }}"
+                                               {% if item.manager_rating == rating_value %}checked{% endif %}
+                                               class="form-radio text-indigo-600 focus:ring-indigo-500"
+                                               required>
+                                        <span class="text-sm text-gray-700">{{ rating_value }}</span>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                                
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Your Comments
+                                </label>
+                                <textarea name="items[{{ item.id }}][manager_comments]"
+                                          rows="3"
+                                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                          placeholder="Provide your feedback on this achievement">{{ item.manager_comments }}</textarea>
+                            </div>
+                            {% else %}
+                            <!-- Display Existing Manager Rating -->
+                            {% if item.manager_rating %}
+                            <div class="p-4 bg-indigo-50 rounded-lg">
+                                <p class="text-sm font-medium text-gray-700 mb-2">Manager Rating</p>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <div class="flex items-center gap-1">
+                                        {% for i in "12345" %}
+                                            <i class="ri-star-{% if forloop.counter <= item.manager_rating %}fill text-indigo-500{% else %}line text-gray-300{% endif %} text-lg"></i>
+                                        {% endfor %}
+                                    </div>
+                                    <span class="text-sm text-gray-600">({{ item.manager_rating_display }})</span>
+                                </div>
+                                {% if item.manager_comments %}
+                                <p class="text-sm text-gray-700 mt-2">"{{ item.manager_comments }}"</p>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <div class="p-4 bg-gray-50 rounded-lg">
+                                <p class="text-sm text-gray-500 text-center">Not yet rated by manager</p>
+                            </div>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Attachments -->
+                {% if attachments %}
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-xl font-bold text-gray-900">Attachments</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-3">
+                            {% for attachment in attachments %}
+                            <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
+                                <div class="flex items-center gap-3">
+                                    <i class="ri-file-line text-2xl text-gray-400"></i>
+                                    <div>
+                                        <p class="font-medium text-gray-900">{{ attachment.title }}</p>
+                                        <p class="text-sm text-gray-500">
+                                            Uploaded by {{ attachment.uploaded_by.get_full_name|default:attachment.uploaded_by.username }} 
+                                            on {{ attachment.uploaded_at|date:"M d, Y" }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <a href="{{ attachment.file.url }}" target="_blank" 
+                                   class="text-indigo-600 hover:text-indigo-800 transition-colors">
+                                    <i class="ri-download-line text-xl"></i>
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Review Comments -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <label for="comments" class="block text-lg font-bold text-gray-900 mb-3">
+                        Overall Comments
+                    </label>
+                    <textarea id="comments" name="comments" rows="4"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                              placeholder="Provide any additional feedback or comments about this appraisal"></textarea>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <!-- Actions -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Review Actions</h3>
+                    
+                    <div class="space-y-3">
+                        <button type="submit" name="action" value="approve"
+                                onclick="return confirm('Are you sure you want to approve this appraisal?')"
+                                class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
+                            <i class="ri-checkbox-circle-line text-xl"></i>
+                            <span>Approve</span>
+                        </button>
+                        
+                        <button type="submit" name="action" value="reject"
+                                onclick="return confirm('Are you sure you want to reject this appraisal? Please provide comments explaining your decision.')"
+                                class="w-full bg-red-600 text-white px-4 py-3 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2">
+                            <i class="ri-close-circle-line text-xl"></i>
+                            <span>Reject</span>
+                        </button>
+                        
+                        <a href="{% url 'appraisal:appraisal_list' %}"
+                           class="w-full bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
+                            <i class="ri-arrow-left-line"></i>
+                            <span>Back to List</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Workflow History -->
+                {% if workflow_history %}
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Workflow History</h3>
+                    <div class="space-y-4">
+                        {% for history in workflow_history %}
+                        <div class="relative pl-6 pb-4 border-l-2 border-gray-200 last:pb-0">
+                            <div class="absolute left-[-9px] top-0 w-4 h-4 rounded-full bg-white border-2 
+                                {% if history.to_status == 'approved' %}border-green-500
+                                {% elif history.to_status == 'rejected' %}border-red-500
+                                {% else %}border-blue-500{% endif %}">
+                            </div>
+                            <div class="text-sm">
+                                <p class="font-medium text-gray-900">{{ history.action_display }}</p>
+                                <p class="text-gray-600 mt-1">
+                                    by {{ history.action_by.get_full_name|default:history.action_by.username }}
+                                </p>
+                                {% if history.comments %}
+                                <p class="text-gray-500 mt-1 italic">"{{ history.comments }}"</p>
+                                {% endif %}
+                                <p class="text-xs text-gray-400 mt-1">{{ history.timestamp|date:"M d, Y - h:i A" }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Review Guidelines -->
+                <div class="bg-blue-50 rounded-xl border border-blue-200 p-6">
+                    <h3 class="text-lg font-bold text-blue-900 mb-3 flex items-center gap-2">
+                        <i class="ri-information-line"></i>
+                        <span>Review Guidelines</span>
+                    </h3>
+                    <ul class="space-y-2 text-sm text-blue-800">
+                        <li class="flex items-start gap-2">
+                            <i class="ri-checkbox-circle-line mt-1"></i>
+                            <span>Review each achievement carefully</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="ri-checkbox-circle-line mt-1"></i>
+                            <span>Provide constructive feedback</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="ri-checkbox-circle-line mt-1"></i>
+                            <span>Be fair and objective in your ratings</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="ri-checkbox-circle-line mt-1"></i>
+                            <span>Add comments to explain your decisions</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

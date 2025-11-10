@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Appraisals - TrueAlign{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8" x-data="{ showFilters: false }">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">
+                {% if is_manager %}
+                    Appraisals to Review
+                {% elif is_hr %}
+                    HR Appraisal Reviews
+                {% elif is_finance %}
+                    Finance Appraisal Reviews
+                {% elif is_management %}
+                    All Appraisals
+                {% else %}
+                    My Appraisals
+                {% endif %}
+            </h1>
+            <p class="text-gray-600 mt-1">
+                {% if pending_reviews %}
+                    <span class="text-orange-600 font-semibold">{{ pending_reviews }} pending review{{ pending_reviews|pluralize }}</span>
+                {% else %}
+                    Manage and track performance appraisals
+                {% endif %}
+            </p>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            {% if is_hr %}
+            <a href="{% url 'appraisal:appraisal_dashboard' %}" 
+               class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="{% url 'appraisal:appraisal_export' %}" 
+               class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                <span>Export to Excel</span>
+            </a>
+            {% endif %}
+            {% if not is_special_user %}
+            <a href="{% url 'appraisal:appraisal_create' %}" 
+               class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 shadow-sm">
+                <i class="ri-add-line text-xl"></i>
+                <span>New Appraisal</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Stats Cards (for management view) -->
+    {% if is_management %}
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Appraisals</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ total_appraisals }}</p>
+                </div>
+                <div class="bg-indigo-100 p-3 rounded-lg">
+                    <i class="ri-file-list-3-line text-2xl text-indigo-600"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Pending Reviews</p>
+                    <p class="text-2xl font-bold text-orange-600 mt-1">{{ pending_reviews }}</p>
+                </div>
+                <div class="bg-orange-100 p-3 rounded-lg">
+                    <i class="ri-time-line text-2xl text-orange-600"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Approved</p>
+                    <p class="text-2xl font-bold text-green-600 mt-1">{{ approved_appraisals }}</p>
+                </div>
+                <div class="bg-green-100 p-3 rounded-lg">
+                    <i class="ri-checkbox-circle-line text-2xl text-green-600"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Rejected</p>
+                    <p class="text-2xl font-bold text-red-600 mt-1">{{ rejected_appraisals }}</p>
+                </div>
+                <div class="bg-red-100 p-3 rounded-lg">
+                    <i class="ri-close-circle-line text-2xl text-red-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Appraisals List -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <!-- Table Header -->
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Appraisals</h2>
+        </div>
+
+        <!-- Table Body -->
+        {% if appraisals %}
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% if is_special_user %}Employee{% else %}Manager{% endif %}
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for appraisal in appraisals %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ appraisal.title }}</div>
+                            <div class="text-sm text-gray-500">{{ appraisal.overview|truncatewords:10 }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">
+                                {% if is_special_user %}
+                                    {{ appraisal.user.get_full_name|default:appraisal.user.username }}
+                                {% else %}
+                                    {{ appraisal.manager.get_full_name|default:appraisal.manager.username }}
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ appraisal.period_start|date:"M d" }} - {{ appraisal.period_end|date:"M d, Y" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                {% if appraisal.status == 'draft' %}bg-gray-100 text-gray-800
+                                {% elif appraisal.status == 'submitted' %}bg-blue-100 text-blue-800
+                                {% elif appraisal.status == 'hr_review' %}bg-purple-100 text-purple-800
+                                {% elif appraisal.status == 'finance_review' %}bg-yellow-100 text-yellow-800
+                                {% elif appraisal.status == 'approved' %}bg-green-100 text-green-800
+                                {% elif appraisal.status == 'rejected' %}bg-red-100 text-red-800
+                                {% endif %}">
+                                {{ appraisal.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {% if appraisal.submitted_at %}
+                                {{ appraisal.submitted_at|date:"M d, Y" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div class="flex items-center justify-end gap-2">
+                                <a href="{% url 'appraisal:appraisal_detail' appraisal.id %}" 
+                                   class="text-indigo-600 hover:text-indigo-900 transition-colors p-2 hover:bg-indigo-50 rounded-lg"
+                                   title="View Details">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                </a>
+                                
+                                {% if is_special_user and appraisal.status == 'submitted' or appraisal.status == 'hr_review' or appraisal.status == 'finance_review' %}
+                                <a href="{% url 'appraisal:appraisal_review' appraisal.id %}" 
+                                   class="text-green-600 hover:text-green-900 transition-colors p-2 hover:bg-green-50 rounded-lg"
+                                   title="Review Appraisal">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                </a>
+                                {% endif %}
+                                
+                                {% if appraisal.status == 'draft' and not is_special_user %}
+                                <a href="{% url 'appraisal:appraisal_update' appraisal.id %}" 
+                                   class="text-blue-600 hover:text-blue-900 transition-colors p-2 hover:bg-blue-50 rounded-lg"
+                                   title="Edit Appraisal">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="px-6 py-12 text-center">
+            <i class="ri-file-list-3-line text-6xl text-gray-300"></i>
+            <h3 class="mt-4 text-lg font-medium text-gray-900">No appraisals found</h3>
+            <p class="mt-2 text-sm text-gray-500">
+                {% if not is_special_user %}
+                Get started by creating your first appraisal.
+                {% else %}
+                No appraisals available for review at the moment.
+                {% endif %}
+            </p>
+            {% if not is_special_user %}
+            <a href="{% url 'appraisal:appraisal_create' %}" 
+               class="mt-6 inline-flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors">
+                <i class="ri-add-line"></i>
+                <span>Create New Appraisal</span>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
