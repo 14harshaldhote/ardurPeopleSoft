@@ -20,6 +20,10 @@ def role_required(role_name, redirect_url='leave_management:dashboard'):
         def _wrapped_view(request, *args, **kwargs):
             user = request.user
 
+            # Check if user is superuser and grant Admin access
+            if user.is_superuser and role_name == 'Admin':
+                return view_func(request, *args, **kwargs)
+
             # Check if user has the required role via groups
             if user.groups.filter(name=role_name).exists():
                 return view_func(request, *args, **kwargs)
@@ -65,6 +69,10 @@ def multiple_roles_required(roles, redirect_url='leave_management:dashboard'):
         @login_required
         def _wrapped_view(request, *args, **kwargs):
             user = request.user
+
+            # Check if user is superuser and Admin is in required roles
+            if user.is_superuser and 'Admin' in roles:
+                return view_func(request, *args, **kwargs)
 
             # Check if user has any of the required roles via groups
             if user.groups.filter(name__in=roles).exists():

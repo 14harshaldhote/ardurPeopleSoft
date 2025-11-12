@@ -9,6 +9,9 @@ from django.utils import timezone
 from datetime import datetime, date, time
 import pytz
 
+# Import LeaveRequest for manager availability check
+from trueAlign.models import LeaveRequest
+
 
 # Role constants
 class Roles:
@@ -220,13 +223,25 @@ def get_user_roles(user: User) -> List[str]:
     """Get all roles/groups for a user"""
     if not user.is_authenticated:
         return []
-    return list(user.groups.values_list('name', flat=True))
+    
+    roles = list(user.groups.values_list('name', flat=True))
+    
+    # Add Admin role for superusers
+    if user.is_superuser and Roles.ADMIN not in roles:
+        roles.append(Roles.ADMIN)
+    
+    return roles
 
 
 def has_role(user: User, role: str) -> bool:
     """Check if user has a specific role"""
     if not user.is_authenticated:
         return False
+    
+    # Check if user is superuser and grant Admin privileges
+    if user.is_superuser and role == Roles.ADMIN:
+        return True
+    
     return user.groups.filter(name=role).exists()
 
 
@@ -311,6 +326,20 @@ def can_approve_leave(approver: User, requestor: User) -> bool:
     return False
 
 
+def is_manager_on_leave(manager: User) -> bool:
+    """Check if manager is currently on leave or absent"""
+    if not manager or not is_manager(manager):
+        return False
+    
+    today = timezone.now().date()
+    return LeaveRequest.objects.filter(
+        user=manager,
+        status='Approved',
+        start_date__lte=today,
+        end_date__gte=today
+    ).exists()
+
+
 def get_potential_approvers(requestor: User) -> List[User]:
     """Get list of users who can approve requestor's leave"""
     if not requestor.is_authenticated:
@@ -321,10 +350,20 @@ def get_potential_approvers(requestor: User) -> List[User]:
 
     # Employee leave - can be approved by Manager, HR, or Admin
     if Roles.EMPLOYEE in requestor_roles:
+        # Try to get available managers first
         managers = User.objects.filter(groups__name=Roles.MANAGER, is_active=True)
-        hrs = User.objects.filter(groups__name=Roles.HR, is_active=True)
-        admins = User.objects.filter(groups__name=Roles.ADMIN, is_active=True)
-        potential_approvers = list(managers) + list(hrs) + list(admins)
+        available_managers = [m for m in managers if not is_manager_on_leave(m)]
+        
+        # If no available managers, include HR and Admin
+        if not available_managers:
+            hrs = User.objects.filter(groups__name=Roles.HR, is_active=True)
+            admins = User.objects.filter(groups__name=Roles.ADMIN, is_active=True)
+            potential_approvers = list(hrs) + list(admins)
+        else:
+            # Use available managers, plus HR/Admin as backup
+            hrs = User.objects.filter(groups__name=Roles.HR, is_active=True)
+            admins = User.objects.filter(groups__name=Roles.ADMIN, is_active=True)
+            potential_approvers = list(available_managers) + list(hrs) + list(admins)
 
     # Manager leave - can be approved by HR or Admin
     elif Roles.MANAGER in requestor_roles:
@@ -349,6 +388,17 @@ def get_potential_approvers(requestor: User) -> List[User]:
 def get_auto_approver(requestor: User) -> Optional[User]:
     """Get the first available auto-approver for a user"""
     potential_approvers = get_potential_approvers(requestor)
+    
+    # For employees, prioritize available managers
+    if is_employee(requestor):
+        # Return first available manager if exists
+        for approver in potential_approvers:
+            if is_manager(approver) and not is_manager_on_leave(approver):
+                return approver
+        # If no managers available, return HR or Admin
+        return potential_approvers[0] if potential_approvers else None
+    
+    # For other roles, return first available approver
     return potential_approvers[0] if potential_approvers else None
 
 

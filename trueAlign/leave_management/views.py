@@ -29,7 +29,10 @@ from .utils import (
     get_user_roles, Roles, require_role, require_any_role, require_hr_or_admin
 )
 from .services.leave_service import LeaveService, LeaveServiceError
-from .forms import LeaveApplicationForm, CompOffRequestForm, LeaveFilterForm
+from .forms.leave_forms import LeaveApplicationForm, CompOffRequestForm
+from .forms.filter_forms import LeaveFilterForm
+from .rate_limiting import api_rate_limit, strict_rate_limit
+from .audit import LeaveAuditLogger
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +93,8 @@ def employee_dashboard(request):
 def manager_dashboard(request):
     """Manager dashboard showing team leave information"""
     try:
-        # Get team members (employees)
+        # Get team members (employees who report to this manager)
+        # For now, get all employees, but in real implementation this should be based on reporting structure
         team_members = User.objects.filter(
             groups__name=Roles.EMPLOYEE,
             is_active=True
@@ -208,11 +212,20 @@ def apply_leave(request):
                 leave_request, result = LeaveService.apply_leave(request.user, leave_data)
 
                 if result['is_valid']:
-                    messages.success(request, f"Leave application submitted successfully. Request ID: {leave_request.id}")
+                    # Ensure leave_request has an ID before accessing it
+                    request_id = getattr(leave_request, 'id', 'N/A')
+                    messages.success(request, f"Leave application submitted successfully. Request ID: {request_id}")
+                    
+                    # Log data access for audit
+                    LeaveAuditLogger.log_data_access(request.user, request.user, "LEAVE_APPLICATION_SUCCESS")
+                    
                     return redirect('leave_management:my_leaves')
                 else:
                     for error in result.get('errors', []):
                         messages.error(request, error)
+                    
+                    # Log failed attempt
+                    LeaveAuditLogger.log_data_access(request.user, request.user, "LEAVE_APPLICATION_FAILED")
 
             except LeaveServiceError as e:
                 messages.error(request, str(e))
@@ -373,8 +386,10 @@ def cancel_leave(request, leave_id):
 def team_leaves(request):
     """View team leave requests"""
     if is_manager(request.user) and not (is_hr(request.user) or is_admin(request.user)):
+        # Managers can only see their team members' leave requests
         team_members = User.objects.filter(groups__name=Roles.EMPLOYEE, is_active=True)
     else:
+        # HR and Admin can see all leave requests
         team_members = User.objects.filter(is_active=True)
 
     # Base queryset
@@ -406,6 +421,7 @@ def team_leaves(request):
         'status_filter': status_filter,
         'user_filter': user_filter,
         'status_choices': LeaveRequest.STATUS_CHOICES,
+        'is_manager_only': is_manager(request.user) and not (is_hr(request.user) or is_admin(request.user))
     }
 
     return render(request, 'leave_management/team_leaves.html', context)
@@ -466,10 +482,10 @@ def apply_comp_off(request):
         if form.is_valid():
             try:
                 comp_off_data = form.cleaned_data
-                comp_off_request, result = LeaveService.apply_comp_off(request.user, comp_off_data)
+                result = LeaveService.apply_comp_off(request.user, comp_off_data)
 
                 if result.get('success'):
-                    messages.success(request, f"Comp-off request submitted successfully. Request ID: {comp_off_request.id}")
+                    messages.success(request, f"Comp-off request submitted successfully. Request ID: {result.get('request_id')}")
                     return redirect('leave_management:my_comp_off')
                 else:
                     messages.error(request, result.get('message', 'Comp-off application failed'))
@@ -508,6 +524,7 @@ def my_comp_off(request):
 # ================================
 
 @login_required
+@api_rate_limit
 def api_leave_balance(request, user_id=None):
     """API endpoint to get leave balance data"""
     if user_id and not (is_hr(request.user) or is_admin(request.user)):
@@ -551,6 +568,7 @@ def api_leave_balance(request, user_id=None):
         }, status=500)
 
 @login_required
+@api_rate_limit
 def api_leave_types(request):
     """API endpoint to get leave types"""
     try:
