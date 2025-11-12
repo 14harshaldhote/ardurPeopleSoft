@@ -348,22 +348,20 @@ class ShiftForm(forms.ModelForm):
                 if len(day_names) == 0:
                     errors['custom_work_days'] = 'At least one working day must be specified.'
 
-        # Note: Overlapping shifts are now allowed per requirements
-        # Check for shift conflicts with existing shifts (for warning only)
+        # Only prevent exact duplicate shifts (same time AND same work days)
         if start_time and end_time and work_days:
-            conflicts = self._check_shift_conflicts(cleaned_data)
-            if conflicts:
-                conflict_names = [f"{c.name} ({c.start_time.strftime('%H:%M')}-{c.end_time.strftime('%H:%M')})" for c in conflicts]
-                # Changed to warning instead of error to allow overlaps
-                self.add_error('__all__', f'Warning: This shift has time overlaps with existing shifts: {", ".join(conflict_names)}. This is allowed but may cause scheduling complexity.')
+            exact_duplicates = self._check_exact_duplicate_shifts(cleaned_data)
+            if exact_duplicates:
+                duplicate_names = [f"{d.name}" for d in exact_duplicates]
+                errors['__all__'] = f'Cannot create shift: Identical shift already exists with same time and work days: {", ".join(duplicate_names)}. Please modify the time or work days.'
 
         if errors:
             raise ValidationError(errors)
 
         return cleaned_data
 
-    def _check_shift_conflicts(self, cleaned_data):
-        """Check for overlaps with existing shifts (for informational purposes)."""
+    def _check_exact_duplicate_shifts(self, cleaned_data):
+        """Check for exact duplicate shifts (same time AND same work days)."""
         from trueAlign.models import ShiftMaster
 
         start_time = cleaned_data.get('start_time')
@@ -395,17 +393,16 @@ class ShiftForm(forms.ModelForm):
         if self.instance and self.instance.pk:
             existing_shifts = existing_shifts.exclude(pk=self.instance.pk)
 
-        conflicts = []
+        exact_duplicates = []
         for shift in existing_shifts:
-            # Check work days overlap
+            # Check for exact match: same work days AND same time
             shift_work_days = set(shift.working_days_list)
-            common_days = my_work_days.intersection(shift_work_days)
-            if common_days:
-                # Only check time overlap if there are common working days
-                if self._times_overlap(start_time, end_time, shift.start_time, shift.end_time):
-                    conflicts.append(shift)
+            if shift_work_days == my_work_days:
+                # Check if times are exactly the same
+                if (shift.start_time == start_time and shift.end_time == end_time):
+                    exact_duplicates.append(shift)
 
-        return conflicts
+        return exact_duplicates
 
     def _times_overlap(self, start1, end1, start2, end2):
         """Check if two time ranges overlap with improved logic."""

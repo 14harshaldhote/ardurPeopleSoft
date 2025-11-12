@@ -28,12 +28,9 @@ from .forms import ShiftForm, ShiftAssignmentForm, BulkAssignmentForm, HolidayFo
 from .services import ShiftService, ConflictDetector
 from .decorators import group_required
 from .app_settings import SHIFT_GROUPS, CACHE_SETTINGS, EMAIL_NOTIFICATIONS
-from .logging_config import ActionLogger, APILogger
 
 # Initialize loggers and services
 logger = logging.getLogger('trueAlign.shift')
-action_logger = ActionLogger()
-api_logger = APILogger()
 shift_service = ShiftService()
 conflict_detector = ConflictDetector()
 
@@ -47,7 +44,7 @@ User = get_user_model()
 def shift_dashboard(request):
     """Manager-friendly dashboard with key metrics and quick actions"""
     try:
-        action_logger.log_action('DASHBOARD_ACCESS', user_id=request.user.id, user=request.user.username)
+        logger.info(f'Dashboard accessed by user {request.user.username} (ID: {request.user.id})')
 
         # Get key statistics
         total_shifts = ShiftMaster.objects.filter(is_active=True).count()
@@ -194,12 +191,7 @@ def create_shift(request):
             try:
                 with transaction.atomic():
                     shift = form.save()
-                    action_logger.log_action(
-                        'SHIFT_CREATED',
-                        user=request.user.username,
-                        shift_id=shift.id,
-                        shift_name=shift.name
-                    )
+                    logger.info(f'Shift created: {shift.name} by user {request.user.username} (ID: {shift.id})')
                     messages.success(request, f'Shift "{shift.name}" created successfully!')
                     return redirect('shift:detail', shift_id=shift.id)
             except Exception as e:
@@ -265,13 +257,7 @@ def update_shift(request, shift_id):
             try:
                 with transaction.atomic():
                     updated_shift = form.save()
-                    action_logger.log_action(
-                        'SHIFT_UPDATED',
-                        user_id=request.user.id,
-                        user=request.user.username,
-                        shift_id=shift.id,
-                        shift_name=shift.name
-                    )
+                    logger.info(f'Shift updated: {updated_shift.name} by user {request.user.username} (ID: {updated_shift.id})')
                     messages.success(request, f'Shift "{updated_shift.name}" updated successfully!')
                     return redirect('shift:detail', shift_id=updated_shift.id)
             except Exception as e:
@@ -306,12 +292,7 @@ def delete_shift(request, shift_id):
         shift_name = shift.name
         shift.delete()
 
-        action_logger.log_action(
-            'SHIFT_DELETED',
-            user_id=request.user.id,
-            user=request.user.username,
-            shift_name=shift_name
-        )
+        logger.info(f'Shift deleted: {shift_name} by user {request.user.username}')
 
         messages.success(request, f'Shift "{shift_name}" deleted successfully!')
         return redirect('shift:list')
@@ -437,14 +418,7 @@ def assign_shift(request):
                 # No conflicts, proceed with assignment
                 with transaction.atomic():
                     assignment = form.save()
-                    action_logger.log_action(
-                        'SHIFT_ASSIGNED',
-                        user_id=request.user.id,
-                        user=request.user.username,
-                        target_user=user.username,
-                        shift_name=shift.name,
-                        effective_from=str(effective_from)
-                    )
+                    logger.info(f'Shift assigned: {assignment.shift.name} to {assignment.user.username} by {request.user.username}')
 
                     messages.success(request,
                         f'Shift "{shift.name}" assigned to {user.get_full_name() or user.username} successfully!')
@@ -543,16 +517,7 @@ def bulk_assign_shift(request):
                         assignments_data, created_by=request.user
                     )
 
-                    action_logger.log_action(
-                        'BULK_ASSIGNMENT',
-                        user_id=request.user.id,
-                        user=request.user.username,
-                        shift_name=shift.name,
-                        total_users=len(users),
-                        successful=len(result.successful),
-                        failed=len(result.failed),
-                        skipped=len(result.skipped)
-                    )
+                    logger.info(f'Bulk assignment by user {request.user.username}: {len(result.successful)} successful, {len(result.failed)} failed, {len(result.skipped)} skipped')
 
                     # Show results
                     if result.successful:
@@ -623,9 +588,9 @@ def bulk_assign_shift(request):
 
     context = {
         'form': form,
-        'shifts': shifts,
-        'users': users,
-        'groups': groups,
+        'available_shifts': shifts,
+        'available_users': users,
+        'user_groups': groups,
         'title': 'Bulk Assign Shift',
         'submit_text': 'Assign to Selected Users',
         'today': timezone.now().date(),
@@ -648,13 +613,7 @@ def end_assignment(request, assignment_id):
         success = shift_service.end_shift_assignment(assignment.id)
 
         if success:
-            action_logger.log_action(
-                'ASSIGNMENT_ENDED',
-                user_id=request.user.id,
-                user=request.user.username,
-                target_user=assignment.user.username,
-                shift_name=assignment.shift.name
-            )
+            logger.info(f'Assignment ended: ID {assignment_id} by user {request.user.username}, shift_name={assignment.shift.name}')
             messages.success(request,
                 f'Assignment for {assignment.user.get_full_name() or assignment.user.username} ended successfully.')
         else:
@@ -676,14 +635,36 @@ def end_assignment(request, assignment_id):
 def api_validate_bulk_conflicts(request):
     """API endpoint to validate bulk assignment conflicts"""
     try:
-        data = json.loads(request.body)
-        shift_id = data.get('shift_id')
-        user_ids = data.get('user_ids', [])
-        effective_from = data.get('effective_from')
-        effective_to = data.get('effective_to')
+        # Handle both JSON and FormData
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+            shift_id = data.get('shift_id')
+            user_ids = data.get('user_ids', [])
+            effective_from = data.get('effective_from')
+            effective_to = data.get('effective_to')
+        else:
+            # Handle FormData
+            shift_id = request.POST.get('shift')
+            user_ids = request.POST.getlist('users')
+            effective_from = request.POST.get('effective_from')
+            effective_to = request.POST.get('effective_to')
         
         if not shift_id or not user_ids:
             return JsonResponse({'success': False, 'message': 'Missing required data'})
+        
+        # Parse dates
+        try:
+            from datetime import datetime
+            if effective_from:
+                effective_from_date = datetime.strptime(effective_from, '%Y-%m-%d').date()
+            else:
+                effective_from_date = timezone.now().date()
+                
+            effective_to_date = None
+            if effective_to:
+                effective_to_date = datetime.strptime(effective_to, '%Y-%m-%d').date()
+        except ValueError:
+            return JsonResponse({'success': False, 'message': 'Invalid date format'})
         
         # Get shift and users
         try:
@@ -699,13 +680,13 @@ def api_validate_bulk_conflicts(request):
         
         for user in users:
             try:
-                # Check for existing assignments
+                # Check for existing assignments that would conflict
                 existing_assignment = ShiftAssignment.objects.filter(
                     user=user,
                     is_current=True,
-                    effective_from__lte=timezone.now().date()
+                    effective_from__lte=effective_to_date if effective_to_date else effective_from_date
                 ).filter(
-                    Q(effective_to__isnull=True) | Q(effective_to__gte=timezone.now().date())
+                    Q(effective_to__isnull=True) | Q(effective_to__gte=effective_from_date)
                 ).first()
                 
                 if existing_assignment:
@@ -721,8 +702,8 @@ def api_validate_bulk_conflicts(request):
                         leave_conflicts = LeaveRequest.objects.filter(
                             user=user,
                             status='approved',
-                            start_date__lte=effective_from,
-                            end_date__gte=effective_from
+                            start_date__lte=effective_to_date if effective_to_date else effective_from_date,
+                            end_date__gte=effective_from_date
                         ).exists()
                         
                         if leave_conflicts:
@@ -1100,13 +1081,7 @@ def create_holiday(request):
         if form.is_valid():
             try:
                 holiday = form.save()
-                action_logger.log_action(
-                    'HOLIDAY_CREATED',
-                    user_id=request.user.id,
-                    user=request.user.username,
-                    holiday_name=holiday.name,
-                    holiday_date=str(holiday.date)
-                )
+                logger.info(f'Holiday created: {holiday.name} on {holiday.date} by user {request.user.username}')
                 messages.success(request, f'Holiday "{holiday.name}" created successfully!')
                 return redirect('shift:holidays')
             except Exception as e:
@@ -1132,12 +1107,7 @@ def delete_holiday(request, holiday_id):
         holiday_name = holiday.name
         holiday.delete()
 
-        action_logger.log_action(
-            'HOLIDAY_DELETED',
-            user_id=request.user.id,
-            user=request.user.username,
-            holiday_name=holiday_name
-        )
+        logger.info(f'Holiday deleted: {holiday_name} by user {request.user.username}')
 
         messages.success(request, f'Holiday "{holiday_name}" deleted successfully!')
         return redirect('shift:holidays')
@@ -1202,12 +1172,7 @@ def export_assignments_csv(request):
                 assignment.notes or ''
             ])
 
-        action_logger.log_action(
-            'CSV_EXPORT',
-            user_id=request.user.id,
-            user=request.user.username,
-            exported_count=assignments.count()
-        )
+        logger.info(f'CSV export: {assignments.count()} assignments exported by user {request.user.username}')
 
         return response
 
@@ -1897,7 +1862,7 @@ def quick_assign_user(request):
                 shift_id=shift_id,
                 effective_from=effective_from,
                 effective_to=effective_to,
-                assigned_by=request.user
+                created_by=request.user
             )
 
             if result.success:
@@ -2402,3 +2367,77 @@ def auto_resolve_conflict(request, conflict_id):
         return JsonResponse({'success': False, 'error': str(e)})
 
 
+@login_required
+@group_required(['Manager', 'HR'])
+def csv_upload_assignments(request):
+    """CSV upload for bulk assignments"""
+    if request.method == 'POST':
+        form = CSVUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                csv_file = request.FILES['csv_file']
+                decoded_file = csv_file.read().decode('utf-8')
+                csv_data = csv.DictReader(StringIO(decoded_file))
+                
+                success_count = 0
+                errors = []
+                
+                for row in csv_data:
+                    try:
+                        user = User.objects.get(username=row['username'])
+                        shift = ShiftMaster.objects.get(name=row['shift_name'])
+                        
+                        result = shift_service.assign_shift_to_user(
+                            user_id=user.id,
+                            shift_id=shift.id,
+                            effective_from=row['effective_from'],
+                            effective_to=row.get('effective_to'),
+                            assigned_by=request.user
+                        )
+                        
+                        if result.success:
+                            success_count += 1
+                        else:
+                            errors.append(f"Row {csv_data.line_num}: {', '.join(result.errors)}")
+                            
+                    except Exception as e:
+                        errors.append(f"Row {csv_data.line_num}: {str(e)}")
+                
+                if success_count > 0:
+                    messages.success(request, f"Successfully assigned {success_count} shifts.")
+                if errors:
+                    messages.warning(request, f"Errors: {'; '.join(errors[:5])}")
+                    
+                return redirect('shift:assignments')
+                
+            except Exception as e:
+                messages.error(request, f"Error processing CSV: {str(e)}")
+    else:
+        form = CSVUploadForm()
+    
+    return render(request, 'shift/csv_upload_form.html', {'form': form})
+
+@login_required
+@group_required(['Manager', 'HR'])
+def export_assignments_csv(request):
+    """Export assignments to CSV"""
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="shift_assignments.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow(['User', 'Email', 'Shift', 'Start Time', 'End Time', 'Effective From', 'Effective To', 'Status'])
+    
+    assignments = ShiftAssignment.objects.select_related('user', 'shift').all()
+    for assignment in assignments:
+        writer.writerow([
+            assignment.user.get_full_name() or assignment.user.username,
+            assignment.user.email,
+            assignment.shift.name,
+            assignment.shift.start_time,
+            assignment.shift.end_time,
+            assignment.effective_from,
+            assignment.effective_to or 'Permanent',
+            'Active' if assignment.is_current else 'Inactive'
+        ])
+    
+    return response
