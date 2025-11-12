@@ -82,7 +82,7 @@
           </svg>
           <!-- Badge -->
           <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center shadow-md">
-              3
+              0
           </span>
       </div>
   </button>
@@ -98,19 +98,7 @@
           <a href="#" class="text-sm text-blue-600 hover:text-blue-800">Mark all</a>
       </div>
 
-      <!-- List -->
-      <div class="divide-y divide-gray-100 bg-white">
-          <div class="p-3 hover:bg-gray-50 cursor-pointer">
-              <p class="font-medium text-gray-800">New Ticket Assigned</p>
-              <p class="text-sm text-gray-600">You’ve got ticket #124 assigned.</p>
-              <p class="text-xs text-gray-400 mt-1">2 min ago</p>
-          </div>
-          <div class="p-3 hover:bg-gray-50 cursor-pointer">
-              <p class="font-medium text-gray-800">Leave Approved</p>
-              <p class="text-sm text-gray-600">Your leave for Nov 10–12 was approved.</p>
-              <p class="text-xs text-gray-400 mt-1">1 hr ago</p>
-          </div>
-          NOT DYNMACIC YET
+
       </div>
   </div>
 </div>
@@ -122,7 +110,7 @@
 
             <!-- Main Grid -->
             <div
-                class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6"
+                class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 px-5"
             >
                 <!-- Left: Welcome + Cards -->
                 <div class="lg:col-span-2 space-y-3 sm:space-y-4 lg:space-y-6">
@@ -144,7 +132,7 @@
 
                     <!-- Role Based Cards Grid -->
                     <div
-                        class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-3 lg:gap-4 xl:gap-6"
+                        class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-3 lg:gap-4 xl:gap-6 "
                     >
                         {% if is_admin or is_manager %} 
                         {% include 'dashboard/attendace_card.html' %} 
