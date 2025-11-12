@@ -86,13 +86,20 @@
                                         <option value="">Choose a user...</option>
                                         {% for user in available_users %}
                                         <option value="{{ user.id }}" {% if form.user.value == user.id %}selected{% endif %}>
-                                            {{ user.get_full_name|default:user.username }}
-                                            {% if user.profile.employee_id %} - {{ user.profile.employee_id }}{% endif %}
+                                            {% if user.first_name and user.last_name %}
+                                                {{ user.first_name }} {{ user.last_name }}
+                                            {% else %}
+                                                {{ user.username }}
+                                            {% endif %}
+                                            {% if user.employee_id %} - ID: {{ user.employee_id }}{% endif %}
+                                            ({{ user.email }})
                                         </option>
                                         {% endfor %}
                                     </select>
                                 <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                    <i class="ri-user-line text-gray-400"></i>
+                                    <svg class="w-5 h-5 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                    </svg>
                                 </div>
                             </div>
                             {% if form.user.errors %}
@@ -126,7 +133,9 @@
                                     {% endfor %}
                                 </select>
                                 <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                    <i class="ri-time-line text-gray-400"></i>
+                                    <svg class="w-5 h-5 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
                                 </div>
                             </div>
                             {% if form.shift.errors %}
@@ -158,7 +167,9 @@
                                        onchange="validateDateRange()"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 {% if form.effective_from.errors %}border-rose-300{% endif %}">
                                 <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                    <i class="ri-calendar-line text-gray-400"></i>
+                                    <svg class="w-5 h-5 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
                                 </div>
                             </div>
                             {% if form.effective_from.errors %}
@@ -184,7 +195,9 @@
                                        onchange="validateDateRange()"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 {% if form.effective_to.errors %}border-rose-300{% endif %}">
                                 <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                    <i class="ri-calendar-line text-gray-400"></i>
+                                    <svg class="w-5 h-5 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
                                 </div>
                             </div>
                             {% if form.effective_to.errors %}

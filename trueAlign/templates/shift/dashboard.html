@@ -1,111 +1,204 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Shift Dashboard - TrueAlign{% endblock %}
+{% block title %}Shift Management Dashboard - TrueAlign{% endblock %}
 
 {% block content %}
+<!-- Toast Notification Container -->
+<div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2" aria-live="polite"></div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="fixed inset-0 bg-gray-600 bg-opacity-50 z-40 hidden">
+    <div class="flex items-center justify-center min-h-screen">
+        <div class="bg-white rounded-lg p-6 shadow-lg">
+            <div class="flex items-center space-x-3">
+                <svg class="animate-spin h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-gray-700">Loading...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="min-h-screen bg-gray-50">
-    <!-- Header Section -->
+    <!-- Enhanced Header Section -->
     <div class="bg-white shadow-sm border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Shift Management Dashboard</h1>
-                    <p class="text-gray-600 mt-1">Monitor and manage shift operations</p>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+                <div class="flex items-center space-x-4">
+                    <div class="p-3 bg-blue-100 rounded-xl">
+                        <svg class="w-8 h-8 text-blue-600" stroke="currentColor" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Shift Management Dashboard</h1>
+                        <p class="text-gray-600 mt-1 flex items-center">
+                            <span>Monitor and manage shift operations</span>
+                            <span class="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full" id="last-updated">
+                                Last updated: <span id="update-time">{{ now|date:"H:i" }}</span>
+                            </span>
+                        </p>
+                    </div>
                 </div>
-                <div class="flex space-x-3">
-                    <a href="{% url 'shift:create' %}" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
-                        <i class="ri-add-line mr-2"></i>
-                        Create Shift
+                <div class="flex flex-wrap gap-2 sm:gap-3">
+                    <button onclick="refreshDashboard()" 
+                            class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center shadow-sm"
+                            aria-label="Refresh dashboard data">
+                        <svg class="w-4 h-4 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        <span class="hidden sm:inline">Refresh</span>
+                    </button>
+                    <a href="{% url 'shift:create' %}" 
+                       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center shadow-sm"
+                       aria-label="Create new shift">
+                        <svg class="w-4 h-4 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        <span class="hidden sm:inline">Create Shift</span>
+                        <span class="sm:hidden">Create</span>
                     </a>
-                    <a href="{% url 'shift:assign' %}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
-                        <i class="ri-user-add-line mr-2"></i>
-                        Assign Shift
+                    <a href="{% url 'shift:assign' %}" 
+                       class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center shadow-sm"
+                       aria-label="Assign shift to user">
+                        <svg class="w-4 h-4 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        <span class="hidden sm:inline">Assign Shift</span>
+                        <span class="sm:hidden">Assign</span>
                     </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Quick Stats Grid -->
+    <!-- Enhanced Quick Stats Grid -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8" id="stats-grid">
             <!-- Total Shifts -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-sky-100">
-                        <i class="ri-time-line text-sky-600 text-2xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Total Shifts</p>
-                        <p class="text-3xl font-bold text-gray-900">{{ total_shifts|default:0 }}</p>
-                        {% if shift_change %}
-                        <p class="text-sm text-gray-500">
-                            {% if shift_change > 0 %}
-                                <span class="text-emerald-600">+{{ shift_change }}</span>
-                            {% else %}
-                                <span class="text-rose-600">{{ shift_change }}</span>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer" onclick="navigateToShifts()">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="flex items-center space-x-3">
+                            <div class="p-3 rounded-xl bg-blue-100">
+                                <svg class="w-6 h-6 text-blue-600" stroke="currentColor" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Total Shifts</p>
+                                <p class="text-2xl sm:text-3xl font-bold text-gray-900" id="total-shifts">{{ total_shifts|default:0 }}</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-center space-x-2">
+                            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full" id="active-shifts">{{ active_shifts|default:0 }} active</span>
+                            {% if shift_change %}
+                            <span class="text-sm {% if shift_change > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                {% if shift_change > 0 %}+{% endif %}{{ shift_change }} this month
+                            </span>
                             {% endif %}
-                            this month
-                        </p>
-                        {% endif %}
+                        </div>
+                    </div>
+                    <div class="text-blue-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
                     </div>
                 </div>
             </div>
 
             <!-- Active Assignments -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-emerald-100">
-                        <i class="ri-user-follow-line text-emerald-600 text-2xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Active Assignments</p>
-                        <p class="text-3xl font-bold text-gray-900">{{ active_assignments|default:0 }}</p>
-                        {% if assignment_change %}
-                        <p class="text-sm text-gray-500">
-                            {% if assignment_change > 0 %}
-                                <span class="text-emerald-600">+{{ assignment_change }}</span>
-                            {% else %}
-                                <span class="text-rose-600">{{ assignment_change }}</span>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer" onclick="navigateToAssignments()">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="flex items-center space-x-3">
+                            <div class="p-3 rounded-xl bg-green-100">
+                                <svg class="w-6 h-6 text-green-600" stroke="currentColor" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Active Assignments</p>
+                                <p class="text-2xl sm:text-3xl font-bold text-gray-900" id="active-assignments">{{ active_assignments|default:0 }}</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-center space-x-2">
+                            <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full" id="users-assigned">{{ users_assigned|default:0 }} users</span>
+                            {% if assignment_change %}
+                            <span class="text-sm {% if assignment_change > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                {% if assignment_change > 0 %}+{% endif %}{{ assignment_change }} this week
+                            </span>
                             {% endif %}
-                            this week
-                        </p>
-                        {% endif %}
+                        </div>
+                    </div>
+                    <div class="text-green-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
                     </div>
                 </div>
             </div>
 
             <!-- Pending Conflicts -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-amber-100">
-                        <i class="ri-alert-line text-amber-600 text-2xl"></i>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer" onclick="viewConflicts()">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="flex items-center space-x-3">
+                            <div class="p-3 rounded-xl bg-yellow-100">
+                                <svg class="w-6 h-6 text-yellow-600" stroke="currentColor" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Pending Conflicts</p>
+                                <p class="text-2xl sm:text-3xl font-bold text-gray-900" id="pending-conflicts">{{ pending_conflicts|default:0 }}</p>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            {% if pending_conflicts > 0 %}
+                            <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">Requires attention</span>
+                            {% else %}
+                            <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">All clear</span>
+                            {% endif %}
+                        </div>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Pending Conflicts</p>
-                        <p class="text-3xl font-bold text-gray-900">{{ pending_conflicts|default:0 }}</p>
-                        {% if pending_conflicts > 0 %}
-                        <a href="{% url 'shift:conflict_dashboard' %}" class="text-sm text-amber-600 hover:text-amber-700">
-                            View Conflicts →
-                        </a>
-                        {% endif %}
+                    <div class="text-yellow-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
                     </div>
                 </div>
             </div>
 
             <!-- Coverage Rate -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-lime-100">
-                        <i class="ri-shield-check-line text-lime-600 text-2xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Coverage Rate</p>
-                        <p class="text-3xl font-bold text-gray-900">{{ coverage_rate|default:0 }}%</p>
-                        <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
-                            <div class="bg-lime-600 h-2 rounded-full" style="width: {{ coverage_rate|default:0 }}%"></div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer" onclick="viewCoverage()">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="flex items-center space-x-3">
+                            <div class="p-3 rounded-xl bg-purple-100">
+                                <svg class="w-6 h-6 text-purple-600" stroke="currentColor" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Coverage Rate</p>
+                                <p class="text-2xl sm:text-3xl font-bold text-gray-900" id="coverage-rate">{{ coverage_rate|default:0 }}%</p>
+                            </div>
                         </div>
+                        <div class="mt-3">
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-purple-600 h-2 rounded-full transition-all duration-300" style="width: {{ coverage_rate|default:0 }}%" id="coverage-bar"></div>
+                            </div>
+                            <span class="text-xs text-gray-500 mt-1 block">{{ covered_hours|default:0 }}/{{ total_hours|default:0 }} hours covered</span>
+                        </div>
+                    </div>
+                    <div class="text-purple-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
                     </div>
                 </div>
             </div>
@@ -424,82 +517,376 @@
     </div>
 </div>
 
-<!-- JavaScript for Dashboard Functionality -->
+<!-- Enhanced JavaScript for Dashboard Functionality -->
 <script>
-// Dismiss suggestion functionality
+// Dashboard AJAX functionality and real-time updates
+class ShiftDashboard {
+    constructor() {
+        this.refreshInterval = null;
+        this.autoRefreshEnabled = true;
+        this.lastUpdateTime = new Date();
+        this.init();
+    }
+
+    init() {
+        this.setupEventListeners();
+        this.startAutoRefresh();
+        this.updateLastRefreshTime();
+    }
+
+    setupEventListeners() {
+        // Auto-refresh toggle
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                this.stopAutoRefresh();
+            } else {
+                this.startAutoRefresh();
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'r':
+                        e.preventDefault();
+                        this.refreshDashboard();
+                        break;
+                }
+            }
+        });
+    }
+
+    async refreshDashboard() {
+        try {
+            this.showLoading();
+            
+            const response = await fetch('/shift/api/dashboard-data/', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            this.updateDashboardData(data);
+            this.updateLastRefreshTime();
+            this.showToast('Dashboard refreshed successfully', 'success');
+            
+        } catch (error) {
+            console.error('Error refreshing dashboard:', error);
+            this.showToast('Failed to refresh dashboard', 'error');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    updateDashboardData(data) {
+        // Update statistics with animation
+        this.updateElement('total-shifts', data.total_shifts || 0);
+        this.updateElement('active-shifts', `${data.active_shifts || 0} active`);
+        this.updateElement('active-assignments', data.active_assignments || 0);
+        this.updateElement('users-assigned', `${data.users_assigned || 0} users`);
+        this.updateElement('pending-conflicts', data.pending_conflicts || 0);
+        this.updateElement('coverage-rate', `${data.coverage_rate || 0}%`);
+        
+        // Update coverage bar with animation
+        const coverageBar = document.getElementById('coverage-bar');
+        if (coverageBar) {
+            coverageBar.style.transition = 'width 0.5s ease';
+            coverageBar.style.width = `${data.coverage_rate || 0}%`;
+        }
+
+        // Update recent activities if provided
+        if (data.recent_activities) {
+            this.updateRecentActivities(data.recent_activities);
+        }
+
+        // Update today's schedule if provided
+        if (data.todays_schedule) {
+            this.updateTodaysSchedule(data.todays_schedule);
+        }
+    }
+
+    updateElement(id, value) {
+        const element = document.getElementById(id);
+        if (element) {
+            // Add pulse animation effect
+            element.style.transform = 'scale(1.05)';
+            element.style.transition = 'transform 0.2s ease';
+            
+            setTimeout(() => {
+                element.textContent = value;
+                element.style.transform = 'scale(1)';
+            }, 100);
+        }
+    }
+
+    updateRecentActivities(activities) {
+        const container = document.querySelector('#recent-activities-container');
+        if (!container || !activities.length) return;
+
+        const activitiesHtml = activities.map(activity => `
+            <div class="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                <div class="flex-shrink-0">
+                    <svg class="w-4 h-4 text-${this.getActivityColor(activity.type)}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        ${this.getActivityIcon(activity.type)}
+                    </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm text-gray-900">${activity.description}</p>
+                    <p class="text-xs text-gray-500">${activity.time_ago}</p>
+                </div>
+            </div>
+        `).join('');
+        
+        container.innerHTML = activitiesHtml;
+    }
+
+    getActivityColor(type) {
+        const colors = {
+            'assignment': 'green',
+            'end_assignment': 'red',
+            'shift_created': 'blue',
+            'conflict': 'yellow'
+        };
+        return colors[type] || 'gray';
+    }
+
+    getActivityIcon(type) {
+        const icons = {
+            'assignment': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>',
+            'end_assignment': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>',
+            'shift_created': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>',
+            'conflict': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>'
+        };
+        return icons[type] || '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
+    }
+
+    updateTodaysSchedule(schedule) {
+        const container = document.querySelector('#todays-schedule-container');
+        if (!container || !schedule.length) return;
+
+        const scheduleHtml = schedule.map(assignment => `
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div class="flex items-center space-x-3">
+                    <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <div>
+                        <p class="font-medium text-gray-900">${assignment.user_name}</p>
+                        <p class="text-sm text-gray-600">${assignment.shift_name}</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm font-medium text-gray-900">${assignment.time_range}</p>
+                    <p class="text-xs text-gray-500">${assignment.duration}</p>
+                </div>
+            </div>
+        `).join('');
+        
+        container.innerHTML = scheduleHtml;
+    }
+
+    updateLastRefreshTime() {
+        const timeElement = document.getElementById('update-time');
+        if (timeElement) {
+            const now = new Date();
+            timeElement.textContent = now.toLocaleTimeString('en-US', { 
+                hour12: false, 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        }
+    }
+
+    startAutoRefresh() {
+        if (this.autoRefreshEnabled && !this.refreshInterval) {
+            this.refreshInterval = setInterval(() => {
+                this.refreshDashboard();
+            }, 300000); // Refresh every 5 minutes
+        }
+    }
+
+    stopAutoRefresh() {
+        if (this.refreshInterval) {
+            clearInterval(this.refreshInterval);
+            this.refreshInterval = null;
+        }
+    }
+
+    showLoading() {
+        const overlay = document.getElementById('loading-overlay');
+        if (overlay) {
+            overlay.classList.remove('hidden');
+        }
+    }
+
+    hideLoading() {
+        const overlay = document.getElementById('loading-overlay');
+        if (overlay) {
+            overlay.classList.add('hidden');
+        }
+    }
+
+    showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
+        
+        toast.className = `${bgColor} text-white px-6 py-3 rounded-lg shadow-lg transform transition-transform duration-300 translate-x-full`;
+        toast.innerHTML = `
+            <div class="flex items-center justify-between">
+                <span>${message}</span>
+                <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        `;
+        
+        container.appendChild(toast);
+        
+        // Animate in
+        setTimeout(() => {
+            toast.classList.remove('translate-x-full');
+        }, 100);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            toast.classList.add('translate-x-full');
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
+    }
+}
+
+// Navigation functions
+function navigateToShifts() {
+    window.location.href = '{% url "shift:list" %}';
+}
+
+function navigateToAssignments() {
+    window.location.href = '{% url "shift:assignments" %}';
+}
+
+function viewConflicts() {
+    window.location.href = '{% url "shift:assignments" %}?status=conflict';
+}
+
+function viewCoverage() {
+    window.location.href = '{% url "shift:statistics" %}';
+}
+
+// Global refresh function
+function refreshDashboard() {
+    if (window.dashboard) {
+        window.dashboard.refreshDashboard();
+    }
+}
+
+// Enhanced suggestion management
 function dismissSuggestion(suggestionId) {
+    const suggestionElement = event.target.closest('.bg-lime-50');
+    if (!suggestionElement) return;
+
+    // Add loading state
+    const button = event.target;
+    const originalText = button.textContent;
+    button.textContent = 'Dismissing...';
+    button.disabled = true;
+
     fetch(`/shift/api/suggestions/${suggestionId}/dismiss/`, {
         method: 'POST',
         headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
             'Content-Type': 'application/json',
-        },
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        }
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Remove the suggestion element
-            event.target.closest('.bg-lime-50').remove();
+            // Animate out and remove
+            suggestionElement.style.transform = 'translateX(100%)';
+            suggestionElement.style.opacity = '0';
+            setTimeout(() => suggestionElement.remove(), 300);
+            
+            if (window.dashboard) {
+                window.dashboard.showToast('Suggestion dismissed', 'success');
+            }
+        } else {
+            throw new Error(data.message || 'Failed to dismiss suggestion');
         }
     })
     .catch(error => {
         console.error('Error dismissing suggestion:', error);
-    });
-}
-
-// Auto-refresh dashboard data
-function refreshDashboardStats() {
-    fetch('/shift/api/analytics/dashboard/')
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Update stats without full page reload
-                updateStatsDisplay(data.stats);
-            }
-        })
-        .catch(error => {
-            console.error('Error refreshing dashboard:', error);
-        });
-}
-
-function updateStatsDisplay(stats) {
-    // Update stat values if elements exist
-    const elements = {
-        'total_shifts': stats.total_shifts,
-        'active_assignments': stats.active_assignments,
-        'pending_conflicts': stats.pending_conflicts,
-        'coverage_rate': stats.coverage_rate
-    };
-
-    Object.keys(elements).forEach(key => {
-        const element = document.querySelector(`[data-stat="${key}"]`);
-        if (element) {
-            element.textContent = elements[key];
+        button.textContent = originalText;
+        button.disabled = false;
+        
+        if (window.dashboard) {
+            window.dashboard.showToast('Failed to dismiss suggestion', 'error');
         }
     });
-
-    // Update coverage rate bar
-    const coverageBar = document.querySelector('[data-coverage-bar]');
-    if (coverageBar) {
-        coverageBar.style.width = `${stats.coverage_rate}%`;
-    }
 }
 
-// Initialize dashboard
+// Initialize dashboard when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Set up auto-refresh every 5 minutes
-    setInterval(refreshDashboardStats, 300000);
-
-    // Add smooth scrolling to anchor links
+    // Initialize dashboard
+    window.dashboard = new ShiftDashboard();
+    
+    // Add smooth scrolling for anchor links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             e.preventDefault();
             const target = document.querySelector(this.getAttribute('href'));
             if (target) {
-                target.scrollIntoView({ behavior: 'smooth' });
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
             }
         });
     });
+    
+    // Add loading states to navigation links
+    document.querySelectorAll('a[href]').forEach(link => {
+        if (!link.href.startsWith('#') && !link.href.startsWith('javascript:')) {
+            link.addEventListener('click', function() {
+                // Add subtle loading state
+                this.style.opacity = '0.7';
+                this.style.pointerEvents = 'none';
+                
+                // Restore state after delay
+                setTimeout(() => {
+                    this.style.opacity = '1';
+                    this.style.pointerEvents = 'auto';
+                }, 2000);
+            });
+        }
+    });
+    
+    // Add hover effects to stat cards
+    document.querySelectorAll('[onclick^="navigate"], [onclick^="view"]').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (window.dashboard) {
+        window.dashboard.stopAutoRefresh();
+    }
 });
 </script>
 {% endblock %}
