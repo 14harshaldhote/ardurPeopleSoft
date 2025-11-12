@@ -106,13 +106,13 @@
                     <div class="p-6 border-b border-gray-200">
                         <div class="flex justify-between items-center">
                             <h3 class="text-lg font-semibold text-gray-900">Current Assignments</h3>
-                            <span class="text-sm text-gray-500">{{ assignments|length }} active</span>
+                            <span class="text-sm text-gray-500">{{ current_assignments|length }} active</span>
                         </div>
                     </div>
                     <div class="p-6">
-                        {% if assignments %}
+                        {% if current_assignments %}
                         <div class="space-y-4">
-                            {% for assignment in assignments %}
+                            {% for assignment in current_assignments %}
                             <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                                 <div class="flex items-center">
                                     <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-4">
@@ -170,22 +170,22 @@
                     <div class="p-6 space-y-4">
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-600">Current Assignments</span>
-                            <span class="font-semibold text-gray-900">{{ assignments|length }}</span>
+                            <span class="font-semibold text-gray-900">{{ current_assignments|length }}</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-600">Total Assignments</span>
-                            <span class="font-semibold text-gray-900">{{ stats.total_assignments }}</span>
+                            <span class="font-semibold text-gray-900">{{ total_assignments }}</span>
                         </div>
                         {% if shift.max_employees %}
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-600">Capacity</span>
                             <span class="font-semibold text-gray-900">
-                                {{ assignments|length }}/{{ shift.max_employees }}
+                                {{ current_assignments|length }}/{{ shift.max_employees }}
                             </span>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-2">
                             <div class="bg-blue-600 h-2 rounded-full" 
-                                 style="width: {% widthratio assignments|length shift.max_employees 100 %}%"></div>
+                                 style="width: {{ current_assignments|length|div:shift.max_employees|mul:100 }}%"></div>
                         </div>
                         {% endif %}
                     </div>

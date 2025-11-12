@@ -32,14 +32,28 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Messages -->
         {% if messages %}
-        <div class="max-w-4xl mx-auto px-4 pt-6">
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} mb-4 p-4 rounded-lg border">
-                {{ message }}
-                <button onclick="this.parentElement.remove()" class="float-right">&times;</button>
+            <div class="mb-6">
+                {% for message in messages %}
+                    <div class="mb-4 p-4 rounded-md {% if message.tags == 'error' %}bg-red-50 border border-red-200 text-red-800{% elif message.tags == 'success' %}bg-emerald-50 border border-emerald-200 text-emerald-800{% elif message.tags == 'warning' %}bg-amber-50 border border-amber-200 text-amber-800{% else %}bg-sky-50 border border-sky-200 text-sky-800{% endif %}">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                {% if message.tags == 'error' %}
+                                    <i class="ri-error-warning-line text-red-500"></i>
+                                {% elif message.tags == 'success' %}
+                                    <i class="ri-check-line text-emerald-500"></i>
+                                {% elif message.tags == 'warning' %}
+                                    <i class="ri-alert-line text-amber-500"></i>
+                                {% else %}
+                                    <i class="ri-information-line text-sky-500"></i>
+                                {% endif %}
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm">{{ message }}</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
             </div>
-            {% endfor %}
-        </div>
         {% endif %}
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">

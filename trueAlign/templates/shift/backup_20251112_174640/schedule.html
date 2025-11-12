@@ -1,0 +1,572 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Shift Schedule - TrueAlign{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header Section -->
+    <div class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="py-6">
+                <div class="flex items-center justify-between">
+                    <div></div>
+                        <h1 class="text-3xl font-bold text-gray-900">Shift Schedule</h1>
+                        <p class="mt-2 text-gray-600">Comprehensive view of all shift assignments</p>
+                    </div>
+                    <div class="flex space-x-3">
+                        <a href="{% url 'shift:calendar' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
+                            <i class="ri-calendar-line mr-2"></i>
+                            Calendar View
+                        </a>
+                        <a href="{% url 'shift:assign' %}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
+                            <i class="ri-user-add-line mr-2"></i>
+                            New Assignment
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Schedule Controls -->
+        <div class="bg-white shadow rounded-lg mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-medium text-gray-900">Schedule Controls</h3>
+                    <div class="flex items-center space-x-4">
+                        <!-- Date Navigation -->
+                        <div class="flex items-center space-x-2">
+                            <button id="prevWeek" class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md">
+                                <i class="ri-arrow-left-line"></i>
+                            </button>
+                            <span id="currentWeek" class="px-4 py-2 text-sm font-medium text-gray-900">
+                                {{ current_week_start|date:"M d" }} - {{ current_week_end|date:"M d, Y" }}
+                            </span>
+                            <button id="nextWeek" class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md">
+                                <i class="ri-arrow-right-line"></i>
+                            </button>
+                        </div>
+                        <button id="todayBtn" class="px-3 py-2 text-xs font-medium text-sky-700 bg-sky-100 rounded-md hover:bg-sky-200">
+                            This Week
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <!-- View Mode -->
+                    <div>
+                        <label for="viewMode" class="block text-sm font-medium text-gray-700 mb-2">View Mode</label>
+                        <select id="viewMode" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm">
+                            <option value="week">Week View</option>
+                            <option value="day">Day View</option>
+                            <option value="month">Month View</option>
+                        </select>
+                    </div>
+
+                    <!-- Department Filter -->
+                    <div>
+                        <label for="departmentFilter" class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                        <select id="departmentFilter" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm">
+                            <option value="">All Departments</option>
+                            {% for dept in departments %}
+                                <option value="{{ dept.id }}">{{ dept.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Shift Filter -->
+                    <div>
+                        <label for="shiftFilter" class="block text-sm font-medium text-gray-700 mb-2">Shift Type</label>
+                        <select id="shiftFilter" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm">
+                            <option value="">All Shifts</option>
+                            {% for shift in shifts %}
+                                <option value="{{ shift.id }}">{{ shift.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Export Options -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Export</label>
+                        <div class="flex space-x-2">
+                            <button onclick="exportSchedule('pdf')" class="flex-1 px-3 py-2 text-xs font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+                                <i class="ri-file-pdf-line mr-1"></i>
+                                PDF
+                            </button>
+                            <button onclick="exportSchedule('csv')" class="flex-1 px-3 py-2 text-xs font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+                                <i class="ri-file-excel-line mr-1"></i>
+                                CSV
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule Grid -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-medium text-gray-900">Weekly Schedule</h3>
+                    <div class="flex items-center space-x-4">
+                        <!-- Coverage Indicator -->
+                        <div class="flex items-center space-x-3 text-xs">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-emerald-500 rounded mr-1"></div>
+                                <span class="text-gray-600">Fully Covered</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-amber-500 rounded mr-1"></div>
+                                <span class="text-gray-600">Partial Coverage</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-rose-500 rounded mr-1"></div>
+                                <span class="text-gray-600">No Coverage</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Time Grid -->
+            <div class="overflow-x-auto">
+                <div class="min-w-full">
+                    <!-- Header with days -->
+                    <div class="grid grid-cols-8 gap-px bg-gray-200">
+                        <div class="bg-gray-50 p-3 text-center text-xs font-medium text-gray-700">Time</div>
+                        {% for day in week_days %}
+                            <div class="bg-gray-50 p-3 text-center text-xs font-medium text-gray-700">
+                                <div></div>{{ day.name }}</div>
+                                <div class="text-gray-500">{{ day.date|date:"M d" }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Time slots -->
+                    <div class="grid grid-cols-8 gap-px bg-gray-200">
+                        {% for hour in time_slots %}
+                            <!-- Time column -->
+                            <div class="bg-white p-2 text-center text-xs font-medium text-gray-500 border-r border-gray-200">
+                                {{ hour.time }}
+                            </div>
+
+                            <!-- Day columns -->
+                            {% for day in week_days %}
+                                <div class="bg-white p-2 min-h-16 relative hover:bg-gray-50"
+                                     data-day="{{ day.date|date:'Y-m-d' }}"
+                                     data-hour="{{ hour.value }}">
+
+                                    <!-- Assignments for this time slot -->
+                                    {% for assignment in day.assignments %}
+                                        {% if assignment.overlaps_hour:hour.value %}
+                                            <div class="assignment-block mb-1 p-1 rounded text-xs font-medium cursor-pointer
+                                                      {% if assignment.shift.shift_type == 'morning' %}
+                                                          bg-sky-100 text-sky-800 border border-sky-200
+                                                      {% elif assignment.shift.shift_type == 'afternoon' %}
+                                                          bg-emerald-100 text-emerald-800 border border-emerald-200
+                                                      {% elif assignment.shift.shift_type == 'night' %}
+                                                          bg-purple-100 text-purple-800 border border-purple-200
+                                                      {% else %}
+                                                          bg-gray-100 text-gray-800 border border-gray-200
+                                                      {% endif %}"
+                                                 onclick="showAssignmentDetails({{ assignment.id|default:'null' }})"
+                                                 title="{{ assignment.user.get_full_name }} - {{ assignment.shift.name }}">
+                                                <div class="truncate">{{ assignment.user.get_full_name|default:assignment.user.username|truncatechars:12 }}</div>
+                                                <div class="text-xs text-gray-600 truncate">{{ assignment.shift.name }}</div>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    <!-- Coverage indicator -->
+                                    <div class="absolute top-1 right-1 w-2 h-2 rounded-full
+                                              {% if day.coverage_status == 'full' %}
+                                                  bg-emerald-500
+                                              {% elif day.coverage_status == 'partial' %}
+                                                  bg-amber-500
+                                              {% else %}
+                                                  bg-rose-500
+                                              {% endif %}">
+                                    </div>
+
+                                    <!-- Quick assign button for managers -->
+                                    {% if can_manage %}
+                                        <button onclick="quickAssign('{{ day.date|date:'Y-m-d' }}', '{{ hour.value|escapejs }}')"
+                                                class="absolute bottom-1 right-1 w-4 h-4 text-xs text-gray-400 hover:text-sky-600 hover:bg-sky-50 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <i class="ri-add-line"></i>
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Statistics -->
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-white shadow rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-sky-500 rounded-md flex items-center justify-center">
+                            <i class="ri-user-line text-white"></i>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total Assignments</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ total_assignments|default:0 }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white shadow rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-emerald-500 rounded-md flex items-center justify-center">
+                            <i class="ri-checkbox-circle-line text-white"></i>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Coverage Rate</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ coverage_percentage|default:0 }}%</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white shadow rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-amber-500 rounded-md flex items-center justify-center">
+                            <i class="ri-alert-line text-white"></i>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Conflicts</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ conflict_count|default:0 }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white shadow rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
+                            <i class="ri-time-line text-white"></i>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total Hours</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ total_hours|default:0 }}h</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assignment Details Panel -->
+        <div class="mt-8 bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Assignment Details</h3>
+                <p class="mt-1 text-sm text-gray-500">Click on any assignment to view details</p>
+            </div>
+            <div class="p-6">
+                <div id="assignmentDetails" class="text-center text-gray-500">
+                    <i class="ri-information-line text-4xl mb-2"></i>
+                    <p>Select an assignment from the schedule to view details</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Assignment Modal -->
+<div id="quickAssignModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Quick Assignment</h3>
+                <button onclick="closeQuickAssign()" class="text-gray-400 hover:text-gray-600">
+                    <i class="ri-close-line text-xl"></i>
+                </button>
+            </div>
+            <form id="quickAssignForm">
+                {% csrf_token %}
+                <input type="hidden" id="assignDate" name="date">
+                <input type="hidden" id="assignHour" name="hour">
+
+                <div class="mb-4">
+                    <label for="quickUser" class="block text-sm font-medium text-gray-700 mb-2">User</label>
+                    <select id="quickUser" name="user" required class="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm">
+                        <option value="">Select user...</option>
+                        {% for user in available_users %}
+                            <option value="{{ user.id }}">{{ user.get_full_name|default:user.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label for="quickShift" class="block text-sm font-medium text-gray-700 mb-2">Shift</label>
+                    <select id="quickShift" name="shift" required class="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm">
+                        <option value="">Select shift...</option>
+                        {% for shift in shifts %}
+                            <option value="{{ shift.id }}">{{ shift.name }} ({{ shift.start_time }} - {{ shift.end_time }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeQuickAssign()" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-sky-600 text-white text-sm font-medium rounded-md hover:bg-sky-700">
+                        Assign
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let currentWeekStart = new Date('{{ current_week_start|date:"Y-m-d" }}');
+
+    // Navigation functions
+    document.getElementById('prevWeek').addEventListener('click', function() {
+        currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+        updateSchedule();
+    });
+
+    document.getElementById('nextWeek').addEventListener('click', function() {
+        currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+        updateSchedule();
+    });
+
+    document.getElementById('todayBtn').addEventListener('click', function() {
+        const today = new Date();
+        const dayOfWeek = today.getDay();
+        currentWeekStart = new Date(today);
+        currentWeekStart.setDate(today.getDate() - dayOfWeek);
+        updateSchedule();
+    });
+
+    // Filter functions
+    document.getElementById('viewMode').addEventListener('change', updateSchedule);
+    document.getElementById('departmentFilter').addEventListener('change', updateSchedule);
+    document.getElementById('shiftFilter').addEventListener('change', updateSchedule);
+
+    function updateSchedule() {
+        const params = new URLSearchParams({
+            week_start: currentWeekStart.toISOString().split('T')[0],
+            view_mode: document.getElementById('viewMode').value,
+            department: document.getElementById('departmentFilter').value,
+            shift: document.getElementById('shiftFilter').value
+        });
+
+        window.location.href = '{% url "shift:schedule" %}?' + params.toString();
+    }
+
+    // Add hover effects to time slots
+    document.querySelectorAll('[data-day][data-hour]').forEach(slot => {
+        slot.addEventListener('mouseenter', function() {
+            this.classList.add('bg-gray-50');
+        });
+        slot.addEventListener('mouseleave', function() {
+            this.classList.remove('bg-gray-50');
+        });
+    });
+});
+
+// Quick assignment functions
+function quickAssign(date, hour) {
+    document.getElementById('assignDate').value = date;
+    document.getElementById('assignHour').value = hour;
+    document.getElementById('quickAssignModal').classList.remove('hidden');
+}
+
+function closeQuickAssign() {
+    document.getElementById('quickAssignModal').classList.add('hidden');
+    document.getElementById('quickAssignForm').reset();
+}
+
+// Handle quick assignment form submission
+document.getElementById('quickAssignForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+
+    fetch('{% url "shift:quick_assign" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Assignment created successfully!', 'success');
+            closeQuickAssign();
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showNotification(data.error || 'Error creating assignment', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error creating assignment', 'error');
+    });
+});
+
+// Show assignment details
+function showAssignmentDetails(assignmentId) {
+    fetch(`/shift/api/assignments/${assignmentId}/`)
+    .then(response => response.json())
+    .then(data => {
+        const detailsDiv = document.getElementById('assignmentDetails');
+        detailsDiv.innerHTML = `
+            <div class="text-left">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-lg font-medium text-gray-900">Assignment Details</h4>
+                    <span class="px-2 py-1 text-xs font-medium rounded-full ${data.is_current ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-800'}">
+                        ${data.is_current ? 'Active' : 'Inactive'}
+                    </span>
+                </div>
+                <dl class="space-y-3">
+                    <div class="flex justify-between">
+                        <dt class="text-sm text-gray-600">User:</dt>
+                        <dd class="text-sm font-medium text-gray-900">${data.user_name}</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-sm text-gray-600">Shift:</dt>
+                        <dd class="text-sm font-medium text-gray-900">${data.shift_name}</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-sm text-gray-600">Time:</dt>
+                        <dd class="text-sm font-medium text-gray-900">${data.shift_time}</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-sm text-gray-600">Duration:</dt>
+                        <dd class="text-sm font-medium text-gray-900">${data.duration}h</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-sm text-gray-600">Effective From:</dt>
+                        <dd class="text-sm font-medium text-gray-900">${data.effective_from}</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-sm text-gray-600">Effective To:</dt>
+                        <dd class="text-sm font-medium text-gray-900">${data.effective_to || 'Ongoing'}</dd>
+                    </div>
+                </dl>
+
+                {% if can_manage %}
+                <div class="mt-4 pt-4 border-t border-gray-200 flex space-x-3">
+                    <button onclick="editAssignment(${data.id})" class="inline-flex items-center px-3 py-1 border border-sky-300 rounded text-xs font-medium text-sky-700 bg-sky-50 hover:bg-sky-100">
+                        <i class="ri-edit-line mr-1"></i>
+                        Edit
+                    </button>
+                    <button onclick="endAssignment(${data.id})" class="inline-flex items-center px-3 py-1 border border-rose-300 rounded text-xs font-medium text-rose-700 bg-rose-50 hover:bg-rose-100">
+                        <i class="ri-stop-line mr-1"></i>
+                        End
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        `;
+    })
+    .catch(error => {
+        console.error('Error loading assignment details:', error);
+        document.getElementById('assignmentDetails').innerHTML = `
+            <div class="text-center text-red-500">
+                <i class="ri-error-warning-line text-2xl mb-2"></i>
+                <p>Error loading assignment details</p>
+            </div>
+        `;
+    });
+}
+
+// Export functions
+function exportSchedule(format) {
+    const params = new URLSearchParams({
+        format: format,
+        week_start: '{{ current_week_start|date:"Y-m-d" }}',
+        department: document.getElementById('departmentFilter').value,
+        shift: document.getElementById('shiftFilter').value
+    });
+
+    window.open('{% url "shift:csv_export" %}?' + params.toString(), '_blank');
+}
+
+// Utility functions
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg border max-w-sm transform transition-transform duration-300`;
+
+    const colors = {
+        success: 'bg-emerald-50 border-emerald-200 text-emerald-800',
+        error: 'bg-rose-50 border-rose-200 text-rose-800',
+        warning: 'bg-amber-50 border-amber-200 text-amber-800',
+        info: 'bg-sky-50 border-sky-200 text-sky-800'
+    };
+
+    notification.className += ` ${colors[type] || colors.info}`;
+    notification.innerHTML = `
+        <div class="flex items-center justify-between">
+            <p class="text-sm font-medium">${message}</p>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-3 text-gray-400 hover:text-gray-600">
+                <i class="ri-close-line"></i>
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+
+    setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => notification.remove(), 300);
+    }, 5000);
+}
+
+function editAssignment(assignmentId) {
+    window.location.href = `{% url 'shift:assignments' %}?edit=${assignmentId}`;
+}
+
+function endAssignment(assignmentId) {
+    if (confirm('Are you sure you want to end this assignment?')) {
+        fetch(`{% url 'shift:end_assignment' assignment_id=0 %}`.replace('0', assignmentId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Assignment ended successfully!', 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showNotification(data.error || 'Error ending assignment', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error ending assignment', 'error');
+        });
+    }
+}
+</script>
+{% endblock %}

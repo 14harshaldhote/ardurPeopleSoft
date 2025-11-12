@@ -342,9 +342,6 @@ async function validateBulkAssignment() {
     try {
         const response = await fetch('{% url "shift:api_validate_bulk_conflicts" %}', {
             method: 'POST',
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-            },
             body: formData
         });
         
@@ -353,7 +350,7 @@ async function validateBulkAssignment() {
         if (data.conflicts && data.conflicts.length > 0) {
             let message = `Found ${data.conflicts.length} conflicts:\n\n`;
             data.conflicts.forEach(conflict => {
-                message += `• ${conflict.user_name}: ${conflict.message}\n`;
+                message += `• ${conflict.user}: ${conflict.message}\n`;
             });
             message += '\nDo you want to proceed anyway?';
             

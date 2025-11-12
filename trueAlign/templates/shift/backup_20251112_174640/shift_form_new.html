@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Edit Shift{% else %}Create Shift{% endif %} - TrueAlign{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm">
+        <div class="max-w-4xl mx-auto px-4 py-6">
+            <div class="flex items-center">
+                <a href="{% url 'shift:list' %}" class="mr-4 text-gray-600 hover:text-gray-900">
+                    <i class="ri-arrow-left-line text-xl"></i>
+                </a>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">
+                        {% if form.instance.pk %}Edit Shift{% else %}Create New Shift{% endif %}
+                    </h1>
+                    <p class="text-gray-600">
+                        {% if form.instance.pk %}Update shift details{% else %}Create a new shift schedule{% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <div class="bg-white rounded-lg shadow">
+            <form method="post" id="shiftForm">
+                {% csrf_token %}
+                
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">Shift Details</h3>
+                </div>
+
+                <div class="p-6 space-y-6">
+                    <!-- Basic Information -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Shift Name <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" name="name" value="{{ form.instance.name }}" required
+                                   placeholder="e.g., Morning Shift, Night Shift"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            {% if form.name.errors %}
+                                <div class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Status
+                            </label>
+                            <select name="is_active" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="true" {% if form.instance.is_active %}selected{% endif %}>Active</option>
+                                <option value="false" {% if not form.instance.is_active %}selected{% endif %}>Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Description
+                        </label>
+                        <textarea name="description" rows="3" 
+                                  placeholder="Brief description of the shift..."
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">{{ form.instance.description }}</textarea>
+                    </div>
+
+                    <!-- Time Settings -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Start Time <span class="text-red-500">*</span>
+                            </label>
+                            <input type="time" name="start_time" 
+                                   value="{% if form.instance.start_time %}{{ form.instance.start_time|time:'H:i' }}{% endif %}" 
+                                   required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            {% if form.start_time.errors %}
+                                <div class="mt-1 text-sm text-red-600">{{ form.start_time.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                End Time <span class="text-red-500">*</span>
+                            </label>
+                            <input type="time" name="end_time" 
+                                   value="{% if form.instance.end_time %}{{ form.instance.end_time|time:'H:i' }}{% endif %}" 
+                                   required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            {% if form.end_time.errors %}
+                                <div class="mt-1 text-sm text-red-600">{{ form.end_time.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Break Duration (minutes)
+                            </label>
+                            <input type="number" name="break_duration" min="0" max="480"
+                                   value="{{ form.instance.break_duration|default:'' }}"
+                                   placeholder="30"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <p class="mt-1 text-xs text-gray-500">Optional break time in minutes</p>
+                        </div>
+                    </div>
+
+                    <!-- Capacity Settings -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Maximum Employees
+                            </label>
+                            <input type="number" name="max_employees" min="1" max="1000"
+                                   value="{{ form.instance.max_employees|default:'' }}"
+                                   placeholder="No limit"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <p class="mt-1 text-xs text-gray-500">Leave empty for no limit</p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Grace Period (minutes)
+                            </label>
+                            <input type="number" name="grace_period" min="0" max="60"
+                                   value="{{ form.instance.grace_period|default:'' }}"
+                                   placeholder="15"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <p class="mt-1 text-xs text-gray-500">Late arrival tolerance</p>
+                        </div>
+                    </div>
+
+                    <!-- Calculated Duration Display -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <i class="ri-information-line text-blue-600 mr-2"></i>
+                            <div>
+                                <p class="font-medium text-blue-900">Shift Duration</p>
+                                <p class="text-sm text-blue-700" id="durationDisplay">
+                                    {% if form.instance.shift_duration %}
+                                        {{ form.instance.shift_duration }} hours
+                                    {% else %}
+                                        Select start and end times to calculate duration
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg flex justify-between">
+                    <a href="{% url 'shift:list' %}" class="btn btn-secondary">
+                        <i class="ri-arrow-left-line"></i> Cancel
+                    </a>
+                    <div class="flex space-x-3">
+                        <button type="button" onclick="validateShift()" class="btn btn-outline-primary">
+                            <i class="ri-check-line"></i> Validate
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="ri-save-line"></i> 
+                            {% if form.instance.pk %}Update Shift{% else %}Create Shift{% endif %}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Calculate shift duration
+function calculateDuration() {
+    const startTime = document.querySelector('input[name="start_time"]').value;
+    const endTime = document.querySelector('input[name="end_time"]').value;
+    const breakDuration = parseInt(document.querySelector('input[name="break_duration"]').value) || 0;
+    
+    if (startTime && endTime) {
+        const start = new Date(`2000-01-01T${startTime}`);
+        const end = new Date(`2000-01-01T${endTime}`);
+        
+        // Handle midnight crossing
+        if (end <= start) {
+            end.setDate(end.getDate() + 1);
+        }
+        
+        const diffMs = end - start;
+        const diffHours = diffMs / (1000 * 60 * 60);
+        const workingHours = diffHours - (breakDuration / 60);
+        
+        document.getElementById('durationDisplay').textContent = 
+            `${workingHours.toFixed(1)} hours (${diffHours.toFixed(1)} total - ${breakDuration} min break)`;
+    }
+}
+
+// Validate shift times
+function validateShift() {
+    const startTime = document.querySelector('input[name="start_time"]').value;
+    const endTime = document.querySelector('input[name="end_time"]').value;
+    const name = document.querySelector('input[name="name"]').value;
+    
+    const errors = [];
+    
+    if (!name.trim()) {
+        errors.push('Shift name is required');
+    }
+    
+    if (!startTime) {
+        errors.push('Start time is required');
+    }
+    
+    if (!endTime) {
+        errors.push('End time is required');
+    }
+    
+    if (startTime && endTime && startTime === endTime) {
+        errors.push('Start time and end time cannot be the same');
+    }
+    
+    if (errors.length > 0) {
+        alert('Validation errors:\n' + errors.join('\n'));
+    } else {
+        alert('Shift validation passed! You can now save the shift.');
+    }
+}
+
+// Event listeners
+document.querySelector('input[name="start_time"]').addEventListener('change', calculateDuration);
+document.querySelector('input[name="end_time"]').addEventListener('change', calculateDuration);
+document.querySelector('input[name="break_duration"]').addEventListener('input', calculateDuration);
+
+// Calculate duration on page load
+document.addEventListener('DOMContentLoaded', calculateDuration);
+</script>
+{% endblock %}
