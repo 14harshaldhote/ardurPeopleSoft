@@ -117,7 +117,7 @@ def leave_notification(sender, instance, created, **kwargs):
             create_notification(
                 recipient=manager,
                 title='📅 New Leave Request',
-                message=f'Leave request from {instance.employee.get_full_name()}',
+                message=f'Leave request from {instance.user.get_full_name()}',
                 module='leave',
                 reference_id=str(instance.id),
                 url=f'/leave/request/{instance.id}/'
@@ -125,7 +125,7 @@ def leave_notification(sender, instance, created, **kwargs):
     elif hasattr(instance, 'status_changed') and instance.status_changed:
         if instance.status in ['approved', 'rejected']:
             create_notification(
-                recipient=instance.employee,
+                recipient=instance.user,
                 title=f'{"✅" if instance.status == "approved" else "❌"} Leave {instance.status.title()}',
                 message=f'Your leave request has been {instance.status}',
                 module='leave',

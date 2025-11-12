@@ -1,0 +1,503 @@
+{
+  "summary": {
+    "total_tests": 43,
+    "passed": 37,
+    "failed": 6,
+    "success_rate": 86.04651162790698
+  },
+  "test_results": [
+    {
+      "test_name": "Delete Leave Requests",
+      "status": "SUCCESS",
+      "details": "Deleted 0 leave requests",
+      "timestamp": "2025-11-12T13:33:19.319306",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Delete Comp-off Requests",
+      "status": "SUCCESS",
+      "details": "Deleted 1 comp-off requests",
+      "timestamp": "2025-11-12T13:33:19.320520",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Delete User Balances",
+      "status": "SUCCESS",
+      "details": "Deleted 47 user balances",
+      "timestamp": "2025-11-12T13:33:19.321590",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Delete Leave Allocations",
+      "status": "SUCCESS",
+      "details": "Deleted 15 allocations",
+      "timestamp": "2025-11-12T13:33:19.323522",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Delete Leave Policies",
+      "status": "SUCCESS",
+      "details": "Deleted 4 policies",
+      "timestamp": "2025-11-12T13:33:19.325834",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Delete Leave Types",
+      "status": "SUCCESS",
+      "details": "Deleted 8 leave types",
+      "timestamp": "2025-11-12T13:33:19.328526",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Create Leave Type Annual Leave",
+      "status": "SUCCESS",
+      "details": "Max days: 30",
+      "timestamp": "2025-11-12T13:33:19.333237",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Create Leave Type Sick Leave",
+      "status": "SUCCESS",
+      "details": "Max days: 15",
+      "timestamp": "2025-11-12T13:33:19.333669",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Create Leave Type Casual Leave",
+      "status": "SUCCESS",
+      "details": "Max days: 12",
+      "timestamp": "2025-11-12T13:33:19.333982",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Create Leave Type Maternity Leave",
+      "status": "SUCCESS",
+      "details": "Max days: 180",
+      "timestamp": "2025-11-12T13:33:19.334269",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Create Leave Type Paternity Leave",
+      "status": "SUCCESS",
+      "details": "Max days: 15",
+      "timestamp": "2025-11-12T13:33:19.334560",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Create Leave Type Comp Off",
+      "status": "SUCCESS",
+      "details": "Max days: 50",
+      "timestamp": "2025-11-12T13:33:19.334831",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Create Leave Type Loss of Pay",
+      "status": "SUCCESS",
+      "details": "Max days: 365",
+      "timestamp": "2025-11-12T13:33:19.335102",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Create Leave Type Emergency Leave",
+      "status": "SUCCESS",
+      "details": "Max days: 5",
+      "timestamp": "2025-11-12T13:33:19.335366",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Create Policy Standard Employee Policy",
+      "status": "SUCCESS",
+      "details": "Group: Employee, Allocations: 4",
+      "timestamp": "2025-11-12T13:33:19.337337",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Create Policy Manager Policy",
+      "status": "SUCCESS",
+      "details": "Group: Manager, Allocations: 4",
+      "timestamp": "2025-11-12T13:33:19.339107",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Create Policy HR Policy",
+      "status": "SUCCESS",
+      "details": "Group: HR, Allocations: 4",
+      "timestamp": "2025-11-12T13:33:19.341192",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Create Policy Intern Policy",
+      "status": "SUCCESS",
+      "details": "Group: Intern, Allocations: 3",
+      "timestamp": "2025-11-12T13:33:19.342873",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Create User john_employee",
+      "status": "SUCCESS",
+      "details": "Groups: Employee",
+      "timestamp": "2025-11-12T13:33:19.344887",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Create User jane_manager",
+      "status": "SUCCESS",
+      "details": "Groups: Manager",
+      "timestamp": "2025-11-12T13:33:19.346051",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Create User bob_hr",
+      "status": "SUCCESS",
+      "details": "Groups: HR",
+      "timestamp": "2025-11-12T13:33:19.346945",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Create User alice_employee",
+      "status": "SUCCESS",
+      "details": "Groups: Employee",
+      "timestamp": "2025-11-12T13:33:19.347802",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Create User mike_intern",
+      "status": "SUCCESS",
+      "details": "Groups: Intern",
+      "timestamp": "2025-11-12T13:33:19.348700",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Create User sarah_manager",
+      "status": "SUCCESS",
+      "details": "Groups: Manager",
+      "timestamp": "2025-11-12T13:33:19.349675",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Allocate Leaves - john_employee",
+      "status": "SUCCESS",
+      "details": "Allocated leaves for John Doe",
+      "timestamp": "2025-11-12T13:33:19.359597",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Allocate Leaves - jane_manager",
+      "status": "SUCCESS",
+      "details": "Allocated leaves for Jane Smith",
+      "timestamp": "2025-11-12T13:33:19.371881",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Allocate Leaves - bob_hr",
+      "status": "SUCCESS",
+      "details": "Allocated leaves for Bob Wilson",
+      "timestamp": "2025-11-12T13:33:19.385008",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Allocate Leaves - alice_employee",
+      "status": "SUCCESS",
+      "details": "Allocated leaves for Alice Brown",
+      "timestamp": "2025-11-12T13:33:19.397795",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Allocate Leaves - mike_intern",
+      "status": "SUCCESS",
+      "details": "Allocated leaves for Mike Wilson",
+      "timestamp": "2025-11-12T13:33:19.407993",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Allocate Leaves - sarah_manager",
+      "status": "SUCCESS",
+      "details": "Allocated leaves for Sarah Davis",
+      "timestamp": "2025-11-12T13:33:19.419512",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Basic Leave Application",
+      "status": "FAILED",
+      "details": "Validation errors: ['Insufficient Annual Leave balance']",
+      "timestamp": "2025-11-12T13:33:19.429882",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Leave Approval Workflow",
+      "status": "FAILED",
+      "details": "Application failed: ['Insufficient Casual Leave balance']",
+      "timestamp": "2025-11-12T13:33:19.435749",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Insufficient Balance Detection",
+      "status": "SUCCESS",
+      "details": "System correctly detected insufficient balance",
+      "timestamp": "2025-11-12T13:33:19.443882",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Auto-conversion Available",
+      "status": "SUCCESS",
+      "details": "System can auto-convert to Loss of Pay",
+      "timestamp": "2025-11-12T13:33:19.443906",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Overlapping Leave Detection",
+      "status": "FAILED",
+      "details": "First leave application failed: {'is_valid': False, 'errors': ['Insufficient Annual Leave balance'], 'warnings': [], 'can_auto_convert': True}",
+      "timestamp": "2025-11-12T13:33:19.449339",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Half-day Leave Processing",
+      "status": "FAILED",
+      "details": "Half-day leave application failed: ['Insufficient Casual Leave balance']",
+      "timestamp": "2025-11-12T13:33:19.454401",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Advance Notice Validation",
+      "status": "SUCCESS",
+      "details": "System correctly enforced advance notice requirement",
+      "timestamp": "2025-11-12T13:33:19.461219",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Consecutive Days Limit",
+      "status": "SUCCESS",
+      "details": "System correctly enforced consecutive days limit",
+      "timestamp": "2025-11-12T13:33:19.467670",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Documentation Requirement",
+      "status": "SUCCESS",
+      "details": "System correctly enforced documentation requirement",
+      "timestamp": "2025-11-12T13:33:19.473343",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Comp-off Management",
+      "status": "SUCCESS",
+      "details": "Comp-off request created and approved: 7",
+      "timestamp": "2025-11-12T13:33:19.499678",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Leave Cancellation",
+      "status": "FAILED",
+      "details": "Initial leave application failed: {'is_valid': False, 'errors': ['Annual Leave requires 14 days advance notice', 'Insufficient Annual Leave balance'], 'warnings': [], 'can_auto_convert': True}",
+      "timestamp": "2025-11-12T13:33:19.505682",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Retroactive Leave Application",
+      "status": "FAILED",
+      "details": "Retroactive leave rejected: ['Insufficient Emergency Leave balance']",
+      "timestamp": "2025-11-12T13:33:19.510853",
+      "workflow_step": ""
+    },
+    {
+      "test_name": "Bulk Leave Allocation",
+      "status": "SUCCESS",
+      "details": "Allocated leaves to 6/6 users for 2025",
+      "timestamp": "2025-11-12T13:33:19.568566",
+      "workflow_step": ""
+    }
+  ],
+  "workflow_details": [
+    {
+      "step": "STEP 1",
+      "description": "Allocating leaves to all users",
+      "data": null,
+      "timestamp": "2025-11-12T13:33:19.350312"
+    },
+    {
+      "step": "SCENARIO 1",
+      "description": "Testing basic leave application",
+      "data": null,
+      "timestamp": "2025-11-12T13:33:19.422360"
+    },
+    {
+      "step": "SCENARIO 2",
+      "description": "Testing leave approval workflow",
+      "data": null,
+      "timestamp": "2025-11-12T13:33:19.429903"
+    },
+    {
+      "step": "SCENARIO 3",
+      "description": "Testing insufficient balance handling",
+      "data": null,
+      "timestamp": "2025-11-12T13:33:19.435762"
+    },
+    {
+      "step": "WORKFLOW",
+      "description": "Auto-conversion option available",
+      "data": {
+        "original_type": "Annual Leave",
+        "suggested_type": "Loss of Pay"
+      },
+      "timestamp": "2025-11-12T13:33:19.443910"
+    },
+    {
+      "step": "SCENARIO 4",
+      "description": "Testing overlapping leave detection",
+      "data": null,
+      "timestamp": "2025-11-12T13:33:19.443916"
+    },
+    {
+      "step": "SCENARIO 5",
+      "description": "Testing half-day leave processing",
+      "data": null,
+      "timestamp": "2025-11-12T13:33:19.449351"
+    },
+    {
+      "step": "SCENARIO 6",
+      "description": "Testing advance notice validation",
+      "data": null,
+      "timestamp": "2025-11-12T13:33:19.454413"
+    },
+    {
+      "step": "WORKFLOW",
+      "description": "Advance notice validation triggered",
+      "data": {
+        "required_days": 14,
+        "provided_days": 5,
+        "status": "Rejected"
+      },
+      "timestamp": "2025-11-12T13:33:19.461240"
+    },
+    {
+      "step": "SCENARIO 7",
+      "description": "Testing consecutive days limit",
+      "data": null,
+      "timestamp": "2025-11-12T13:33:19.461246"
+    },
+    {
+      "step": "WORKFLOW",
+      "description": "Consecutive days limit enforced",
+      "data": {
+        "max_allowed": 5,
+        "requested": 7,
+        "status": "Rejected"
+      },
+      "timestamp": "2025-11-12T13:33:19.467682"
+    },
+    {
+      "step": "SCENARIO 8",
+      "description": "Testing documentation requirements",
+      "data": null,
+      "timestamp": "2025-11-12T13:33:19.467687"
+    },
+    {
+      "step": "WORKFLOW",
+      "description": "Documentation requirement enforced",
+      "data": {
+        "leave_type": "Sick Leave",
+        "requires_doc": true,
+        "provided": false,
+        "status": "Rejected"
+      },
+      "timestamp": "2025-11-12T13:33:19.473393"
+    },
+    {
+      "step": "SCENARIO 9",
+      "description": "Testing comp-off management",
+      "data": null,
+      "timestamp": "2025-11-12T13:33:19.473484"
+    },
+    {
+      "step": "WORKFLOW",
+      "description": "Comp-off workflow completed",
+      "data": {
+        "worked_date": "2025-11-10",
+        "hours_worked": 10.0,
+        "days_earned": 1.25,
+        "status": "Approved"
+      },
+      "timestamp": "2025-11-12T13:33:19.499705"
+    },
+    {
+      "step": "SCENARIO 10",
+      "description": "Testing leave cancellation",
+      "data": null,
+      "timestamp": "2025-11-12T13:33:19.499711"
+    },
+    {
+      "step": "SCENARIO 11",
+      "description": "Testing retroactive leave application",
+      "data": null,
+      "timestamp": "2025-11-12T13:33:19.505697"
+    },
+    {
+      "step": "SCENARIO 12",
+      "description": "Testing bulk operations",
+      "data": null,
+      "timestamp": "2025-11-12T13:33:19.510874"
+    },
+    {
+      "step": "WORKFLOW",
+      "description": "Bulk allocation completed",
+      "data": {
+        "total_users": 6,
+        "successful": 6,
+        "year": 2025
+      },
+      "timestamp": "2025-11-12T13:33:19.568589"
+    },
+    {
+      "step": "SCENARIO 13",
+      "description": "Testing edge cases",
+      "data": null,
+      "timestamp": "2025-11-12T13:33:19.568594"
+    }
+  ],
+  "recommendations": {
+    "critical_issues": [
+      "Fix failed test: Basic Leave Application - Validation errors: ['Insufficient Annual Leave balance']",
+      "Fix failed test: Leave Approval Workflow - Application failed: ['Insufficient Casual Leave balance']",
+      "Fix failed test: Overlapping Leave Detection - First leave application failed: {'is_valid': False, 'errors': ['Insufficient Annual Leave balance'], 'warnings': [], 'can_auto_convert': True}",
+      "Fix failed test: Half-day Leave Processing - Half-day leave application failed: ['Insufficient Casual Leave balance']",
+      "Fix failed test: Leave Cancellation - Initial leave application failed: {'is_valid': False, 'errors': ['Annual Leave requires 14 days advance notice', 'Insufficient Annual Leave balance'], 'warnings': [], 'can_auto_convert': True}",
+      "Fix failed test: Retroactive Leave Application - Retroactive leave rejected: ['Insufficient Emergency Leave balance']"
+    ],
+    "performance_optimizations": [
+      "Implement database indexing for leave request queries by user and date range",
+      "Add caching for frequently accessed leave policies and allocations",
+      "Optimize bulk operations with batch processing for large user sets",
+      "Implement async processing for leave balance calculations"
+    ],
+    "user_experience_improvements": [
+      "Add real-time balance checking during leave application",
+      "Implement leave calendar view for better date selection",
+      "Add email notifications for leave status changes",
+      "Create mobile-responsive leave application interface",
+      "Add leave history and analytics dashboard for employees"
+    ],
+    "workflow_enhancements": [
+      "Implement multi-level approval workflow for senior positions",
+      "Add delegation feature for approvers during their absence",
+      "Create automated leave approval for certain leave types",
+      "Implement leave request templates for common scenarios",
+      "Add bulk approval functionality for managers"
+    ],
+    "security_considerations": [
+      "Implement role-based access control for leave management functions",
+      "Add audit trail for all leave-related actions",
+      "Implement data encryption for sensitive leave information",
+      "Add rate limiting for leave application APIs",
+      "Implement secure file upload for leave documentation"
+    ],
+    "monitoring_and_analytics": [
+      "Add comprehensive logging for leave management operations",
+      "Implement leave usage analytics and reporting",
+      "Create alerts for unusual leave patterns",
+      "Add performance monitoring for leave-related database operations",
+      "Implement leave trend analysis for HR planning"
+    ]
+  },
+  "generated_at": "2025-11-12T13:33:19.580320"
+}

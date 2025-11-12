@@ -3413,61 +3413,66 @@ class LeaveRequest(models.Model):
         ]
 
     def clean(self):
-        if not self.user:
-            raise ValidationError("User is required")
+        # Only validate user when saving to database (not during form validation)
+        if self.pk is not None or (hasattr(self, '_state') and not self._state.adding):
+            if not self.user:
+                raise ValidationError("User is required")
 
         # Check if end date is after start date
-        if self.start_date > self.end_date:
+        if self.start_date and self.end_date and self.start_date > self.end_date:
             raise ValidationError("End date must be after start date")
 
         # Check if leave type allows half day
-        if self.half_day and not self.leave_type.can_be_half_day:
+        if self.half_day and self.leave_type and not self.leave_type.can_be_half_day:
             raise ValidationError(f"{self.leave_type.name} cannot be taken as half day")
 
         # Check for documentation if required
-        if self.leave_type.requires_documentation and not self.documentation:
+        if self.leave_type and self.leave_type.requires_documentation and not self.documentation:
             raise ValidationError(f"{self.leave_type.name} requires supporting documentation")
 
-        # Check for advance notice requirement
-        user_policy = self.get_user_policy()
-        if user_policy:
-            try:
-                allocation = LeaveAllocation.objects.get(policy=user_policy, leave_type=self.leave_type)
-                if allocation.advance_notice_days > 0 and not self.is_retroactive:
-                    min_request_date = timezone.now().date() + timedelta(days=allocation.advance_notice_days)
-                    if self.start_date < min_request_date:
-                        raise ValidationError(
-                            f"{self.leave_type.name} requires {allocation.advance_notice_days} days advance notice"
-                        )
+        # Check for advance notice requirement (only if user is set)
+        if self.user:
+            user_policy = self.get_user_policy()
+            if user_policy and self.leave_type:
+                try:
+                    allocation = LeaveAllocation.objects.get(policy=user_policy, leave_type=self.leave_type)
+                    if allocation.advance_notice_days > 0 and not self.is_retroactive and self.start_date:
+                        min_request_date = timezone.now().date() + timedelta(days=allocation.advance_notice_days)
+                        if self.start_date < min_request_date:
+                            raise ValidationError(
+                                f"{self.leave_type.name} requires {allocation.advance_notice_days} days advance notice"
+                            )
 
-                # Check consecutive days limit
-                if allocation.max_consecutive_days > 0:
-                    days_requested = (self.end_date - self.start_date).days + 1
-                    if days_requested > allocation.max_consecutive_days:
-                        raise ValidationError(
-                            f"You can only take {allocation.max_consecutive_days} consecutive days of {self.leave_type.name}"
-                        )
-            except LeaveAllocation.DoesNotExist:
-                pass
+                    # Check consecutive days limit
+                    if allocation.max_consecutive_days > 0 and self.start_date and self.end_date:
+                        days_requested = (self.end_date - self.start_date).days + 1
+                        if days_requested > allocation.max_consecutive_days:
+                            raise ValidationError(
+                                f"You can only take {allocation.max_consecutive_days} consecutive days of {self.leave_type.name}"
+                            )
+                except LeaveAllocation.DoesNotExist:
+                    pass
 
-        # Check for overlapping leaves - include both Approved and Pending
-        overlap_statuses = ['Approved', 'Pending']
-        overlapping_leaves = LeaveRequest.objects.filter(
-            status__in=overlap_statuses,
-            start_date__lte=self.end_date,
-            end_date__gte=self.start_date,
-            user=self.user,
-            is_deleted=False
-        )
-        if self.pk is not None:
-            overlapping_leaves = overlapping_leaves.exclude(pk=self.pk)
+        # Check for overlapping leaves - include both Approved and Pending (only if user is set)
+        if self.user and self.start_date and self.end_date:
+            overlap_statuses = ['Approved', 'Pending']
+            overlapping_leaves = LeaveRequest.objects.filter(
+                status__in=overlap_statuses,
+                start_date__lte=self.end_date,
+                end_date__gte=self.start_date,
+                user=self.user,
+                is_deleted=False
+            )
+            if self.pk is not None:
+                overlapping_leaves = overlapping_leaves.exclude(pk=self.pk)
 
-        if overlapping_leaves.exists():
-            raise ValidationError("You already have approved or pending leave during this period")
+            if overlapping_leaves.exists():
+                raise ValidationError("You already have approved or pending leave during this period")
 
-        # Check leave balance
-        if not self.has_sufficient_balance():
-            raise ValidationError(f"Insufficient {self.leave_type.name} balance")
+        # Check leave balance (only if user and leave_type are set)
+        if self.user and self.leave_type and self.start_date:
+            if not self.has_sufficient_balance():
+                raise ValidationError(f"Insufficient {self.leave_type.name} balance")
 
     def get_user_policy(self):
         """Get the applicable leave policy for this user"""
@@ -3531,8 +3536,11 @@ class LeaveRequest(models.Model):
 
         year = self.start_date.year
         try:
-            balance = UserLeaveBalance.objects.for_user_and_year(self.user, year).select_for_update().get(
-                leave_type=self.leave_type
+            balance = UserLeaveBalance.objects.get(
+                user=self.user,
+                leave_type=self.leave_type,
+                year=year,
+                is_deleted=False
             )
             days_needed = self.calculate_leave_days()
             has_balance = balance.available >= days_needed
@@ -3564,8 +3572,11 @@ class LeaveRequest(models.Model):
 
         with transaction.atomic():
             try:
-                balance = UserLeaveBalance.objects.for_user_and_year(self.user, year).select_for_update().get(
-                    leave_type=self.leave_type
+                balance = UserLeaveBalance.objects.select_for_update().get(
+                    user=self.user,
+                    leave_type=self.leave_type,
+                    year=year,
+                    is_deleted=False
                 )
                 logger.debug(f"Found balance - current used: {balance.used}, adding: {leave_days_decimal}")
                 balance.used = balance.used + leave_days_decimal
@@ -3616,8 +3627,11 @@ class LeaveRequest(models.Model):
 
         with transaction.atomic():
             try:
-                balance = UserLeaveBalance.objects.for_user_and_year(self.user, year).select_for_update().get(
-                    leave_type=self.leave_type
+                balance = UserLeaveBalance.objects.select_for_update().get(
+                    user=self.user,
+                    leave_type=self.leave_type,
+                    year=year,
+                    is_deleted=False
                 )
                 balance.used = balance.used - leave_days_decimal
                 balance.save()
@@ -3794,8 +3808,11 @@ class LeaveRequest(models.Model):
 
         with transaction.atomic():
             try:
-                balance = UserLeaveBalance.objects.for_user_and_year(self.user, year).select_for_update().get(
-                    leave_type=self.leave_type
+                balance = UserLeaveBalance.objects.select_for_update().get(
+                    user=self.user,
+                    leave_type=self.leave_type,
+                    year=year,
+                    is_deleted=False
                 )
                 balance.used = balance.used + difference
                 balance.save()
@@ -3803,6 +3820,99 @@ class LeaveRequest(models.Model):
             except UserLeaveBalance.DoesNotExist:
                 logger.warning("No balance record found for adjustment, updating balance from scratch")
                 self._update_leave_balance_service()
+
+    def __str__(self):
+        """String representation of leave request"""
+        return f"{self.user.username} - {self.leave_type.name} ({self.start_date} to {self.end_date}) - {self.status}"
+
+    @property
+    def is_pending(self):
+        """Check if leave request is pending"""
+        return self.status == 'Pending'
+
+    @property
+    def is_approved(self):
+        """Check if leave request is approved"""
+        return self.status == 'Approved'
+
+    @property
+    def is_rejected(self):
+        """Check if leave request is rejected"""
+        return self.status == 'Rejected'
+
+    @property
+    def is_cancelled(self):
+        """Check if leave request is cancelled"""
+        return self.status == 'Cancelled'
+
+    def can_be_cancelled(self, user=None):
+        """Check if this leave request can be cancelled"""
+        if self.status in ['Approved', 'Pending']:
+            # User can cancel their own pending/approved requests
+            if user and user == self.user:
+                return True
+            # HR/Admin can cancel any request
+            if user and (user.groups.filter(name='HR').exists() or 
+                        user.groups.filter(name='Admin').exists() or 
+                        user.is_superuser):
+                return True
+        return False
+
+    def can_be_edited(self, user=None):
+        """Check if this leave request can be edited"""
+        if self.status == 'Pending':
+            # User can edit their own pending requests
+            if user and user == self.user:
+                return True
+            # HR can edit any pending request
+            if user and user.groups.filter(name='HR').exists():
+                return True
+        return False
+
+    def get_appropriate_approvers(self):
+        """Get list of appropriate approvers based on workflow"""
+        from trueAlign.leave_management.utils import get_potential_approvers
+        return get_potential_approvers(self.user)
+
+    def is_past_leave(self):
+        """Check if this leave request is for a past date"""
+        from django.utils import timezone
+        return self.end_date < timezone.localdate()
+
+    def is_current_leave(self):
+        """Check if this leave request includes today"""
+        from django.utils import timezone
+        today = timezone.localdate()
+        return self.start_date <= today <= self.end_date
+
+    def get_duration_display(self):
+        """Get human-readable duration"""
+        if self.start_date == self.end_date:
+            if self.half_day:
+                return "Half Day"
+            else:
+                return "1 Day"
+        else:
+            days = float(self.leave_days)
+            if days == int(days):
+                return f"{int(days)} Days"
+            else:
+                return f"{days} Days"
+
+    def get_status_color(self):
+        """Get Bootstrap color class for status"""
+        colors = {
+            'Pending': 'warning',
+            'Approved': 'success', 
+            'Rejected': 'danger',
+            'Cancelled': 'secondary'
+        }
+        return colors.get(self.status, 'secondary')
+    
+    def get_approvers(self):
+        """Get list of users who can approve this leave request"""
+        from .leave_management.utils import get_potential_approvers
+        return get_potential_approvers(self.user)
 
 class CompOffRequest(models.Model):
     """
@@ -3903,20 +4013,23 @@ class CompOffRequest(models.Model):
     def _update_comp_off_balance_service(self):
         """Service method to update user's comp-off balance when request is approved"""
         try:
-            comp_off_type = LeaveType.objects.get(name='Comp Off', is_deleted=False)
+            comp_off_type = LeaveType.objects.get(name='Comp Off', is_active=True)
             year = self.worked_date.year
 
             # Calculate days earned - convert hours to days (8 hours = 1 day)
             days_earned = self.hours_worked / Decimal('8.0')
 
             with transaction.atomic():
-                balance, created = UserLeaveBalance.objects.for_user_and_year(self.user, year).get_or_create(
+                balance, created = UserLeaveBalance.objects.get_or_create(
+                    user=self.user,
                     leave_type=comp_off_type,
+                    year=year,
                     defaults={
                         'allocated': Decimal('0'),
                         'used': Decimal('0'),
                         'carried_forward': Decimal('0'),
-                        'additional': Decimal('0')
+                        'additional': Decimal('0'),
+                        'is_deleted': False
                     }
                 )
 
@@ -3938,14 +4051,17 @@ class CompOffRequest(models.Model):
     def _revert_comp_off_balance_service(self):
         """Service method to revert comp-off balance when request is rejected/cancelled"""
         try:
-            comp_off_type = LeaveType.objects.get(name='Comp Off', is_deleted=False)
+            comp_off_type = LeaveType.objects.get(name='Comp Off', is_active=True)
             year = self.worked_date.year
             days_to_revert = self.hours_worked / Decimal('8.0')
 
             with transaction.atomic():
                 try:
-                    balance = UserLeaveBalance.objects.for_user_and_year(self.user, year).select_for_update().get(
-                        leave_type=comp_off_type
+                    balance = UserLeaveBalance.objects.select_for_update().get(
+                        user=self.user,
+                        leave_type=comp_off_type,
+                        year=year,
+                        is_deleted=False
                     )
                     balance.additional = max(Decimal('0'), balance.additional - days_to_revert)
                     balance.save()

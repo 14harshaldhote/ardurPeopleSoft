@@ -144,6 +144,20 @@ class LeaveApplicationForm(forms.ModelForm):
 
         return cleaned_data
 
+    def _post_clean(self):
+        """Override to prevent model validation errors when user is not set"""
+        # Set the user temporarily for validation
+        if self.user and not self.instance.user_id:
+            self.instance.user = self.user
+        
+        # Call parent _post_clean but catch user-related validation errors
+        try:
+            super()._post_clean()
+        except ValidationError as e:
+            # If the error is about missing user, ignore it during form validation
+            if 'User is required' not in str(e):
+                raise
+
     def get_leave_days_preview(self):
         """Get preview of leave days for the current form data"""
         if self.is_valid():

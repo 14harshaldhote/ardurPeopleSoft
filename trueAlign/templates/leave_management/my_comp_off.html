@@ -1,422 +1,216 @@
 {% extends 'base.html' %}
 {% load static %}
-
 {% block title %}My Comp-off Requests - Leave Management{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <!-- Header Section -->
-    <div class="bg-gradient-to-r from-lime-500 to-green-500 rounded-lg shadow-lg p-6 text-white">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold">My Comp-off Requests</h1>
-                <p class="text-lime-100 mt-2">View and manage your compensatory time off requests</p>
-            </div>
-            <div class="hidden md:block">
-                <a href="{% url 'leave_management:apply_comp_off' %}"
-                   class="inline-flex items-center px-4 py-2 border border-lime-300 text-sm font-medium rounded-md text-lime-100 bg-lime-600 hover:bg-lime-700 transition-colors">
-                    <i class="fas fa-plus mr-2"></i>
-                    Request Comp-off
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Stats Overview -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <!-- Total Requests -->
-        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-lime-500">
-            <div class="flex items-center">
-                <div class="p-3 rounded-full bg-lime-100 text-lime-600">
-                    <i class="fas fa-clock text-xl"></i>
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="w-8 h-8 text-lime-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <h1 class="text-2xl font-bold text-gray-900">My Comp-off Requests</h1>
+                        <p class="text-sm text-gray-500">View and manage your compensation off requests</p>
+                    </div>
                 </div>
-                <div class="ml-4">
-                    <p class="text-2xl font-semibold text-gray-900">{{ page_obj.paginator.count|default:0 }}</p>
-                    <p class="text-gray-600">Total Requests</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Pending Requests -->
-        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-amber-500">
-            <div class="flex items-center">
-                <div class="p-3 rounded-full bg-amber-100 text-amber-600">
-                    <i class="fas fa-hourglass-half text-xl"></i>
-                </div>
-                <div class="ml-4">
-                    <p class="text-2xl font-semibold text-gray-900">
-                        {% regroup page_obj.object_list by status as status_groups %}
-                        {% for group in status_groups %}
-                            {% if group.grouper == 'Pending' %}{{ group.list|length }}{% endif %}
-                        {% empty %}0{% endfor %}
-                    </p>
-                    <p class="text-gray-600">Pending</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Approved Requests -->
-        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-emerald-500">
-            <div class="flex items-center">
-                <div class="p-3 rounded-full bg-emerald-100 text-emerald-600">
-                    <i class="fas fa-check-circle text-xl"></i>
-                </div>
-                <div class="ml-4">
-                    <p class="text-2xl font-semibold text-gray-900">
-                        {% for group in status_groups %}
-                            {% if group.grouper == 'Approved' %}{{ group.list|length }}{% endif %}
-                        {% empty %}0{% endfor %}
-                    </p>
-                    <p class="text-gray-600">Approved</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Total Hours -->
-        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-sky-500">
-            <div class="flex items-center">
-                <div class="p-3 rounded-full bg-sky-100 text-sky-600">
-                    <i class="fas fa-stopwatch text-xl"></i>
-                </div>
-                <div class="ml-4">
-                    <p class="text-2xl font-semibold text-gray-900">
-                        {% for request in page_obj.object_list %}
-                            {% if forloop.first %}{{ total_hours|default:0 }}{% endif %}
-                        {% empty %}0{% endfor %}
-                    </p>
-                    <p class="text-gray-600">Total Hours</p>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'leave_management:apply_comp_off' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-lime-600 hover:bg-lime-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lime-500 transition-colors duration-200">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Apply Comp-off
+                    </a>
+                    <a href="{% url 'leave_management:dashboard' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                        Back to Dashboard
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Comp-off Requests List -->
-    <div class="bg-white rounded-lg shadow-md">
-        {% if page_obj.object_list %}
-            <div class="divide-y divide-gray-200">
-                {% for request in page_obj.object_list %}
-                    <div class="p-6 hover:bg-gray-50 transition-colors">
-                        <div class="flex items-start justify-between mb-4">
-                            <div class="flex items-center space-x-4">
-                                <div class="p-3 rounded-full {% if request.status == 'Pending' %}bg-amber-100 text-amber-600{% elif request.status == 'Approved' %}bg-emerald-100 text-emerald-600{% elif request.status == 'Rejected' %}bg-rose-100 text-rose-600{% else %}bg-gray-100 text-gray-600{% endif %}">
-                                    <i class="fas {% if request.status == 'Pending' %}fa-clock{% elif request.status == 'Approved' %}fa-check-circle{% elif request.status == 'Rejected' %}fa-times-circle{% else %}fa-ban{% endif %} text-lg"></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-lg font-semibold text-gray-900">Comp-off Request</h3>
-                                    <p class="text-sm text-gray-600">Request ID: #{{ request.id }}</p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {% if request.status == 'Pending' %}bg-amber-100 text-amber-800{% elif request.status == 'Approved' %}bg-emerald-100 text-emerald-800{% elif request.status == 'Rejected' %}bg-rose-100 text-rose-800{% else %}bg-gray-100 text-gray-800{% endif %}">
-                                    {{ request.status }}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                            <div class="flex items-center space-x-2">
-                                <i class="fas fa-calendar text-gray-400"></i>
-                                <div>
-                                    <p class="text-sm text-gray-600">Worked Date</p>
-                                    <p class="font-medium text-gray-900">{{ request.worked_date|date:"M j, Y" }}</p>
-                                </div>
-                            </div>
-
-                            <div class="flex items-center space-x-2">
-                                <i class="fas fa-clock text-gray-400"></i>
-                                <div>
-                                    <p class="text-sm text-gray-600">Extra Hours</p>
-                                    <p class="font-medium text-gray-900">{{ request.hours_worked }} hours</p>
-                                </div>
-                            </div>
-
-                            <div class="flex items-center space-x-2">
-                                <i class="fas fa-calendar-day text-gray-400"></i>
-                                <div>
-                                    <p class="text-sm text-gray-600">Comp-off Days</p>
-                                    <p class="font-medium text-gray-900">
-                                        {% widthratio request.hours_worked 8 1 as comp_days %}
-                                        {{ comp_days|floatformat:1 }} day{{ comp_days|pluralize }}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div class="flex items-center space-x-2">
-                                <i class="fas fa-user text-gray-400"></i>
-                                <div>
-                                    <p class="text-sm text-gray-600">Approver</p>
-                                    <p class="font-medium text-gray-900">
-                                        {% if request.approver %}
-                                            {{ request.approver.get_full_name|default:request.approver.username }}
-                                        {% else %}
-                                            Not assigned
-                                        {% endif %}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <p class="text-sm text-gray-600 mb-1">Reason:</p>
-                            <div class="bg-gray-50 p-3 rounded-lg border-l-4 border-lime-300">
-                                <p class="text-gray-800">{{ request.reason|truncatewords:50 }}</p>
-                            </div>
-                        </div>
-
-                        {% if request.project_task %}
-                            <div class="mb-4">
-                                <p class="text-sm text-gray-600 mb-1">Project/Task:</p>
-                                <p class="text-gray-800 bg-sky-50 p-2 rounded">{{ request.project_task }}</p>
-                            </div>
-                        {% endif %}
-
-                        {% if request.status == 'Rejected' and request.rejection_reason %}
-                            <div class="mb-4">
-                                <p class="text-sm text-rose-600 mb-1">Rejection Reason:</p>
-                                <div class="bg-rose-50 p-3 rounded-lg border-l-4 border-rose-400">
-                                    <p class="text-gray-800">{{ request.rejection_reason }}</p>
-                                </div>
-                            </div>
-                        {% endif %}
-
-                        {% if request.documentation %}
-                            <div class="mb-4">
-                                <p class="text-sm text-gray-600 mb-2">Documentation:</p>
-                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
-                                    <div class="flex items-center space-x-3">
-                                        <i class="fas fa-file-alt text-gray-600"></i>
-                                        <span class="text-gray-800">{{ request.documentation.name }}</span>
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Comp-off Requests List -->
+        <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+            {% if page_obj %}
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Comp-off Requests</h3>
+                    <p class="text-sm text-gray-500 mt-1">{{ page_obj.paginator.count }} total request{{ page_obj.paginator.count|pluralize }}</p>
+                </div>
+                
+                <div class="divide-y divide-gray-200">
+                    {% for comp_off in page_obj %}
+                        <div class="p-6 hover:bg-gray-50 transition-colors duration-200">
+                            <div class="flex items-center justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-3 mb-3">
+                                        <h4 class="text-lg font-medium text-gray-900">Comp-off Request</h4>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            {% if comp_off.status == 'Approved' %}bg-green-100 text-green-800
+                                            {% elif comp_off.status == 'Pending' %}bg-yellow-100 text-yellow-800
+                                            {% elif comp_off.status == 'Rejected' %}bg-red-100 text-red-800
+                                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                            {{ comp_off.status }}
+                                        </span>
+                                        <span class="text-xs text-gray-500">ID: #{{ comp_off.id }}</span>
                                     </div>
-                                    <a href="{{ request.documentation.url }}" target="_blank"
-                                       class="inline-flex items-center px-2 py-1 border border-sky-300 text-xs font-medium rounded text-sky-700 bg-sky-50 hover:bg-sky-100 transition-colors">
-                                        <i class="fas fa-download mr-1"></i>
-                                        Download
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 mb-4">
+                                        <div>
+                                            <span class="font-medium">Worked Date:</span>
+                                            <div class="mt-1 text-gray-900">{{ comp_off.worked_date|date:"F d, Y" }}</div>
+                                        </div>
+                                        
+                                        <div>
+                                            <span class="font-medium">Hours Worked:</span>
+                                            <div class="mt-1 text-gray-900">{{ comp_off.hours_worked }} hours</div>
+                                        </div>
+                                        
+                                        <div>
+                                            <span class="font-medium">Applied:</span>
+                                            <div class="mt-1 text-gray-900">{{ comp_off.created_at|date:"M d, Y" }}</div>
+                                        </div>
+                                    </div>
+                                    
+                                    {% if comp_off.approver %}
+                                        <div class="mb-4">
+                                            <span class="text-sm font-medium text-gray-600">Approver:</span>
+                                            <span class="text-sm text-gray-900 ml-2">{{ comp_off.approver.get_full_name|default:comp_off.approver.username }}</span>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    {% if comp_off.reason %}
+                                        <div class="mb-4">
+                                            <span class="text-sm font-medium text-gray-700">Work Description:</span>
+                                            <div class="mt-1 p-3 bg-gray-50 rounded-lg">
+                                                <p class="text-sm text-gray-800">{{ comp_off.reason }}</p>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    {% if comp_off.rejection_reason %}
+                                        <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                            <span class="text-sm font-medium text-red-800">
+                                                {% if comp_off.status == 'Rejected' %}Rejection Reason:{% else %}Comments:{% endif %}
+                                            </span>
+                                            <p class="text-sm text-red-700 mt-1">{{ comp_off.rejection_reason }}</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="flex flex-col space-y-2 ml-6">
+                                    {% if comp_off.status == 'Pending' %}
+                                        <button type="button" onclick="cancelCompOff({{ comp_off.id }})" class="inline-flex items-center px-3 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200">
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                                            </svg>
+                                            Cancel
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                    <div class="px-6 py-4 border-t border-gray-200">
+                        <nav class="flex items-center justify-between">
+                            <div class="flex-1 flex justify-between sm:hidden">
+                                {% if page_obj.has_previous %}
+                                    <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                        Previous
                                     </a>
+                                {% endif %}
+                                {% if page_obj.has_next %}
+                                    <a href="?page={{ page_obj.next_page_number }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                        Next
+                                    </a>
+                                {% endif %}
+                            </div>
+                            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-700">
+                                        Showing
+                                        <span class="font-medium">{{ page_obj.start_index }}</span>
+                                        to
+                                        <span class="font-medium">{{ page_obj.end_index }}</span>
+                                        of
+                                        <span class="font-medium">{{ page_obj.paginator.count }}</span>
+                                        results
+                                    </p>
+                                </div>
+                                <div>
+                                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                        {% if page_obj.has_previous %}
+                                            <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
+                                                </svg>
+                                            </a>
+                                        {% endif %}
+                                        
+                                        {% for num in page_obj.paginator.page_range %}
+                                            {% if page_obj.number == num %}
+                                                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-lime-50 text-sm font-medium text-lime-600">
+                                                    {{ num }}
+                                                </span>
+                                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                                <a href="?page={{ num }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                                    {{ num }}
+                                                </a>
+                                            {% endif %}
+                                        {% endfor %}
+                                        
+                                        {% if page_obj.has_next %}
+                                            <a href="?page={{ page_obj.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+                                                </svg>
+                                            </a>
+                                        {% endif %}
+                                    </nav>
                                 </div>
                             </div>
-                        {% endif %}
-
-                        <div class="flex items-center justify-between text-sm text-gray-500 mb-3">
-                            <div class="flex items-center space-x-4">
-                                <span><i class="fas fa-calendar-plus mr-1"></i>Applied: {{ request.created_at|date:"M j, Y g:i A" }}</span>
-                                {% if request.approved_at %}
-                                    <span><i class="fas fa-check mr-1"></i>Approved: {{ request.approved_at|date:"M j, Y g:i A" }}</span>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="flex items-center justify-between pt-3 border-t border-gray-200">
-                            <div class="flex space-x-2">
-                                {% if request.status == 'Pending' %}
-                                    <button onclick="cancelRequest({{ request.id }})"
-                                            class="inline-flex items-center px-3 py-1 border border-rose-300 text-sm font-medium rounded-md text-rose-700 bg-rose-50 hover:bg-rose-100 transition-colors">
-                                        <i class="fas fa-times mr-1"></i>
-                                        Cancel
-                                    </button>
-                                {% endif %}
-
-                                {% if request.status == 'Approved' %}
-                                    <div class="flex items-center text-emerald-600 text-sm">
-                                        <i class="fas fa-check-circle mr-1"></i>
-                                        <span>Available for use</span>
-                                    </div>
-                                {% endif %}
-                            </div>
-
-                            <div class="text-xs text-gray-400">
-                                Last updated: {{ request.updated_at|date:"M j, Y g:i A" }}
-                            </div>
-                        </div>
+                        </nav>
                     </div>
-                {% endfor %}
-            </div>
-
-            <!-- Pagination -->
-            {% if page_obj.has_other_pages %}
-                <div class="px-6 py-4 border-t border-gray-200">
-                    <div class="flex items-center justify-between">
-                        <div class="text-sm text-gray-500">
-                            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} requests
-                        </div>
-                        <div class="flex space-x-2">
-                            {% if page_obj.has_previous %}
-                                <a href="?page={{ page_obj.previous_page_number }}"
-                                   class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                                    <i class="fas fa-chevron-left mr-1"></i>
-                                    Previous
-                                </a>
-                            {% endif %}
-
-                            <span class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-gray-50">
-                                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-                            </span>
-
-                            {% if page_obj.has_next %}
-                                <a href="?page={{ page_obj.next_page_number }}"
-                                   class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                                    Next
-                                    <i class="fas fa-chevron-right ml-1"></i>
-                                </a>
-                            {% endif %}
-                        </div>
-                    </div>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-12">
+                    <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">No comp-off requests found</h3>
+                    <p class="text-gray-500 mb-6">You haven't submitted any comp-off requests yet.</p>
+                    <a href="{% url 'leave_management:apply_comp_off' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-lime-600 hover:bg-lime-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lime-500 transition-colors duration-200">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Apply for Comp-off
+                    </a>
                 </div>
             {% endif %}
-        {% else %}
-            <!-- Empty State -->
-            <div class="text-center py-12">
-                <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                    <i class="fas fa-clock text-gray-400 text-3xl"></i>
-                </div>
-                <h3 class="text-lg font-medium text-gray-900 mb-2">No comp-off requests found</h3>
-                <p class="text-gray-600 mb-6">You haven't submitted any comp-off requests yet.</p>
-                <a href="{% url 'leave_management:apply_comp_off' %}"
-                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-lime-600 hover:bg-lime-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lime-500 transition-colors">
-                    <i class="fas fa-plus mr-2"></i>
-                    Request Your First Comp-off
-                </a>
-            </div>
-        {% endif %}
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <a href="{% url 'leave_management:apply_comp_off' %}"
-               class="flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-lime-600 hover:bg-lime-700 transition-colors">
-                <i class="fas fa-plus mr-2"></i>
-                Request Comp-off
-            </a>
-
-            <a href="{% url 'leave_management:dashboard' %}"
-               class="flex items-center justify-center px-4 py-3 border border-sky-300 text-sm font-medium rounded-md text-sky-700 bg-sky-50 hover:bg-sky-100 transition-colors">
-                <i class="fas fa-tachometer-alt mr-2"></i>
-                Dashboard
-            </a>
-
-            <a href="{% url 'leave_management:my_leaves' %}"
-               class="flex items-center justify-center px-4 py-3 border border-emerald-300 text-sm font-medium rounded-md text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">
-                <i class="fas fa-calendar-alt mr-2"></i>
-                My Leaves
-            </a>
-        </div>
-    </div>
-
-    <!-- Comp-off Information -->
-    <div class="bg-gradient-to-r from-lime-50 to-green-50 rounded-lg p-6 border border-lime-200">
-        <div class="flex items-start space-x-3">
-            <div class="flex-shrink-0">
-                <i class="fas fa-info-circle text-2xl text-lime-500"></i>
-            </div>
-            <div>
-                <h3 class="text-lg font-medium text-gray-900 mb-2">Comp-off Policy</h3>
-                <div class="text-sm text-gray-600 space-y-2">
-                    <p>• Comp-off is earned by working extra hours beyond your regular schedule</p>
-                    <p>• Minimum 4 hours of extra work required to earn comp-off time</p>
-                    <p>• Each 8 hours of extra work equals 1 day of comp-off</p>
-                    <p>• Comp-off must be used within 90 days of approval</p>
-                    <p>• Manager approval is required for all comp-off requests</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Cancel Request Modal -->
-<div id="cancelModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-            <div class="flex items-center justify-center w-12 h-12 mx-auto bg-rose-100 rounded-full mb-4">
-                <i class="fas fa-exclamation-triangle text-rose-600 text-xl"></i>
-            </div>
-            <h3 class="text-lg font-medium text-gray-900 text-center mb-4">Cancel Comp-off Request</h3>
-            <form id="cancelForm" method="post">
-                {% csrf_token %}
-                <div class="mb-4">
-                    <label for="cancellation_reason" class="block text-sm font-medium text-gray-700 mb-2">
-                        Reason for cancellation (optional)
-                    </label>
-                    <textarea id="cancellation_reason" name="cancellation_reason" rows="3"
-                              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-lime-500 focus:border-lime-500"
-                              placeholder="Please provide a reason for cancelling this request..."></textarea>
-                </div>
-                <div class="flex items-center justify-end space-x-3">
-                    <button type="button" onclick="closeCancelModal()"
-                            class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                        Cancel
-                    </button>
-                    <button type="submit"
-                            class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-rose-600 hover:bg-rose-700 transition-colors">
-                        Confirm Cancellation
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
 </div>
 
 <script>
-let selectedRequestId = null;
-
-function cancelRequest(requestId) {
-    selectedRequestId = requestId;
-    document.getElementById('cancelModal').classList.remove('hidden');
+function cancelCompOff(compOffId) {
+    if (confirm('Are you sure you want to cancel this comp-off request?')) {
+        // In a real implementation, this would make an AJAX call to cancel the comp-off
+        // For now, we'll redirect to a cancel URL (which would need to be implemented)
+        window.location.href = `/leave-management/comp-off/${compOffId}/cancel/`;
+    }
 }
-
-function closeCancelModal() {
-    document.getElementById('cancelModal').classList.add('hidden');
-    selectedRequestId = null;
-    document.getElementById('cancellation_reason').value = '';
-}
-
-document.getElementById('cancelForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    if (selectedRequestId) {
-        // Note: This would need to be implemented in the backend
-        // For now, we'll show a message
-        alert('Cancellation functionality needs to be implemented in the backend.');
-        closeCancelModal();
-    }
-});
-
-// Close modal when clicking outside
-document.getElementById('cancelModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeCancelModal();
-    }
-});
-
-// Handle escape key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeCancelModal();
-    }
-});
-
-// Auto-refresh every 5 minutes
-setTimeout(function() {
-    if (document.visibilityState === 'visible') {
-        window.location.reload();
-    }
-}, 300000);
-
-// Calculate total hours for display (if not provided by backend)
-document.addEventListener('DOMContentLoaded', function() {
-    const hourElements = document.querySelectorAll('[data-hours]');
-    let totalHours = 0;
-
-    hourElements.forEach(function(element) {
-        const hours = parseFloat(element.dataset.hours) || 0;
-        totalHours += hours;
-    });
-
-    // Update total hours display if element exists
-    const totalHoursElement = document.querySelector('[data-total-hours]');
-    if (totalHoursElement) {
-        totalHoursElement.textContent = totalHours;
-    }
-});
 </script>
 {% endblock %}

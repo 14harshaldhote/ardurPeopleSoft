@@ -6,6 +6,7 @@ from django.db import transaction
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.core.cache import cache
 from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Dict, List, Optional, Tuple
@@ -23,10 +24,13 @@ try:
 except ImportError:
     NOTIFICATIONS_AVAILABLE = False
     notify = None
+
+# Import utilities
 from ..utils import (
     can_approve_leave, get_potential_approvers, get_auto_approver,
     validate_approval_hierarchy, is_hr, is_admin
 )
+from ..audit import LeaveAuditLogger
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +42,54 @@ class LeaveServiceError(Exception):
 
 class LeaveService:
     """Main service class for all leave operations"""
+    
+    # Cache timeout in seconds (1 hour)
+    CACHE_TIMEOUT = 3600
+    
+    @staticmethod
+    def get_cached_leave_policies(user: User) -> Optional[LeavePolicy]:
+        """Get user's leave policy with caching"""
+        cache_key = f"leave_policy_{user.id}"
+        policy = cache.get(cache_key)
+        
+        if policy is None:
+            user_groups = user.groups.all()
+            if user_groups:
+                policy = LeavePolicy.objects.filter(
+                    group__in=user_groups,
+                    is_active=True,
+                    is_deleted=False
+                ).first()
+                
+                if policy:
+                    cache.set(cache_key, policy, LeaveService.CACHE_TIMEOUT)
+        
+        return policy
+    
+    @staticmethod
+    def get_cached_leave_allocations(policy: LeavePolicy) -> List[LeaveAllocation]:
+        """Get leave allocations for a policy with caching"""
+        cache_key = f"leave_allocations_{policy.id}"
+        allocations = cache.get(cache_key)
+        
+        if allocations is None:
+            allocations = list(LeaveAllocation.objects.filter(
+                policy=policy,
+                is_deleted=False
+            ).select_related('leave_type'))
+            
+            cache.set(cache_key, allocations, LeaveService.CACHE_TIMEOUT)
+        
+        return allocations
+    
+    @staticmethod
+    def clear_user_cache(user: User):
+        """Clear cache for a specific user"""
+        cache_keys = [
+            f"leave_policy_{user.id}",
+            f"leave_balance_{user.id}_{timezone.now().year}"
+        ]
+        cache.delete_many(cache_keys)
 
     @staticmethod
     def apply_leave(user: User, leave_data: Dict) -> Tuple[LeaveRequest, Dict]:
@@ -47,10 +99,28 @@ class LeaveService:
         """
         try:
             with transaction.atomic():
+                # Get the leave type object (handle both ID and object cases)
+                leave_type_value = leave_data['leave_type']
+                logger.debug(f"Processing leave_type_value: {leave_type_value} (type: {type(leave_type_value)})")
+                
+                if isinstance(leave_type_value, LeaveType):
+                    leave_type = leave_type_value
+                    logger.debug(f"Using LeaveType object: {leave_type.name}")
+                elif isinstance(leave_type_value, (int, str)):
+                    try:
+                        leave_type = LeaveType.objects.get(id=int(leave_type_value))
+                        logger.debug(f"Retrieved LeaveType by ID {leave_type_value}: {leave_type.name}")
+                    except (LeaveType.DoesNotExist, ValueError):
+                        logger.error(f"Invalid leave type ID: {leave_type_value}")
+                        raise LeaveServiceError(f"Invalid leave type: {leave_type_value}")
+                else:
+                    logger.error(f"Invalid leave type format: {type(leave_type_value)}")
+                    raise LeaveServiceError(f"Invalid leave type format: {type(leave_type_value)}")
+                
                 # Create leave request instance
                 leave_request = LeaveRequest(
                     user=user,
-                    leave_type_id=leave_data['leave_type'],
+                    leave_type=leave_type,
                     start_date=leave_data['start_date'],
                     end_date=leave_data['end_date'],
                     half_day=leave_data.get('half_day', False),
@@ -64,11 +134,16 @@ class LeaveService:
 
                 # Calculate leave days
                 leave_request.leave_days = leave_request.calculate_leave_days()
+                
+                # Ensure the leave_type relationship is properly loaded
+                leave_request.leave_type = leave_type
 
                 # Validate the request
                 validation_result = LeaveService.validate_leave_request(leave_request)
 
                 if not validation_result['is_valid']:
+                    # Log failed application
+                    LeaveAuditLogger.log_leave_application(user, leave_request, validation_result)
                     return leave_request, validation_result
 
                 # Auto-assign approver if not specified
@@ -79,6 +154,15 @@ class LeaveService:
 
                 # Save the leave request
                 leave_request.save()
+
+                # Log successful application
+                success_result = {
+                    'is_valid': True,
+                    'errors': [],
+                    'warnings': validation_result.get('warnings', []),
+                    'can_auto_convert': False
+                }
+                LeaveAuditLogger.log_leave_application(user, leave_request, success_result)
 
                 # Send notification to potential approvers
                 if NOTIFICATIONS_AVAILABLE and leave_request.approver:
@@ -91,15 +175,11 @@ class LeaveService:
                             description=f'{user.get_full_name()} has submitted a leave request for {leave_request.leave_type.name} from {leave_request.start_date} to {leave_request.end_date}'
                         )
                     except Exception as e:
-                        logger.warning(f"Failed to send leave application notification: {str(e)}")
+                        logger.warning(f"Failed to send notification: {str(e)}")
 
-                logger.info(f"Leave application created: ID={leave_request.id}, User={user.username}")
+                logger.info(f"Leave request created successfully: ID {leave_request.id}")
 
-                return leave_request, {
-                    'is_valid': True,
-                    'message': 'Leave application submitted successfully',
-                    'leave_request_id': leave_request.id
-                }
+                return leave_request, success_result
 
         except (ValidationError, ValueError, TypeError) as e:
             logger.error(f"Error applying leave for user {user.username}: {str(e)}", exc_info=True)
@@ -235,9 +315,15 @@ class LeaveService:
     @staticmethod
     def _validate_leave_balance(leave_request: LeaveRequest) -> Optional[str]:
         """Validate sufficient leave balance"""
-        if not leave_request.has_sufficient_balance():
-            return f"Insufficient {leave_request.leave_type.name} balance"
-        return None
+        try:
+            has_balance = leave_request.has_sufficient_balance()
+            logger.debug(f"Balance validation for {leave_request.user.username}: {has_balance}")
+            if not has_balance:
+                return f"Insufficient {leave_request.leave_type.name} balance"
+            return None
+        except Exception as e:
+            logger.error(f"Error in balance validation: {str(e)}")
+            return f"Error checking {leave_request.leave_type.name} balance"
 
     @staticmethod
     def _check_holiday_weekend_conflicts(leave_request: LeaveRequest) -> List[str]:
@@ -252,9 +338,15 @@ class LeaveService:
 
             # Check for holidays (if Holiday model exists)
             try:
-                from ..models import Holiday
-                if Holiday.objects.filter(date=current_date, is_active=True).exists():
-                    warnings.append(f"Leave period includes holiday ({current_date})")
+                from trueAlign.models import Holiday
+                # Check if Holiday model has is_active field, otherwise just check by date
+                holiday_fields = [f.name for f in Holiday._meta.get_fields()]
+                if 'is_active' in holiday_fields:
+                    if Holiday.objects.filter(date=current_date, is_active=True).exists():
+                        warnings.append(f"Leave period includes holiday ({current_date})")
+                else:
+                    if Holiday.objects.filter(date=current_date).exists():
+                        warnings.append(f"Leave period includes holiday ({current_date})")
             except (ImportError, AttributeError):
                 pass
 
@@ -270,6 +362,24 @@ class LeaveService:
             return True
         except LeaveType.DoesNotExist:
             return False
+
+    @staticmethod
+    def _revert_leave_balance(leave_request: LeaveRequest):
+        """Revert leave balance when cancelling an approved leave"""
+        try:
+            if leave_request.leave_type.is_paid and leave_request.leave_days > 0:
+                balance = UserLeaveBalance.objects.get(
+                    user=leave_request.user,
+                    leave_type=leave_request.leave_type,
+                    year=leave_request.start_date.year
+                )
+                balance.used -= leave_request.leave_days
+                balance.save()
+                logger.info(f"Reverted {leave_request.leave_days} days for user {leave_request.user.username}")
+        except UserLeaveBalance.DoesNotExist:
+            logger.warning(f"No balance record found to revert for leave request {leave_request.id}")
+        except Exception as e:
+            logger.error(f"Error reverting leave balance: {str(e)}")
 
     @staticmethod
     def approve_leave(leave_request: LeaveRequest, approver: User, comments: str = "") -> Dict:
@@ -399,7 +509,8 @@ class LeaveService:
 
                 # If it was approved, we need to revert the balance
                 if previous_status == 'Approved':
-                    leave_request.revert_leave_balance()
+                    LeaveService._revert_leave_balance(leave_request)
+                
                 leave_request.save()
 
                 # Send notification to approver/HR if leave was approved
@@ -443,6 +554,17 @@ class LeaveService:
                 user=user,
                 year=year
             ).select_related('leave_type')
+
+            # If no balances exist, try to create them automatically
+            if not balances.exists():
+                try:
+                    LeaveService.allocate_leaves_to_user(user, {}, year)
+                    balances = UserLeaveBalance.objects.filter(
+                        user=user,
+                        year=year
+                    ).select_related('leave_type')
+                except Exception as e:
+                    logger.warning(f"Could not auto-allocate leaves for user {user.username}: {str(e)}")
 
             balance_data = []
             for balance in balances:
@@ -506,7 +628,8 @@ class LeaveService:
                             'allocated': allocation.annual_days,
                             'used': Decimal('0'),
                             'carried_forward': Decimal('0'),
-                            'additional': Decimal('0')
+                            'additional': Decimal('0'),
+                            'is_deleted': False
                         }
                     )
 
@@ -575,7 +698,7 @@ class LeaveService:
             raise LeaveServiceError(f"Bulk allocation failed: {str(e)}")
 
     @staticmethod
-    def apply_comp_off(user: User, comp_off_data: Dict) -> Tuple[CompOffRequest, Dict]:
+    def apply_comp_off(user: User, comp_off_data: Dict) -> Dict:
         """
         Apply for compensation off
         """

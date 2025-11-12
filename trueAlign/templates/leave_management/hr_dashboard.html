@@ -1,681 +1,265 @@
-{% extends 'base.html' %} {% load static %} {% block title %}HR Dashboard -
-Leave Management{% endblock %} {% block content %}
-<div
-    class="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-6 w-full max-w-full overflow-x-hidden"
->
-    <!-- Header Section -->
-    <div
-        class="relative overflow-hidden mb-3 sm:mb-6 rounded-[16px] sm:rounded-[20px] lg:rounded-[28px] bg-white/10 border border-white/40 shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:scale-[1.005] sm:hover:scale-[1.015] transition-all duration-500"
-    >
-        <!-- Gradient Background -->
-        <div
-            class="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-white/10 rounded-[28px]"
-        ></div>
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}HR Dashboard - Leave Management{% endblock %}
 
-        <!-- Soft Orbs -->
-        <div class="absolute inset-0 overflow-hidden">
-            <div
-                class="absolute -top-8 sm:-top-16 -left-8 sm:-left-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-br from-teal-300/30 to-teal-400/10 rounded-full"
-            ></div>
-            <div
-                class="absolute -bottom-8 sm:-bottom-16 -right-8 sm:-right-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-tr from-rose-400/30 to-rose-500/10 rounded-full"
-            ></div>
-            <div
-                class="absolute top-1/2 left-1/2 w-24 h-24 sm:w-48 sm:h-48 bg-gradient-to-br from-sky-300/30 to-sky-400/10 rounded-full -translate-x-1/2 -translate-y-1/2"
-            ></div>
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <h1 class="text-2xl font-bold text-gray-900">HR Dashboard</h1>
+                        <p class="text-sm text-gray-500">Organization-wide leave management overview</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'leave_management:team_leaves' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        Manage Team Leaves
+                    </a>
+                </div>
+            </div>
         </div>
+    </div>
 
-        <!-- Header Content -->
-        <div class="relative p-3 sm:p-6 md:p-8 lg:p-12 z-10 w-full">
-            <!-- Top Navigation -->
-            <nav
-                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-md p-2 sm:p-3 mb-3 sm:mb-6 flex flex-col sm:flex-row gap-3 sm:gap-0 justify-between items-center"
-            >
-                <!-- Time -->
-                <div
-                    class="px-3 sm:px-4 lg:px-5 py-2 sm:py-3 backdrop-blur-sm bg-white/20 rounded-lg sm:rounded-xl border border-white/10"
-                >
-                    <span
-                        class="text-zinc-900 font-semibold text-xs sm:text-sm lg:text-md"
-                        id="time"
-                        >12:34:56</span
-                    >
-                    <span
-                        class="text-zinc-600 font-medium text-xs sm:text-sm lg:text-md"
-                        id="time-ampm"
-                        >AM</span
-                    >
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Employees -->
+            <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+                <div class="p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">Total Employees</p>
+                            <p class="text-2xl font-semibold text-gray-900">{{ stats.total_employees|default:0 }}</p>
+                        </div>
+                    </div>
                 </div>
+            </div>
 
-                <!-- Status & Notification -->
-                <div class="flex items-center space-x-2 sm:space-x-4 mt-0">
-                    <span
-                        class="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 lg:px-4 py-1.5 sm:py-2 backdrop-blur-sm bg-white/20 rounded-lg sm:rounded-xl border border-white/10"
-                    >
-                        <span
-                            class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-emerald-500 animate-pulse"
-                        ></span>
-                        <span class="text-xs sm:text-sm text-zinc-700"
-                            >Active</span
-                        >
-                    </span>
-
-                    <button
-                        class="p-2 sm:p-3 backdrop-blur-sm bg-white/20 rounded-lg sm:rounded-xl border border-white/10 hover:bg-white/30 hover:scale-105 transition"
-                    >
-                        <i
-                            class="fas fa-bell w-4 h-4 sm:w-5 sm:h-5 text-zinc-700"
-                        ></i>
-                    </button>
+            <!-- Pending Requests -->
+            <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+                <div class="p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">Pending Requests</p>
+                            <p class="text-2xl font-semibold text-gray-900">{{ stats.pending_requests|default:0 }}</p>
+                        </div>
+                    </div>
                 </div>
-            </nav>
+            </div>
 
-            <!-- Main Header Content -->
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1
-                        class="text-2xl sm:text-3xl md:text-4xl font-bold text-zinc-900 mb-2"
-                    >
-                        HR Dashboard
-                    </h1>
-                    <p class="text-zinc-600 text-sm sm:text-base md:text-lg">
-                        Organization-wide leave management and oversight
-                    </p>
+            <!-- Approved This Month -->
+            <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+                <div class="p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">Approved This Month</p>
+                            <p class="text-2xl font-semibold text-gray-900">{{ stats.approved_this_month|default:0 }}</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="hidden md:block">
-                    <div
-                        class="backdrop-blur-sm bg-white/20 rounded-xl border border-white/10 p-4"
-                    >
-                        <p class="text-2xl font-bold text-zinc-900">
-                            {{ current_year }}
-                        </p>
-                        <p class="text-zinc-600 text-sm">Current Year</p>
+            </div>
+
+            <!-- Total Leave Days -->
+            <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+                <div class="p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">Leave Days ({{ current_year }})</p>
+                            <p class="text-2xl font-semibold text-gray-900">{{ stats.total_leave_days_this_year|default:0 }}</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Quick Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6">
-        <!-- Total Employees -->
-        <div
-            class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
-        >
-            <div class="flex items-center">
-                <div
-                    class="p-3 rounded-full bg-gradient-to-tr from-emerald-300/20 to-emerald-400/10 text-emerald-600 backdrop-blur-sm border border-emerald-400/20"
-                >
-                    <i class="fas fa-users text-lg sm:text-xl"></i>
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Manage Team Leaves -->
+            <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+                <div class="p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900">Team Leaves</h3>
+                            <p class="text-sm text-gray-500 mt-1">Review and manage all leave requests</p>
+                        </div>
+                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="mt-4">
+                        <a href="{% url 'leave_management:team_leaves' %}" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
+                            Manage Leaves
+                        </a>
+                    </div>
                 </div>
-                <div class="ml-4">
-                    <p class="text-xl sm:text-2xl font-semibold text-zinc-900">
-                        {{ stats.total_employees|default:0 }}
-                    </p>
-                    <p class="text-zinc-700 text-sm sm:text-base font-medium">
-                        Total Employees
-                    </p>
+            </div>
+
+            <!-- Leave Balances -->
+            <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+                <div class="p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900">Leave Balances</h3>
+                            <p class="text-sm text-gray-500 mt-1">View employee leave balances</p>
+                        </div>
+                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                        </svg>
+                    </div>
+                    <div class="mt-4">
+                        <a href="{% url 'leave_management:leave_balance' %}" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors duration-200">
+                            View Balances
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Apply Leave -->
+            <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+                <div class="p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900">Apply Leave</h3>
+                            <p class="text-sm text-gray-500 mt-1">Submit your own leave request</p>
+                        </div>
+                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                    </div>
+                    <div class="mt-4">
+                        <a href="{% url 'leave_management:apply_leave' %}" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                            Apply Leave
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Leaves -->
+            <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+                <div class="p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900">My Leaves</h3>
+                            <p class="text-sm text-gray-500 mt-1">View your leave requests</p>
+                        </div>
+                        <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <div class="mt-4">
+                        <a href="{% url 'leave_management:my_leaves' %}" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
+                            View My Leaves
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Pending Requests -->
-        <div
-            class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
-        >
-            <div class="flex items-center">
-                <div
-                    class="p-3 rounded-full bg-gradient-to-tr from-rose-300/20 to-rose-400/10 text-rose-600 backdrop-blur-sm border border-rose-400/20"
-                >
-                    <i class="fas fa-clock text-lg sm:text-xl"></i>
-                </div>
-                <div class="ml-4">
-                    <p class="text-xl sm:text-2xl font-semibold text-zinc-900">
-                        {{ stats.pending_requests|default:0 }}
-                    </p>
-                    <p class="text-zinc-700 text-sm sm:text-base font-medium">
-                        Pending Requests
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Approved This Month -->
-        <div
-            class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
-        >
-            <div class="flex items-center">
-                <div
-                    class="p-3 rounded-full bg-gradient-to-tr from-teal-300/20 to-teal-400/10 text-teal-600 backdrop-blur-sm border border-teal-400/20"
-                >
-                    <i class="fas fa-check-circle text-lg sm:text-xl"></i>
-                </div>
-                <div class="ml-4">
-                    <p class="text-xl sm:text-2xl font-semibold text-zinc-900">
-                        {{ stats.approved_this_month|default:0 }}
-                    </p>
-                    <p class="text-zinc-700 text-sm sm:text-base font-medium">
-                        Approved This Month
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Total Leave Days -->
-        <div
-            class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
-        >
-            <div class="flex items-center">
-                <div
-                    class="p-3 rounded-full bg-gradient-to-tr from-violet-300/20 to-violet-400/10 text-violet-600 backdrop-blur-sm border border-violet-400/20"
-                >
-                    <i class="fas fa-calendar-alt text-lg sm:text-xl"></i>
-                </div>
-                <div class="ml-4">
-                    <p class="text-xl sm:text-2xl font-semibold text-zinc-900">
-                        {{ stats.total_leave_days_this_year|default:0 }}
-                    </p>
-                    <p class="text-zinc-700 text-sm sm:text-base font-medium">
-                        Leave Days {{ current_year }}
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Content Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
-        <!-- Left Column - Pending Requests -->
-        <div class="lg:col-span-2">
-            <div
-                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
-            >
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-zinc-900">
-                        Recent Pending Requests
-                    </h3>
-                    <a
-                        href="{% url 'leave_management:team_leaves' %}?status=Pending"
-                        class="text-emerald-600 hover:text-emerald-800 text-sm font-medium transition-colors"
-                    >
-                        View All <i class="fas fa-arrow-right ml-1"></i>
+        <!-- Recent Pending Requests -->
+        <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-medium text-gray-900">Recent Pending Requests</h3>
+                    <a href="{% url 'leave_management:team_leaves' %}?status=Pending" class="text-green-600 hover:text-green-800 text-sm font-medium">
+                        View all pending →
                     </a>
                 </div>
-
+            </div>
+            <div class="p-6">
                 {% if recent_requests %}
-                <div class="space-y-4">
-                    {% for request in recent_requests %}
-                    <div
-                        class="backdrop-blur-sm bg-white/30 border border-white/30 rounded-lg p-4 hover:bg-white/40 hover:shadow-md transition-all duration-200"
-                    >
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="flex items-center space-x-3">
-                                <div
-                                    class="w-10 h-10 bg-gradient-to-tr from-emerald-300/20 to-emerald-400/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-emerald-400/20"
-                                >
-                                    <span
-                                        class="text-emerald-600 font-medium text-sm"
-                                    >
-                                        {{
-                                        request.user.first_name.0|default:request.user.username.0|upper
-                                        }}{{
-                                        request.user.last_name.0|default:''|upper
-                                        }}
-                                    </span>
+                    <div class="space-y-4">
+                        {% for request in recent_requests %}
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-3 mb-2">
+                                        <div class="flex-shrink-0">
+                                            <div class="w-10 h-10 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center">
+                                                <span class="text-blue-600 font-medium text-sm">
+                                                    {{ request.user.first_name.0|default:request.user.username.0|upper }}{{ request.user.last_name.0|default:''|upper }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-sm font-medium text-gray-900">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                                            <p class="text-sm text-gray-500">{{ request.leave_type.name }}</p>
+                                        </div>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                            Pending
+                                        </span>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                                        <div>
+                                            <span class="font-medium">Duration:</span>
+                                            <div class="mt-1">
+                                                {{ request.start_date|date:"M d" }} - {{ request.end_date|date:"M d, Y" }}
+                                                <div class="text-xs text-gray-500">{{ request.leave_days }} day{{ request.leave_days|pluralize }}</div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span class="font-medium">Applied:</span>
+                                            <div class="mt-1">{{ request.created_at|date:"M d, Y" }}</div>
+                                        </div>
+                                        <div>
+                                            <span class="font-medium">Request ID:</span>
+                                            <div class="mt-1">#{{ request.id }}</div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h4 class="font-medium text-zinc-900">
-                                        {{
-                                        request.user.get_full_name|default:request.user.username
-                                        }}
-                                    </h4>
-                                    <p class="text-sm text-zinc-700">
-                                        {{ request.leave_type.name }}
-                                    </p>
+                                <div class="flex flex-col space-y-2 ml-6">
+                                    <a href="{% url 'leave_management:leave_detail' request.id %}" class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        </svg>
+                                        Review
+                                    </a>
                                 </div>
                             </div>
-                            <div class="text-right">
-                                <span
-                                    class="text-sm font-medium text-rose-800 bg-rose-100/80 px-2 py-1 rounded-full backdrop-blur-sm"
-                                    >{{ request.leave_days }} day{{
-                                    request.leave_days|pluralize }}</span
-                                >
-                                {% if request.half_day %}
-                                <p class="text-xs text-rose-600 mt-1">
-                                    Half Day
-                                </p>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div
-                            class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3 text-sm text-zinc-700"
-                        >
-                            <div
-                                class="flex items-center space-x-2 p-2 rounded-lg backdrop-blur-sm bg-white/20"
-                            >
-                                <i class="fas fa-calendar text-teal-600"></i>
-                                <span>
-                                    {{ request.start_date|date:"M j, Y" }} {% if
-                                    request.start_date != request.end_date %} -
-                                    {{ request.end_date|date:"M j, Y" }} {%
-                                    endif %}
-                                </span>
-                            </div>
-                            <div
-                                class="flex items-center space-x-2 p-2 rounded-lg backdrop-blur-sm bg-white/20"
-                            >
-                                <i class="fas fa-clock text-rose-600"></i>
-                                <span
-                                    >Applied: {{ request.created_at|date:"M j, Y
-                                    g:i A" }}</span
-                                >
-                            </div>
-                        </div>
-
-                        {% if request.reason %}
-                        <div
-                            class="text-sm text-zinc-700 mb-3 backdrop-blur-sm bg-white/30 p-3 rounded-lg border-l-4 border-emerald-400"
-                        >
-                            {{ request.reason|truncatewords:25 }}
-                        </div>
-                        {% endif %}
-
-                        <div class="flex items-center justify-between">
-                            <div
-                                class="text-xs text-zinc-600 p-2 rounded-lg backdrop-blur-sm bg-white/20"
-                            >
-                                {% if request.approver %}
-                                <i class="fas fa-user text-teal-600 mr-1"></i>
-                                Approver: {{
-                                request.approver.get_full_name|default:request.approver.username
-                                }} {% else %}
-                                <i
-                                    class="fas fa-user-times text-rose-600 mr-1"
-                                ></i>
-                                No approver assigned {% endif %}
-                            </div>
-                            <div class="flex space-x-2">
-                                <a
-                                    href="{% url 'leave_management:leave_detail' request.id %}"
-                                    class="btn-secondary-small"
-                                >
-                                    <i class="fas fa-eye mr-1"></i>
-                                    Review
-                                </a>
-                            </div>
-                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
-                </div>
                 {% else %}
-                <div class="text-center py-8 text-zinc-600">
-                    <i
-                        class="fas fa-check-circle text-4xl mb-4 text-emerald-400"
-                    ></i>
-                    <p class="mb-2">No pending requests</p>
-                    <p class="text-sm">
-                        All leave requests have been processed
-                    </p>
-                </div>
+                    <div class="text-center py-8">
+                        <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">No Pending Requests</h3>
+                        <p class="text-gray-500">All leave requests have been processed.</p>
+                    </div>
                 {% endif %}
-            </div>
-        </div>
-
-        <!-- Right Column - Quick Actions & Tools -->
-        <div class="space-y-3 sm:space-y-4 lg:space-y-6">
-            <!-- HR Tools -->
-            <div
-                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
-            >
-                <h3 class="text-lg font-semibold text-zinc-900 mb-4">
-                    HR Tools
-                </h3>
-                <div class="space-y-3">
-                    <a
-                        href="{% url 'leave_management:team_leaves' %}"
-                        class="btn-primary w-full text-center block"
-                    >
-                        <i class="fas fa-list mr-2"></i>
-                        All Leave Requests
-                    </a>
-
-                    <a
-                        href="{% url 'leave_management:team_leaves' %}?status=Pending"
-                        class="btn-secondary w-full text-center block"
-                    >
-                        <i class="fas fa-clock mr-2"></i>
-                        Pending Approvals
-                    </a>
-
-                    <a
-                        href="{% url 'leave_management:leave_balance' %}"
-                        class="btn-secondary w-full text-center block"
-                    >
-                        <i class="fas fa-chart-bar mr-2"></i>
-                        Leave Balances
-                    </a>
-
-                    <a
-                        href="{% url 'leave_management:apply_leave' %}"
-                        class="btn-secondary w-full text-center block"
-                    >
-                        <i class="fas fa-plus mr-2"></i>
-                        Apply Leave
-                    </a>
-
-                    <a
-                        href="{% url 'leave_management:my_leaves' %}"
-                        class="btn-secondary w-full text-center block"
-                    >
-                        <i class="fas fa-user mr-2"></i>
-                        My Leaves
-                    </a>
-                </div>
-            </div>
-
-            <!-- System Statistics -->
-            <div
-                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
-            >
-                <h3 class="text-lg font-semibold text-zinc-900 mb-4">
-                    System Overview
-                </h3>
-                <div class="space-y-4">
-                    <div
-                        class="flex justify-between items-center p-3 backdrop-blur-sm bg-white/30 rounded-lg border border-emerald-200/30"
-                    >
-                        <div class="flex items-center space-x-3">
-                            <i class="fas fa-users text-emerald-600"></i>
-                            <span class="text-zinc-700">Active Employees</span>
-                        </div>
-                        <span
-                            class="font-semibold text-emerald-600 bg-emerald-100/80 px-2 py-1 rounded-full text-sm backdrop-blur-sm"
-                            >{{ stats.total_employees|default:0 }}</span
-                        >
-                    </div>
-
-                    <div
-                        class="flex justify-between items-center p-3 backdrop-blur-sm bg-white/30 rounded-lg border border-rose-200/30"
-                    >
-                        <div class="flex items-center space-x-3">
-                            <i class="fas fa-hourglass-half text-rose-600"></i>
-                            <span class="text-zinc-700">Pending Requests</span>
-                        </div>
-                        <span
-                            class="font-semibold text-rose-600 bg-rose-100/80 px-2 py-1 rounded-full text-sm backdrop-blur-sm"
-                            >{{ stats.pending_requests|default:0 }}</span
-                        >
-                    </div>
-
-                    <div
-                        class="flex justify-between items-center p-3 backdrop-blur-sm bg-white/30 rounded-lg border border-teal-200/30"
-                    >
-                        <div class="flex items-center space-x-3">
-                            <i class="fas fa-check text-teal-600"></i>
-                            <span class="text-zinc-700"
-                                >Approved This Month</span
-                            >
-                        </div>
-                        <span
-                            class="font-semibold text-teal-600 bg-teal-100/80 px-2 py-1 rounded-full text-sm backdrop-blur-sm"
-                            >{{ stats.approved_this_month|default:0 }}</span
-                        >
-                    </div>
-
-                    <div
-                        class="flex justify-between items-center p-3 backdrop-blur-sm bg-white/30 rounded-lg border border-violet-200/30"
-                    >
-                        <div class="flex items-center space-x-3">
-                            <i class="fas fa-calendar-day text-violet-600"></i>
-                            <span class="text-zinc-700"
-                                >Total Days {{ current_year }}</span
-                            >
-                        </div>
-                        <span
-                            class="font-semibold text-violet-600 bg-violet-100/80 px-2 py-1 rounded-full text-sm backdrop-blur-sm"
-                            >{{ stats.total_leave_days_this_year|default:0
-                            }}</span
-                        >
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Filters -->
-            <div
-                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
-            >
-                <h3 class="text-lg font-semibold text-zinc-900 mb-4">
-                    Quick Filters
-                </h3>
-                <div class="space-y-2 text-sm">
-                    <a
-                        href="{% url 'leave_management:team_leaves' %}?status=Approved"
-                        class="flex items-center space-x-3 text-emerald-600 hover:text-emerald-800 py-2 px-3 rounded-md hover:bg-emerald-50/50 transition-colors font-medium backdrop-blur-sm bg-white/20 border border-emerald-200/30"
-                    >
-                        <i class="fas fa-check-circle"></i>
-                        <span>Approved Requests</span>
-                    </a>
-                    <a
-                        href="{% url 'leave_management:team_leaves' %}?status=Rejected"
-                        class="flex items-center space-x-3 text-rose-600 hover:text-rose-800 py-2 px-3 rounded-md hover:bg-rose-50/50 transition-colors font-medium backdrop-blur-sm bg-white/20 border border-rose-200/30"
-                    >
-                        <i class="fas fa-times-circle"></i>
-                        <span>Rejected Requests</span>
-                    </a>
-                    <a
-                        href="{% url 'leave_management:team_leaves' %}?status=Cancelled"
-                        class="flex items-center space-x-3 text-zinc-600 hover:text-zinc-800 py-2 px-3 rounded-md hover:bg-gray-50/50 transition-colors font-medium backdrop-blur-sm bg-white/20 border border-gray-200/30"
-                    >
-                        <i class="fas fa-ban"></i>
-                        <span>Cancelled Requests</span>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- HR Guidelines -->
-    <div
-        class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300 mt-6"
-    >
-        <div class="flex items-start space-x-3">
-            <div class="flex-shrink-0">
-                <i class="fas fa-info-circle text-2xl text-sky-500"></i>
-            </div>
-            <div>
-                <h3 class="text-lg font-medium text-zinc-900 mb-2">
-                    HR Guidelines
-                </h3>
-                <div class="text-sm text-zinc-700 space-y-2">
-                    <p class="flex items-start space-x-2">
-                        <span class="text-teal-600">•</span>
-                        <span
-                            >Monitor leave patterns to identify potential issues
-                            or policy gaps</span
-                        >
-                    </p>
-                    <p class="flex items-start space-x-2">
-                        <span class="text-teal-600">•</span>
-                        <span
-                            >Ensure fair distribution of leave approvals across
-                            all departments</span
-                        >
-                    </p>
-                    <p class="flex items-start space-x-2">
-                        <span class="text-teal-600">•</span>
-                        <span
-                            >Review and update leave policies based on
-                            organizational needs</span
-                        >
-                    </p>
-                    <p class="flex items-start space-x-2">
-                        <span class="text-teal-600">•</span>
-                        <span
-                            >Maintain confidentiality of employee personal
-                            information</span
-                        >
-                    </p>
-                    <p class="flex items-start space-x-2">
-                        <span class="text-teal-600">•</span>
-                        <span
-                            >Keep accurate records for compliance and reporting
-                            purposes</span
-                        >
-                    </p>
-                </div>
             </div>
         </div>
     </div>
 </div>
-
-<style>
-    html {
-        scroll-behavior: smooth;
-    }
-
-    .btn-primary {
-        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg shadow-md hover:from-emerald-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg text-xs sm:text-sm lg:text-base backdrop-blur-sm font-medium;
-    }
-
-    .btn-secondary {
-        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-white/50 text-zinc-800 border border-zinc-400/60 rounded-lg shadow-sm hover:bg-white/70 hover:border-zinc-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-300 hover:shadow-md text-xs sm:text-sm lg:text-base backdrop-blur-sm font-medium;
-    }
-
-    .btn-secondary-small {
-        @apply px-2 py-1 bg-white/50 text-zinc-800 border border-emerald-400/60 rounded text-xs font-medium hover:bg-white/70 hover:border-emerald-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-300 hover:shadow-sm backdrop-blur-sm;
-    }
-
-    .card {
-        @apply backdrop-blur-xl bg-white/30 p-2 sm:p-3 md:p-4 lg:p-6 rounded-lg sm:rounded-xl shadow transition-all duration-300 border border-white/20;
-    }
-
-    /* Custom scrollbar */
-    .scrollbar-thin::-webkit-scrollbar {
-        width: 3px;
-    }
-
-    .scrollbar-thin::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-    }
-
-    .scrollbar-thin::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.3);
-        border-radius: 10px;
-    }
-
-    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-        background: rgba(255, 255, 255, 0.5);
-    }
-
-    /* Responsive utilities */
-    @media (max-width: 640px) {
-        .scrollbar-thin {
-            scrollbar-width: thin;
-        }
-
-        .grid {
-            gap: 0.5rem;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .scrollbar-thin::-webkit-scrollbar {
-            width: 2px;
-        }
-    }
-
-    /* Animation for elements */
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .card,
-    .btn-primary,
-    .btn-secondary {
-        animation: fadeIn 0.5s ease-out;
-    }
-
-    /* Pulse animation for notifications */
-    @keyframes pulse {
-        0% {
-            transform: scale(1);
-        }
-        50% {
-            transform: scale(1.05);
-        }
-        100% {
-            transform: scale(1);
-        }
-    }
-
-    .animate-pulse {
-        animation: pulse 2s infinite;
-    }
-</style>
-
-<script>
-    function updateTime() {
-        const timeElement = document.getElementById("time");
-        const ampmElement = document.getElementById("time-ampm");
-        const now = new Date();
-        let hours = now.getHours();
-        let minutes = now.getMinutes();
-        let seconds = now.getSeconds();
-        let ampm = hours >= 12 ? "PM" : "AM";
-
-        // Convert to 12-hour format
-        hours = hours % 12;
-        hours = hours ? hours : 12; // 0 becomes 12
-        minutes = minutes < 10 ? "0" + minutes : minutes;
-        seconds = seconds < 10 ? "0" + seconds : seconds;
-
-        const formattedTime = `${hours}:${minutes}:${seconds}`;
-        timeElement.textContent = formattedTime;
-        ampmElement.textContent = ampm;
-    }
-
-    // Update time immediately and every second
-    updateTime();
-    setInterval(updateTime, 1000);
-
-    document.addEventListener("DOMContentLoaded", function () {
-        // Auto-refresh every 3 minutes for HR dashboard
-        setTimeout(function () {
-            if (document.visibilityState === "visible") {
-                window.location.reload();
-            }
-        }, 180000); // 3 minutes
-
-        // Update page title with pending count
-        const pendingCount = {{ stats.pending_requests|default:0 }};
-        if (pendingCount > 0) {
-            document.title = `(${pendingCount}) HR Dashboard - Leave Management`;
-        }
-
-        // Add visual indicators for high-priority items
-        const highPriorityCount = {{ stats.pending_requests|default:0 }};
-        if (highPriorityCount > 10) {
-            // Add visual warning for high pending count
-            const statsCard = document.querySelector(
-                ".border-rose-400/20",
-            ).closest(".backdrop-blur-xl");
-            if (statsCard) {
-                statsCard.classList.add(
-                    "ring-2",
-                    "ring-rose-300",
-                    "ring-opacity-50",
-                );
-            }
-        }
-    });
-</script>
 {% endblock %}

@@ -1,33 +1,40 @@
-{% extends 'base.html' %} {% load static %} {% block title %}Apply for Comp-off
-- Leave Management{% endblock %} {% block content %}
-<div
-    class="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-6 w-full max-w-full overflow-x-hidden"
->
-    <!-- Header Section -->
-    <div
-        class="relative overflow-hidden mb-3 sm:mb-6 rounded-[16px] sm:rounded-[20px] lg:rounded-[28px] bg-white/10 border border-white/40 shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:scale-[1.005] sm:hover:scale-[1.015] transition-all duration-500"
-    >
-        <!-- Gradient Background -->
-        <div
-            class="absolute inset-0 bg-gradient-to-br from-lime-300/20 via-green-200/10 to-lime-300/20 rounded-[28px]"
-        ></div>
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Apply for Comp-off - Leave Management{% endblock %}
 
+{% block content %}
+<div class="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-6 w-full max-w-full overflow-x-hidden">
+    <!-- Header Section -->
+    <div class="relative overflow-hidden mb-3 sm:mb-6 rounded-[16px] sm:rounded-[20px] lg:rounded-[28px] bg-gradient-to-br from-teal-600 via-cyan-500 to-blue-600 shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:scale-[1.005] sm:hover:scale-[1.015] transition-all duration-500">
         <!-- Soft Orbs -->
         <div class="absolute inset-0 overflow-hidden">
-            <div
-                class="absolute -top-8 sm:-top-16 -left-8 sm:-left-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-br from-lime-300/30 to-green-400/10 rounded-full"
-            ></div>
-            <div
-                class="absolute -bottom-8 sm:-bottom-16 -right-8 sm:-right-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-tr from-green-400/30 to-lime-500/10 rounded-full"
-            ></div>
-            <div
-                class="absolute top-1/2 left-1/2 w-24 h-24 sm:w-48 sm:h-48 bg-gradient-to-br from-lime-300/30 to-green-400/10 rounded-full -translate-x-1/2 -translate-y-1/2"
-            ></div>
+            <div class="absolute -top-8 sm:-top-16 -left-8 sm:-left-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-br from-teal-400/30 to-cyan-400/10 rounded-full"></div>
+            <div class="absolute -bottom-8 sm:-bottom-16 -right-8 sm:-right-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-tr from-blue-400/30 to-teal-500/10 rounded-full"></div>
         </div>
 
         <!-- Header Content -->
         <div class="relative p-3 sm:p-6 md:p-8 lg:p-12 z-10 w-full">
             <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-white/20 text-white mr-4 backdrop-blur-sm border border-white/30">
+                        <svg class="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2">Apply for Comp-off</h1>
+                        <p class="text-teal-100 text-sm sm:text-base md:text-lg">Request compensatory off for overtime work</p>
+                    </div>
+                </div>
+                <div class="hidden md:block">
+                    <div class="backdrop-blur-sm bg-white/20 rounded-xl border border-white/10 p-4">
+                        <p class="text-lg font-semibold text-white">{{ available_comp_offs|default:0 }}</p>
+                        <p class="text-teal-200 text-sm">Available</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
                 <div>
                     <h1
                         class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2"
