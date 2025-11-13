@@ -1,696 +1,279 @@
-{% extends 'base.html' %} {% load static %} {% block title %}Shift Calendar -
-TrueAlign{% endblock %} {% block content %}
-<div class="min-h-screen bg-gray-50">
+{% extends "base.html" %}
+
+{% block page_title %}Shift Calendar{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50">
     <!-- Header Section -->
-    <div class="bg-white shadow-sm border-b">
+    <div class="bg-white shadow-sm border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="py-6">
-                <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between py-6">
+                <div class="flex items-center space-x-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                    </div>
                     <div>
-                        <h1 class="text-3xl font-bold text-gray-900">
-                            {% if selected_user %} {{
-                            selected_user.get_full_name|default:selected_user.username
-                            }}'s Calendar {% else %} Shift Calendar {% endif %}
-                        </h1>
-                        <p class="mt-2 text-gray-600">
-                            View shift assignments in calendar format
-                        </p>
+                        <h1 class="text-3xl font-bold text-gray-900">Shift Calendar</h1>
+                        <p class="text-gray-600">{{ target_date|date:"F d, Y" }} - Schedule overview</p>
                     </div>
-                    <div class="flex space-x-3">
-                        <a
-                            href="{% url 'shift:dashboard' %}"
-                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
-                        >
-                            <i class="ri-dashboard-line mr-2"></i>
-                            Dashboard
-                        </a>
-                        <a
-                            href="{% url 'shift:schedule' %}"
-                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
-                        >
-                            <i class="ri-calendar-schedule-line mr-2"></i>
-                            Schedule View
-                        </a>
-                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <!-- Date Navigation -->
+                    <form method="get" class="flex items-center space-x-2">
+                        <input type="date" name="date" value="{{ target_date|date:'Y-m-d' }}" 
+                               class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-purple-500 focus:ring-purple-500">
+                        <button type="submit" 
+                                class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white text-sm font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200">
+                            <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                            View
+                        </button>
+                    </form>
+                    
+                    <a href="{% url 'shift:dashboard' %}" 
+                       class="inline-flex items-center px-4 py-3 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-xl shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200">
+                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+                        </svg>
+                        Dashboard
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Calendar Controls -->
-        <div class="bg-white shadow rounded-lg mb-6">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-medium text-gray-900">
-                        Calendar Controls
-                    </h3>
-                    <div class="flex items-center space-x-2">
-                        <button
-                            id="prevMonth"
-                            class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md"
-                        >
-                            <i class="ri-arrow-left-line"></i>
-                        </button>
-                        <span
-                            id="currentMonth"
-                            class="px-4 py-2 text-sm font-medium text-gray-900"
-                        >
-                            {{ current_month|date:"F Y" }}
-                        </span>
-                        <button
-                            id="nextMonth"
-                            class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md"
-                        >
-                            <i class="ri-arrow-right-line"></i>
-                        </button>
-                        <button
-                            id="todayBtn"
-                            class="ml-4 px-3 py-2 text-xs font-medium text-sky-700 bg-sky-100 rounded-md hover:bg-sky-200"
-                        >
-                            Today
-                        </button>
+        <!-- Summary Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Assignments</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ total_assignments }}</p>
                     </div>
                 </div>
             </div>
-            <div class="p-6">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <!-- User Filter -->
-                    <div>
-                        <label
-                            for="userFilter"
-                            class="block text-sm font-medium text-gray-700 mb-2"
-                            >Filter by User</label
-                        >
-                        <select
-                            id="userFilter"
-                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
-                        >
-                            <option value="">All Users</option>
-                            {% for user in users %}
-                            <option
-                                value="{{ user.id }}"
-                                {%
-                                if
-                                selected_user.id=""
-                                ="user.id"
-                                %}selected{%
-                                endif
-                                %}
-                            >
-                                {{ user.get_full_name|default:user.username }}
-                            </option>
-                            {% endfor %}
-                        </select>
+            
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
                     </div>
-
-                    <!-- Shift Filter -->
-                    <div>
-                        <label
-                            for="shiftFilter"
-                            class="block text-sm font-medium text-gray-700 mb-2"
-                            >Filter by Shift</label
-                        >
-                        <select
-                            id="shiftFilter"
-                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
-                        >
-                            <option value="">All Shifts</option>
-                            {% for shift in shifts %}
-                            <option value="{{ shift.id }}">
-                                {{ shift.name }}
-                            </option>
-                            {% endfor %}
-                        </select>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Active Shifts</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ shift_assignments|length }}</p>
                     </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Date</p>
+                        <p class="text-lg font-bold text-gray-900">{{ target_date|date:"M d" }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 bg-gradient-to-r from-amber-500 to-amber-600 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Coverage</p>
+                        <p class="text-lg font-bold text-gray-900">
+                            {% if total_assignments > 0 %}100%{% else %}0%{% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                    <!-- View Options -->
-                    <div>
-                        <label
-                            class="block text-sm font-medium text-gray-700 mb-2"
-                            >View Options</label
-                        >
+        <!-- Quick Navigation -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900">Quick Navigation</h3>
+                <div class="flex items-center space-x-2">
+                    <a href="?date={{ target_date|date:'Y-m-d'|add_days:-1 }}" 
+                       class="inline-flex items-center px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors duration-200">
+                        <svg class="-ml-1 mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                        Previous
+                    </a>
+                    <a href="?date={{ 'today'|date:'Y-m-d' }}" 
+                       class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white text-sm font-medium rounded-lg transition-all duration-200">
+                        Today
+                    </a>
+                    <a href="?date={{ target_date|date:'Y-m-d'|add_days:1 }}" 
+                       class="inline-flex items-center px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors duration-200">
+                        Next
+                        <svg class="-mr-1 ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shift Schedule -->
+        <div class="space-y-6">
+            {% for shift_name, shift_data in shift_assignments.items %}
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                <!-- Shift Header -->
+                <div class="px-6 py-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100">
+                    <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-4">
-                            <label class="flex items-center">
-                                <input
-                                    type="checkbox"
-                                    id="showHolidays"
-                                    checked
-                                    class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded"
-                                />
-                                <span class="ml-2 text-sm text-gray-700"
-                                    >Show Holidays</span
-                                >
-                            </label>
-                            <label class="flex items-center">
-                                <input
-                                    type="checkbox"
-                                    id="showWeekends"
-                                    checked
-                                    class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded"
-                                />
-                                <span class="ml-2 text-sm text-gray-700"
-                                    >Show Weekends</span
-                                >
-                            </label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Calendar Grid -->
-        <div class="bg-white shadow rounded-lg">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-medium text-gray-900">
-                        Calendar View
-                    </h3>
-                    <div class="flex items-center space-x-4">
-                        <!-- Legend -->
-                        <div class="flex items-center space-x-3 text-xs">
-                            <div class="flex items-center">
-                                <div
-                                    class="w-3 h-3 bg-sky-500 rounded mr-1"
-                                ></div>
-                                <span class="text-gray-600">Assigned</span>
+                            <div class="w-10 h-10 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
                             </div>
-                            <div class="flex items-center">
-                                <div
-                                    class="w-3 h-3 bg-emerald-500 rounded mr-1"
-                                ></div>
-                                <span class="text-gray-600">Available</span>
-                            </div>
-                            <div class="flex items-center">
-                                <div
-                                    class="w-3 h-3 bg-rose-500 rounded mr-1"
-                                ></div>
-                                <span class="text-gray-600">Holiday</span>
-                            </div>
-                            <div class="flex items-center">
-                                <div
-                                    class="w-3 h-3 bg-amber-500 rounded mr-1"
-                                ></div>
-                                <span class="text-gray-600">Conflict</span>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">{{ shift_name }}</h3>
+                                <p class="text-sm text-gray-600">
+                                    {{ shift_data.shift.start_time|time:"H:i" }} - {{ shift_data.shift.end_time|time:"H:i" }}
+                                    <span class="mx-2">•</span>
+                                    {{ shift_data.assignments|length }} employee{{ shift_data.assignments|length|pluralize }}
+                                </p>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-            <div class="p-6">
-                <!-- Calendar Header -->
-                <div
-                    class="grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden mb-2"
-                >
-                    <div
-                        class="bg-gray-50 py-2 text-center text-xs font-medium text-gray-700"
-                    >
-                        Sun
-                    </div>
-                    <div
-                        class="bg-gray-50 py-2 text-center text-xs font-medium text-gray-700"
-                    >
-                        Mon
-                    </div>
-                    <div
-                        class="bg-gray-50 py-2 text-center text-xs font-medium text-gray-700"
-                    >
-                        Tue
-                    </div>
-                    <div
-                        class="bg-gray-50 py-2 text-center text-xs font-medium text-gray-700"
-                    >
-                        Wed
-                    </div>
-                    <div
-                        class="bg-gray-50 py-2 text-center text-xs font-medium text-gray-700"
-                    >
-                        Thu
-                    </div>
-                    <div
-                        class="bg-gray-50 py-2 text-center text-xs font-medium text-gray-700"
-                    >
-                        Fri
-                    </div>
-                    <div
-                        class="bg-gray-50 py-2 text-center text-xs font-medium text-gray-700"
-                    >
-                        Sat
-                    </div>
-                </div>
-
-                <!-- Calendar Days -->
-                <div
-                    class="grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden"
-                >
-                    {% for week in calendar_data %} {% for day in week %}
-                    <div
-                        class="bg-white min-h-24 p-2 {% if day.is_today %}bg-sky-50{% elif day.is_weekend %}bg-gray-50{% endif %}"
-                    >
-                        <div class="flex items-center justify-between mb-1">
-                            <span
-                                class="text-sm {% if day.is_current_month %}text-gray-900{% else %}text-gray-400{% endif %} {% if day.is_today %}font-bold text-sky-700{% endif %}"
-                            >
-                                {{ day.day }}
+                        
+                        <div class="flex items-center space-x-2">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                {{ shift_data.shift.work_days }}
                             </span>
-                            {% if day.is_holiday %}
-                            <i
-                                class="ri-calendar-event-line text-rose-500 text-xs"
-                            ></i>
-                            {% endif %}
+                            <a href="{% url 'shift:shift_detail' shift_data.shift.pk %}" 
+                               class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                                View Details →
+                            </a>
                         </div>
-
-                        <!-- Day Events -->
-                        <div class="space-y-1">
-                            {% for assignment in day.assignments %}
-                            <div
-                                class="px-2 py-1 rounded text-xs font-medium truncate {% if assignment.has_conflict %} bg-amber-100 text-amber-800 border border-amber-200 {% else %} bg-sky-100 text-sky-800 border border-sky-200 {% endif %}"
-                                title="{{ assignment.user.get_full_name|default:assignment.user.username }} - {{ assignment.shift.name }}"
-                            >
-                                {{
-                                assignment.user.get_full_name|default:assignment.user.username|truncatechars:10
-                                }}
-                            </div>
-                            {% endfor %} {% if day.holiday %}
-                            <div
-                                class="px-2 py-1 rounded text-xs font-medium bg-rose-100 text-rose-800 border border-rose-200 truncate"
-                                title="{{ day.holiday.name }}"
-                            >
-                                {{ day.holiday.name|truncatechars:12 }}
-                            </div>
-                            {% endif %}
-                        </div>
-
-                        <!-- Add assignment button for managers -->
-                        {% if can_manage and day.is_current_month %}
-                        <div class="mt-2">
-                            <button
-                                onclick="quickAssign('{{ day.date|date:'Y-m-d' }}')"
-                                class="w-full text-xs text-gray-500 hover:text-sky-600 hover:bg-sky-50 rounded py-1"
-                            >
-                                <i class="ri-add-line"></i>
-                            </button>
-                        </div>
-                        {% endif %}
                     </div>
-                    {% endfor %} {% endfor %}
+                </div>
+                
+                <!-- Employee Assignments -->
+                <div class="px-6 py-4">
+                    {% if shift_data.assignments %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {% for assignment in shift_data.assignments %}
+                        <div class="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors duration-150">
+                            <div class="flex items-center space-x-3">
+                                <div class="flex-shrink-0">
+                                    <div class="h-10 w-10 rounded-lg bg-gradient-to-r from-gray-200 to-gray-300 flex items-center justify-center">
+                                        <span class="text-sm font-semibold text-gray-700">
+                                            {{ assignment.user.first_name.0|default:assignment.user.username.0 }}{{ assignment.user.last_name.0 }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-sm font-semibold text-gray-900 truncate">
+                                        {{ assignment.user.get_full_name|default:assignment.user.username }}
+                                    </p>
+                                    <div class="flex items-center space-x-2">
+                                        {% if assignment.status == 'ACTIVE' %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                            Active
+                                        </span>
+                                        {% elif assignment.status == 'APPROVED' %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            Approved
+                                        </span>
+                                        {% endif %}
+                                        
+                                        <a href="{% url 'shift:assignment_detail' assignment.pk %}" 
+                                           class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                                            View
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-8">
+                        <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900">No assignments</h3>
+                        <p class="mt-1 text-sm text-gray-500">No employees are assigned to this shift today.</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
-        </div>
-
-        <!-- Assignment Details Panel -->
-        <div class="mt-8 bg-white shadow rounded-lg">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">
-                    Assignment Details
-                </h3>
-                <p class="mt-1 text-sm text-gray-500">
-                    Click on any calendar entry to view details
+            {% empty %}
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-12 text-center">
+                <div class="w-20 h-20 mx-auto bg-gradient-to-r from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mb-6">
+                    <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">No shifts scheduled</h3>
+                <p class="text-gray-500 mb-8 max-w-md mx-auto">
+                    No shift assignments are scheduled for {{ target_date|date:"F d, Y" }}.
                 </p>
-            </div>
-            <div class="p-6">
-                <div id="assignmentDetails" class="text-center text-gray-500">
-                    <i class="ri-information-line text-4xl mb-2"></i>
-                    <p>
-                        Select an assignment from the calendar to view details
-                    </p>
+                
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="{% url 'shift:assignment_create' %}" 
+                       class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Create Assignment
+                    </a>
+                    
+                    <a href="{% url 'shift:shift_list' %}" 
+                       class="inline-flex items-center px-6 py-3 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-xl shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200">
+                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        View All Shifts
+                    </a>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- Quick Assignment Modal -->
-<div
-    id="quickAssignModal"
-    class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
->
-    <div
-        class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"
-    >
-        <div class="mt-3">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-medium text-gray-900">
-                    Quick Assignment
-                </h3>
-                <button
-                    onclick="closeQuickAssign()"
-                    class="text-gray-400 hover:text-gray-600"
-                >
-                    <i class="ri-close-line text-xl"></i>
-                </button>
-            </div>
-            <form id="quickAssignForm">
-                {% csrf_token %}
-                <input type="hidden" id="assignDate" name="date" />
-
-                <div class="mb-4">
-                    <label
-                        for="quickUser"
-                        class="block text-sm font-medium text-gray-700 mb-2"
-                        >User</label
-                    >
-                    <select
-                        id="quickUser"
-                        name="user"
-                        required
-                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
-                    >
-                        <option value="">Select user...</option>
-                        {% for user in users %}
-                        <option value="{{ user.id }}">
-                            {{ user.get_full_name|default:user.username }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="mb-4">
-                    <label
-                        for="quickShift"
-                        class="block text-sm font-medium text-gray-700 mb-2"
-                        >Shift</label
-                    >
-                    <select
-                        id="quickShift"
-                        name="shift"
-                        required
-                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
-                    >
-                        <option value="">Select shift...</option>
-                        {% for shift in shifts %}
-                        <option value="{{ shift.id }}">
-                            {{ shift.name }} ({{ shift.start_time }} - {{
-                            shift.end_time }})
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="flex justify-end space-x-3">
-                    <button
-                        type="button"
-                        onclick="closeQuickAssign()"
-                        class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        class="px-4 py-2 bg-sky-600 text-white text-sm font-medium rounded-md hover:bg-sky-700"
-                    >
-                        Assign
-                    </button>
-                </div>
-            </form>
+            {% endfor %}
         </div>
     </div>
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        let currentDate = new Date('{{ current_month|date:"Y-m-d" }}');
-
-        // Navigation functions
-        document
-            .getElementById("prevMonth")
-            .addEventListener("click", function () {
-                currentDate.setMonth(currentDate.getMonth() - 1);
-                updateCalendar();
-            });
-
-        document
-            .getElementById("nextMonth")
-            .addEventListener("click", function () {
-                currentDate.setMonth(currentDate.getMonth() + 1);
-                updateCalendar();
-            });
-
-        document
-            .getElementById("todayBtn")
-            .addEventListener("click", function () {
-                currentDate = new Date();
-                updateCalendar();
-            });
-
-        // Filter functions
-        document
-            .getElementById("userFilter")
-            .addEventListener("change", function () {
-                const userId = this.value;
-                if (userId) {
-                    window.location.href =
-                        `{% url 'shift:user_calendar' user_id=0 %}`.replace(
-                            "0",
-                            userId,
-                        );
-                } else {
-                    window.location.href = '{% url "shift:calendar" %}';
-                }
-            });
-
-        document
-            .getElementById("shiftFilter")
-            .addEventListener("change", function () {
-                updateCalendar();
-            });
-
-        document
-            .getElementById("showHolidays")
-            .addEventListener("change", function () {
-                updateCalendar();
-            });
-
-        document
-            .getElementById("showWeekends")
-            .addEventListener("change", function () {
-                updateCalendar();
-            });
-
-        function updateCalendar() {
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth() + 1;
-            const userId = document.getElementById("userFilter").value;
-            const shiftId = document.getElementById("shiftFilter").value;
-            const showHolidays =
-                document.getElementById("showHolidays").checked;
-            const showWeekends =
-                document.getElementById("showWeekends").checked;
-
-            const params = new URLSearchParams({
-                year: year,
-                month: month,
-            });
-
-            if (userId) params.append("user_id", userId);
-            if (shiftId) params.append("shift_id", shiftId);
-            if (!showHolidays) params.append("hide_holidays", "true");
-            if (!showWeekends) params.append("hide_weekends", "true");
-
-            const url = userId
-                ? `{% url 'shift:user_calendar' user_id=0 %}`.replace(
-                      "0",
-                      userId,
-                  ) +
-                  "?" +
-                  params.toString()
-                : '{% url "shift:calendar" %}?' + params.toString();
-
-            window.location.href = url;
-        }
-    });
-
-    // Quick assignment functions
-    function quickAssign(date) {
-        document.getElementById("assignDate").value = date;
-        document.getElementById("quickAssignModal").classList.remove("hidden");
-    }
-
-    function closeQuickAssign() {
-        document.getElementById("quickAssignModal").classList.add("hidden");
-        document.getElementById("quickAssignForm").reset();
-    }
-
-    // Handle quick assignment form submission
-    document
-        .getElementById("quickAssignForm")
-        .addEventListener("submit", function (e) {
-            e.preventDefault();
-
-            const formData = new FormData(this);
-            const date = formData.get("date");
-            const userId = formData.get("user");
-            const shiftId = formData.get("shift");
-
-            fetch('{% url "shift:quick_assign" %}', {
-                method: "POST",
-                headers: {
-                    "X-CSRFToken": document.querySelector(
-                        "[name=csrfmiddlewaretoken]",
-                    ).value,
-                },
-                body: formData,
-            })
-                .then((response) => response.json())
-                .then((data) => {
-                    if (data.success) {
-                        showNotification(
-                            "Assignment created successfully!",
-                            "success",
-                        );
-                        closeQuickAssign();
-                        // Refresh calendar
-                        setTimeout(() => window.location.reload(), 1000);
-                    } else {
-                        showNotification(
-                            data.error || "Error creating assignment",
-                            "error",
-                        );
-                    }
-                })
-                .catch((error) => {
-                    console.error("Error:", error);
-                    showNotification("Error creating assignment", "error");
-                });
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit date form on change
+    const dateInput = document.querySelector('input[name="date"]');
+    if (dateInput) {
+        dateInput.addEventListener('change', function() {
+            this.form.submit();
         });
-
-    // Show assignment details
-    function showAssignmentDetails(assignmentId) {
-        fetch(`/shift/api/assignments/${assignmentId}/`)
-            .then((response) => response.json())
-            .then((data) => {
-                const detailsDiv = document.getElementById("assignmentDetails");
-                detailsDiv.innerHTML = `
-            <div class="text-left">
-                <div class="flex items-center justify-between mb-4">
-                    <h4 class="text-lg font-medium text-gray-900">Assignment Details</h4>
-                    <span class="px-2 py-1 text-xs font-medium rounded-full ${data.is_current ? "bg-emerald-100 text-emerald-800" : "bg-gray-100 text-gray-800"}">
-                        ${data.is_current ? "Active" : "Inactive"}
-                    </span>
-                </div>
-                <dl class="space-y-3">
-                    <div class="flex justify-between">
-                        <dt class="text-sm text-gray-600">User:</dt>
-                        <dd class="text-sm font-medium text-gray-900">${data.user_name}</dd>
-                    </div>
-                    <div class="flex justify-between">
-                        <dt class="text-sm text-gray-600">Shift:</dt>
-                        <dd class="text-sm font-medium text-gray-900">${data.shift_name}</dd>
-                    </div>
-                    <div class="flex justify-between">
-                        <dt class="text-sm text-gray-600">Time:</dt>
-                        <dd class="text-sm font-medium text-gray-900">${data.shift_time}</dd>
-                    </div>
-                    <div class="flex justify-between">
-                        <dt class="text-sm text-gray-600">Effective From:</dt>
-                        <dd class="text-sm font-medium text-gray-900">${data.effective_from}</dd>
-                    </div>
-                    <div class="flex justify-between">
-                        <dt class="text-sm text-gray-600">Effective To:</dt>
-                        <dd class="text-sm font-medium text-gray-900">${data.effective_to || "Ongoing"}</dd>
-                    </div>
-                </dl>
-
-                {% if can_manage %}
-                <div class="mt-4 pt-4 border-t border-gray-200 flex space-x-3">
-                    <button onclick="editAssignment(${data.id})" class="inline-flex items-center px-3 py-1 border border-sky-300 rounded text-xs font-medium text-sky-700 bg-sky-50 hover:bg-sky-100">
-                        <i class="ri-edit-line mr-1"></i>
-                        Edit
-                    </button>
-                    <button onclick="endAssignment(${data.id})" class="inline-flex items-center px-3 py-1 border border-rose-300 rounded text-xs font-medium text-rose-700 bg-rose-50 hover:bg-rose-100">
-                        <i class="ri-stop-line mr-1"></i>
-                        End
-                    </button>
-                </div>
-                {% endif %}
-            </div>
-        `;
-            })
-            .catch((error) => {
-                console.error("Error loading assignment details:", error);
-                document.getElementById("assignmentDetails").innerHTML = `
-            <div class="text-center text-red-500">
-                <i class="ri-error-warning-line text-2xl mb-2"></i>
-                <p>Error loading assignment details</p>
-            </div>
-        `;
-            });
     }
-
-    // Utility functions
-    function showNotification(message, type = "info") {
-        const notification = document.createElement("div");
-        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg border max-w-sm transform transition-transform duration-300`;
-
-        const colors = {
-            success: "bg-emerald-50 border-emerald-200 text-emerald-800",
-            error: "bg-rose-50 border-rose-200 text-rose-800",
-            warning: "bg-amber-50 border-amber-200 text-amber-800",
-            info: "bg-sky-50 border-sky-200 text-sky-800",
-        };
-
-        notification.className += ` ${colors[type] || colors.info}`;
-        notification.innerHTML = `
-        <div class="flex items-center justify-between">
-            <p class="text-sm font-medium">${message}</p>
-            <button onclick="this.parentElement.parentElement.remove()" class="ml-3 text-gray-400 hover:text-gray-600">
-                <i class="ri-close-line"></i>
-            </button>
-        </div>
-    `;
-
-        document.body.appendChild(notification);
-
-        setTimeout(() => {
-            notification.style.transform = "translateX(0)";
-        }, 100);
-
-        setTimeout(() => {
-            notification.style.transform = "translateX(100%)";
-            setTimeout(() => notification.remove(), 300);
-        }, 5000);
-    }
-
-    function editAssignment(assignmentId) {
-        window.location.href = `{% url 'shift:assignments' %}?edit=${assignmentId}`;
-    }
-
-    function endAssignment(assignmentId) {
-        if (confirm("Are you sure you want to end this assignment?")) {
-            fetch(
-                `{% url 'shift:end_assignment' assignment_id=0 %}`.replace(
-                    "0",
-                    assignmentId,
-                ),
-                {
-                    method: "POST",
-                    headers: {
-                        "X-CSRFToken": document.querySelector(
-                            "[name=csrfmiddlewaretoken]",
-                        ).value,
-                    },
-                },
-            )
-                .then((response) => response.json())
-                .then((data) => {
-                    if (data.success) {
-                        showNotification(
-                            "Assignment ended successfully!",
-                            "success",
-                        );
-                        setTimeout(() => window.location.reload(), 1000);
-                    } else {
-                        showNotification(
-                            data.error || "Error ending assignment",
-                            "error",
-                        );
-                    }
-                })
-                .catch((error) => {
-                    console.error("Error:", error);
-                    showNotification("Error ending assignment", "error");
-                });
-        }
-    }
+});
 </script>
 {% endblock %}

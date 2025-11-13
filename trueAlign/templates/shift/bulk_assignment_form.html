@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block page_title %}Bulk Assignment{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white shadow rounded-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Create Bulk Shift Assignments</h3>
+            <p class="mt-1 text-sm text-gray-500">Assign a shift to multiple employees at once.</p>
+        </div>
+        
+        <form method="post" class="px-6 py-4 space-y-6">
+            {% csrf_token %}
+            
+            <div>
+                <label for="shift" class="block text-sm font-medium text-gray-700">Select Shift</label>
+                <select name="shift" id="shift" required 
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                    <option value="">Choose a shift</option>
+                    {% for shift in shifts %}
+                    <option value="{{ shift.id }}" data-requires-approval="{{ shift.requires_approval|yesno:'true,false' }}">
+                        {{ shift.name }} ({{ shift.start_time|time:"H:i" }} - {{ shift.end_time|time:"H:i" }})
+                    </option>
+                    {% endfor %}
+                </select>
+                <div id="approval-notice" class="mt-2 hidden">
+                    <div class="rounded-md bg-yellow-50 p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-yellow-800">Approval Required</h3>
+                                <div class="mt-2 text-sm text-yellow-700">
+                                    <p>This shift requires approval before assignments become active.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-3">Select Employees</label>
+                <div class="border border-gray-300 rounded-md p-4 max-h-64 overflow-y-auto">
+                    <div class="mb-3">
+                        <button type="button" onclick="selectAll()" 
+                                class="text-sm text-blue-600 hover:text-blue-500 mr-4">Select All</button>
+                        <button type="button" onclick="selectNone()" 
+                                class="text-sm text-blue-600 hover:text-blue-500">Select None</button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {% for user in users %}
+                        <label class="flex items-center">
+                            <input type="checkbox" name="users" value="{{ user.id }}" 
+                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <span class="ml-2 text-sm text-gray-900">
+                                {{ user.get_full_name|default:user.username }}
+                                <span class="text-gray-500">({{ user.username }})</span>
+                            </span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <p class="mt-1 text-sm text-gray-500">
+                    <span id="selected-count">0</span> employees selected
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="effective_from" class="block text-sm font-medium text-gray-700">Start Date</label>
+                    <input type="date" name="effective_from" id="effective_from" required 
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                </div>
+                
+                <div>
+                    <label for="effective_to" class="block text-sm font-medium text-gray-700">End Date (Optional)</label>
+                    <input type="date" name="effective_to" id="effective_to" 
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                    <p class="mt-1 text-sm text-gray-500">Leave empty for ongoing assignments</p>
+                </div>
+            </div>
+            
+            <div>
+                <label for="notes" class="block text-sm font-medium text-gray-700">Notes (Optional)</label>
+                <textarea name="notes" id="notes" rows="3" 
+                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                          placeholder="Any additional notes for these assignments..."></textarea>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-md">
+                <h4 class="text-sm font-medium text-gray-900 mb-2">Assignment Summary</h4>
+                <div class="text-sm text-gray-600">
+                    <p>Shift: <span id="summary-shift">Not selected</span></p>
+                    <p>Employees: <span id="summary-employees">0 selected</span></p>
+                    <p>Period: <span id="summary-period">Not set</span></p>
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <a href="{% url 'shift:assignment_list' %}" 
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Cancel
+                </a>
+                <button type="submit" id="submit-btn" disabled
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    Create Assignments
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const shiftSelect = document.getElementById('shift');
+    const approvalNotice = document.getElementById('approval-notice');
+    const userCheckboxes = document.querySelectorAll('input[name="users"]');
+    const selectedCount = document.getElementById('selected-count');
+    const submitBtn = document.getElementById('submit-btn');
+    const effectiveFrom = document.getElementById('effective_from');
+    const effectiveTo = document.getElementById('effective_to');
+    
+    // Summary elements
+    const summaryShift = document.getElementById('summary-shift');
+    const summaryEmployees = document.getElementById('summary-employees');
+    const summaryPeriod = document.getElementById('summary-period');
+    
+    // Set minimum date to today
+    const today = new Date().toISOString().split('T')[0];
+    effectiveFrom.min = today;
+    effectiveTo.min = today;
+    
+    // Handle shift selection
+    shiftSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const requiresApproval = selectedOption.getAttribute('data-requires-approval') === 'true';
+        
+        if (requiresApproval && this.value) {
+            approvalNotice.classList.remove('hidden');
+        } else {
+            approvalNotice.classList.add('hidden');
+        }
+        
+        updateSummary();
+        validateForm();
+    });
+    
+    // Handle user selection
+    userCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateSelectedCount();
+            updateSummary();
+            validateForm();
+        });
+    });
+    
+    // Handle date changes
+    effectiveFrom.addEventListener('change', function() {
+        effectiveTo.min = this.value;
+        updateSummary();
+        validateForm();
+    });
+    
+    effectiveTo.addEventListener('change', function() {
+        updateSummary();
+    });
+    
+    function updateSelectedCount() {
+        const count = document.querySelectorAll('input[name="users"]:checked').length;
+        selectedCount.textContent = count;
+    }
+    
+    function updateSummary() {
+        // Update shift summary
+        const shiftOption = shiftSelect.options[shiftSelect.selectedIndex];
+        summaryShift.textContent = shiftOption.text || 'Not selected';
+        
+        // Update employees summary
+        const count = document.querySelectorAll('input[name="users"]:checked').length;
+        summaryEmployees.textContent = `${count} selected`;
+        
+        // Update period summary
+        const startDate = effectiveFrom.value;
+        const endDate = effectiveTo.value;
+        if (startDate) {
+            summaryPeriod.textContent = endDate ? 
+                `${startDate} to ${endDate}` : 
+                `${startDate} (ongoing)`;
+        } else {
+            summaryPeriod.textContent = 'Not set';
+        }
+    }
+    
+    function validateForm() {
+        const hasShift = shiftSelect.value !== '';
+        const hasUsers = document.querySelectorAll('input[name="users"]:checked').length > 0;
+        const hasStartDate = effectiveFrom.value !== '';
+        
+        submitBtn.disabled = !(hasShift && hasUsers && hasStartDate);
+    }
+    
+    // Initialize
+    updateSelectedCount();
+    updateSummary();
+    validateForm();
+});
+
+function selectAll() {
+    const checkboxes = document.querySelectorAll('input[name="users"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    document.getElementById('selected-count').textContent = checkboxes.length;
+    document.getElementById('summary-employees').textContent = `${checkboxes.length} selected`;
+    document.getElementById('submit-btn').disabled = false;
+}
+
+function selectNone() {
+    const checkboxes = document.querySelectorAll('input[name="users"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    document.getElementById('selected-count').textContent = '0';
+    document.getElementById('summary-employees').textContent = '0 selected';
+    document.getElementById('submit-btn').disabled = true;
+}
+</script>
+{% endblock %}

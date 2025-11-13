@@ -1,868 +1,476 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends "base.html" %}
 
-{% block title %}Assignment Management - TrueAlign{% endblock %}
+{% block page_title %}Shift Assignments{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-emerald-50">
     <!-- Header Section -->
     <div class="bg-white shadow-sm border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Assignment Management</h1>
-                    <p class="text-gray-600 mt-1">Manage user shift assignments and schedules</p>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between py-6">
+                <div class="flex items-center space-x-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
+                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">Shift Assignments</h1>
+                        <p class="text-gray-600">Manage employee shift assignments</p>
+                    </div>
                 </div>
-                <div class="flex space-x-3">
-                    {% if user.role == 'Manager' or user.role == 'HR' %}
-                    <a href="{% url 'shift:assign' %}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
-                        <i class="ri-user-add-line mr-2"></i>
+                
+                <!-- Action Buttons -->
+                <div class="flex items-center space-x-3">
+                    {% if can_create %}
+                    <a href="{% url 'shift:assignment_create' %}" 
+                       class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
                         New Assignment
                     </a>
-                    <a href="{% url 'shift:bulk_assign' %}" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
-                        <i class="ri-group-line mr-2"></i>
+                    
+                    <a href="{% url 'shift:bulk_assignment_create' %}" 
+                       class="inline-flex items-center px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 515.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
                         Bulk Assign
                     </a>
-                    <a href="{% url 'shift:csv_upload' %}" class="bg-lime-600 hover:bg-lime-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
-                        <i class="ri-file-upload-line mr-2"></i>
-                        Import CSV
-                    </a>
+                    
+                    <button id="bulk-end-btn" 
+                            class="inline-flex items-center px-4 py-3 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/>
+                        </svg>
+                        Bulk End
+                    </button>
                     {% endif %}
-                    <a href="{% url 'shift:csv_export' %}" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
-                        <i class="ri-download-line mr-2"></i>
-                        Export
+                    
+                    <a href="{% url 'shift:dashboard' %}" 
+                       class="inline-flex items-center px-4 py-3 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-xl shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200">
+                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+                        </svg>
+                        Dashboard
                     </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <!-- Quick Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-emerald-100">
-                        <i class="ri-user-follow-line text-emerald-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Active Assignments</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ active_assignments_count|default:0 }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-sky-100">
-                        <i class="ri-calendar-event-line text-sky-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Scheduled</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ scheduled_assignments_count|default:0 }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-amber-100">
-                        <i class="ri-alert-line text-amber-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Conflicts</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ conflicts_count|default:0 }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-lime-100">
-                        <i class="ri-team-line text-lime-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Total Users</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ total_assigned_users|default:0 }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Search and Filters -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
             <form method="get" class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                    <!-- Search -->
-                    <div>
-                        <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                        <div class="relative">
-                            <input type="text"
-                                   id="search"
-                                   name="search"
-                                   value="{{ request.GET.search }}"
-                                   placeholder="Search by user, shift..."
-                                   class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i class="ri-search-line text-gray-400"></i>
-                            </div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <!-- Employee Filter -->
+                    <div class="relative">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Employee</label>
+                        <select name="user_id" class="block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm transition-all duration-200 appearance-none bg-white">
+                            <option value="">👤 All Employees</option>
+                            {% for user in users %}
+                            <option value="{{ user.id }}" {% if user_id == user.id|stringformat:"s" %}selected{% endif %}>
+                                {{ user.get_full_name|default:user.username }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none mt-7">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                            </svg>
                         </div>
                     </div>
-
+                    
                     <!-- Shift Filter -->
-                    <div>
-                        <label for="shift" class="block text-sm font-medium text-gray-700 mb-1">Shift</label>
-                        <select id="shift" name="shift" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
-                            <option value="">All Shifts</option>
-                            {% for shift in available_shifts %}
-                            <option value="{{ shift.id }}" {% if request.GET.shift == shift.id|stringformat:"s" %}selected{% endif %}>
+                    <div class="relative">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Shift</label>
+                        <select name="shift_id" class="block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm transition-all duration-200 appearance-none bg-white">
+                            <option value="">🕐 All Shifts</option>
+                            {% for shift in shifts %}
+                            <option value="{{ shift.id }}" {% if shift_id == shift.id|stringformat:"s" %}selected{% endif %}>
                                 {{ shift.name }}
                             </option>
                             {% endfor %}
                         </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none mt-7">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
                     </div>
-
+                    
                     <!-- Status Filter -->
-                    <div>
-                        <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                        <select id="status" name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
-                            <option value="">All Status</option>
-                            <option value="current" {% if request.GET.status == 'current' %}selected{% endif %}>Current</option>
-                            <option value="scheduled" {% if request.GET.status == 'scheduled' %}selected{% endif %}>Scheduled</option>
-                            <option value="ended" {% if request.GET.status == 'ended' %}selected{% endif %}>Ended</option>
+                    <div class="relative">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                        <select name="status" class="block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm transition-all duration-200 appearance-none bg-white">
+                            <option value="">📊 All Status</option>
+                            {% for status_choice in assignment_status_choices %}
+                            <option value="{{ status_choice.0 }}" {% if status == status_choice.0 %}selected{% endif %}>
+                                {% if status_choice.0 == 'ACTIVE' %}✅ {{ status_choice.1 }}
+                                {% elif status_choice.0 == 'PENDING' %}⏳ {{ status_choice.1 }}
+                                {% elif status_choice.0 == 'APPROVED' %}👍 {{ status_choice.1 }}
+                                {% elif status_choice.0 == 'REJECTED' %}❌ {{ status_choice.1 }}
+                                {% else %}{{ status_choice.1 }}{% endif %}
+                            </option>
+                            {% endfor %}
                         </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none mt-7">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
                     </div>
-
-                    <!-- Date Range -->
-                    <div>
-                        <label for="date_from" class="block text-sm font-medium text-gray-700 mb-1">From Date</label>
-                        <input type="date"
-                               id="date_from"
-                               name="date_from"
-                               value="{{ request.GET.date_from }}"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
-                    </div>
-
-                    <div>
-                        <label for="date_to" class="block text-sm font-medium text-gray-700 mb-1">To Date</label>
-                        <input type="date"
-                               id="date_to"
-                               name="date_to"
-                               value="{{ request.GET.date_to }}"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                    
+                    <!-- Filter Button -->
+                    <div class="flex items-end">
+                        <button type="submit" 
+                                class="w-full inline-flex justify-center items-center px-4 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+                            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                            </svg>
+                            Filter
+                        </button>
                     </div>
                 </div>
-
-                <div class="flex justify-between items-center">
-                    <div class="flex space-x-2">
-                        <button type="submit" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
-                            <i class="ri-search-line mr-2"></i>
-                            Search
-                        </button>
-                        <a href="{% url 'shift:assignments' %}" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
-                            <i class="ri-refresh-line mr-2"></i>
-                            Clear
-                        </a>
-                        {% if user.role == 'Manager' or user.role == 'HR' %}
-                        <button type="button" onclick="openBatchModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
-                            <i class="ri-check-double-line mr-2"></i>
-                            Batch Actions
-                        </button>
-                        {% endif %}
-                    </div>
-                    <div class="text-sm text-gray-600">
-                        Showing {{ assignments.start_index }}-{{ assignments.end_index }} of {{ assignments.paginator.count }} assignments
-                    </div>
+                
+                <!-- Clear Filters -->
+                {% if user_id or shift_id or status %}
+                <div class="flex justify-center">
+                    <a href="{% url 'shift:assignment_list' %}" 
+                       class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors duration-200">
+                        <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Clear Filters
+                    </a>
                 </div>
+                {% endif %}
             </form>
         </div>
 
-        <!-- Assignments Table -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            {% if assignments %}
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            {% if user.role == 'Manager' or user.role == 'HR' %}
-                            <th class="px-6 py-3 text-left">
-                                <input type="checkbox" id="selectAll" onchange="toggleSelectAll()" class="rounded border-gray-300 text-sky-600 focus:ring-sky-500">
-                            </th>
+        <!-- Assignments Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {% for assignment in page_obj %}
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
+                <!-- Header -->
+                <div class="px-6 py-4 bg-gradient-to-r from-emerald-50 to-green-50 border-b border-emerald-100">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            {% if assignment.status in 'ACTIVE,APPROVED' and not assignment.effective_to %}
+                            <input type="checkbox" class="assignment-checkbox h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded" 
+                                   value="{{ assignment.pk }}" data-assignment-id="{{ assignment.pk }}">
                             {% endif %}
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                User
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Shift
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Start Date
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                End Date
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Duration
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Status
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Actions
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        {% for assignment in assignments %}
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            {% if user.role == 'Manager' or user.role == 'HR' %}
-                            <td class="px-6 py-4">
-                                <input type="checkbox" name="selected_assignments" value="{{ assignment.id }}" class="assignment-checkbox rounded border-gray-300 text-sky-600 focus:ring-sky-500">
-                            </td>
-                            {% endif %}
-                            <td class="px-6 py-4">
-                                <div class="flex items-center">
-                                    <div class="flex-shrink-0">
-                                        <div class="w-10 h-10 bg-sky-100 rounded-full flex items-center justify-center">
-                                            <span class="text-sm font-medium text-sky-600">
-                                                {{ assignment.user.first_name|first|upper }}{{ assignment.user.last_name|first|upper }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900">
-                                            {{ assignment.user.get_full_name|default:assignment.user.username }}
-                                        </div>
-                                        <div class="text-sm text-gray-500">{{ assignment.user.email }}</div>
-                                        {% if assignment.user.employee_id %}
-                                        <div class="text-xs text-gray-400">ID: {{ assignment.user.employee_id }}</div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex items-center">
-                                    <div class="flex-shrink-0">
-                                        <div class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
-                                            <i class="ri-time-line text-emerald-600"></i>
-                                        </div>
-                                    </div>
-                                    <div class="ml-3">
-                                        <div class="text-sm font-medium text-gray-900">
-                                            <a href="{% url 'shift:detail' assignment.shift.id %}" class="hover:text-sky-600">
-                                                {{ assignment.shift.name }}
-                                            </a>
-                                        </div>
-                                        <div class="text-sm text-gray-500">
-                                            {{ assignment.shift.start_time|time:"H:i" }} - {{ assignment.shift.end_time|time:"H:i" }}
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="text-sm text-gray-900">{{ assignment.effective_from|date:"M d, Y" }}</div>
-                                <div class="text-sm text-gray-500">{{ assignment.effective_from|date:"l" }}</div>
-                            </td>
-                            <td class="px-6 py-4">
-                                {% if assignment.effective_to %}
-                                    <div class="text-sm text-gray-900">{{ assignment.effective_to|date:"M d, Y" }}</div>
-                                    <div class="text-sm text-gray-500">{{ assignment.effective_to|date:"l" }}</div>
-                                {% else %}
-                                    <div class="text-sm font-medium text-emerald-600">Ongoing</div>
-                                    <div class="text-sm text-gray-500">No end date</div>
-                                {% endif %}
-                            </td>
-                            <td class="px-6 py-4">
-                                {% if assignment.effective_to %}
-                                    <div class="text-sm text-gray-900">{{ assignment.duration_days }} days</div>
-                                {% else %}
-                                    <div class="text-sm text-gray-900">{{ assignment.days_active }} days</div>
-                                    <div class="text-sm text-gray-500">so far</div>
-                                {% endif %}
-                            </td>
-                            <td class="px-6 py-4">
-                                {% if assignment.is_current %}
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                                        <i class="ri-play-circle-line mr-1"></i>
-                                        Current
-                                    </span>
-                                {% elif assignment.effective_from > today %}
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                                        <i class="ri-time-line mr-1"></i>
-                                        Scheduled
-                                    </span>
-                                {% else %}
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                        <i class="ri-stop-circle-line mr-1"></i>
-                                        Ended
-                                    </span>
-                                {% endif %}
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex items-center space-x-2">
-                                    <button onclick="viewAssignment({{ assignment.id|default:'null' }})" class="text-sky-600 hover:text-sky-700 p-1" title="View Details">
-                                        <i class="ri-eye-line"></i>
-                                    </button>
-                                    {% if user.role == 'Manager' or user.role == 'HR' %}
-                                        {% if assignment.is_current %}
-                                        <button onclick="confirmEndAssignment({{ assignment.id|default:'null' }}, '{{ assignment.user.get_full_name|default:assignment.user.username|escapejs }}', '{{ assignment.shift.name|escapejs }}')"
-                                                class="text-rose-600 hover:text-rose-700 p-1" title="End Assignment">
-                                            <i class="ri-stop-line"></i>
-                                        </button>
-                                        {% endif %}
-                                        <button onclick="extendAssignment({{ assignment.id|default:'null' }})" class="text-lime-600 hover:text-lime-700 p-1" title="Extend Assignment">
-                                            <i class="ri-time-add-line"></i>
-                                        </button>
-                                        <div class="relative" onclick="toggleDropdown({{ assignment.id|default:'null' }})">
-                                            <button class="text-gray-600 hover:text-gray-700 p-1" title="More Actions">
-                                                <i class="ri-more-line"></i>
-                                            </button>
-                                            <div id="dropdown-{{ assignment.id }}" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
-                                                <div class="py-1">
-                                                    <button onclick="duplicateAssignment({{ assignment.id|default:'null' }})" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                                        <i class="ri-file-copy-line mr-2"></i>
-                                                        Duplicate
-                                                    </button>
-                                                    <button onclick="editAssignment({{ assignment.id|default:'null' }})" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                                        <i class="ri-edit-line mr-2"></i>
-                                                        Edit Notes
-                                                    </button>
-                                                    <hr class="my-1">
-                                                    <button onclick="deleteAssignment({{ assignment.id|default:'null' }})" class="block w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50">
-                                                        <i class="ri-delete-bin-line mr-2"></i>
-                                                        Delete
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            {% if assignments.has_other_pages %}
-            <div class="bg-white px-6 py-3 border-t border-gray-200 flex items-center justify-between">
-                <div class="flex-1 flex justify-between sm:hidden">
-                    {% if assignments.has_previous %}
-                        <a href="?page={{ assignments.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                            Previous
-                        </a>
-                    {% endif %}
-                    {% if assignments.has_next %}
-                        <a href="?page={{ assignments.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-                           class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                            Next
-                        </a>
-                    {% endif %}
-                </div>
-                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                    <div>
-                        <p class="text-sm text-gray-700">
-                            Page {{ assignments.number }} of {{ assignments.paginator.num_pages }}
-                        </p>
+                            <div class="h-10 w-10 rounded-xl bg-gradient-to-r from-gray-100 to-gray-200 flex items-center justify-center border-2 border-white shadow-sm">
+                                <span class="text-sm font-semibold text-gray-700">
+                                    {{ assignment.user.first_name.0|default:assignment.user.username.0 }}{{ assignment.user.last_name.0 }}
+                                </span>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-900">{{ assignment.user.get_full_name|default:assignment.user.username }}</h3>
+                                <p class="text-xs text-gray-500">{{ assignment.user.email|default:"No email" }}</p>
+                            </div>
+                        </div>
+                        
+                        {% if assignment.status == 'ACTIVE' %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                            <div class="w-2 h-2 bg-emerald-400 rounded-full mr-1"></div>
+                            Active
+                        </span>
+                        {% elif assignment.status == 'PENDING' %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                            <div class="w-2 h-2 bg-amber-400 rounded-full mr-1"></div>
+                            Pending
+                        </span>
+                        {% elif assignment.status == 'APPROVED' %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <div class="w-2 h-2 bg-blue-400 rounded-full mr-1"></div>
+                            Approved
+                        </span>
+                        {% elif assignment.status == 'REJECTED' %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <div class="w-2 h-2 bg-red-400 rounded-full mr-1"></div>
+                            Rejected
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            {{ assignment.get_status_display }}
+                        </span>
+                        {% endif %}
                     </div>
-                    <div>
-                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                            {% if assignments.has_previous %}
-                                <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                    <i class="ri-skip-back-line"></i>
-                                </a>
-                                <a href="?page={{ assignments.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                    <i class="ri-arrow-left-s-line"></i>
-                                </a>
+                </div>
+                
+                <!-- Content -->
+                <div class="px-6 py-4 space-y-4">
+                    <!-- Shift Info -->
+                    <div class="flex items-center text-sm text-gray-600">
+                        <svg class="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="font-medium">{{ assignment.shift.name }}</span>
+                    </div>
+                    
+                    <!-- Timing -->
+                    <div class="flex items-center text-sm text-gray-600">
+                        <svg class="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        {{ assignment.shift.start_time|time:"H:i" }} - {{ assignment.shift.end_time|time:"H:i" }}
+                    </div>
+                    
+                    <!-- Duration -->
+                    <div class="flex items-center text-sm text-gray-600">
+                        <svg class="w-4 h-4 mr-2 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        {{ assignment.effective_from|date:"M d, Y" }}
+                        {% if assignment.effective_to %} - {{ assignment.effective_to|date:"M d, Y" }}{% else %} - Ongoing{% endif %}
+                    </div>
+                    
+                 
+                </div>
+                
+                <!-- Actions -->
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div class="text-xs text-gray-500">
+                            Created {{ assignment.created_at|date:"M d" }}
+                        </div>
+                        
+                        <div class="flex space-x-2">
+                            <a href="{% url 'shift:assignment_detail' assignment.pk %}" 
+                               class="text-emerald-600 hover:text-emerald-800 text-sm font-medium flex items-center group">
+                                View Details
+                                <svg class="ml-1 w-3 h-3 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </a>
+                            
+                            {% if can_approve and assignment.status == 'PENDING' %}
+                            <a href="{% url 'shift:assignment_approve' assignment.pk %}" 
+                               class="inline-flex items-center px-2 py-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white text-xs font-medium rounded-md shadow-sm hover:shadow-md transition-all duration-200">
+                                <svg class="-ml-0.5 mr-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                Approve
+                            </a>
                             {% endif %}
-
-                            {% for num in assignments.paginator.page_range %}
-                                {% if num == assignments.number %}
-                                    <span class="relative inline-flex items-center px-4 py-2 border border-sky-300 bg-sky-50 text-sm font-medium text-sky-600">{{ num }}</span>
-                                {% elif num > assignments.number|add:'-3' and num < assignments.number|add:'3' %}
-                                    <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">{{ num }}</a>
-                                {% endif %}
-                            {% endfor %}
-
-                            {% if assignments.has_next %}
-                                <a href="?page={{ assignments.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                    <i class="ri-arrow-right-s-line"></i>
-                                </a>
-                                <a href="?page={{ assignments.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                    <i class="ri-skip-forward-line"></i>
-                                </a>
-                            {% endif %}
-                        </nav>
+                        </div>
                     </div>
                 </div>
             </div>
-            {% endif %}
-            {% else %}
-            <!-- Empty State -->
-            <div class="text-center py-12">
-                <div class="w-24 h-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                    <i class="ri-user-follow-line text-gray-400 text-4xl"></i>
-                </div>
-                <h3 class="text-lg font-medium text-gray-900 mb-2">No assignments found</h3>
-                <p class="text-gray-500 mb-6">
-                    {% if request.GET.search or request.GET.shift or request.GET.status %}
+            {% empty %}
+            <div class="col-span-full">
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-12 text-center">
+                    <div class="w-20 h-20 mx-auto bg-gradient-to-r from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mb-6">
+                        <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">No assignments found</h3>
+                    <p class="text-gray-500 mb-8 max-w-md mx-auto">
+                        {% if user_id or shift_id or status %}
                         No assignments match your current filters. Try adjusting your search criteria.
-                    {% else %}
-                        Get started by assigning shifts to users.
-                    {% endif %}
-                </p>
-                {% if user.role == 'Manager' or user.role == 'HR' %}
-                <a href="{% url 'shift:assign' %}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg transition-colors inline-flex items-center">
-                    <i class="ri-user-add-line mr-2"></i>
-                    Create First Assignment
+                        {% else %}
+                        Get started by creating your first shift assignment for employees.
+                        {% endif %}
+                    </p>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        {% if user_id or shift_id or status %}
+                        <a href="{% url 'shift:assignment_list' %}" 
+                           class="inline-flex items-center px-6 py-3 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-xl shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200">
+                            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            Clear Filters
+                        </a>
+                        {% endif %}
+                        
+                        {% if can_create %}
+                        <a href="{% url 'shift:assignment_create' %}" 
+                           class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+                            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                            Create Your First Assignment
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="mt-8 flex justify-center">
+            <nav class="relative z-0 inline-flex rounded-xl shadow-lg border border-gray-200 bg-white" aria-label="Pagination">
+                {% if page_obj.has_previous %}
+                <a href="?{% if user_id %}user_id={{ user_id }}&{% endif %}{% if shift_id %}shift_id={{ shift_id }}&{% endif %}{% if status %}status={{ status }}&{% endif %}page={{ page_obj.previous_page_number }}" 
+                   class="relative inline-flex items-center px-4 py-3 rounded-l-xl border-r border-gray-200 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-colors duration-200">
+                    <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Previous
                 </a>
                 {% endif %}
-            </div>
-            {% endif %}
+                
+                <span class="relative inline-flex items-center px-6 py-3 border-r border-gray-200 bg-emerald-50 text-sm font-semibold text-emerald-700">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                <a href="?{% if user_id %}user_id={{ user_id }}&{% endif %}{% if shift_id %}shift_id={{ shift_id }}&{% endif %}{% if status %}status={{ status }}&{% endif %}page={{ page_obj.next_page_number }}" 
+                   class="relative inline-flex items-center px-4 py-3 rounded-r-xl bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-colors duration-200">
+                    Next
+                    <svg class="h-5 w-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </a>
+                {% endif %}
+            </nav>
         </div>
-    </div>
-</div>
-
-<!-- End Assignment Modal -->
-<div id="endAssignmentModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-lg bg-white">
-        <div class="mt-3">
-            <div class="flex items-center mb-4">
-                <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-rose-100">
-                    <i class="ri-stop-line text-rose-600 text-xl"></i>
-                </div>
-            </div>
-            <div class="text-center">
-                <h3 class="text-lg font-medium text-gray-900 mb-2">End Assignment</h3>
-                <p class="text-sm text-gray-500 mb-6">
-                    End assignment for <span id="userToEnd" class="font-medium"></span>
-                    from <span id="shiftToEnd" class="font-medium"></span>?
-                </p>
-                <div class="flex justify-center space-x-3">
-                    <button onclick="closeEndAssignmentModal()" class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg transition-colors">
-                        Cancel
-                    </button>
-                    <form id="endAssignmentForm" method="post" class="inline">
-                        {% csrf_token %}
-                        <button type="submit" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-colors">
-                            End Assignment
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Batch Actions Modal -->
-<div id="batchModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-lg bg-white">
-        <div class="mt-3">
-            <div class="flex items-center mb-4">
-                <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
-                    <i class="ri-check-double-line text-emerald-600 text-xl"></i>
-                </div>
-            </div>
-            <div class="text-center">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Batch Actions</h3>
-                <p class="text-sm text-gray-500 mb-6">
-                    Select an action to perform on <span id="selectedCount">0</span> selected assignments.
-                </p>
-                <div class="space-y-3">
-                    <button onclick="batchEndAssignments()" class="w-full px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-colors">
-                        <i class="ri-stop-line mr-2"></i>
-                        End Assignments
-                    </button>
-                    <button onclick="batchExtendAssignments()" class="w-full px-4 py-2 bg-lime-600 hover:bg-lime-700 text-white rounded-lg transition-colors">
-                        <i class="ri-time-add-line mr-2"></i>
-                        Extend Assignments
-                    </button>
-                    <button onclick="closeBatchModal()" class="w-full px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg transition-colors">
-                        Cancel
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Assignment Details Modal -->
-<div id="assignmentDetailsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-    <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-lg bg-white">
-        <div class="mt-3">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-medium text-gray-900">Assignment Details</h3>
-                <button onclick="closeAssignmentDetailsModal()" class="text-gray-400 hover:text-gray-600">
-                    <i class="ri-close-line text-xl"></i>
-                </button>
-            </div>
-            <div id="assignmentDetailsContent" class="space-y-4">
-                <!-- Content will be loaded dynamically -->
-            </div>
-        </div>
+        {% endif %}
     </div>
 </div>
 
 <script>
-// Modal functions
-function confirmEndAssignment(assignmentId, userName, shiftName) {
-    document.getElementById('userToEnd').textContent = userName;
-    document.getElementById('shiftToEnd').textContent = shiftName;
-    document.getElementById('endAssignmentForm').action = `/shift/assignments/${assignmentId}/end/`;
-    document.getElementById('endAssignmentModal').classList.remove('hidden');
+// Helper function to get CSRF token
+function getCsrfToken() {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+    return csrfToken ? csrfToken.value : '';
 }
 
-function closeEndAssignmentModal() {
-    document.getElementById('endAssignmentModal').classList.add('hidden');
-}
-
-function openBatchModal() {
-    const selectedCheckboxes = document.querySelectorAll('.assignment-checkbox:checked');
-    if (selectedCheckboxes.length === 0) {
-        alert('Please select at least one assignment to perform batch actions.');
-        return;
-    }
-    document.getElementById('selectedCount').textContent = selectedCheckboxes.length;
-    document.getElementById('batchModal').classList.remove('hidden');
-}
-
-function closeBatchModal() {
-    document.getElementById('batchModal').classList.add('hidden');
-}
-
-function closeAssignmentDetailsModal() {
-    document.getElementById('assignmentDetailsModal').classList.add('hidden');
-}
-
-// Checkbox selection functions
-function toggleSelectAll() {
-    const selectAllCheckbox = document.getElementById('selectAll');
-    const assignmentCheckboxes = document.querySelectorAll('.assignment-checkbox');
-
-    assignmentCheckboxes.forEach(checkbox => {
-        checkbox.checked = selectAllCheckbox.checked;
-    });
-
-    updateBatchButton();
-}
-
-function updateBatchButton() {
-    const selectedCheckboxes = document.querySelectorAll('.assignment-checkbox:checked');
-    const batchButton = document.querySelector('[onclick="openBatchModal()"]');
-
-    if (batchButton) {
-        if (selectedCheckboxes.length > 0) {
-            batchButton.classList.remove('opacity-50', 'cursor-not-allowed');
-            batchButton.disabled = false;
-        } else {
-            batchButton.classList.add('opacity-50', 'cursor-not-allowed');
-            batchButton.disabled = true;
-        }
-    }
-}
-
-// Dropdown toggle
-function toggleDropdown(assignmentId) {
-    const dropdown = document.getElementById(`dropdown-${assignmentId}`);
-    // Close all other dropdowns first
-    document.querySelectorAll('[id^="dropdown-"]').forEach(d => {
-        if (d !== dropdown) {
-            d.classList.add('hidden');
-        }
-    });
-    dropdown.classList.toggle('hidden');
-}
-
-// Assignment actions
-function viewAssignment(assignmentId) {
-    fetch(`/shift/api/assignments/${assignmentId}/`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showAssignmentDetails(data.assignment);
-            } else {
-                alert('Error loading assignment details');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while loading assignment details');
-        });
-}
-
-function showAssignmentDetails(assignment) {
-    const content = document.getElementById('assignmentDetailsContent');
-    content.innerHTML = `
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <h4 class="font-medium text-gray-900 mb-2">User Information</h4>
-                <div class="space-y-2">
-                    <p class="text-sm"><span class="font-medium">Name:</span> ${assignment.user_name}</p>
-                    <p class="text-sm"><span class="font-medium">Email:</span> ${assignment.user_email}</p>
-                    ${assignment.employee_id ? `<p class="text-sm"><span class="font-medium">Employee ID:</span> ${assignment.employee_id}</p>` : ''}
-                </div>
-            </div>
-            <div>
-                <h4 class="font-medium text-gray-900 mb-2">Shift Information</h4>
-                <div class="space-y-2">
-                    <p class="text-sm"><span class="font-medium">Shift:</span> ${assignment.shift_name}</p>
-                    <p class="text-sm"><span class="font-medium">Time:</span> ${assignment.shift_time}</p>
-                    <p class="text-sm"><span class="font-medium">Duration:</span> ${assignment.shift_duration}</p>
-                </div>
-            </div>
-            <div>
-                <h4 class="font-medium text-gray-900 mb-2">Assignment Period</h4>
-                <div class="space-y-2">
-                    <p class="text-sm"><span class="font-medium">Start:</span> ${assignment.effective_from}</p>
-                    <p class="text-sm"><span class="font-medium">End:</span> ${assignment.effective_to || 'Ongoing'}</p>
-                    <p class="text-sm"><span class="font-medium">Duration:</span> ${assignment.duration}</p>
-                </div>
-            </div>
-            <div>
-                <h4 class="font-medium text-gray-900 mb-2">Status</h4>
-                <div class="space-y-2">
-                    <p class="text-sm"><span class="font-medium">Current Status:</span>
-                        <span class="px-2 py-1 rounded text-xs ${assignment.status_class}">${assignment.status}</span>
-                    </p>
-                    <p class="text-sm"><span class="font-medium">Created:</span> ${assignment.created_at}</p>
-                    ${assignment.created_by ? `<p class="text-sm"><span class="font-medium">Created by:</span> ${assignment.created_by}</p>` : ''}
-                </div>
-            </div>
-        </div>
-        ${assignment.notes ? `
-        <div class="mt-6">
-            <h4 class="font-medium text-gray-900 mb-2">Notes</h4>
-            <p class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">${assignment.notes}</p>
-        </div>` : ''}
-    `;
-    document.getElementById('assignmentDetailsModal').classList.remove('hidden');
-}
-
-function extendAssignment(assignmentId) {
-    const newEndDate = prompt('Enter new end date (YYYY-MM-DD) or leave empty for ongoing:');
-    if (newEndDate === null) return; // User cancelled
-
-    fetch(`/shift/api/assignments/${assignmentId}/extend/`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-        },
-        body: JSON.stringify({
-            new_end_date: newEndDate || null
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        } else {
-            alert('Error: ' + (data.message || 'Failed to extend assignment'));
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred while extending the assignment');
-    });
-}
-
-function duplicateAssignment(assignmentId) {
-    if (confirm('Create a duplicate of this assignment?')) {
-        fetch(`/shift/api/assignments/${assignmentId}/duplicate/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                'Content-Type': 'application/json',
-            },
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('Error: ' + (data.message || 'Failed to duplicate assignment'));
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while duplicating the assignment');
-        });
-    }
-}
-
-function editAssignment(assignmentId) {
-    const newNotes = prompt('Enter notes for this assignment (optional):');
-    if (newNotes === null) return; // User cancelled
-
-    fetch(`/shift/api/assignments/${assignmentId}/edit/`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-        },
-        body: JSON.stringify({
-            notes: newNotes
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        } else {
-            alert('Error: ' + (data.message || 'Failed to update assignment'));
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred while updating the assignment');
-    });
-}
-
-function deleteAssignment(assignmentId) {
-    if (confirm('Are you sure you want to delete this assignment? This action cannot be undone.')) {
-        fetch(`/shift/assignments/${assignmentId}/delete/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                'Content-Type': 'application/json',
-            },
-        })
-        .then(response => {
-            if (response.ok) {
-                location.reload();
-            } else {
-                alert('Failed to delete assignment');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while deleting the assignment');
-        });
-    }
-}
-
-// Batch operations
-function batchEndAssignments() {
-    const selectedIds = Array.from(document.querySelectorAll('.assignment-checkbox:checked')).map(cb => cb.value);
-
-    fetch('/shift/batch/end-assignments/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-        },
-        body: JSON.stringify({ assignment_ids: selectedIds })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        } else {
-            alert('Error: ' + (data.message || 'Failed to end assignments'));
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred while ending assignments');
-    });
-
-    closeBatchModal();
-}
-
-function batchExtendAssignments() {
-    const newEndDate = prompt('Enter new end date for all selected assignments (YYYY-MM-DD) or leave empty for ongoing:');
-    if (newEndDate === null) {
-        closeBatchModal();
-        return;
-    }
-
-    const selectedIds = Array.from(document.querySelectorAll('.assignment-checkbox:checked')).map(cb => cb.value);
-
-    fetch('/shift/batch/extend-assignments/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-        },
-        body: JSON.stringify({
-            assignment_ids: selectedIds,
-            new_end_date: newEndDate || null
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        } else {
-            alert('Error: ' + (data.message || 'Failed to extend assignments'));
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred while extending assignments');
-    });
-
-    closeBatchModal();
-}
-
-// Initialize page
 document.addEventListener('DOMContentLoaded', function() {
-    // Add event listeners for checkboxes
-    document.querySelectorAll('.assignment-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', updateBatchButton);
+    // Auto-submit filter form
+    const filterSelects = document.querySelectorAll('select[name="user_id"], select[name="shift_id"], select[name="status"]');
+    filterSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            this.form.submit();
+        });
     });
-
-    // Initial batch button state
-    updateBatchButton();
-
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('[id^="dropdown-"]') && !e.target.closest('button[onclick^="toggleDropdown"]')) {
-            document.querySelectorAll('[id^="dropdown-"]').forEach(dropdown => {
-                dropdown.classList.add('hidden');
-            });
-        }
-    });
-
-    // Close modals on Escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeEndAssignmentModal();
-            closeBatchModal();
-            closeAssignmentDetailsModal();
-        }
-    });
-
-    // Close modals when clicking outside
-    document.getElementById('endAssignmentModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeEndAssignmentModal();
-        }
-    });
-
-    document.getElementById('batchModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeBatchModal();
-        }
-    });
-
-    document.getElementById('assignmentDetailsModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeAssignmentDetailsModal();
-        }
-    });
-
-    // Auto-submit search on Enter
-    const searchInput = document.getElementById('search');
-    if (searchInput) {
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                this.form.submit();
+    
+    // Add loading states to buttons
+    const buttons = document.querySelectorAll('button[type="submit"], a[href*="create"], a[href*="approve"]');
+    buttons.forEach(button => {
+        button.addEventListener('click', function() {
+            const spinner = document.createElement('div');
+            spinner.className = 'animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2';
+            
+            // Add spinner for submit buttons
+            if (this.type === 'submit') {
+                this.disabled = true;
+                this.insertBefore(spinner, this.firstChild);
             }
+        });
+    });
+    
+    // Bulk End Assignment functionality
+    const bulkEndBtn = document.getElementById('bulk-end-btn');
+    if (bulkEndBtn) {
+        bulkEndBtn.addEventListener('click', function() {
+            const selectedAssignments = document.querySelectorAll('.assignment-checkbox:checked');
+            
+            if (selectedAssignments.length === 0) {
+                alert('Please select at least one assignment to end.');
+                return;
+            }
+            
+            // Create and show bulk end modal
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50';
+            modal.innerHTML = `
+                <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-2xl bg-white">
+                    <div class="mt-3">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">End ${selectedAssignments.length} Assignment(s)</h3>
+                            <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <form id="bulk-end-form">
+                            <input type="hidden" name="csrfmiddlewaretoken" value="${getCsrfToken()}">
+                            
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                                <input type="date" name="end_date" value="${new Date().toISOString().split('T')[0]}" required
+                                       class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:border-orange-500 focus:ring-orange-500">
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Reason</label>
+                                <textarea name="reason" rows="3" placeholder="Reason for ending assignments..."
+                                          class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:border-orange-500 focus:ring-orange-500"></textarea>
+                            </div>
+                            
+                            <div class="flex justify-end space-x-3">
+                                <button type="button" onclick="this.closest('.fixed').remove()"
+                                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+                                    Cancel
+                                </button>
+                                <button type="submit"
+                                        class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
+                                    End Assignments
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Handle form submission
+            const form = modal.querySelector('#bulk-end-form');
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const assignmentIds = Array.from(selectedAssignments).map(cb => cb.value);
+                const endDate = form.querySelector('[name="end_date"]').value;
+                const reason = form.querySelector('[name="reason"]').value;
+                
+                try {
+                    const promises = assignmentIds.map(id => 
+                        fetch('/shift/assignments/' + id + '/end/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                                'X-CSRFToken': getCsrfToken()
+                            },
+                            body: new URLSearchParams({
+                                'end_date': endDate,
+                                'reason': reason
+                            })
+                        })
+                    );
+                    
+                    await Promise.all(promises);
+                    
+                    // Close modal and refresh page
+                    modal.remove();
+                    window.location.reload();
+                    
+                } catch (error) {
+                    console.error('Error ending assignments:', error);
+                    alert('Error ending some assignments. Please try again.');
+                }
+            });
         });
     }
 });
 </script>
+
+<!-- Hidden CSRF token for JavaScript -->
+<form style="display: none;">
+    {% csrf_token %}
+</form>
+
 {% endblock %}

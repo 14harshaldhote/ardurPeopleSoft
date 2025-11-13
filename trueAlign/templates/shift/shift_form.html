@@ -1,563 +1,204 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends "base.html" %}
 
-{% block title %}{% if shift %}Edit Shift{% else %}Create Shift{% endif %} - TrueAlign{% endblock %}
+{% block page_title %}{% if shift %}Edit Shift{% else %}Create Shift{% endif %}{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50">
     <!-- Header Section -->
     <div class="bg-white shadow-sm border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div class="flex items-center justify-between">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between py-6">
                 <div class="flex items-center space-x-4">
-                    <a href="{% url 'shift:list' %}" class="text-gray-500 hover:text-gray-700">
-                        <i class="ri-arrow-left-line text-xl"></i>
-                    </a>
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                    </div>
                     <div>
-                        <h1 class="text-3xl font-bold text-gray-900">
-                            {% if shift</div> %}Edit Shift{% else %}Create New Shift{% endif %}
-                        </h1>
-                        <p class="text-gray-600 mt-1">
-                            {% if shift %}Update shift configuration and settings{% else %}Define a new shift pattern for your organization{% endif %}
-                        </p>
+                        <h1 class="text-3xl font-bold text-gray-900">{% if shift %}Edit Shift{% else %}Create New Shift{% endif %}</h1>
+                        <p class="text-gray-600">{% if shift %}Modify shift patterns and schedules{% else %}Define shift patterns and schedules{% endif %}</p>
                     </div>
                 </div>
-                {% if shift %}
+                
                 <div class="flex items-center space-x-3">
-                    {% if shift.is_active %}
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800">
-                            <i class="ri-checkbox-circle-line mr-1"></i>
-                            Active
-                        </span>
-                    {% else %}
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-                            <i class="ri-close-circle-line mr-1"></i>
-                            Inactive
-                        </span>
-                    {% endif %}
+                    <a href="{% url 'shift:shift_list' %}" 
+                       class="inline-flex items-center px-4 py-3 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-xl shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200">
+                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                        Back to Shifts
+                    </a>
                 </div>
-                {% endif %}
             </div>
         </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Messages -->
-        {% if messages %}
-            <div class="mb-6">
-                {% for message in messages %}
-                    <div class="mb-4 p-4 rounded-md {% if message.tags == 'error' %}bg-red-50 border border-red-200 text-red-800{% elif message.tags == 'success' %}bg-emerald-50 border border-emerald-200 text-emerald-800{% elif message.tags == 'warning' %}bg-amber-50 border border-amber-200 text-amber-800{% else %}bg-sky-50 border border-sky-200 text-sky-800{% endif %}">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                {% if message.tags == 'error' %}
-                                    <i class="ri-error-warning-line"></i>
-                                {% elif message.tags == 'success' %}
-                                    <i class="ri-check-line"></i>
-                                {% elif message.tags == 'warning' %}
-                                    <i class="ri-alert-line"></i>
-                                {% else %}
-                                    <i class="ri-information-line"></i>
-                                {% endif %}
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-sm">{{ message }}</p>
-                            </div>
-                        </div>
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white shadow-xl rounded-2xl border border-gray-100 overflow-hidden">
+            <!-- Header -->
+            <div class="px-8 py-6 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center mr-4">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
                     </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-
-        <div class="bg-white shadow-lg rounded-xl overflow-hidden">
-            <form method="post" id="shiftForm" class="space-y-6">
-                {% csrf_token %}
-
-                <!-- Form Header -->
-                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                    <h3 class="text-lg font-medium text-gray-900">Shift Details</h3>
-                    <p class="mt-1 text-sm text-gray-500">Enter the basic information for this shift</p>
-                </div>
-
-                <div class="px-6 py-6 space-y-6">
-                    <!-- Shift Name -->
                     <div>
-                        <label for="id_name" class="block text-sm font-medium text-gray-700 mb-2">
-                            Shift Name <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text"
-                               name="name"
-                               id="id_name"
-                               value="{{ form.instance.name|default:'' }}"
-                               required
-                               maxlength="100"
-                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
-                               placeholder="e.g., Morning Shift, Night Security">
-                        {% if form.name.errors %}
-                            <div class="mt-1 text-sm text-red-600">
-                                {{ form.name.errors.0 }}
-                            </div>
-                        {% endif %}
+                        <h3 class="text-xl font-semibold text-gray-900">Shift Configuration</h3>
+                        <p class="text-sm text-gray-600">Set up timing, duration, and work patterns</p>
                     </div>
-
-                    <!-- Description -->
-                    <div>
-                        <label for="id_description" class="block text-sm font-medium text-gray-700 mb-2">
-                            Description
-                        </label>
-                        <textarea name="description"
-                                  id="id_description"
-                                  rows="3"
-                                  maxlength="500"
-                                  class="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
-                                  placeholder="Brief description of the shift purpose and requirements">{{ form.instance.description|default:'' }}</textarea>
-                        <p class="mt-1 text-xs text-gray-500">Maximum 500 characters</p>
-                        {% if form.description.errors %}
-                            <div class="mt-1 text-sm text-red-600">
-                                {{ form.description.errors.0 }}
-                            </div>
-                        {% endif %}
-                    </div>
-
-                    <!-- Time Settings -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Start Time -->
-                        <div>
-                            <label for="id_start_time" class="block text-sm font-medium text-gray-700 mb-2">
-                                Start Time <span class="text-red-500">*</span>
-                            </label>
-                            <input type="time"
-                                   name="start_time"
-                                   id="id_start_time"
-                                   value="{% if form.instance.start_time %}{{ form.instance.start_time|time:'H:i' }}{% endif %}"
-                                   required
-                                   class="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm">
-                            {% if form.start_time.errors %}
-                                <div class="mt-1 text-sm text-red-600">
-                                    {{ form.start_time.errors.0 }}
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <!-- End Time -->
-                        <div>
-                            <label for="id_end_time" class="block text-sm font-medium text-gray-700 mb-2">
-                                End Time <span class="text-red-500">*</span>
-                            </label>
-                            <input type="time"
-                                   name="end_time"
-                                   id="id_end_time"
-                                   value="{% if form.instance.end_time %}{{ form.instance.end_time|time:'H:i' }}{% endif %}"
-                                   required
-                                   class="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm">
-                            {% if form.end_time.errors %}
-                                <div class="mt-1 text-sm text-red-600">
-                                    {{ form.end_time.errors.0 }}
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <!-- Shift Type and Duration -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Shift Type -->
-                        <div></div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Shift Type</label>
-                            <div class="space-y-2">
-                                <label class="flex items-center">
-                                    <input type="radio"
-                                           name="shift_type"
-                                           value="morning"
-                                           {% if form.instance.shift_type == 'morning' or not form.instance.pk %}checked{% endif %}
-                                           class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300">
-                                    <span class="ml-3 text-sm text-gray-700">Morning Shift</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="radio"
-                                           name="shift_type"
-                                           value="afternoon"
-                                           {% if form.instance.shift_type == 'afternoon' %}checked{% endif %}
-                                           class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300">
-                                    <span class="ml-3 text-sm text-gray-700">Afternoon Shift</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="radio"
-                                           name="shift_type"
-                                           value="night"
-                                           {% if form.instance.shift_type == 'night' %}checked{% endif %}
-                                           class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300">
-                                    <span class="ml-3 text-sm text-gray-700">Night Shift</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="radio"
-                                           name="shift_type"
-                                           value="flexible"
-                                           {% if form.instance.shift_type == 'flexible' %}checked{% endif %}
-                                           class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300">
-                                    <span class="ml-3 text-sm text-gray-700">Flexible Hours</span>
-                                </label>
-                            </div>
-                            {% if form.shift_type.errors %}
-                                <div class="mt-1 text-sm text-red-600">
-                                    {{ form.shift_type.errors.0 }}
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <!-- Duration Display -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Duration</label>
-                            <div class="p-3 bg-gray-50 rounded-md border border-gray-200">
-                                <div class="text-lg font-medium text-gray-900" id="durationDisplay">
-                                    Calculate duration
-                                </div>
-                                <div class="text-sm text-gray-500">
-                                    Hours between start and end time
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Department and Location -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Department -->
-                        <div>
-                            <label for="id_department" class="block text-sm font-medium text-gray-700 mb-2">
-                                Department
-                            </label>
-                            <select name="department"
-                                    id="id_department"
-                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm">
-                                <option value="">Select department...</option>
-                                <option value="security" {% if form.instance.department == 'security' %}selected{% endif %}>Security</option>
-                                <option value="cleaning" {% if form.instance.department == 'cleaning' %}selected{% endif %}>Cleaning</option>
-                                <option value="maintenance" {% if form.instance.department == 'maintenance' %}selected{% endif %}>Maintenance</option>
-                                <option value="administration" {% if form.instance.department == 'administration' %}selected{% endif %}>Administration</option>
-                                <option value="operations" {% if form.instance.department == 'operations' %}selected{% endif %}>Operations</option>
-                                <option value="other" {% if form.instance.department == 'other' %}selected{% endif %}>Other</option>
-                            </select>
-                            {% if form.department.errors %}
-                                <div class="mt-1 text-sm text-red-600">
-                                    {{ form.department.errors.0 }}
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <!-- Location -->
-                        <div>
-                            <label for="id_location" class="block text-sm font-medium text-gray-700 mb-2">
-                                Location
-                            </label>
-                            <input type="text"
-                                   name="location"
-                                   id="id_location"
-                                   value="{{ form.instance.location|default:'' }}"
-                                   maxlength="100"
-                                   class="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
-                                   placeholder="e.g., Main Building, Site A">
-                            {% if form.location.errors %}
-                                <div class="mt-1 text-sm text-red-600">
-                                    {{ form.location.errors.0 }}
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <!-- Capacity and Priority -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Max Capacity -->
-                        <div>
-                            <label for="id_max_capacity" class="block text-sm font-medium text-gray-700 mb-2">
-                                Maximum Capacity
-                            </label>
-                            <input type="number"
-                                   name="max_capacity"
-                                   id="id_max_capacity"
-                                   value="{{ form.instance.max_capacity|default:1 }}"
-                                   min="1"
-                                   max="100"
-                                   class="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm">
-                            <p class="mt-1 text-xs text-gray-500">Maximum number of people that can work this shift</p>
-                            {% if form.max_capacity.errors %}
-                                <div class="mt-1 text-sm text-red-600">
-                                    {{ form.max_capacity.errors.0 }}
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <!-- Priority -->
-                        <div>
-                            <label for="id_priority" class="block text-sm font-medium text-gray-700 mb-2">
-                                Priority Level
-                            </label>
-                            <select name="priority"
-                                    id="id_priority"
-                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm">
-                                <option value="low" {% if form.instance.priority == 'low' %}selected{% endif %}>Low Priority</option>
-                                <option value="medium" {% if form.instance.priority == 'medium' or not form.instance.pk %}selected{% endif %}>Medium Priority</option>
-                                <option value="high" {% if form.instance.priority == 'high' %}selected{% endif %}>High Priority</option>
-                                <option value="critical" {% if form.instance.priority == 'critical' %}selected{% endif %}>Critical</option>
-                            </select>
-                            {% if form.priority.errors %}
-                                <div class="mt-1 text-sm text-red-600">
-                                    {{ form.priority.errors.0 }}
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <!-- Options -->
-                    <div class="space-y-4">
-                        <div class="flex items-center">
-                            <input type="checkbox"
-                                   name="is_active"
-                                   id="id_is_active"
-                                   {% if form.instance.is_active or not form.instance.pk %}checked{% endif %}
-                                   class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded">
-                            <label for="id_is_active" class="ml-3 block text-sm text-gray-700">
-                                <span class="font-medium">Active Shift</span>
-                                <span class="block text-gray-500">Make this shift available for assignments</span>
-                            </label>
-                        </div>
-
-                        <div class="flex items-center">
-                            <input type="checkbox"
-                                   name="requires_approval"
-                                   id="id_requires_approval"
-                                   {% if form.instance.requires_approval %}checked{% endif %}
-                                   class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded">
-                            <label for="id_requires_approval" class="ml-3 block text-sm text-gray-700">
-                                <span class="font-medium">Requires Approval</span>
-                                <span class="block text-gray-500">Assignments to this shift need manager approval</span>
-                            </label>
-                        </div>
-
-                        <div class="flex items-center">
-                            <input type="checkbox"
-                                   name="allows_overtime"
-                                   id="id_allows_overtime"
-                                   {% if form.instance.allows_overtime %}checked{% endif %}
-                                   class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded">
-                            <label for="id_allows_overtime" class="ml-3 block text-sm text-gray-700">
-                                <span class="font-medium">Allows Overtime</span>
-                                <span class="block text-gray-500">This shift can be extended beyond normal hours</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Form Actions -->
-                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
-                    <div class="flex items-center space-x-4">
-                        {% if shift %}
-                            <span class="text-sm text-gray-500">
-                                Created on {{ shift.created_at|date:"M d, Y" }}
-                            </span>
-                        {% endif %}
-                    </div>
-                    <div class="flex space-x-3">
-                        <button type="button"
-                                onclick="history.back()"
-                                class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-                            Cancel
-                        </button>
-                        <button type="submit"
-                                id="submitBtn"
-                                class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
-                            <i class="ri-save-line mr-2"></i>
-                            {% if shift %}Update Shift{% else %}Create Shift{% endif %}
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
-
-        <!-- Preview Section -->
-        {% if not shift %}
-        <div class="mt-8 bg-white shadow rounded-lg">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">Preview</h3>
-                <p class="mt-1 text-sm text-gray-500">Preview how this shift will appear</p>
-            </div>
-            <div class="p-6">
-                <div id="shiftPreview" class="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center">
-                            <div class="w-8 h-8 bg-sky-100 rounded-full flex items-center justify-center mr-3">
-                                <i class="ri-time-line text-sky-600"></i>
-                            </div>
-                            <div>
-                                <h4 class="text-sm font-medium text-gray-900" id="previewName">Shift Name</h4>
-                                <p class="text-xs text-gray-500" id="previewTime">Set start and end time</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <span id="previewType" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-sky-100 text-sky-800">
-                                Morning
-                            </span>
-                            <span id="previewStatus" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                                Active
-                            </span>
-                        </div>
-                    </div>
-                    <p id="previewDescription" class="text-sm text-gray-600">No description provided</p>
                 </div>
             </div>
-        </div>
-        {% endif %}
+        
+        <form method="post" class="px-6 py-4 space-y-6">
+            {% csrf_token %}
+            
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700">Shift Name</label>
+                <input type="text" name="name" id="name" required 
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                       placeholder="e.g., Morning Shift" value="{{ shift.name|default:'' }}">
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="start_time" class="block text-sm font-medium text-gray-700">Start Time</label>
+                    <input type="time" name="start_time" id="start_time" required 
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                           value="{{ shift.start_time|time:'H:i'|default:'' }}">
+                </div>
+                
+                <div>
+                    <label for="end_time" class="block text-sm font-medium text-gray-700">End Time</label>
+                    <input type="time" name="end_time" id="end_time" required 
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                           value="{{ shift.end_time|time:'H:i'|default:'' }}">
+                </div>
+            </div>
+            
+            <div>
+                <label for="work_days" class="block text-sm font-medium text-gray-700">Work Days</label>
+                <select name="work_days" id="work_days" 
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                    {% for choice in work_days_choices %}
+                    <option value="{{ choice.0 }}" {% if shift.work_days == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div id="custom_days_field" class="hidden">
+                <label for="custom_work_days" class="block text-sm font-medium text-gray-700">Custom Work Days</label>
+                <input type="text" name="custom_work_days" id="custom_work_days" 
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                       placeholder="Monday,Tuesday,Wednesday" value="{{ shift.custom_work_days|default:'' }}">
+                <p class="mt-1 text-sm text-gray-500">Enter day names separated by commas</p>
+            </div>
+            
+            <div>
+                <label for="description" class="block text-sm font-medium text-gray-700">Description (Optional)</label>
+                <textarea name="description" id="description" rows="3" 
+                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                          placeholder="Brief description of this shift...">{{ shift.description|default:'' }}</textarea>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="break_duration" class="block text-sm font-medium text-gray-700">Break Duration (minutes)</label>
+                    <input type="number" name="break_duration" id="break_duration" min="0" max="120" 
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                           value="{{ break_duration_minutes|default:30 }}">
+                    <p class="mt-1 text-sm text-gray-500">Break time in minutes</p>
+                </div>
+                
+                <div>
+                    <label for="grace_period" class="block text-sm font-medium text-gray-700">Grace Period (minutes)</label>
+                    <input type="number" name="grace_period" id="grace_period" min="0" max="60" 
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                           value="{{ grace_period_minutes|default:15 }}">
+                    <p class="mt-1 text-sm text-gray-500">Grace period for late arrivals</p>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="color_code" class="block text-sm font-medium text-gray-700">Color Code</label>
+                    <input type="color" name="color_code" id="color_code" value="{{ shift.color_code|default:'#3B82F6' }}" 
+                           class="mt-1 block w-full h-10 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <p class="mt-1 text-sm text-gray-500">Color for UI display</p>
+                </div>
+                
+                <div class="space-y-3 mt-6">
+                    <div class="flex items-center">
+                        <input type="checkbox" name="requires_approval" id="requires_approval" 
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                               {% if shift.requires_approval %}checked{% endif %}>
+                        <label for="requires_approval" class="ml-2 block text-sm text-gray-900">
+                            Requires approval for assignments
+                        </label>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" name="is_active" id="is_active" 
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                               {% if shift.is_active or not shift %}checked{% endif %}>
+                        <label for="is_active" class="ml-2 block text-sm text-gray-900">
+                            Active shift (available for assignments)
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <a href="{% url 'shift:shift_list' %}" 
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Cancel
+                </a>
+                <button type="submit" 
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    {% if shift %}Update Shift{% else %}Create Shift{% endif %}
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const nameInput = document.getElementById('id_name');
-    const startTimeInput = document.getElementById('id_start_time');
-    const endTimeInput = document.getElementById('id_end_time');
-    const descriptionInput = document.getElementById('id_description');
-    const typeInputs = document.querySelectorAll('input[name="shift_type"]');
-    const isActiveInput = document.getElementById('id_is_active');
-    const form = document.getElementById('shiftForm');
-    const submitBtn = document.getElementById('submitBtn');
-
-    // Duration calculation
+    const workDaysSelect = document.getElementById('work_days');
+    const customDaysField = document.getElementById('custom_days_field');
+    
+    workDaysSelect.addEventListener('change', function() {
+        if (this.value === 'Custom') {
+            customDaysField.classList.remove('hidden');
+        } else {
+            customDaysField.classList.add('hidden');
+        }
+    });
+    
+    // Calculate duration when times change
+    const startTime = document.getElementById('start_time');
+    const endTime = document.getElementById('end_time');
+    
     function calculateDuration() {
-        const startTime = startTimeInput.value;
-        const endTime = endTimeInput.value;
-
-        if (startTime && endTime) {
-            const start = new Date(`2000-01-01T${startTime}`);
-            const end = new Date(`2000-01-01T${endTime}`);
-
-            let duration = (end - start) / (1000 * 60 * 60); // Convert to hours
-
-            // Handle overnight shifts
-            if (duration <= 0) {
-                duration += 24;
+        if (startTime.value && endTime.value) {
+            const start = new Date(`2000-01-01T${startTime.value}`);
+            const end = new Date(`2000-01-01T${endTime.value}`);
+            
+            let diff = end - start;
+            if (diff < 0) {
+                // Handle overnight shifts
+                diff += 24 * 60 * 60 * 1000;
             }
-
-            document.getElementById('durationDisplay').textContent = `${duration.toFixed(1)} hours`;
-        } else {
-            document.getElementById('durationDisplay').textContent = 'Calculate duration';
+            
+            const hours = diff / (1000 * 60 * 60);
+            console.log(`Shift duration: ${hours} hours`);
         }
     }
-
-    // Update preview (only if preview exists)
-    function updatePreview() {
-        const previewName = document.getElementById('previewName');
-        const previewTime = document.getElementById('previewTime');
-        const previewDescription = document.getElementById('previewDescription');
-        const previewType = document.getElementById('previewType');
-        const previewStatus = document.getElementById('previewStatus');
-
-        if (!previewName) return; // Preview doesn't exist for edit mode
-
-        // Update name
-        previewName.textContent = nameInput.value || 'Shift Name';
-
-        // Update time
-        if (startTimeInput.value && endTimeInput.value) {
-            previewTime.textContent = `${startTimeInput.value} - ${endTimeInput.value}`;
-        } else {
-            previewTime.textContent = 'Set start and end time';
-        }
-
-        // Update description
-        previewDescription.textContent = descriptionInput.value || 'No description provided';
-
-        // Update type
-        const selectedType = document.querySelector('input[name="shift_type"]:checked');
-        if (selectedType) {
-            const typeText = selectedType.value.charAt(0).toUpperCase() + selectedType.value.slice(1);
-            previewType.textContent = typeText;
-        }
-
-        // Update status
-        if (isActiveInput.checked) {
-            previewStatus.textContent = 'Active';
-            previewStatus.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800';
-        } else {
-            previewStatus.textContent = 'Inactive';
-            previewStatus.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800';
-        }
-    }
-
-    // Event listeners
-    startTimeInput.addEventListener('change', function() {
-        calculateDuration();
-        updatePreview();
-    });
-
-    endTimeInput.addEventListener('change', function() {
-        calculateDuration();
-        updatePreview();
-    });
-
-    nameInput.addEventListener('input', updatePreview);
-    descriptionInput.addEventListener('input', updatePreview);
-    typeInputs.forEach(input => input.addEventListener('change', updatePreview));
-    isActiveInput.addEventListener('change', updatePreview);
-
-    // Form validation
-    form.addEventListener('submit', function(e) {
-        // Show loading state
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="ri-loader-4-line animate-spin mr-2"></i>Processing...';
-
-        // Basic validation
-        if (!nameInput.value.trim()) {
-            e.preventDefault();
-            alert('Shift name is required');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="ri-save-line mr-2"></i>{% if shift %}Update Shift{% else %}Create Shift{% endif %}';
-            return;
-        }
-
-        if (!startTimeInput.value || !endTimeInput.value) {
-            e.preventDefault();
-            alert('Both start time and end time are required');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="ri-save-line mr-2"></i>{% if shift %}Update Shift{% else %}Create Shift{% endif %}';
-            return;
-        }
-    });
-
-    // Initialize
-    calculateDuration();
-    updatePreview();
+    
+    startTime.addEventListener('change', calculateDuration);
+    endTime.addEventListener('change', calculateDuration);
 });
-
-// Utility function for notifications
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg border max-w-sm transform transition-transform duration-300`;
-
-    const colors = {
-        success: 'bg-emerald-50 border-emerald-200 text-emerald-800',
-        error: 'bg-rose-50 border-rose-200 text-rose-800',
-        warning: 'bg-amber-50 border-amber-200 text-amber-800',
-        info: 'bg-sky-50 border-sky-200 text-sky-800'
-    };
-
-    notification.className += ` ${colors[type] || colors.info}`;
-    notification.innerHTML = `
-        <div class="flex items-center justify-between">
-            <p class="text-sm font-medium">${message}</p>
-            <button onclick="this.parentElement.parentElement.remove()" class="ml-3 text-gray-400 hover:text-gray-600">
-                <i class="ri-close-line"></i>
-            </button>
-        </div>
-    `;
-
-    document.body.appendChild(notification);
-
-    setTimeout(() => {
-        notification.style.transform = 'translateX(0)';
-    }, 100);
-
-    setTimeout(() => {
-        notification.style.transform = 'translateX(100%)';
-        setTimeout(() => notification.remove(), 300);
-    }, 5000);
-}
 </script>
 {% endblock %}

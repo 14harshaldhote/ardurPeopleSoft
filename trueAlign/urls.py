@@ -23,7 +23,7 @@ urlpatterns = [
     # Include other app URLs with appropriate prefixes
     path('sessions/', include('trueAlign.sessions.urls')),
     path('profile/', include('trueAlign.profile.urls')),
-    path('shift/',include('trueAlign.shift.urls')),
+    path('shift/', include('trueAlign.shift.urls')),
     path('leave_management/', include('trueAlign.leave_management.urls')),
     path('attendance/', include('trueAlign.attendance.urls')),
     path('notes/', include('trueAlign.notes.urls')),

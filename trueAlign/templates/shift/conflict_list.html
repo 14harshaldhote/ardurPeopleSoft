@@ -1,0 +1,576 @@
+{% extends "base.html" %}
+
+{% block page_title %}Shift Conflicts{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-rose-50">
+    <!-- Header Section -->
+    <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between py-6">
+                <div class="flex items-center space-x-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-gradient-to-r from-rose-500 to-red-600 rounded-xl flex items-center justify-center">
+                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">Shift Conflicts</h1>
+                        <p class="text-gray-600">Manage and resolve scheduling conflicts</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'shift:dashboard' %}" 
+                       class="inline-flex items-center px-4 py-3 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-xl shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200">
+                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+                        </svg>
+                        Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Filters -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
+            <form method="get" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Resolution Status</label>
+                        <select name="is_resolved" class="block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm transition-all duration-200 appearance-none bg-white">
+                            <option value="">All Conflicts</option>
+                            <option value="false" {% if is_resolved == 'false' %}selected{% endif %}>🔴 Unresolved</option>
+                            <option value="true" {% if is_resolved == 'true' %}selected{% endif %}>✅ Resolved</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Severity Level</label>
+                        <select name="severity" class="block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm transition-all duration-200 appearance-none bg-white">
+                            <option value="">All Severities</option>
+                            {% for severity_choice in severity_choices %}
+                            <option value="{{ severity_choice.0 }}" {% if severity == severity_choice.0 %}selected{% endif %}>
+                                {% if severity_choice.0 == 'HIGH' %}🔴 High Priority
+                                {% elif severity_choice.0 == 'MEDIUM' %}🟡 Medium Priority
+                                {% else %}🟢 Low Priority{% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="flex items-end">
+                        <button type="submit" 
+                                class="w-full inline-flex items-center justify-center px-4 py-3 bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+                            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                            </svg>
+                            Filter
+                        </button>
+                    </div>
+                </div>
+                
+                {% if is_resolved or severity %}
+                <div class="flex justify-center">
+                    <a href="{% url 'shift:conflict_list' %}" 
+                       class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors duration-200">
+                        <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Clear Filters
+                    </a>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+
+        <!-- Conflict Summary Statistics -->
+        {% if conflict_summary %}
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-gradient-to-r from-rose-500 to-red-600 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Conflict Overview</h3>
+                </div>
+                <span class="text-sm text-gray-500">Current Status</span>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <!-- Total Conflicts -->
+                <div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Total Conflicts</p>
+                            <p class="text-2xl font-bold text-gray-900" data-conflict="total">{{ conflict_summary.total_conflicts|default:0 }}</p>
+                        </div>
+                        <div class="w-10 h-10 bg-gray-500 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Unresolved Conflicts -->
+                <div class="bg-gradient-to-r from-red-50 to-rose-100 rounded-xl p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-red-600">Unresolved</p>
+                            <p class="text-2xl font-bold text-red-700" data-conflict="unresolved">{{ conflict_summary.unresolved_count|default:0 }}</p>
+                        </div>
+                        <div class="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- High Priority Conflicts -->
+                <div class="bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-orange-600">High Priority</p>
+                            <p class="text-2xl font-bold text-orange-700" data-conflict="high_priority">{{ conflict_summary.high_priority_count|default:0 }}</p>
+                        </div>
+                        <div class="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resolved Today -->
+                <div class="bg-gradient-to-r from-green-50 to-emerald-100 rounded-xl p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-green-600">Resolved Today</p>
+                            <p class="text-2xl font-bold text-green-700" data-conflict="resolved_today">{{ conflict_summary.resolved_today|default:0 }}</p>
+                        </div>
+                        <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conflict Type Breakdown -->
+            {% if conflict_summary.by_type %}
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <h4 class="text-sm font-semibold text-gray-700 mb-4">Conflict Types</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {% for type_stat in conflict_summary.by_type %}
+                    <div class="flex items-center justify-between p-3 bg-gradient-to-r from-indigo-50 to-indigo-100 rounded-lg">
+                        <span class="text-sm font-medium text-gray-900">
+                            {% if type_stat.conflict_type == 'OVERLAP' %}🔄 Overlap
+                            {% elif type_stat.conflict_type == 'REST_PERIOD' %}😴 Rest Period
+                            {% elif type_stat.conflict_type == 'MAX_HOURS' %}⏰ Max Hours
+                            {% elif type_stat.conflict_type == 'ROLE_RESTRICTION' %}👤 Role Restriction
+                            {% else %}{{ type_stat.conflict_type }}{% endif %}
+                        </span>
+                        <span class="text-lg font-bold text-indigo-600">{{ type_stat.count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Conflicts List -->
+        <div class="space-y-4">
+            {% for conflict in page_obj %}
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5">
+                <!-- Conflict Header -->
+                <div class="px-6 py-4 {% if conflict.severity == 'HIGH' %}bg-gradient-to-r from-red-50 to-rose-50 border-b border-red-100{% elif conflict.severity == 'MEDIUM' %}bg-gradient-to-r from-amber-50 to-yellow-50 border-b border-amber-100{% else %}bg-gradient-to-r from-emerald-50 to-green-50 border-b border-emerald-100{% endif %}">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-10 h-10 {% if conflict.severity == 'HIGH' %}bg-gradient-to-r from-red-500 to-red-600{% elif conflict.severity == 'MEDIUM' %}bg-gradient-to-r from-amber-500 to-amber-600{% else %}bg-gradient-to-r from-emerald-500 to-emerald-600{% endif %} rounded-xl flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">{{ conflict.get_conflict_type_display }}</h3>
+                                <p class="text-sm text-gray-600">{{ conflict.created_at|date:"F d, Y g:i A" }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-3">
+                            {% if conflict.severity == 'HIGH' %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                                <div class="w-2 h-2 bg-red-400 rounded-full mr-2"></div>
+                                High Priority
+                            </span>
+                            {% elif conflict.severity == 'MEDIUM' %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-800">
+                                <div class="w-2 h-2 bg-amber-400 rounded-full mr-2"></div>
+                                Medium Priority
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800">
+                                <div class="w-2 h-2 bg-emerald-400 rounded-full mr-2"></div>
+                                Low Priority
+                            </span>
+                            {% endif %}
+                            
+                            {% if conflict.is_resolved %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                Resolved
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Unresolved
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Conflict Details -->
+                <div class="px-6 py-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Assignment Info -->
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-600 mb-3">Assignment Details</h4>
+                            <div class="bg-gray-50 rounded-xl p-4">
+                                <div class="flex items-center space-x-3 mb-3">
+                                    <div class="h-10 w-10 rounded-lg bg-gradient-to-r from-gray-200 to-gray-300 flex items-center justify-center">
+                                        <span class="text-sm font-semibold text-gray-700">
+                                            {{ conflict.assignment.user.first_name.0|default:conflict.assignment.user.username.0 }}{{ conflict.assignment.user.last_name.0 }}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-gray-900">{{ conflict.assignment.user.get_full_name|default:conflict.assignment.user.username }}</p>
+                                        <p class="text-xs text-gray-500">{{ conflict.assignment.user.email }}</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs font-medium text-gray-600">Shift:</span>
+                                        <span class="text-xs font-semibold text-gray-900">{{ conflict.assignment.shift.name }}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs font-medium text-gray-600">Period:</span>
+                                        <span class="text-xs font-semibold text-gray-900">
+                                            {{ conflict.assignment.effective_from|date:"M d" }}
+                                            {% if conflict.assignment.effective_to %} - {{ conflict.assignment.effective_to|date:"M d" }}{% else %} - Ongoing{% endif %}
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs font-medium text-gray-600">Status:</span>
+                                        <span class="text-xs font-semibold text-gray-900">{{ conflict.assignment.get_status_display }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Conflict Description -->
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-600 mb-3">Conflict Description</h4>
+                            <div class="bg-gray-50 rounded-xl p-4">
+                                {% if conflict.description %}
+                                <p class="text-sm text-gray-700 mb-4">{{ conflict.description }}</p>
+                                {% else %}
+                                <p class="text-sm text-gray-500 italic mb-4">No description provided.</p>
+                                {% endif %}
+                                
+                                {% if conflict.resolution_notes %}
+                                <div class="border-t border-gray-200 pt-4">
+                                    <h5 class="text-xs font-medium text-gray-600 mb-2">Resolution Notes:</h5>
+                                    <p class="text-sm text-gray-700">{{ conflict.resolution_notes }}</p>
+                                </div>
+                                {% endif %}
+                                
+                                {% if conflict.resolved_by %}
+                                <div class="border-t border-gray-200 pt-4 mt-4">
+                                    <div class="flex items-center text-xs text-gray-600">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                        </svg>
+                                        Resolved by {{ conflict.resolved_by.get_full_name|default:conflict.resolved_by.username }}
+                                        on {{ conflict.resolved_at|date:"M d, Y" }}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions -->
+                    {% if not conflict.is_resolved %}
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm text-gray-600">This conflict requires attention and resolution.</p>
+                            <div class="flex space-x-3">
+                                {% if can_resolve %}
+                                <button class="resolve-conflict-btn" 
+                                        data-conflict-id="{{ conflict.pk }}"
+                                        data-conflict-type="{{ conflict.get_conflict_type_display }}"
+                                        class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white text-sm font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200">
+                                    <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                    Resolve Conflict
+                                </button>
+                                {% endif %}
+                                
+                                <a href="{% url 'shift:assignment_detail' conflict.assignment.pk %}" 
+                                   class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg shadow-sm hover:bg-gray-50 transition-all duration-200">
+                                    <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    View Assignment
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-12 text-center">
+                <div class="w-20 h-20 mx-auto bg-gradient-to-r from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mb-6">
+                    <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">No conflicts found</h3>
+                <p class="text-gray-500 mb-8 max-w-md mx-auto">
+                    {% if is_resolved or severity %}
+                    No conflicts match your current filters. Try adjusting your search criteria.
+                    {% else %}
+                    Great! All shift assignments are running smoothly without any conflicts.
+                    {% endif %}
+                </p>
+                
+                {% if is_resolved or severity %}
+                <a href="{% url 'shift:conflict_list' %}" 
+                   class="inline-flex items-center px-6 py-3 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-xl shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    Clear Filters
+                </a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="mt-8 flex justify-center">
+            <nav class="relative z-0 inline-flex rounded-xl shadow-lg border border-gray-200 bg-white" aria-label="Pagination">
+                {% if page_obj.has_previous %}
+                <a href="?{% if is_resolved %}is_resolved={{ is_resolved }}&{% endif %}{% if severity %}severity={{ severity }}&{% endif %}page={{ page_obj.previous_page_number }}" 
+                   class="relative inline-flex items-center px-4 py-3 rounded-l-xl border-r border-gray-200 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-colors duration-200">
+                    <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Previous
+                </a>
+                {% endif %}
+                
+                <span class="relative inline-flex items-center px-6 py-3 border-r border-gray-200 bg-rose-50 text-sm font-semibold text-rose-700">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                <a href="?{% if is_resolved %}is_resolved={{ is_resolved }}&{% endif %}{% if severity %}severity={{ severity }}&{% endif %}page={{ page_obj.next_page_number }}" 
+                   class="relative inline-flex items-center px-4 py-3 rounded-r-xl bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-colors duration-200">
+                    Next
+                    <svg class="h-5 w-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Conflict Resolution Modal -->
+<div id="resolve-conflict-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-2xl bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <div class="w-8 h-8 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center mr-3">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                    Resolve Conflict
+                </h3>
+                <button id="close-resolve-modal" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="mb-4 p-3 bg-blue-50 rounded-lg">
+                <p class="text-sm text-blue-800">
+                    <span class="font-medium">Conflict Type:</span> 
+                    <span id="conflict-type-display"></span>
+                </p>
+            </div>
+            
+            <form id="resolve-conflict-form">
+                <div class="mb-4">
+                    <label for="resolution-notes" class="block text-sm font-medium text-gray-700 mb-2">Resolution Notes</label>
+                    <textarea id="resolution-notes" name="resolution_notes" rows="4" required
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                              placeholder="Describe how this conflict was resolved..."></textarea>
+                </div>
+                
+                <div class="flex items-center justify-end space-x-3 pt-4">
+                    <button type="button" id="cancel-resolve" 
+                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors duration-200">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            class="px-6 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white text-sm font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200">
+                        <span class="resolve-btn-text">Mark as Resolved</span>
+                        <span class="resolve-btn-loading hidden">
+                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Resolving...
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit filter form
+    const filterSelects = document.querySelectorAll('select[name="is_resolved"], select[name="severity"]');
+    filterSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            this.form.submit();
+        });
+    });
+
+    // Conflict Resolution Functionality
+    const resolveModal = document.getElementById('resolve-conflict-modal');
+    const resolveForm = document.getElementById('resolve-conflict-form');
+    const closeResolveModal = document.getElementById('close-resolve-modal');
+    const cancelResolve = document.getElementById('cancel-resolve');
+    const conflictTypeDisplay = document.getElementById('conflict-type-display');
+    const resolutionNotesInput = document.getElementById('resolution-notes');
+    
+    let currentConflictId = null;
+
+    // Handle resolve conflict button clicks
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.resolve-conflict-btn')) {
+            const btn = e.target.closest('.resolve-conflict-btn');
+            currentConflictId = btn.dataset.conflictId;
+            const conflictType = btn.dataset.conflictType;
+            
+            conflictTypeDisplay.textContent = conflictType;
+            resolutionNotesInput.value = '';
+            resolveModal.classList.remove('hidden');
+            resolutionNotesInput.focus();
+        }
+    });
+
+    // Close modal handlers
+    [closeResolveModal, cancelResolve].forEach(btn => {
+        if (btn) {
+            btn.addEventListener('click', function() {
+                resolveModal.classList.add('hidden');
+                currentConflictId = null;
+            });
+        }
+    });
+
+    // Close modal on outside click
+    resolveModal.addEventListener('click', function(e) {
+        if (e.target === resolveModal) {
+            resolveModal.classList.add('hidden');
+            currentConflictId = null;
+        }
+    });
+
+    // Handle form submission
+    if (resolveForm) {
+        resolveForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!currentConflictId) {
+                alert('No conflict selected');
+                return;
+            }
+            
+            const resolutionNotes = resolutionNotesInput.value.trim();
+            
+            if (!resolutionNotes) {
+                alert('Please enter resolution notes');
+                return;
+            }
+
+            // Show loading state
+            const btnText = document.querySelector('.resolve-btn-text');
+            const btnLoading = document.querySelector('.resolve-btn-loading');
+            btnText.classList.add('hidden');
+            btnLoading.classList.remove('hidden');
+
+            try {
+                const response = await fetch(`{% url "shift:resolve_conflict" 0 %}`.replace('0', currentConflictId), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: new URLSearchParams({
+                        'resolution_notes': resolutionNotes
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Success - reload page to show updated status
+                    window.location.reload();
+                } else {
+                    throw new Error(data.error || 'Failed to resolve conflict');
+                }
+            } catch (error) {
+                console.error('Error resolving conflict:', error);
+                alert('Error resolving conflict: ' + error.message);
+                
+                // Reset button state
+                btnText.classList.remove('hidden');
+                btnLoading.classList.add('hidden');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

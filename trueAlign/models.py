@@ -2612,6 +2612,7 @@ class ShiftMaster(models.Model):
     MAX_GRACE_MINUTES = 120
 
     name = models.CharField(max_length=50)
+    shift_type = models.CharField(max_length=20, choices=SHIFT_CHOICES, default='Day Shift')
     start_time = models.TimeField()
     end_time = models.TimeField()
     shift_duration = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('8.0'))
@@ -2625,8 +2626,34 @@ class ShiftMaster(models.Model):
         help_text="Comma-separated day names (Monday,Tuesday,etc.)"
     )
     is_active = models.BooleanField(default=True)
+    
+    # Enhanced fields for better management
+    color_code = models.CharField(max_length=7, default='#3B82F6', help_text="Hex color code for UI")
+    description = models.TextField(blank=True, help_text="Shift description")
+    requires_approval = models.BooleanField(default=False, help_text="Requires approval for assignments")
+    min_rest_hours = models.DecimalField(
+        max_digits=4, 
+        decimal_places=2, 
+        default=Decimal('8.0'),
+        help_text="Minimum rest hours before next shift"
+    )
+    max_consecutive_days = models.IntegerField(default=6, help_text="Maximum consecutive working days")
+    overtime_threshold = models.DecimalField(
+        max_digits=4, 
+        decimal_places=2, 
+        default=Decimal('8.0'),
+        help_text="Hours threshold for overtime"
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='created_shifts'
+    )
 
     class Meta:
         verbose_name = "Shift"
@@ -2986,6 +3013,27 @@ class ShiftAssignment(models.Model):
         blank=True,
         help_text="Additional notes about this assignment"
     )
+    
+    # Enhanced fields for approval workflow
+    ASSIGNMENT_STATUS = [
+        ('ACTIVE', 'Active'),
+        ('PENDING', 'Pending Approval'),
+        ('APPROVED', 'Approved'),
+        ('REJECTED', 'Rejected'),
+        ('EXPIRED', 'Expired'),
+    ]
+    
+    status = models.CharField(max_length=20, choices=ASSIGNMENT_STATUS, default='ACTIVE')
+    requires_approval = models.BooleanField(default=False)
+    approved_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='approved_assignments'
+    )
+    approved_at = models.DateTimeField(null=True, blank=True)
+    assignment_hash = models.CharField(max_length=64, null=True, blank=True)
 
     class Meta:
         verbose_name = "Shift Assignment"
@@ -3044,8 +3092,8 @@ class ShiftAssignment(models.Model):
         """Validate assignment timing constraints."""
         if self.effective_from:
             today = timezone.now().date()
-            if self.effective_from < (today - timedelta(days=7)):
-                errors['effective_from'] = 'Assignment cannot be more than 7 days in the past.'
+            if self.effective_from < (today - timedelta(days=30)):
+                errors['effective_from'] = 'Assignment cannot be more than 30 days in the past.'
 
     def _validate_overlapping_assignments(self, errors):
         """Validate overlapping assignments."""
@@ -6262,3 +6310,98 @@ class AppraisalWorkflow(models.Model):
             return "Approved"
         else:
             return f"Moved to {self.to_status.replace('_', ' ').title()}"
+
+
+'''----------------------------------- ENHANCED SHIFT MANAGEMENT -----------------------------------'''
+
+class ShiftValidationRule(models.Model):
+    """Custom validation rules for shift management"""
+    
+    RULE_TYPES = [
+        ('MIN_REST_HOURS', 'Minimum Rest Hours Between Shifts'),
+        ('MAX_DAILY_HOURS', 'Maximum Daily Work Hours'),
+        ('MAX_WEEKLY_HOURS', 'Maximum Weekly Work Hours'),
+        ('ROLE_BASED_TIMING', 'Role-Based Allowed Timing'),
+        ('SHIFT_GAP_REQUIREMENT', 'Required Gap Between Shifts'),
+        ('OVERTIME_APPROVAL', 'Overtime Requires Approval'),
+    ]
+    
+    name = models.CharField(max_length=100)
+    rule_type = models.CharField(max_length=30, choices=RULE_TYPES)
+    value = models.DecimalField(max_digits=10, decimal_places=2)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['rule_type', 'group']
+        indexes = [
+            models.Index(fields=['rule_type', 'is_active']),
+            models.Index(fields=['group', 'is_active']),
+        ]
+    
+    def __str__(self):
+        group_name = self.group.name if self.group else "Global"
+        return f"{self.name} ({group_name}): {self.value}"
+
+
+class ShiftConflict(models.Model):
+    """Track and manage shift conflicts"""
+    
+    CONFLICT_TYPES = [
+        ('OVERLAP', 'Overlapping Assignments'),
+        ('REST_VIOLATION', 'Insufficient Rest Period'),
+        ('MAX_HOURS', 'Maximum Hours Exceeded'),
+        ('ROLE_RESTRICTION', 'Role-Based Restriction'),
+        ('APPROVAL_REQUIRED', 'Requires Approval'),
+    ]
+    
+    CONFLICT_SEVERITY = [
+        ('LOW', 'Low - Warning Only'),
+        ('MEDIUM', 'Medium - Requires Review'),
+        ('HIGH', 'High - Blocks Assignment'),
+        ('CRITICAL', 'Critical - System Error'),
+    ]
+    
+    assignment = models.ForeignKey('ShiftAssignment', on_delete=models.CASCADE, related_name='conflicts')
+    conflict_type = models.CharField(max_length=20, choices=CONFLICT_TYPES)
+    severity = models.CharField(max_length=10, choices=CONFLICT_SEVERITY)
+    description = models.TextField()
+    conflicting_assignment = models.ForeignKey(
+        'ShiftAssignment', 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True,
+        related_name='causing_conflicts'
+    )
+    
+    is_resolved = models.BooleanField(default=False)
+    resolved_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='resolved_conflicts'
+    )
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    resolution_notes = models.TextField(blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['assignment', 'conflict_type']),
+            models.Index(fields=['severity', 'is_resolved']),
+            models.Index(fields=['created_at']),
+        ]
+    
+    def resolve(self, resolved_by_user, notes=""):
+        """Mark conflict as resolved"""
+        self.is_resolved = True
+        self.resolved_by = resolved_by_user
+        self.resolved_at = timezone.now()
+        self.resolution_notes = notes
+        self.save(update_fields=['is_resolved', 'resolved_by', 'resolved_at', 'resolution_notes'])
+    
+    def __str__(self):
+        return f"{self.get_conflict_type_display()} - {self.assignment.user.username} ({self.get_severity_display()})"
