@@ -11,22 +11,22 @@ class UserDetailsCreateForm(forms.ModelForm):
     # User model fields
     first_name = forms.CharField(
         max_length=30,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
+        widget=forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'})
     )
     last_name = forms.CharField(
         max_length=30,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
+        widget=forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'})
     )
     email = forms.EmailField(
-        widget=forms.EmailInput(attrs={'class': 'form-control'})
+        widget=forms.EmailInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'})
     )
     password = forms.CharField(
-        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        widget=forms.PasswordInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
         initial='Welcome@123'
     )
     group = forms.ModelChoiceField(
         queryset=Group.objects.all().order_by('name'),
-        widget=forms.Select(attrs={'class': 'form-control'}),
+        widget=forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
         help_text="Select user group/role",
         required=True
     )
@@ -51,53 +51,53 @@ class UserDetailsCreateForm(forms.ModelForm):
             'skills'
         ]
         widgets = {
-            'dob': forms.DateInput(attrs={'type': 'date', 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'}),
-            'blood_group': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'}),
-            'gender': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'}),
-            'marital_status': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'}),
-            'contact_number_primary': forms.TextInput(attrs={'class': 'form-control'}),
-            'personal_email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'company_email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'current_address_line1': forms.TextInput(attrs={'class': 'form-control'}),
-            'current_address_line2': forms.TextInput(attrs={'class': 'form-control'}),
-            'current_city': forms.TextInput(attrs={'class': 'form-control'}),
-            'current_state': forms.TextInput(attrs={'class': 'form-control'}),
-            'current_postal_code': forms.TextInput(attrs={'class': 'form-control'}),
-            'current_country': forms.TextInput(attrs={'class': 'form-control'}),
-            'permanent_address_line1': forms.TextInput(attrs={'class': 'form-control'}),
-            'permanent_address_line2': forms.TextInput(attrs={'class': 'form-control'}),
-            'permanent_city': forms.TextInput(attrs={'class': 'form-control'}),
-            'permanent_state': forms.TextInput(attrs={'class': 'form-control'}),
-            'permanent_postal_code': forms.TextInput(attrs={'class': 'form-control'}),
-            'permanent_country': forms.TextInput(attrs={'class': 'form-control'}),
+            'dob': forms.DateInput(attrs={'type': 'date', 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'blood_group': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'gender': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'marital_status': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'contact_number_primary': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'personal_email': forms.EmailInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'company_email': forms.EmailInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'current_address_line1': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'current_address_line2': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'current_city': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'current_state': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'current_postal_code': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'current_country': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'permanent_address_line1': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'permanent_address_line2': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'permanent_city': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'permanent_state': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'permanent_postal_code': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'permanent_country': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
             'is_current_same_as_permanent': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'emergency_contact_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'emergency_contact_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'emergency_contact_relationship': forms.TextInput(attrs={'class': 'form-control'}),
-            'employee_type': forms.Select(attrs={'class': 'form-control'}),
-            'role': forms.Select(attrs={'class': 'form-control'}),
-            'reporting_manager': forms.Select(attrs={'class': 'form-control'}),
-            'hire_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'probation_end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'notice_period_days': forms.NumberInput(attrs={'class': 'form-control'}),
-            'job_description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'office_location': forms.Select(attrs={'class': 'form-control'}),
-            'employment_status': forms.Select(attrs={'class': 'form-control'}),
-            'salary_currency': forms.TextInput(attrs={'class': 'form-control'}),
-            'base_salary': forms.NumberInput(attrs={'class': 'form-control'}),
-            'salary_frequency': forms.Select(attrs={'class': 'form-control'}),
-            'pan_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'aadhar_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'passport_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'passport_expiry': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'bank_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'bank_account_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'bank_ifsc': forms.TextInput(attrs={'class': 'form-control'}),
-            'previous_company': forms.TextInput(attrs={'class': 'form-control'}),
-            'previous_position': forms.TextInput(attrs={'class': 'form-control'}),
-            'previous_experience_years': forms.NumberInput(attrs={'class': 'form-control'}),
-            'skills': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'emergency_contact_name': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'emergency_contact_number': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'emergency_contact_relationship': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'employee_type': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'role': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'reporting_manager': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'hire_date': forms.DateInput(attrs={'type': 'date', 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'probation_end_date': forms.DateInput(attrs={'type': 'date', 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'notice_period_days': forms.NumberInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'job_description': forms.Textarea(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500', 'rows': 3}),
+            'office_location': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'employment_status': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'salary_currency': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'base_salary': forms.NumberInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'salary_frequency': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'pan_number': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'aadhar_number': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'passport_number': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'passport_expiry': forms.DateInput(attrs={'type': 'date', 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'bank_name': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'bank_account_number': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'bank_ifsc': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'previous_company': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'previous_position': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'previous_experience_years': forms.NumberInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'skills': forms.Textarea(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500', 'rows': 3}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -145,20 +145,20 @@ class UserDetailsUpdateForm(forms.ModelForm):
     first_name = forms.CharField(
         max_length=30,
         required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
+        widget=forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'})
     )
     last_name = forms.CharField(
         max_length=30,
         required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
+        widget=forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'})
     )
     email = forms.EmailField(
         required=False,
-        widget=forms.EmailInput(attrs={'class': 'form-control'})
+        widget=forms.EmailInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'})
     )
     group = forms.ModelChoiceField(
         queryset=Group.objects.all().order_by('name'),
-        widget=forms.Select(attrs={'class': 'form-control'}),
+        widget=forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
         help_text="Select user group/role",
         required=False
     )
@@ -187,60 +187,60 @@ class UserDetailsUpdateForm(forms.ModelForm):
             'skills', 'confidential_notes'
         ]
         widgets = {
-            'dob': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'blood_group': forms.Select(attrs={'class': 'form-control'}),
-            'gender': forms.Select(attrs={'class': 'form-control'}),
-            'marital_status': forms.Select(attrs={'class': 'form-control'}),
-            'contact_number_primary': forms.TextInput(attrs={'class': 'form-control'}),
-            'personal_email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'company_email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'current_address_line1': forms.TextInput(attrs={'class': 'form-control'}),
-            'current_address_line2': forms.TextInput(attrs={'class': 'form-control'}),
-            'current_city': forms.TextInput(attrs={'class': 'form-control'}),
-            'current_state': forms.TextInput(attrs={'class': 'form-control'}),
-            'current_postal_code': forms.TextInput(attrs={'class': 'form-control'}),
-            'current_country': forms.TextInput(attrs={'class': 'form-control'}),
-            'permanent_address_line1': forms.TextInput(attrs={'class': 'form-control'}),
-            'permanent_address_line2': forms.TextInput(attrs={'class': 'form-control'}),
-            'permanent_city': forms.TextInput(attrs={'class': 'form-control'}),
-            'permanent_state': forms.TextInput(attrs={'class': 'form-control'}),
-            'permanent_postal_code': forms.TextInput(attrs={'class': 'form-control'}),
-            'permanent_country': forms.TextInput(attrs={'class': 'form-control'}),
+            'dob': forms.DateInput(attrs={'type': 'date', 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'blood_group': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'gender': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'marital_status': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'contact_number_primary': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'personal_email': forms.EmailInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'company_email': forms.EmailInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'current_address_line1': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'current_address_line2': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'current_city': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'current_state': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'current_postal_code': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'current_country': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'permanent_address_line1': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'permanent_address_line2': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'permanent_city': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'permanent_state': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'permanent_postal_code': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'permanent_country': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
             'is_current_same_as_permanent': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'emergency_contact_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'emergency_contact_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'emergency_contact_relationship': forms.TextInput(attrs={'class': 'form-control'}),
-            'secondary_emergency_contact_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'secondary_emergency_contact_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'secondary_emergency_contact_relationship': forms.TextInput(attrs={'class': 'form-control'}),
-            'employee_type': forms.Select(attrs={'class': 'form-control'}),
-            'role': forms.Select(attrs={'class': 'form-control'}),
-            'reporting_manager': forms.Select(attrs={'class': 'form-control'}),
-            'hire_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'probation_end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'notice_period_days': forms.NumberInput(attrs={'class': 'form-control'}),
-            'job_description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'office_location': forms.Select(attrs={'class': 'form-control'}),
-            'employment_status': forms.Select(attrs={'class': 'form-control'}),
-            'exit_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'exit_reason': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'rehire_eligibility': forms.Select(choices=[(True, 'Yes'), (False, 'No')], attrs={'class': 'form-control'}),
-            'salary_currency': forms.TextInput(attrs={'class': 'form-control'}),
-            'base_salary': forms.NumberInput(attrs={'class': 'form-control'}),
-            'salary_frequency': forms.Select(attrs={'class': 'form-control'}),
-            'pan_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'aadhar_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'passport_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'passport_expiry': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'bank_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'bank_account_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'bank_ifsc': forms.TextInput(attrs={'class': 'form-control'}),
-            'previous_company': forms.TextInput(attrs={'class': 'form-control'}),
-            'previous_position': forms.TextInput(attrs={'class': 'form-control'}),
-            'previous_experience_years': forms.NumberInput(attrs={'class': 'form-control'}),
-            'skills': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'confidential_notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'emergency_contact_name': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'emergency_contact_number': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'emergency_contact_relationship': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'secondary_emergency_contact_name': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'secondary_emergency_contact_number': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'secondary_emergency_contact_relationship': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'employee_type': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'role': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'reporting_manager': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'hire_date': forms.DateInput(attrs={'type': 'date', 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'probation_end_date': forms.DateInput(attrs={'type': 'date', 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'notice_period_days': forms.NumberInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'job_description': forms.Textarea(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500', 'rows': 3}),
+            'office_location': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'employment_status': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'exit_date': forms.DateInput(attrs={'type': 'date', 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'exit_reason': forms.Textarea(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500', 'rows': 3}),
+            'rehire_eligibility': forms.Select(choices=[(True, 'Yes'), (False, 'No')], attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'salary_currency': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'base_salary': forms.NumberInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'salary_frequency': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'pan_number': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'aadhar_number': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'passport_number': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'passport_expiry': forms.DateInput(attrs={'type': 'date', 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'bank_name': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'bank_account_number': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'bank_ifsc': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'previous_company': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'previous_position': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'previous_experience_years': forms.NumberInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'skills': forms.Textarea(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500', 'rows': 3}),
+            'confidential_notes': forms.Textarea(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500', 'rows': 4}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -298,18 +298,18 @@ class CSVImportForm(forms.Form):
     csv_file = forms.FileField(
         label='CSV/XLSX File',
         help_text='Upload a CSV or XLSX file with columns: first_name, last_name, email, employee_type (optional)',
-        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': '.csv,.xlsx,.xls'})
+        widget=forms.FileInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500', 'accept': '.csv,.xlsx,.xls'})
     )
 
     group = forms.ModelChoiceField(
         queryset=Group.objects.all().order_by('name'),
-        widget=forms.Select(attrs={'class': 'form-control'}),
+        widget=forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
         help_text="All imported users will be assigned to this group"
     )
 
     office_location = forms.ModelChoiceField(
         queryset=OfficeLocation.objects.filter(is_active=True),
-        widget=forms.Select(attrs={'class': 'form-control'}),
+        widget=forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
         help_text="All imported users will be assigned to this office location"
     )
 
@@ -334,12 +334,12 @@ class UserProfileForm(forms.ModelForm):
     first_name = forms.CharField(
         max_length=30,
         required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
+        widget=forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'})
     )
     last_name = forms.CharField(
         max_length=30,
         required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
+        widget=forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'})
     )
 
     class Meta:
@@ -361,40 +361,40 @@ class UserProfileForm(forms.ModelForm):
             'skills'
         ]
         widgets = {
-            'dob': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'blood_group': forms.Select(attrs={'class': 'form-control'}),
-            'gender': forms.Select(attrs={'class': 'form-control'}),
-            'marital_status': forms.Select(attrs={'class': 'form-control'}),
-            'contact_number_primary': forms.TextInput(attrs={'class': 'form-control'}),
-            'personal_email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'current_address_line1': forms.TextInput(attrs={'class': 'form-control'}),
-            'current_address_line2': forms.TextInput(attrs={'class': 'form-control'}),
-            'current_city': forms.TextInput(attrs={'class': 'form-control'}),
-            'current_state': forms.TextInput(attrs={'class': 'form-control'}),
-            'current_postal_code': forms.TextInput(attrs={'class': 'form-control'}),
-            'current_country': forms.TextInput(attrs={'class': 'form-control'}),
-            'permanent_address_line1': forms.TextInput(attrs={'class': 'form-control'}),
-            'permanent_address_line2': forms.TextInput(attrs={'class': 'form-control'}),
-            'permanent_city': forms.TextInput(attrs={'class': 'form-control'}),
-            'permanent_state': forms.TextInput(attrs={'class': 'form-control'}),
-            'permanent_postal_code': forms.TextInput(attrs={'class': 'form-control'}),
-            'permanent_country': forms.TextInput(attrs={'class': 'form-control'}),
+            'dob': forms.DateInput(attrs={'type': 'date', 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'blood_group': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'gender': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'marital_status': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'contact_number_primary': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'personal_email': forms.EmailInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'current_address_line1': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'current_address_line2': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'current_city': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'current_state': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'current_postal_code': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'current_country': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'permanent_address_line1': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'permanent_address_line2': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'permanent_city': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'permanent_state': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'permanent_postal_code': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'permanent_country': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
             'is_current_same_as_permanent': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'emergency_contact_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'emergency_contact_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'emergency_contact_relationship': forms.TextInput(attrs={'class': 'form-control'}),
-            'secondary_emergency_contact_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'secondary_emergency_contact_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'secondary_emergency_contact_relationship': forms.TextInput(attrs={'class': 'form-control'}),
-            'passport_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'passport_expiry': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'bank_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'bank_account_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'bank_ifsc': forms.TextInput(attrs={'class': 'form-control'}),
-            'previous_company': forms.TextInput(attrs={'class': 'form-control'}),
-            'previous_position': forms.TextInput(attrs={'class': 'form-control'}),
-            'previous_experience_years': forms.NumberInput(attrs={'class': 'form-control'}),
-            'skills': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'emergency_contact_name': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'emergency_contact_number': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'emergency_contact_relationship': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'secondary_emergency_contact_name': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'secondary_emergency_contact_number': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'secondary_emergency_contact_relationship': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'passport_number': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'passport_expiry': forms.DateInput(attrs={'type': 'date', 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'bank_name': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'bank_account_number': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'bank_ifsc': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'previous_company': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'previous_position': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'previous_experience_years': forms.NumberInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'skills': forms.Textarea(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500', 'rows': 3}),
         }
 
     def __init__(self, *args, **kwargs):

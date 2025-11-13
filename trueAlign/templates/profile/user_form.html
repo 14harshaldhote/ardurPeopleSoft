@@ -1,893 +1,362 @@
-{% extends 'base.html' %} {% block title %}{{ title }} - TrueAlign Portal{% endblock %} {% block content %}
+{% extends 'base.html' %}
+{% block title %}{{ title }} - TrueAlign Portal{% endblock %}
 
-<div
-    class="min-h-screen py-6 px-4 lg:px-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100"
->
-    <div class="max-w-4xl mx-auto">
-        <!-- Header Section -->
-        <div
-            class="relative overflow-hidden mb-8 rounded-2xl bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl"
-        >
-            <div
-                class="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-pink-500/10"
-            ></div>
-            <div class="relative p-8">
-                <div
-                    class="flex flex-col lg:flex-row justify-between items-start lg:items-center"
-                >
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
                     <div>
-                        <h1
-                            class="text-4xl font-bold text-slate-800 mb-2 tracking-wide"
-                        >
-                            {{ title }}
-                        </h1>
-                        <p class="text-slate-600 text-lg">
-                            {% if form.instance.pk %} Update employee
-                            information and profile details {% else %} Create a
-                            new employee profile in the system {% endif %}
+                        <h1 class="text-2xl font-semibold text-gray-900">{{ title }}</h1>
+                        <p class="text-sm text-gray-600 mt-1">
+                            {% if form.instance.pk %}
+                                Update employee information and profile details
+                            {% else %}
+                                Create a new employee profile in the system
+                            {% endif %}
                         </p>
                     </div>
-                    <div class="flex flex-wrap gap-3 mt-6 lg:mt-0">
-                        <a
-                            href="{% url 'profile:user-list' %}"
-                            class="bg-white/80 backdrop-blur-sm hover:bg-white text-slate-700 hover:text-slate-900 px-6 py-3 rounded-xl border border-slate-200 transition-all duration-300 font-semibold tracking-wide shadow-md hover:shadow-lg"
-                        >
-                            <i class="fas fa-arrow-left mr-2"></i>Back to List
-                        </a>
-                    </div>
+                    <a href="{% url 'profile:user-list' %}" 
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                        Back to List
+                    </a>
                 </div>
             </div>
         </div>
 
         <!-- Form Container -->
-        <div
-            class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden"
-        >
-            <form method="post" enctype="multipart/form-data" class="space-y-0">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
 
                 <!-- Personal Information Section -->
-                <div
-                    class="p-8 border-b border-slate-200 bg-gradient-to-r from-slate-50/50 to-slate-100/50"
-                >
-                    <div class="flex items-center mb-8">
-                        <div
-                            class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center"
-                        >
-                            <i class="fas fa-user text-white text-xl"></i>
-                        </div>
-                        <h2
-                            class="text-2xl font-bold text-slate-800 ml-4 tracking-wide"
-                        >
-                            Personal Information
-                        </h2>
+                <div class="px-6 py-6 border-b border-gray-200">
+                    <div class="flex items-center mb-6">
+                        <svg class="w-6 h-6 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                        <h2 class="text-lg font-medium text-gray-900">Personal Information</h2>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- First Name -->
-                        <div class="space-y-2">
-                            <label
-                                class="block text-sm font-semibold text-slate-700 tracking-wide"
-                            >
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
                                 First Name <span class="text-red-500">*</span>
                             </label>
-                            <div class="relative">
-                                <i
-                                    class="fas fa-user absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"
-                                ></i>
-                                <input
-                                    type="text"
-                                    name="first_name"
-                                    value="{{ form.first_name.value|default:'' }}"
-                                    class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 font-medium"
-                                    placeholder="Enter first name"
-                                    required
-                                />
-                            </div>
+                            <input
+                                type="text"
+                                name="first_name"
+                                value="{{ form.first_name.value|default:'' }}"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Enter first name"
+                                required
+                            />
                             {% if form.first_name.errors %}
-                            <p class="text-red-600 text-sm font-medium">
-                                {{ form.first_name.errors.0 }}
-                            </p>
+                            <p class="text-red-600 text-sm mt-1">{{ form.first_name.errors.0 }}</p>
                             {% endif %}
                         </div>
 
                         <!-- Last Name -->
-                        <div class="space-y-2">
-                            <label
-                                class="block text-sm font-semibold text-slate-700 tracking-wide"
-                            >
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
                                 Last Name <span class="text-red-500">*</span>
                             </label>
-                            <div class="relative">
-                                <i
-                                    class="fas fa-user absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"
-                                ></i>
-                                <input
-                                    type="text"
-                                    name="last_name"
-                                    value="{{ form.last_name.value|default:'' }}"
-                                    class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 font-medium"
-                                    placeholder="Enter last name"
-                                    required
-                                />
-                            </div>
+                            <input
+                                type="text"
+                                name="last_name"
+                                value="{{ form.last_name.value|default:'' }}"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Enter last name"
+                                required
+                            />
                             {% if form.last_name.errors %}
-                            <p class="text-red-600 text-sm font-medium">
-                                {{ form.last_name.errors.0 }}
-                            </p>
-                            {% endif %}
-                        </div>
-
-                        <!-- Username -->
-                        <div class="space-y-2">
-                            <label
-                                class="block text-sm font-semibold text-slate-700 tracking-wide"
-                            >
-                                Username <span class="text-red-500">*</span>
-                            </label>
-                            <div class="relative">
-                                <i
-                                    class="fas fa-at absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"
-                                ></i>
-                                <input
-                                    type="text"
-                                    name="username"
-                                    value="{{ form.username.value|default:'' }}"
-                                    class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 font-medium"
-                                    placeholder="Enter username"
-                                    required
-                                />
-                            </div>
-                            {% if form.username.errors %}
-                            <p class="text-red-600 text-sm font-medium">
-                                {{ form.username.errors.0 }}
-                            </p>
+                            <p class="text-red-600 text-sm mt-1">{{ form.last_name.errors.0 }}</p>
                             {% endif %}
                         </div>
 
                         <!-- Email -->
-                        <div class="space-y-2">
-                            <label
-                                class="block text-sm font-semibold text-slate-700 tracking-wide"
-                            >
-                                Email Address
-                                <span class="text-red-500">*</span>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Email Address <span class="text-red-500">*</span>
                             </label>
-                            <div class="relative">
-                                <i
-                                    class="fas fa-envelope absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"
-                                ></i>
-                                <input
-                                    type="email"
-                                    name="email"
-                                    value="{{ form.email.value|default:'' }}"
-                                    class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 font-medium"
-                                    placeholder="Enter email address"
-                                    required
-                                />
-                            </div>
+                            <input
+                                type="email"
+                                name="email"
+                                value="{{ form.email.value|default:'' }}"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Enter email address"
+                                required
+                            />
                             {% if form.email.errors %}
-                            <p class="text-red-600 text-sm font-medium">
-                                {{ form.email.errors.0 }}
-                            </p>
+                            <p class="text-red-600 text-sm mt-1">{{ form.email.errors.0 }}</p>
                             {% endif %}
                         </div>
 
                         <!-- Date of Birth -->
-                        <div class="space-y-2">
-                            <label
-                                class="block text-sm font-semibold text-slate-700 tracking-wide"
-                                >Date of Birth</label
-                            >
-                            <div class="relative">
-                                <i
-                                    class="fas fa-calendar absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"
-                                ></i>
-                                <input
-                                    type="date"
-                                    name="dob"
-                                    value="{{ form.dob.value|date:'Y-m-d'|default:'' }}"
-                                    class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 font-medium"
-                                />
-                            </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
+                            <input
+                                type="date"
+                                name="dob"
+                                value="{{ form.dob.value|date:'Y-m-d'|default:'' }}"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
                             {% if form.dob.errors %}
-                            <p class="text-red-600 text-sm font-medium">
-                                {{ form.dob.errors.0 }}
-                            </p>
+                            <p class="text-red-600 text-sm mt-1">{{ form.dob.errors.0 }}</p>
                             {% endif %}
                         </div>
 
                         <!-- Gender -->
-                        <div class="space-y-2">
-                            <label
-                                class="block text-sm font-semibold text-slate-700 tracking-wide"
-                                >Gender</label
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+                            <select
+                                name="gender"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             >
-                            <div class="relative">
-                                <i
-                                    class="fas fa-venus-mars absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"
-                                ></i>
-                                <select
-                                    name="gender"
-                                    class="w-full pl-12 pr-10 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 font-medium appearance-none"
-                                >
-                                    <option value="">Select gender</option>
-                                    <option
-                                        value="Male"
-                                        {%
-                                        if
-                                        form.gender.value=""
-                                        ="Male"
-                                        %}selected{%
-                                        endif
-                                        %}
-                                    >
-                                        Male
-                                    </option>
-                                    <option
-                                        value="Female"
-                                        {%
-                                        if
-                                        form.gender.value=""
-                                        ="Female"
-                                        %}selected{%
-                                        endif
-                                        %}
-                                    >
-                                        Female
-                                    </option>
-                                    <option
-                                        value="Other"
-                                        {%
-                                        if
-                                        form.gender.value=""
-                                        ="Other"
-                                        %}selected{%
-                                        endif
-                                        %}
-                                    >
-                                        Other
-                                    </option>
-                                    <option
-                                        value="Prefer not to say"
-                                        {%
-                                        if
-                                        form.gender.value=""
-                                        ="Prefer not to say"
-                                        %}selected{%
-                                        endif
-                                        %}
-                                    >
-                                        Prefer not to say
-                                    </option>
-                                </select>
-                                <i
-                                    class="fas fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none"
-                                ></i>
-                            </div>
+                                <option value="">Select gender</option>
+                                <option value="Male" {% if form.gender.value == "Male" %}selected{% endif %}>Male</option>
+                                <option value="Female" {% if form.gender.value == "Female" %}selected{% endif %}>Female</option>
+                                <option value="Other" {% if form.gender.value == "Other" %}selected{% endif %}>Other</option>
+                                <option value="Prefer not to say" {% if form.gender.value == "Prefer not to say" %}selected{% endif %}>Prefer not to say</option>
+                            </select>
                             {% if form.gender.errors %}
-                            <p class="text-red-600 text-sm font-medium">
-                                {{ form.gender.errors.0 }}
-                            </p>
+                            <p class="text-red-600 text-sm mt-1">{{ form.gender.errors.0 }}</p>
                             {% endif %}
                         </div>
-                    </div>
-                </div>
 
-                <!-- Contact Information Section -->
-                <div class="p-8 border-b border-slate-200">
-                    <div class="flex items-center mb-8">
-                        <div
-                            class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center"
-                        >
-                            <i class="fas fa-phone text-white text-xl"></i>
-                        </div>
-                        <h2
-                            class="text-2xl font-bold text-slate-800 ml-4 tracking-wide"
-                        >
-                            Contact Information
-                        </h2>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Primary Phone -->
-                        <div class="space-y-2">
-                            <label
-                                class="block text-sm font-semibold text-slate-700 tracking-wide"
-                                >Primary Phone</label
-                            >
-                            <div class="relative">
-                                <i
-                                    class="fas fa-phone absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"
-                                ></i>
-                                <input
-                                    type="tel"
-                                    name="contact_number_primary"
-                                    value="{{ form.contact_number_primary.value|default:'' }}"
-                                    class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 font-medium"
-                                    placeholder="Enter primary phone number"
-                                />
-                            </div>
+                        <!-- Phone Number -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Primary Phone</label>
+                            <input
+                                type="tel"
+                                name="contact_number_primary"
+                                value="{{ form.contact_number_primary.value|default:'' }}"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Enter phone number"
+                            />
                             {% if form.contact_number_primary.errors %}
-                            <p class="text-red-600 text-sm font-medium">
-                                {{ form.contact_number_primary.errors.0 }}
-                            </p>
+                            <p class="text-red-600 text-sm mt-1">{{ form.contact_number_primary.errors.0 }}</p>
                             {% endif %}
-                        </div>
-
-                        <!-- Secondary Phone -->
-                        <div class="space-y-2">
-                            <label
-                                class="block text-sm font-semibold text-slate-700 tracking-wide"
-                                >Secondary Phone</label
-                            >
-                            <div class="relative">
-                                <i
-                                    class="fas fa-phone-alt absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"
-                                ></i>
-                                <input
-                                    type="tel"
-                                    name="contact_number_secondary"
-                                    value="{{ form.contact_number_secondary.value|default:'' }}"
-                                    class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 font-medium"
-                                    placeholder="Enter secondary phone number"
-                                />
-                            </div>
-                            {% if form.contact_number_secondary.errors %}
-                            <p class="text-red-600 text-sm font-medium">
-                                {{ form.contact_number_secondary.errors.0 }}
-                            </p>
-                            {% endif %}
-                        </div>
-
-                        <!-- Current Address Line 1 -->
-                        <div class="md:col-span-2 space-y-2">
-                            <label
-                                class="block text-sm font-semibold text-slate-700 tracking-wide"
-                                >Current Address</label
-                            >
-                            <div class="relative">
-                                <i
-                                    class="fas fa-map-marker-alt absolute left-4 top-4 text-slate-400"
-                                ></i>
-                                <input
-                                    type="text"
-                                    name="current_address_line1"
-                                    value="{{ form.current_address_line1.value|default:'' }}"
-                                    class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 font-medium"
-                                    placeholder="Street address"
-                                />
-                            </div>
-                            {% if form.current_address_line1.errors %}
-                            <p class="text-red-600 text-sm font-medium">
-                                {{ form.current_address_line1.errors.0 }}
-                            </p>
-                            {% endif %}
-                        </div>
-
-                        <!-- City, State, Postal Code -->
-                        <div class="space-y-2">
-                            <label
-                                class="block text-sm font-semibold text-slate-700 tracking-wide"
-                                >City</label
-                            >
-                            <div class="relative">
-                                <i
-                                    class="fas fa-city absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"
-                                ></i>
-                                <input
-                                    type="text"
-                                    name="current_city"
-                                    value="{{ form.current_city.value|default:'' }}"
-                                    class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 font-medium"
-                                    placeholder="City"
-                                />
-                            </div>
-                        </div>
-
-                        <div class="space-y-2">
-                            <label
-                                class="block text-sm font-semibold text-slate-700 tracking-wide"
-                                >State / Postal Code</label
-                            >
-                            <div class="flex gap-3">
-                                <div class="relative flex-1">
-                                    <input
-                                        type="text"
-                                        name="current_state"
-                                        value="{{ form.current_state.value|default:'' }}"
-                                        class="w-full px-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 font-medium"
-                                        placeholder="State"
-                                    />
-                                </div>
-                                <div class="relative flex-1">
-                                    <input
-                                        type="text"
-                                        name="current_postal_code"
-                                        value="{{ form.current_postal_code.value|default:'' }}"
-                                        class="w-full px-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 font-medium"
-                                        placeholder="Postal Code"
-                                    />
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Employment Information Section -->
-                <div class="p-8 border-b border-slate-200">
-                    <div class="flex items-center mb-8">
-                        <div
-                            class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center"
-                        >
-                            <i class="fas fa-briefcase text-white text-xl"></i>
-                        </div>
-                        <h2
-                            class="text-2xl font-bold text-slate-800 ml-4 tracking-wide"
-                        >
-                            Employment Details
-                        </h2>
+                <div class="px-6 py-6 border-b border-gray-200">
+                    <div class="flex items-center mb-6">
+                        <svg class="w-6 h-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6"/>
+                        </svg>
+                        <h2 class="text-lg font-medium text-gray-900">Employment Details</h2>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Employment Status -->
-                        <div class="space-y-2">
-                            <label
-                                class="block text-sm font-semibold text-slate-700 tracking-wide"
-                                >Employment Status</label
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Employment Status</label>
+                            <select
+                                name="employment_status"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             >
-                            <div class="relative">
-                                <i
-                                    class="fas fa-user-check absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"
-                                ></i>
-                                <select
-                                    name="employment_status"
-                                    class="w-full pl-12 pr-10 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 font-medium appearance-none"
-                                >
-                                    <option value="">Select status</option>
-                                    <option
-                                        value="active"
-                                        {%
-                                        if
-                                        form.employment_status.value=""
-                                        ="active"
-                                        %}selected{%
-                                        endif
-                                        %}
-                                    >
-                                        Active
-                                    </option>
-                                    <option
-                                        value="inactive"
-                                        {%
-                                        if
-                                        form.employment_status.value=""
-                                        ="inactive"
-                                        %}selected{%
-                                        endif
-                                        %}
-                                    >
-                                        Inactive
-                                    </option>
-                                    <option
-                                        value="probation"
-                                        {%
-                                        if
-                                        form.employment_status.value=""
-                                        ="probation"
-                                        %}selected{%
-                                        endif
-                                        %}
-                                    >
-                                        Probation
-                                    </option>
-                                    <option
-                                        value="terminated"
-                                        {%
-                                        if
-                                        form.employment_status.value=""
-                                        ="terminated"
-                                        %}selected{%
-                                        endif
-                                        %}
-                                    >
-                                        Terminated
-                                    </option>
-                                    <option
-                                        value="resigned"
-                                        {%
-                                        if
-                                        form.employment_status.value=""
-                                        ="resigned"
-                                        %}selected{%
-                                        endif
-                                        %}
-                                    >
-                                        Resigned
-                                    </option>
-                                </select>
-                                <i
-                                    class="fas fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none"
-                                ></i>
-                            </div>
+                                <option value="">Select status</option>
+                                {% for value, label in form.employment_status.field.choices %}
+                                <option value="{{ value }}" {% if form.employment_status.value == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if form.employment_status.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.employment_status.errors.0 }}</p>
+                            {% endif %}
                         </div>
 
                         <!-- Employee Type -->
-                        <div class="space-y-2">
-                            <label
-                                class="block text-sm font-semibold text-slate-700 tracking-wide"
-                                >Employee Type</label
-                            >
-                            <div class="relative">
-                                <i
-                                    class="fas fa-id-badge absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"
-                                ></i>
-                                <select
-                                    name="employee_type"
-                                    class="w-full pl-12 pr-10 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 font-medium appearance-none"
-                                >
-                                    <option value="">Select type</option>
-                                    <option
-                                        value="full_time"
-                                        {%
-                                        if
-                                        form.employee_type.value=""
-                                        ="full_time"
-                                        %}selected{%
-                                        endif
-                                        %}
-                                    >
-                                        Full-Time Employee
-                                    </option>
-                                    <option
-                                        value="part_time"
-                                        {%
-                                        if
-                                        form.employee_type.value=""
-                                        ="part_time"
-                                        %}selected{%
-                                        endif
-                                        %}
-                                    >
-                                        Part-Time Employee
-                                    </option>
-                                    <option
-                                        value="contract"
-                                        {%
-                                        if
-                                        form.employee_type.value=""
-                                        ="contract"
-                                        %}selected{%
-                                        endif
-                                        %}
-                                    >
-                                        Contract Employee
-                                    </option>
-                                    <option
-                                        value="intern"
-                                        {%
-                                        if
-                                        form.employee_type.value=""
-                                        ="intern"
-                                        %}selected{%
-                                        endif
-                                        %}
-                                    >
-                                        Intern
-                                    </option>
-                                    <option
-                                        value="consultant"
-                                        {%
-                                        if
-                                        form.employee_type.value=""
-                                        ="consultant"
-                                        %}selected{%
-                                        endif
-                                        %}
-                                    >
-                                        Consultant
-                                    </option>
-                                </select>
-                                <i
-                                    class="fas fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none"
-                                ></i>
-                            </div>
-                        </div>
-                        <!-- Role -->
-                        <div class="space-y-2">
-                          <label class="block text-sm font-semibold text-slate-700 tracking-wide" for="{{ form.role.id_for_label }}">
-                            Role
-                          </label>
-
-                          <div class="relative">
-                            <!-- left icon (user-tie) -->
-                            <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 11a4 4 0 100-8 4 4 0 000 8z"/>
-                              </svg>
-                            </div>
-
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Employee Type</label>
                             <select
-                              name="role"
-                              class="w-full pl-12 pr-10 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 font-medium appearance-none"
+                                name="employee_type"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             >
-                              {% for choice_value, choice_label in form.role.field.choices %}
-                              <option
-                                value="{{ choice_value }}"
-                                {% if form.role.value == choice_value %}selected{% endif %}
-                              >
-                                {{ choice_label }}
-                              </option>
-                              {% endfor %}
+                                <option value="">Select type</option>
+                                {% for value, label in form.employee_type.field.choices %}
+                                <option value="{{ value }}" {% if form.employee_type.value == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
                             </select>
-
-                            <!-- right chevron -->
-                            <div class="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/>
-                              </svg>
-                            </div>
-                          </div>
-
-                          {% if form.role.errors %}
-                            <p class="text-sm text-red-600 mt-2">{{ form.role.errors.0 }}</p>
-                          {% endif %}
+                            {% if form.employee_type.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.employee_type.errors.0 }}</p>
+                            {% endif %}
                         </div>
 
+                        <!-- Role -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                            <select
+                                name="role"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                {% for choice_value, choice_label in form.role.field.choices %}
+                                <option value="{{ choice_value }}" {% if form.role.value == choice_value %}selected{% endif %}>
+                                    {{ choice_label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.role.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.role.errors.0 }}</p>
+                            {% endif %}
+                        </div>
 
                         <!-- Office Location -->
-                        <div class="space-y-2">
-                            <label
-                                class="block text-sm font-semibold text-slate-700 tracking-wide"
-                                >Office Location</label
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Office Location</label>
+                            <select
+                                name="office_location"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             >
-                            <div class="relative">
-                                <i
-                                    class="fas fa-building absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"
-                                ></i>
-                                <select
-                                    name="office_location"
-                                    class="w-full pl-12 pr-10 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 font-medium appearance-none"
-                                >
-                                    <option value="">Select location</option>
-                                    {% for location in form.office_location.field.queryset %}
-                                    <option
-                                        value="{{ location.id }}"
-                                        {% if form.office_location.value == location.id|stringformat:"s" %}selected{% endif %}
-                                    >
-                                        {{ location.name }} - {{ location.city }}, {{ location.state }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                                <i
-                                    class="fas fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none"
-                                ></i>
-                            </div>
+                                <option value="">Select location</option>
+                                {% for location in form.office_location.field.queryset %}
+                                <option value="{{ location.id }}" {% if form.office_location.value == location.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ location.name }} - {{ location.city }}, {{ location.state }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.office_location.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.office_location.errors.0 }}</p>
+                            {% endif %}
                         </div>
 
                         <!-- Hire Date -->
-                        <div class="space-y-2">
-                            <label
-                                class="block text-sm font-semibold text-slate-700 tracking-wide"
-                                >Hire Date</label
-                            >
-                            <div class="relative">
-                                <i
-                                    class="fas fa-calendar-plus absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"
-                                ></i>
-                                <input
-                                    type="date"
-                                    name="hire_date"
-                                    value="{{ form.hire_date.value|date:'Y-m-d'|default:'' }}"
-                                    class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 font-medium"
-                                />
-                            </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Hire Date</label>
+                            <input
+                                type="date"
+                                name="hire_date"
+                                value="{{ form.hire_date.value|date:'Y-m-d'|default:'' }}"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                            {% if form.hire_date.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.hire_date.errors.0 }}</p>
+                            {% endif %}
                         </div>
 
                         <!-- Start Date -->
-                        <div class="space-y-2">
-                            <label
-                                class="block text-sm font-semibold text-slate-700 tracking-wide"
-                                >Start Date</label
-                            >
-                            <div class="relative">
-                                <i
-                                    class="fas fa-calendar-check absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"
-                                ></i>
-                                <input
-                                    type="date"
-                                    name="start_date"
-                                    value="{{ form.start_date.value|date:'Y-m-d'|default:'' }}"
-                                    class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 font-medium"
-                                />
-                            </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                            <input
+                                type="date"
+                                name="start_date"
+                                value="{{ form.start_date.value|date:'Y-m-d'|default:'' }}"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                            {% if form.start_date.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.start_date.errors.0 }}</p>
+                            {% endif %}
                         </div>
 
                         <!-- Job Description -->
-                        <div class="md:col-span-2 space-y-2">
-                            <label
-                                class="block text-sm font-semibold text-slate-700 tracking-wide"
-                                >Job Description</label
-                            >
-                            <div class="relative">
-                                <i
-                                    class="fas fa-file-alt absolute left-4 top-4 text-slate-400"
-                                ></i>
-                                <textarea
-                                    name="job_description"
-                                    rows="4"
-                                    class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 font-medium resize-none"
-                                    placeholder="Enter job description and responsibilities"
-                                >
-{{ form.job_description.value|default:'' }}</textarea
-                                >
-                            </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Job Description</label>
+                            <textarea
+                                name="job_description"
+                                rows="4"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Enter job description and responsibilities"
+                            >{{ form.job_description.value|default:'' }}</textarea>
+                            {% if form.job_description.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.job_description.errors.0 }}</p>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
 
                 <!-- Account & Security Section -->
-                <div
-                    class="p-8 border-b border-slate-200 bg-gradient-to-r from-amber-50/50 to-orange-50/50"
-                >
-                    <div class="flex items-center mb-8">
-                        <div
-                            class="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center"
-                        >
-                            <i class="fas fa-key text-white text-xl"></i>
-                        </div>
-                        <h2
-                            class="text-2xl font-bold text-slate-800 ml-4 tracking-wide"
-                        >
-                            Account & Security
-                        </h2>
+                <div class="px-6 py-6 border-b border-gray-200">
+                    <div class="flex items-center mb-6">
+                        <svg class="w-6 h-6 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                        <h2 class="text-lg font-medium text-gray-900">Account & Security</h2>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-{% if form.instance.pk %}2{% else %}3{% endif %} gap-6">
-                        <!-- Group/Role Assignment -->
-                        <div class="space-y-2">
-                            <label
-                                class="block text-sm font-semibold text-slate-700 tracking-wide"
-                            >
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- User Group -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
                                 User Group <span class="text-red-500">*</span>
                             </label>
-                            <div class="relative">
-                                <i
-                                    class="fas fa-users absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"
-                                ></i>
-                                <select
-                                    name="group"
-                                    class="w-full pl-12 pr-10 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 font-medium appearance-none"
-                                    {% if not form.instance.pk %}required{% endif %}
+                            <select
+                                name="group"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                {% if not form.instance.pk %}required{% endif %}
+                            >
+                                <option value="">Select Group</option>
+                                {% for group_option in form.group.field.queryset %}
+                                <option
+                                    value="{{ group_option.id }}"
+                                    {% if form.instance.pk and group_option in form.instance.user.groups.all %}selected{% elif form.group.value == group_option.id %}selected{% endif %}
                                 >
-                                    <option value="">Select Group</option>
-                                    {% for group_option in form.group.field.queryset %}
-                                    <option
-                                        value="{{ group_option.id }}"
-                                        {% if form.instance.pk and group_option in form.instance.user.groups.all %}selected{% elif form.group.value == group_option.id %}selected{% endif %}
-                                    >
-                                        {{ group_option.name }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                                <i
-                                    class="fas fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none"
-                                ></i>
-                            </div>
+                                    {{ group_option.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
                             {% if form.group.errors %}
-                            <p class="text-red-600 text-sm font-medium">
-                                {{ form.group.errors.0 }}
-                            </p>
+                            <p class="text-red-600 text-sm mt-1">{{ form.group.errors.0 }}</p>
                             {% endif %}
-                            <p class="text-xs text-slate-500">
-                                <i class="fas fa-info-circle mr-1"></i>
-                                This determines user permissions and access levels
-                            </p>
+                            <p class="text-xs text-gray-500 mt-1">This determines user permissions and access levels</p>
                         </div>
 
                         {% if not form.instance.pk %}
                         <!-- Password (only for new users) -->
-                        <div class="space-y-2">
-                            <label
-                                class="block text-sm font-semibold text-slate-700 tracking-wide"
-                            >
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
                                 Password <span class="text-red-500">*</span>
                             </label>
-                            <div class="relative">
-                                <i
-                                    class="fas fa-lock absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"
-                                ></i>
-                                <input
-                                    type="password"
-                                    name="password"
-                                    value="{{ form.password.value|default:'Welcome@123' }}"
-                                    class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 font-medium"
-                                    placeholder="Enter password"
-                                    required
-                                />
-                            </div>
+                            <input
+                                type="password"
+                                name="password"
+                                value="{{ form.password.value|default:'Welcome@123' }}"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Enter password"
+                                required
+                            />
                             {% if form.password.errors %}
-                            <p class="text-red-600 text-sm font-medium">
-                                {{ form.password.errors.0 }}
-                            </p>
+                            <p class="text-red-600 text-sm mt-1">{{ form.password.errors.0 }}</p>
                             {% endif %}
-                            <p class="text-xs text-slate-500">
-                                <i class="fas fa-info-circle mr-1"></i>
-                                Default: Welcome@123 (user should change on first login)
-                            </p>
-                        </div>
-
-                        <!-- Username Display -->
-                        <div class="space-y-2">
-                            <label
-                                class="block text-sm font-semibold text-slate-700 tracking-wide"
-                            >
-                                Generated Username
-                            </label>
-                            <div class="relative">
-                                <i
-                                    class="fas fa-user-tag absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"
-                                ></i>
-                                <input
-                                    type="text"
-                                    id="generated-username"
-                                    class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-mono text-slate-700 cursor-not-allowed"
-                                    placeholder="Auto-generated based on location & role"
-                                    readonly
-                                />
-                            </div>
-                            <p class="text-xs text-slate-500">
-                                <i class="fas fa-info-circle mr-1"></i>
-                                Username is auto-generated when form is submitted
-                            </p>
+                            <p class="text-xs text-gray-500 mt-1">Default: Welcome@123 (user should change on first login)</p>
                         </div>
                         {% else %}
                         <!-- Current Username Display for Edit Mode -->
-                        <div class="space-y-2">
-                            <label
-                                class="block text-sm font-semibold text-slate-700 tracking-wide"
-                            >
-                                Current Username
-                            </label>
-                            <div class="relative">
-                                <i
-                                    class="fas fa-user-tag absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"
-                                ></i>
-                                <input
-                                    type="text"
-                                    class="w-full pl-12 pr-4 py-3 bg-slate-100 border border-slate-200 rounded-xl font-mono text-slate-700 cursor-not-allowed"
-                                    value="{{ form.instance.user.username }}"
-                                    readonly
-                                />
-                            </div>
-                            <p class="text-xs text-slate-500">
-                                <i class="fas fa-info-circle mr-1"></i>
-                                Username cannot be changed after creation
-                            </p>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Current Username</label>
+                            <input
+                                type="text"
+                                class="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm text-gray-700"
+                                value="{{ form.instance.user.username }}"
+                                readonly
+                            />
+                            <p class="text-xs text-gray-500 mt-1">Username cannot be changed after creation</p>
                         </div>
                         {% endif %}
                     </div>
                 </div>
 
                 <!-- Form Actions -->
-                <div
-                    class="p-8 bg-gradient-to-r from-slate-50/50 to-slate-100/50"
-                >
-                    <div class="flex flex-col sm:flex-row gap-4 justify-end">
+                <div class="px-6 py-4 bg-gray-50">
+                    <div class="flex justify-end space-x-3">
                         <a
                             href="{% url 'profile:user-list' %}"
-                            class="px-8 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 hover:text-slate-900 rounded-xl transition-all duration-300 font-semibold tracking-wide text-center"
+                            class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         >
-                            <i class="fas fa-times mr-2"></i>Cancel
+                            Cancel
                         </a>
                         <button
                             type="submit"
-                            class="px-8 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl transition-all duration-300 font-semibold tracking-wide shadow-lg hover:shadow-xl transform hover:scale-105"
+                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         >
-                            <i class="fas fa-save mr-2"></i>
-                            {% if form.instance.pk %}Update User{% else %}Create
-                            User{% endif %}
+                            {% if form.instance.pk %}Update User{% else %}Create User{% endif %}
                         </button>
                     </div>
                 </div>
@@ -897,119 +366,49 @@
 </div>
 
 <script>
-    // Preview employee ID generation based on office location and group
-    document.addEventListener("DOMContentLoaded", function () {
-        const officeLocationSelect = document.querySelector('select[name="office_location"]');
-        const groupSelect = document.querySelector('select[name="group"]');
-        const generatedUsernameInput = document.querySelector('#generated-username');
-
-        function previewEmployeeId() {
-            if (!generatedUsernameInput) return; // Only for create mode
-
-            const selectedLocationText = officeLocationSelect.options[officeLocationSelect.selectedIndex]?.text || '';
-            const selectedGroupId = groupSelect.value;
-
-            // Extract location name for preview
-            let locationName = 'Unknown';
-            if (selectedLocationText.includes('Betul')) {
-                locationName = 'Betul';
-            } else if (selectedLocationText.includes('Pune')) {
-                locationName = 'Pune';
-            }
-
-            // Current year (last 2 digits)
-            const currentYear = new Date().getFullYear().toString().slice(-2);
-
-            // Preview format based on location
-            let previewId = '';
-            if (locationName === 'Betul') {
-                previewId = `ATS${currentYear}-XXXX`;
-            } else if (locationName === 'Pune') {
-                previewId = `AT${currentYear}-XXXX`;
-            } else {
-                previewId = `EMP${currentYear}-XXXX`;
-            }
-
-            // Add group info to preview
-            const groupName = groupSelect.options[groupSelect.selectedIndex]?.text || 'No Group';
-            if (groupName !== 'No Group') {
-                previewId += ` (${groupName})`;
-            }
-
-            generatedUsernameInput.value = previewId;
-        }
-
-        // Add event listeners for real-time preview
-        if (officeLocationSelect && groupSelect) {
-            officeLocationSelect.addEventListener('change', previewEmployeeId);
-            groupSelect.addEventListener('change', previewEmployeeId);
-
-            // Initial preview
-            previewEmployeeId();
-        }
-
-        // Auto-sync role field when group is changed
-        const roleSelect = document.querySelector('select[name="role"]');
-
-        if (groupSelect && roleSelect) {
-            groupSelect.addEventListener('change', function() {
-                const selectedGroup = groupSelect.options[groupSelect.selectedIndex];
-                if (selectedGroup && selectedGroup.value) {
-                    // Get group name and convert to lowercase for role value
-                    const groupName = selectedGroup.text;
-                    const roleValue = groupName.toLowerCase();
-
-                    // Find matching role option and select it
-                    for (let i = 0; i < roleSelect.options.length; i++) {
-                        if (roleSelect.options[i].value === roleValue) {
-                            roleSelect.selectedIndex = i;
-                            break;
-                        }
-                    }
-                }
-            });
-        }
-    });
-
-    // Form validation
-    function validateForm() {
-        const requiredFields = document.querySelectorAll("[required]");
+// Form validation
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    
+    form.addEventListener('submit', function(e) {
+        const requiredFields = form.querySelectorAll('[required]');
         let isValid = true;
-
-        requiredFields.forEach((field) => {
+        
+        requiredFields.forEach(field => {
             if (!field.value.trim()) {
-                field.classList.add("border-red-500", "bg-red-50");
+                field.classList.add('border-red-500');
                 isValid = false;
             } else {
-                field.classList.remove("border-red-500", "bg-red-50");
+                field.classList.remove('border-red-500');
             }
         });
-
-        return isValid;
-    }
-
-    // Enhanced form submission
-    document.querySelector("form").addEventListener("submit", function (e) {
-        if (!validateForm()) {
+        
+        if (!isValid) {
             e.preventDefault();
-            alert("Please fill in all required fields.");
+            alert('Please fill in all required fields.');
         }
     });
+    
+    // Auto-sync role field when group is changed
+    const groupSelect = document.querySelector('select[name="group"]');
+    const roleSelect = document.querySelector('select[name="role"]');
+    
+    if (groupSelect && roleSelect) {
+        groupSelect.addEventListener('change', function() {
+            const selectedGroup = groupSelect.options[groupSelect.selectedIndex];
+            if (selectedGroup && selectedGroup.value) {
+                const groupName = selectedGroup.text;
+                const roleValue = groupName.toLowerCase();
+                
+                for (let i = 0; i < roleSelect.options.length; i++) {
+                    if (roleSelect.options[i].value === roleValue) {
+                        roleSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+        });
+    }
+});
 </script>
-
-<style>
-    .hover\:scale-105:hover {
-        transform: scale(1.05);
-    }
-
-    .transform {
-        transition-property: transform;
-        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-        transition-duration: 300ms;
-    }
-
-    .backdrop-blur-sm {
-        backdrop-filter: blur(4px);
-    }
-</style>
 {% endblock %}
