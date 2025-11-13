@@ -1,1054 +1,280 @@
-{% extends 'base.html' %} {% block title %}HR Dashboard - TrueAlign Portal{% endblock %} {% block content %}
+{% extends 'base.html' %}
+{% block title %}HR Dashboard - TrueAlign Portal{% endblock %}
 
-<style>
-    .resizable-card {
-        position: relative;
-        resize: both;
-        overflow: auto;
-        min-width: 200px;
-        min-height: 150px;
-        transition: all 0.3s ease;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .resizable-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-        border-color: rgba(255, 255, 255, 0.3);
-    }
-
-    .resizable-card.resizing {
-        transition: none;
-        border-color: rgba(59, 130, 246, 0.5);
-    }
-
-    .resize-handle {
-        position: absolute;
-        background: rgba(255, 255, 255, 0.2);
-        transition: all 0.2s ease;
-    }
-
-    .resizable-card:hover .resize-handle {
-        background: rgba(59, 130, 246, 0.3);
-    }
-
-    .resize-handle:hover {
-        background: rgba(59, 130, 246, 0.5);
-    }
-
-    .resize-se {
-        bottom: 0;
-        right: 0;
-        width: 15px;
-        height: 15px;
-        cursor: se-resize;
-        border-radius: 0 0 12px 0;
-    }
-
-    .resize-s {
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 20px;
-        height: 5px;
-        cursor: s-resize;
-    }
-
-    .resize-e {
-        right: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 5px;
-        height: 20px;
-        cursor: e-resize;
-    }
-
-    .chart-container {
-        position: relative;
-        height: 300px;
-    }
-
-    .drag-handle {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        cursor: grab;
-        padding: 4px;
-        border-radius: 4px;
-        background: rgba(255, 255, 255, 0.1);
-        transition: all 0.2s ease;
-        z-index: 10;
-        opacity: 0;
-        transform: scale(0.8);
-    }
-
-    .resizable-card:hover .drag-handle {
-        opacity: 1;
-        transform: scale(1);
-    }
-
-    .drag-handle:hover {
-        background: rgba(255, 255, 255, 0.2);
-        cursor: grabbing;
-    }
-
-    .size-indicator {
-        position: absolute;
-        bottom: 20px;
-        right: 20px;
-        background: rgba(0, 0, 0, 0.7);
-        color: white;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-size: 10px;
-        opacity: 0;
-        transition: opacity 0.2s ease;
-        z-index: 10;
-    }
-
-    .resizable-card.resizing .size-indicator {
-        opacity: 1;
-    }
-
-    .dashboard-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 24px;
-        margin-bottom: 32px;
-    }
-
-    .loading-spinner {
-        display: inline-block;
-        width: 20px;
-        height: 20px;
-        border: 3px solid rgba(255, 255, 255, 0.3);
-        border-radius: 50%;
-        border-top-color: #ffffff;
-        animation: spin 1s ease-in-out infinite;
-    }
-
-    @keyframes spin {
-        to {
-            transform: rotate(360deg);
-        }
-    }
-
-    .fade-in {
-        animation: fadeIn 0.6s ease-out;
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .pulse-animation {
-        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    }
-
-    @keyframes pulse {
-
-        0%,
-        100% {
-            opacity: 1;
-        }
-
-        50% {
-            opacity: 0.5;
-        }
-    }
-
-    .icon-bounce {
-        animation: bounce 1s infinite;
-    }
-
-    @keyframes bounce {
-
-        0%,
-        20%,
-        53%,
-        80%,
-        100% {
-            transform: translate3d(0, 0, 0);
-        }
-
-        40%,
-        43% {
-            transform: translate3d(0, -30px, 0);
-        }
-
-        70% {
-            transform: translate3d(0, -15px, 0);
-        }
-
-        90% {
-            transform: translate3d(0, -4px, 0);
-        }
-    }
-
-    .progress-bar {
-        background: linear-gradient(90deg,
-                rgba(59, 130, 246, 0.2) 0%,
-                rgba(59, 130, 246, 0.1) 100%);
-        border-radius: 10px;
-        overflow: hidden;
-    }
-
-    .table-hover tbody tr {
-        transition: all 0.2s ease;
-    }
-
-    .table-hover tbody tr:hover {
-        background-color: rgba(59, 130, 246, 0.05);
-        transform: translateY(-1px);
-    }
-
-    .metric-card {
-        transition: all 0.3s ease;
-        backdrop-filter: blur(10px);
-    }
-
-    .dashboard-header {
-        background: linear-gradient(135deg,
-                rgba(59, 130, 246, 0.9) 0%,
-                rgba(147, 51, 234, 0.9) 100%);
-        border-radius: 20px;
-        padding: 32px;
-        margin-bottom: 32px;
-        color: white;
-    }
-
-    .glass-effect {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    @media (max-width: 768px) {
-        .dashboard-grid {
-            grid-template-columns: 1fr;
-            gap: 16px;
-        }
-
-        .resizable-card {
-            min-height: 120px;
-        }
-    }
-</style>
-
-<div class="min-h-screen py-6 px-4 lg:px-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-    <div class="max-w-7xl mx-auto">
-        <!-- Dashboard Header -->
-        <div class="dashboard-header fade-in">
-            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center">
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-4xl font-bold mb-2 tracking-wide">
-                        HR Dashboard
-                    </h1>
-                    <p class="text-blue-100 opacity-90 text-lg">
-                        Manage your workforce with interactive resizable
-                        analytics
-                    </p>
+                    <h1 class="text-3xl font-bold text-gray-900">HR Dashboard</h1>
+                    <p class="text-gray-600 mt-1">Overview of employee data and statistics</p>
                 </div>
-                <div class="flex flex-wrap gap-3 mt-6 lg:mt-0">
-                    <button id="resetLayout"
-                        class="glass-effect hover:bg-white/20 text-white px-6 py-3 rounded-xl transition-all duration-300 backdrop-blur-sm font-medium tracking-wide">
-                        <i class="fas fa-refresh mr-2"></i>Reset Layout
-                    </button>
-                    <button id="saveLayout"
-                        class="glass-effect hover:bg-white/20 text-white px-6 py-3 rounded-xl transition-all duration-300 backdrop-blur-sm font-medium tracking-wide">
-                        <i class="fas fa-save mr-2"></i>Save Layout
-                    </button>
-                    <button id="fullscreen"
-                        class="glass-effect hover:bg-white/20 text-white px-6 py-3 rounded-xl transition-all duration-300 backdrop-blur-sm font-medium tracking-wide">
-                        <i class="fas fa-expand mr-2"></i>Fullscreen
-                    </button>
+                <div class="flex space-x-3">
+                    <a href="{% url 'profile:user-create' %}" 
+                       class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Add User
+                    </a>
+                    <a href="{% url 'profile:user-list' %}" 
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                        View All Users
+                    </a>
                 </div>
             </div>
         </div>
 
         <!-- Stats Cards -->
-        <div id="dashboard-container" class="dashboard-grid">
-            <!-- Total Users Card -->
-            <div id="total-users-card"
-                class="resizable-card bg-gradient-to-br from-blue-500 to-blue-700 text-white rounded-2xl shadow-xl p-8 fade-in"
-                draggable="true">
-                <div class="drag-handle">
-                    <i class="fas fa-grip-horizontal text-white opacity-70"></i>
-                </div>
-                <div class="card-content flex justify-between items-center h-full">
-                    <div>
-                        <h5 class="text-lg font-medium text-blue-100 mb-2 tracking-wide">
-                            Total Users
-                        </h5>
-                        <h2 class="text-5xl font-bold mb-3">
-                            {{ total_users }}
-                        </h2>
-                        <div class="text-sm opacity-80 flex items-center">
-                            <i class="fas fa-arrow-up mr-2 text-emerald-300"></i>Active workforce
-                        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Users -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
                     </div>
-                    <div class="text-6xl opacity-30">
-                        <i class="fas fa-users"></i>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Users</p>
+                        <p class="text-2xl font-semibold text-gray-900">{{ total_users }}</p>
                     </div>
                 </div>
-                <div class="resize-handle resize-se"></div>
-                <div class="resize-handle resize-s"></div>
-                <div class="resize-handle resize-e"></div>
-                <div class="size-indicator"></div>
             </div>
 
-            <!-- Active Users Card -->
-            <div id="active-users-card"
-                class="resizable-card bg-gradient-to-br from-emerald-500 to-emerald-700 text-white rounded-2xl shadow-xl p-8 fade-in"
-                draggable="true">
-                <div class="drag-handle">
-                    <i class="fas fa-grip-horizontal text-white opacity-70"></i>
-                </div>
-                <div class="card-content flex justify-between items-center h-full">
-                    <div>
-                        <h5 class="text-lg font-medium text-emerald-100 mb-2 tracking-wide">
-                            Active Users
-                        </h5>
-                        <h2 class="text-5xl font-bold mb-3">
-                            {{ active_users }}
-                        </h2>
-                        <div class="text-sm opacity-80 flex items-center">
-                            <i class="fas fa-check-circle mr-2 text-emerald-300"></i>Currently active
-                        </div>
+            <!-- Active Users -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
                     </div>
-                    <div class="text-6xl opacity-30">
-                        <i class="fas fa-user-check"></i>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Active Users</p>
+                        <p class="text-2xl font-semibold text-gray-900">{{ active_users }}</p>
                     </div>
                 </div>
-                <div class="resize-handle resize-se"></div>
-                <div class="resize-handle resize-s"></div>
-                <div class="resize-handle resize-e"></div>
-                <div class="size-indicator"></div>
             </div>
 
-            <!-- Inactive Users Card -->
-            <div id="inactive-users-card"
-                class="resizable-card bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-2xl shadow-xl p-8 fade-in"
-                draggable="true">
-                <div class="drag-handle">
-                    <i class="fas fa-grip-horizontal text-white opacity-70"></i>
-                </div>
-                <div class="card-content flex justify-between items-center h-full">
-                    <div>
-                        <h5 class="text-lg font-medium text-amber-100 mb-2 tracking-wide">
-                            Inactive Users
-                        </h5>
-                        <h2 class="text-5xl font-bold mb-3">
-                            {{ inactive_users }}
-                        </h2>
-                        <div class="text-sm opacity-80 flex items-center">
-                            <i class="fas fa-pause-circle mr-2 text-amber-300"></i>Need attention
-                        </div>
+            <!-- Inactive Users -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
                     </div>
-                    <div class="text-6xl opacity-30">
-                        <i class="fas fa-user-times"></i>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Inactive Users</p>
+                        <p class="text-2xl font-semibold text-gray-900">{{ inactive_users }}</p>
                     </div>
                 </div>
-                <div class="resize-handle resize-se"></div>
-                <div class="resize-handle resize-s"></div>
-                <div class="resize-handle resize-e"></div>
-                <div class="size-indicator"></div>
             </div>
 
-            <!-- New Hires Card -->
-            <div id="new-hires-card"
-                class="resizable-card bg-gradient-to-br from-sky-500 to-sky-700 text-white rounded-2xl shadow-xl p-8 fade-in"
-                draggable="true">
-                <div class="drag-handle">
-                    <i class="fas fa-grip-horizontal text-white opacity-70"></i>
-                </div>
-                <div class="card-content flex justify-between items-center h-full">
-                    <div>
-                        <h5 class="text-lg font-medium text-sky-100 mb-2 tracking-wide">
-                            New Hires
-                        </h5>
-                        <h2 class="text-5xl font-bold mb-3">
-                            {{ new_hires_count }}
-                        </h2>
-                        <div class="text-sm opacity-80 flex items-center">
-                            <i class="fas fa-calendar-alt mr-2 text-sky-300"></i>Last 30 days
-                        </div>
+            <!-- New Hires -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                        </svg>
                     </div>
-                    <div class="text-6xl opacity-30">
-                        <i class="fas fa-user-plus"></i>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">New Hires (30 days)</p>
+                        <p class="text-2xl font-semibold text-gray-900">{{ new_hires_count }}</p>
                     </div>
                 </div>
-                <div class="resize-handle resize-se"></div>
-                <div class="resize-handle resize-s"></div>
-                <div class="resize-handle resize-e"></div>
-                <div class="size-indicator"></div>
             </div>
         </div>
 
-        <!-- Analytics Section -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            <!-- Location Stats -->
-            <div id="location-stats-card"
-                class="resizable-card bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-white/20 fade-in"
-                draggable="true">
-                <div class="drag-handle">
-                    <i class="fas fa-grip-horizontal text-slate-400"></i>
+        <!-- Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Location Statistics -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Users by Location</h3>
                 </div>
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-2xl font-bold text-slate-800 tracking-wide">
-                        Location Distribution
-                    </h3>
-                    <i class="fas fa-map-marker-alt text-2xl text-indigo-500"></i>
-                </div>
-                <div class="chart-container">
-                    <canvas id="locationChart" class="w-full h-full"></canvas>
-                </div>
-                <div class="resize-handle resize-se"></div>
-                <div class="resize-handle resize-s"></div>
-                <div class="resize-handle resize-e"></div>
-                <div class="size-indicator"></div>
-            </div>
-
-            <!-- Status Distribution -->
-            <div id="status-stats-card"
-                class="resizable-card bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-white/20 fade-in"
-                draggable="true">
-                <div class="drag-handle">
-                    <i class="fas fa-grip-horizontal text-slate-400"></i>
-                </div>
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-2xl font-bold text-slate-800 tracking-wide">
-                        Status Distribution
-                    </h3>
-                    <i class="fas fa-chart-pie text-2xl text-rose-500"></i>
-                </div>
-                <div class="chart-container">
-                    <canvas id="statusChart" class="w-full h-full"></canvas>
-                </div>
-                <div class="resize-handle resize-se"></div>
-                <div class="resize-handle resize-s"></div>
-                <div class="resize-handle resize-e"></div>
-                <div class="size-indicator"></div>
-            </div>
-        </div>
-
-        <!-- Recent Activity & New Users -->
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-            <!-- New Users List -->
-            <div id="new-users-card"
-                class="resizable-card bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-white/20 fade-in"
-                draggable="true">
-                <div class="drag-handle">
-                    <i class="fas fa-grip-horizontal text-slate-400"></i>
-                </div>
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-2xl font-bold text-slate-800 tracking-wide">
-                        Recent Hires
-                    </h3>
-                    <span class="bg-indigo-100 text-indigo-800 px-4 py-2 rounded-full text-sm font-semibold">
-                        Last 30 days
-                    </span>
-                </div>
-
-                <div
-                    class="space-y-4 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100">
-                    {% if new_users %} {% for user in new_users %}
-                    <div
-                        class="flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl border border-slate-200 hover:shadow-md transition-all duration-300">
-                        <div class="flex items-center space-x-4">
-                            <div
-                                class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-lg">
-                                {% if user.user %} {{ user.user.first_name|first|default:user.user.username|first|upper }} {% else %} {{ user.created_at|date:"d" }} 
-                                {% endif %}
+                <div class="p-6">
+                    {% if location_stats %}
+                        <div class="space-y-4">
+                            {% for stat in location_stats %}
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    </svg>
+                                    <span class="text-sm font-medium text-gray-900">{{ stat.office_location__name|default:"Unknown" }}</span>
+                                </div>
+                                <span class="text-sm text-gray-600">{{ stat.count }} users</span>
                             </div>
-                            <div>
-                                <h4 class="font-semibold text-slate-800">
-                                    {% if user.user %} {{ user.user.get_full_name|default:user.user.username}} {% else %} New User {% endif %}
-                                </h4>
-                                <p class="text-sm text-slate-600">
-                                    {% if user.created_at %} Joined {{
-                                    user.created_at|date:"M d, Y" }} {% else %}
-                                    Recently added {% endif %}
-                                </p>
-                            </div>
+                            {% endfor %}
                         </div>
-                        <span class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-xs font-medium">
-                            New
-                        </span>
-                    </div>
-                    {% endfor %} {% else %}
-                    <div class="text-center py-8 text-slate-500">
-                        <i class="fas fa-user-plus text-4xl mb-4 opacity-50"></i>
-                        <p class="text-lg">No new hires in the last 30 days</p>
-                    </div>
+                    {% else %}
+                        <p class="text-gray-500 text-center py-4">No location data available</p>
                     {% endif %}
                 </div>
-
-                <div class="resize-handle resize-se"></div>
-                <div class="resize-handle resize-s"></div>
-                <div class="resize-handle resize-e"></div>
-                <div class="size-indicator"></div>
             </div>
 
-            <!-- Quick Actions -->
-            <div id="actions-card"
-                class="resizable-card bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-white/20 fade-in"
-                draggable="true">
-                <div class="drag-handle">
-                    <i class="fas fa-grip-horizontal text-slate-400"></i>
+            <!-- Employment Status -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Employment Status</h3>
                 </div>
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-2xl font-bold text-slate-800 tracking-wide">
-                        Quick Actions
-                    </h3>
-                    <i class="fas fa-bolt text-2xl text-amber-500"></i>
+                <div class="p-6">
+                    {% if status_stats %}
+                        <div class="space-y-4">
+                            {% for stat in status_stats %}
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 rounded-full mr-3 
+                                        {% if stat.employment_status == 'active' %}bg-green-500
+                                        {% elif stat.employment_status == 'inactive' %}bg-red-500
+                                        {% elif stat.employment_status == 'probation' %}bg-yellow-500
+                                        {% else %}bg-gray-500{% endif %}">
+                                    </div>
+                                    <span class="text-sm font-medium text-gray-900 capitalize">{{ stat.employment_status|default:"Unknown" }}</span>
+                                </div>
+                                <span class="text-sm text-gray-600">{{ stat.count }} users</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-gray-500 text-center py-4">No status data available</p>
+                    {% endif %}
                 </div>
+            </div>
 
-                <div class="space-y-4">
-                    <a href="{% url 'profile:user-list' %}"
-                        class="block p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200 hover:shadow-md hover:from-blue-100 hover:to-blue-200 transition-all duration-300">
-                        <div class="flex items-center space-x-4">
-                            <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
-                                <i class="fas fa-users text-white text-xl"></i>
+            <!-- Recent Logins -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Recent Logins</h3>
+                </div>
+                <div class="p-6">
+                    {% if recent_logins %}
+                        <div class="space-y-3">
+                            {% for user in recent_logins %}
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mr-3">
+                                        <span class="text-xs font-medium text-gray-600">{{ user.first_name.0|default:user.username.0 }}</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">{{ user.get_full_name|default:user.username }}</p>
+                                        <p class="text-xs text-gray-500">{{ user.email }}</p>
+                                    </div>
+                                </div>
+                                <span class="text-xs text-gray-500">{{ user.last_login|timesince }} ago</span>
                             </div>
-                            <div>
-                                <h4 class="font-semibold text-slate-800">
-                                    View All Users
-                                </h4>
-                                <p class="text-sm text-slate-600">
-                                    Manage user profiles and status
-                                </p>
-                            </div>
+                            {% endfor %}
                         </div>
+                    {% else %}
+                        <p class="text-gray-500 text-center py-4">No recent login data available</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- New Users -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">New Users (Last 30 Days)</h3>
+                </div>
+                <div class="p-6">
+                    {% if new_users %}
+                        <div class="space-y-3">
+                            {% for user_data in new_users %}
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                        <span class="text-xs font-medium text-blue-600">
+                                            {% if user_data.user %}
+                                                {{ user_data.user.first_name.0|default:user_data.user.username.0 }}
+                                            {% else %}
+                                                {{ user_data.first_name.0|default:"U" }}
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">
+                                            {% if user_data.user %}
+                                                {{ user_data.user.get_full_name|default:user_data.user.username }}
+                                            {% else %}
+                                                {{ user_data.get_full_name|default:"Unknown User" }}
+                                            {% endif %}
+                                        </p>
+                                        <p class="text-xs text-gray-500">
+                                            {% if user_data.user %}
+                                                {{ user_data.user.email }}
+                                            {% else %}
+                                                {{ user_data.email|default:"No email" }}
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                                <span class="text-xs text-gray-500">
+                                    {% if user_data.created_at %}
+                                        {{ user_data.created_at|timesince }} ago
+                                    {% else %}
+                                        {{ user_data.user.date_joined|timesince }} ago
+                                    {% endif %}
+                                </span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-gray-500 text-center py-4">No new users in the last 30 days</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="mt-8 bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Quick Actions</h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <a href="{% url 'profile:user-create' %}" 
+                       class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                        <svg class="w-6 h-6 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                        </svg>
+                        <span class="text-sm font-medium text-gray-900">Add New User</span>
                     </a>
-
-                    <a href="{% url 'profile:user-create' %}"
-                        class="block p-4 bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-xl border border-emerald-200 hover:shadow-md hover:from-emerald-100 hover:to-emerald-200 transition-all duration-300">
-                        <div class="flex items-center space-x-4">
-                            <div class="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center">
-                                <i class="fas fa-user-plus text-white text-xl"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-slate-800">
-                                    Add New User
-                                </h4>
-                                <p class="text-sm text-slate-600">
-                                    Create new employee profile
-                                </p>
-                            </div>
-                        </div>
+                    
+                    <a href="{% url 'profile:bulk-upload' %}" 
+                       class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                        <svg class="w-6 h-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                        <span class="text-sm font-medium text-gray-900">Bulk Upload</span>
                     </a>
-
-                    <a href="{% url 'profile:bulk-upload' %}"
-                        class="block p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl border border-purple-200 hover:shadow-md hover:from-purple-100 hover:to-purple-200 transition-all duration-300">
-                        <div class="flex items-center space-x-4">
-                            <div class="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center">
-                                <i class="fas fa-upload text-white text-xl"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-slate-800">
-                                    Bulk Upload
-                                </h4>
-                                <p class="text-sm text-slate-600">
-                                    Import multiple users at once
-                                </p>
-                            </div>
-                        </div>
+                    
+                    <a href="{% url 'profile:export-csv' %}" 
+                       class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                        <svg class="w-6 h-6 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="text-sm font-medium text-gray-900">Export Data</span>
                     </a>
-
-                    <a href="{% url 'profile:export-csv' %}"
-                        class="block p-4 bg-gradient-to-r from-amber-50 to-amber-100 rounded-xl border border-amber-200 hover:shadow-md hover:from-amber-100 hover:to-amber-200 transition-all duration-300">
-                        <div class="flex items-center space-x-4">
-                            <div class="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center">
-                                <i class="fas fa-download text-white text-xl"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-slate-800">
-                                    Export Data
-                                </h4>
-                                <p class="text-sm text-slate-600">
-                                    Download user data as CSV
-                                </p>
-                            </div>
-                        </div>
-                    </a>
-
-                    <a href="{% url 'profile:audit-logs' %}"
-                        class="block p-4 bg-gradient-to-r from-rose-50 to-rose-100 rounded-xl border border-rose-200 hover:shadow-md hover:from-rose-100 hover:to-rose-200 transition-all duration-300">
-                        <div class="flex items-center space-x-4">
-                            <div class="w-12 h-12 bg-rose-500 rounded-xl flex items-center justify-center">
-                                <i class="fas fa-clipboard-list text-white text-xl"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-slate-800">
-                                    Audit Logs
-                                </h4>
-                                <p class="text-sm text-slate-600">
-                                    View system activity logs
-                                </p>
-                            </div>
-                        </div>
+                    
+                    <a href="{% url 'profile:audit-logs' %}" 
+                       class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                        <svg class="w-6 h-6 text-orange-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="text-sm font-medium text-gray-900">Audit Logs</span>
                     </a>
                 </div>
-                <div class="resize-handle resize-se"></div>
-                <div class="resize-handle resize-s"></div>
-                <div class="resize-handle resize-e"></div>
-                <div class="size-indicator"></div>
             </div>
         </div>
     </div>
 </div>
-
-<!-- Dashboard JavaScript -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    class ResizableDashboard {
-        constructor() {
-            this.initializeResizableCards();
-            this.loadSavedLayout();
-            this.initializeCharts();
-            this.bindEvents();
-        }
-
-        initializeResizableCards() {
-            const cards = document.querySelectorAll(".resizable-card");
-
-            cards.forEach((card) => {
-                // Make cards draggable
-                this.makeDraggable(card);
-
-                // Add resize functionality
-                this.makeResizable(card);
-            });
-        }
-
-        makeDraggable(card) {
-            const dragHandle = card.querySelector(".drag-handle");
-            let isDragging = false;
-            let startX, startY, initialX, initialY;
-
-            dragHandle.addEventListener("mousedown", (e) => {
-                isDragging = true;
-                startX = e.clientX;
-                startY = e.clientY;
-
-                const rect = card.getBoundingClientRect();
-                initialX = rect.left;
-                initialY = rect.top;
-
-                card.style.position = "relative";
-                card.style.zIndex = "1000";
-
-                document.addEventListener("mousemove", handleDrag);
-                document.addEventListener("mouseup", handleDragEnd);
-            });
-
-            function handleDrag(e) {
-                if (!isDragging) return;
-
-                const deltaX = e.clientX - startX;
-                const deltaY = e.clientY - startY;
-
-                card.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-            }
-
-            function handleDragEnd() {
-                isDragging = false;
-                card.style.zIndex = "";
-                document.removeEventListener("mousemove", handleDrag);
-                document.removeEventListener("mouseup", handleDragEnd);
-            }
-        }
-
-        makeResizable(card) {
-            const resizeHandles = card.querySelectorAll(".resize-handle");
-
-            resizeHandles.forEach((handle) => {
-                handle.addEventListener("mousedown", (e) => {
-                    e.preventDefault();
-
-                    const startX = e.clientX;
-                    const startY = e.clientY;
-                    const startWidth = parseInt(
-                        window.getComputedStyle(card).width,
-                        10,
-                    );
-                    const startHeight = parseInt(
-                        window.getComputedStyle(card).height,
-                        10,
-                    );
-
-                    card.classList.add("resizing");
-
-                    function handleResize(e) {
-                        if (handle.classList.contains("resize-se")) {
-                            card.style.width =
-                                startWidth + e.clientX - startX + "px";
-                            card.style.height =
-                                startHeight + e.clientY - startY + "px";
-                        } else if (handle.classList.contains("resize-s")) {
-                            card.style.height =
-                                startHeight + e.clientY - startY + "px";
-                        } else if (handle.classList.contains("resize-e")) {
-                            card.style.width =
-                                startWidth + e.clientX - startX + "px";
-                        }
-
-                        // Update size indicator
-                        const sizeIndicator =
-                            card.querySelector(".size-indicator");
-                        if (sizeIndicator) {
-                            sizeIndicator.textContent = `${card.offsetWidth} x ${card.offsetHeight}`;
-                        }
-                    }
-
-                    function handleResizeEnd() {
-                        card.classList.remove("resizing");
-                        document.removeEventListener("mousemove", handleResize);
-                        document.removeEventListener(
-                            "mouseup",
-                            handleResizeEnd,
-                        );
-                    }
-
-                    document.addEventListener("mousemove", handleResize);
-                    document.addEventListener("mouseup", handleResizeEnd);
-                });
-            });
-        }
-
-        loadSavedLayout() {
-            const savedLayout = localStorage.getItem("dashboardLayout");
-            if (savedLayout) {
-                try {
-                    const layout = JSON.parse(savedLayout);
-                    Object.keys(layout).forEach((cardId) => {
-                        const card = document.getElementById(cardId);
-                        if (card && layout[cardId]) {
-                            const { width, height, transform } = layout[cardId];
-                            if (width) card.style.width = width;
-                            if (height) card.style.height = height;
-                            if (transform) card.style.transform = transform;
-                        }
-                    });
-                } catch (e) {
-                    console.warn("Error loading saved layout:", e);
-                }
-            }
-        }
-
-        saveLayout() {
-            const layout = {};
-            const cards = document.querySelectorAll(".resizable-card[id]");
-
-            cards.forEach((card) => {
-                layout[card.id] = {
-                    width: card.style.width,
-                    height: card.style.height,
-                    transform: card.style.transform,
-                };
-            });
-
-            localStorage.setItem("dashboardLayout", JSON.stringify(layout));
-        }
-
-        resetLayout() {
-            const cards = document.querySelectorAll(".resizable-card");
-            cards.forEach((card) => {
-                card.style.width = "";
-                card.style.height = "";
-                card.style.transform = "";
-            });
-            localStorage.removeItem("dashboardLayout");
-        }
-
-        initializeCharts() {
-            const locationCtx = document.getElementById("locationChart");
-            const statusCtx = document.getElementById("statusChart");
-
-            // Fetch analytics data and build charts
-            fetch('{% url "profile:dashboard-analytics-api" %}')
-                .then((response) => {
-                    if (!response.ok)
-                        throw new Error("Network response was not ok");
-                    return response.json();
-                })
-                .then((data) => {
-                    // LOCATION DOUGHNUT
-                    if (locationCtx) {
-                        const locLabels = (
-                            data.location_distribution || []
-                        ).map((item) => item.name);
-                        const locData = (data.location_distribution || []).map(
-                            (item) => item.count,
-                        );
-
-                        // Fallback when there is no data
-                        const hasLocationData =
-                            locData.length &&
-                            locData.reduce((a, b) => a + b, 0) > 0;
-                        const locationDataset = hasLocationData ? locData : [1];
-                        const locationLabelsFinal = hasLocationData
-                            ? locLabels
-                            : ["No data"];
-
-                        this.locationChart = new Chart(locationCtx, {
-                            type: "doughnut",
-                            data: {
-                                labels: locationLabelsFinal,
-                                datasets: [
-                                    {
-                                        data: locationDataset,
-                                        backgroundColor: [
-                                            "#3B82F6",
-                                            "#10B981",
-                                            "#F59E0B",
-                                            "#EF4444",
-                                            "#8B5CF6",
-                                            "#06B6D4",
-                                            "#F97316",
-                                            "#84CC16",
-                                        ],
-                                        borderWidth: 0,
-                                        hoverOffset: 8,
-                                    },
-                                ],
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                cutout: "55%",
-                                plugins: {
-                                    legend: {
-                                        position: "right",
-                                        labels: {
-                                            boxWidth: 12,
-                                            padding: 12,
-                                            usePointStyle: true,
-                                        },
-                                    },
-                                    tooltip: {
-                                        callbacks: {
-                                            label: (ctx) => {
-                                                const val = ctx.raw ?? 0;
-                                                const label = ctx.label ?? "";
-                                                return `${label}: ${val}`;
-                                            },
-                                        },
-                                    },
-                                },
-                                animation: {
-                                    duration: 600,
-                                    easing: "easeOutQuad",
-                                },
-                            },
-                        });
-                    }
-
-                    // STATUS DISTRIBUTION (bar)
-                    if (statusCtx) {
-                        const stLabels = (data.status_distribution || []).map(
-                            (item) => item.name,
-                        );
-                        const stData = (data.status_distribution || []).map(
-                            (item) => item.count,
-                        );
-
-                        const hasStatusData =
-                            stData.length &&
-                            stData.reduce((a, b) => a + b, 0) > 0;
-                        const statusDataset = hasStatusData ? stData : [1];
-                        const statusLabelsFinal = hasStatusData
-                            ? stLabels
-                            : ["No data"];
-
-                        this.statusChart = new Chart(statusCtx, {
-                            type: "bar",
-                            data: {
-                                labels: statusLabelsFinal,
-                                datasets: [
-                                    {
-                                        label: "Count",
-                                        data: statusDataset,
-                                        backgroundColor: [
-                                            "#06B6D4",
-                                            "#8B5CF6",
-                                            "#10B981",
-                                            "#F59E0B",
-                                            "#EF4444",
-                                        ],
-                                        borderRadius: 6,
-                                        barThickness: 18,
-                                    },
-                                ],
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                indexAxis: "y", // horizontal bars for readability
-                                scales: {
-                                    x: {
-                                        beginAtZero: true,
-                                        grid: { display: false },
-                                        ticks: { precision: 0 },
-                                    },
-                                    y: {
-                                        grid: { display: false },
-                                    },
-                                },
-                                plugins: {
-                                    legend: { display: false },
-                                    tooltip: {
-                                        callbacks: {
-                                            label: (ctx) => {
-                                                const val = ctx.raw ?? 0;
-                                                return `${val}`;
-                                            },
-                                        },
-                                    },
-                                },
-                                animation: {
-                                    duration: 600,
-                                    easing: "easeOutQuart",
-                                },
-                            },
-                        });
-                    }
-                })
-                .catch((err) => {
-                    console.error("Error loading analytics:", err);
-                    // Optionally show a user-visible fallback (simple console log here to keep template logic unchanged)
-                });
-        }
-
-        bindEvents() {
-            // Buttons
-            const saveBtn = document.getElementById("saveLayout");
-            const resetBtn = document.getElementById("resetLayout");
-            const fullscreenBtn = document.getElementById("fullscreen");
-
-            if (saveBtn) {
-                saveBtn.addEventListener("click", (e) => {
-                    e.preventDefault();
-                    this.saveLayout();
-                    // subtle UX feedback
-                    saveBtn.classList.add("opacity-80");
-                    setTimeout(
-                        () => saveBtn.classList.remove("opacity-80"),
-                        300,
-                    );
-                });
-            }
-
-            if (resetBtn) {
-                resetBtn.addEventListener("click", (e) => {
-                    e.preventDefault();
-                    this.resetLayout();
-                    resetBtn.classList.add("opacity-80");
-                    setTimeout(
-                        () => resetBtn.classList.remove("opacity-80"),
-                        300,
-                    );
-                });
-            }
-
-            if (fullscreenBtn) {
-                fullscreenBtn.addEventListener("click", (e) => {
-                    e.preventDefault();
-                    this.toggleFullscreen();
-                });
-            }
-
-            // Save layout before the user leaves (good default)
-            window.addEventListener("beforeunload", () => {
-                try {
-                    this.saveLayout();
-                } catch (e) {
-                    /* ignore */
-                }
-            });
-
-            // Resize charts on window resize (debounced)
-            let resizeTimer = null;
-            window.addEventListener("resize", () => {
-                if (resizeTimer) clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(() => {
-                    if (this.locationChart) this.locationChart.resize();
-                    if (this.statusChart) this.statusChart.resize();
-                }, 250);
-            });
-
-            // Optional: Save layout when user finishes dragging cards (listen for global mouseup)
-            document.addEventListener("mouseup", () => {
-                // A tiny debounce to avoid excessive writes
-                if (this._saveTimeout) clearTimeout(this._saveTimeout);
-                this._saveTimeout = setTimeout(() => this.saveLayout(), 500);
-            });
-
-            // Keyboard shortcut: Ctrl/Cmd + S to save layout (prevents default browser save)
-            document.addEventListener("keydown", (e) => {
-                const isMac =
-                    navigator.platform.toUpperCase().indexOf("MAC") >= 0;
-                if (
-                    (isMac && e.metaKey && e.key === "s") ||
-                    (!isMac && e.ctrlKey && e.key === "s")
-                ) {
-                    e.preventDefault();
-                    this.saveLayout();
-                    // small visual feedback
-                    if (saveBtn) {
-                        saveBtn.classList.add(
-                            "ring-2",
-                            "ring-white",
-                            "ring-opacity-40",
-                        );
-                        setTimeout(
-                            () =>
-                                saveBtn.classList.remove(
-                                    "ring-2",
-                                    "ring-white",
-                                    "ring-opacity-40",
-                                ),
-                            400,
-                        );
-                    }
-                }
-            });
-        }
-
-        toggleFullscreen() {
-            const el = document.documentElement;
-            if (!document.fullscreenElement) {
-                if (el.requestFullscreen) {
-                    el.requestFullscreen();
-                } else if (el.webkitRequestFullscreen) {
-                    el.webkitRequestFullscreen();
-                }
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                }
-            }
-        }
-    }
-
-    /* Instantiate dashboard when DOM is ready */
-    document.addEventListener("DOMContentLoaded", () => {
-        // small safety: only instantiate once
-        if (!window.__ResizableDashboardInstance) {
-            window.__ResizableDashboardInstance = new ResizableDashboard();
-        }
-    });
-</script>
 {% endblock %}
