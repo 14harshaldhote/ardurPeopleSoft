@@ -1,143 +1,242 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends "base.html" %}
 
-{% block title %}Shifts - TrueAlign{% endblock %}
+{% block page_title %}Shifts{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <div class="bg-white shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 py-6">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Shift Management</h1>
-                    <p class="text-gray-600">Manage all shifts and schedules</p>
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <!-- Header Section -->
+    <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between py-6">
+                <div class="flex items-center space-x-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">All Shifts</h1>
+                        <p class="text-gray-600">Manage shift patterns and schedules</p>
+                    </div>
                 </div>
-                {% if user.groups.all|join:", " == "Manager" %}
-                <a href="{% url 'shift:create' %}" class="btn btn-primary">
-                    <i class="ri-add-line"></i> Create New Shift
-                </a>
-                {% endif %}
+                
+                <!-- Action Buttons -->
+                <div class="flex items-center space-x-3">
+                    {% if can_create %}
+                    <a href="{% url 'shift:shift_create' %}" 
+                       class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Create New Shift
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'shift:dashboard' %}" 
+                       class="inline-flex items-center px-4 py-3 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-xl shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200">
+                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+                        </svg>
+                        Dashboard
+                    </a>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Content -->
-    <div class="max-w-7xl mx-auto px-4 py-8">
-        <!-- Filters -->
-        <div class="bg-white rounded-lg shadow mb-6 p-6">
-            <div class="flex flex-wrap gap-4 items-center">
-                <div class="flex-1 min-w-64">
-                    <input type="text" id="searchShifts" placeholder="Search shifts..." 
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Search and Filters -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
+            <form method="get" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                        </div>
+                        <input type="text" name="search" value="{{ search }}" 
+                               placeholder="Search shifts by name..." 
+                               class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm transition-all duration-200">
+                    </div>
+                    
+                    <div class="relative">
+                        <select name="is_active" class="block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm transition-all duration-200 appearance-none bg-white">
+                            <option value="">All Status</option>
+                            <option value="true" {% if is_active == 'true' %}selected{% endif %}>✅ Active</option>
+                            <option value="false" {% if is_active == 'false' %}selected{% endif %}>❌ Inactive</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3">
+                        <button type="submit" 
+                                class="flex-1 inline-flex items-center justify-center px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+                            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                            Search
+                        </button>
+                        <a href="{% url 'shift:shift_list' %}" 
+                           class="inline-flex items-center justify-center px-4 py-3 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-xl shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200">
+                            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            Clear
+                        </a>
+                    </div>
                 </div>
-                <div>
-                    <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-lg">
-                        <option value="">All Status</option>
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                    </select>
-                </div>
-                <button onclick="filterShifts()" class="btn btn-secondary">
-                    <i class="ri-filter-line"></i> Filter
-                </button>
-            </div>
+            </form>
         </div>
 
         <!-- Shifts Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="shiftsGrid">
-            {% for shift in shifts %}
-            <div class="bg-white rounded-lg shadow hover:shadow-md transition-shadow shift-card" 
-                 data-name="{{ shift.name|lower }}" data-status="{% if shift.is_active %}active{% else %}inactive{% endif %}">
-                <div class="p-6">
-                    <!-- Shift Header -->
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-900">{{ shift.name }}</h3>
-                            <p class="text-sm text-gray-600">{{ shift.description|truncatechars:50 }}</p>
-                        </div>
-                        <span class="px-2 py-1 text-xs font-medium rounded-full 
-                              {% if shift.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
-                            {% if shift.is_active %}Active{% else %}Inactive{% endif %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for shift in page_obj %}
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
+                <!-- Header -->
+                <div class="px-6 py-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                            <div class="w-8 h-8 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            {{ shift.name }}
+                        </h3>
+                        {% if shift.is_active %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                            Active
                         </span>
-                    </div>
-
-                    <!-- Shift Details -->
-                    <div class="space-y-2 mb-4">
-                        <div class="flex items-center text-sm text-gray-600">
-                            <i class="ri-time-line mr-2"></i>
-                            <span>{{ shift.start_time|time:"H:i" }} - {{ shift.end_time|time:"H:i" }}</span>
-                        </div>
-                        <div class="flex items-center text-sm text-gray-600">
-                            <i class="ri-timer-line mr-2"></i>
-                            <span>{{ shift.shift_duration }} hours</span>
-                        </div>
-                        {% if shift.break_duration %}
-                        <div class="flex items-center text-sm text-gray-600">
-                            <i class="ri-pause-line mr-2"></i>
-                            <span>{{ shift.break_duration }} min break</span>
-                        </div>
+                        {% else %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            Inactive
+                        </span>
                         {% endif %}
                     </div>
-
-                    <!-- Assignment Count -->
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center text-sm text-gray-600">
-                            <i class="ri-user-line mr-2"></i>
-                            <span>{{ shift.current_assignments_count }} assigned</span>
-                        </div>
-                        {% if shift.max_employees %}
-                        <div class="text-sm text-gray-600">
-                            Max: {{ shift.max_employees }}
-                        </div>
-                        {% endif %}
+                </div>
+                
+                <!-- Content -->
+                <div class="px-6 py-4 space-y-3">
+                    <div class="flex items-center text-sm text-gray-600">
+                        <svg class="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        {{ shift.start_time|time:"H:i" }} - {{ shift.end_time|time:"H:i" }}
                     </div>
-
-                    <!-- Actions -->
-                    <div class="flex space-x-2">
-                        <a href="{% url 'shift:detail' shift.id %}" 
-                           class="flex-1 btn btn-outline-primary btn-sm text-center">
-                            <i class="ri-eye-line"></i> View
+                    
+                    <div class="flex items-center text-sm text-gray-600">
+                        <svg class="w-4 h-4 mr-2 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        {{ shift.work_days }}
+                    </div>
+                    
+                    <div class="flex items-center text-sm text-gray-600">
+                        <svg class="w-4 h-4 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                        {{ shift.assignments.count }} assignment{{ shift.assignments.count|pluralize }}
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <a href="{% url 'shift:shift_detail' shift.pk %}" 
+                           class="text-sm font-medium text-indigo-600 hover:text-indigo-800 flex items-center group">
+                            View Details
+                            <svg class="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                            </svg>
                         </a>
-                        {% if user.groups.all|join:", " == "Manager" %}
-                        <a href="{% url 'shift:update' shift.id %}" 
-                           class="flex-1 btn btn-outline-secondary btn-sm text-center">
-                            <i class="ri-edit-line"></i> Edit
-                        </a>
+                        
+                        {% if can_create %}
+                        <div class="flex space-x-2">
+                            <a href="{% url 'shift:assignment_create' %}?shift={{ shift.pk }}" 
+                               class="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200">
+                                Assign
+                            </a>
+                        </div>
                         {% endif %}
                     </div>
                 </div>
             </div>
             {% empty %}
-            <div class="col-span-full text-center py-12">
-                <i class="ri-inbox-line text-gray-400 text-5xl mb-4"></i>
-                <h3 class="text-lg font-medium text-gray-900 mb-2">No shifts found</h3>
-                <p class="text-gray-600 mb-4">Get started by creating your first shift</p>
-                {% if user.groups.all|join:", " == "Manager" %}
-                <a href="{% url 'shift:create' %}" class="btn btn-primary">
-                    <i class="ri-add-line"></i> Create Shift
-                </a>
-                {% endif %}
+            <div class="col-span-full">
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-12 text-center">
+                    <div class="w-20 h-20 mx-auto bg-gradient-to-r from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mb-6">
+                        <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">No shifts found</h3>
+                    <p class="text-gray-500 mb-8 max-w-md mx-auto">
+                        {% if search %}
+                        No shifts match your search criteria. Try adjusting your filters or search terms.
+                        {% else %}
+                        Get started by creating your first shift pattern to organize work schedules.
+                        {% endif %}
+                    </p>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        {% if search %}
+                        <a href="{% url 'shift:shift_list' %}" 
+                           class="inline-flex items-center px-6 py-3 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-xl shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200">
+                            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            Clear Filters
+                        </a>
+                        {% endif %}
+                        
+                        {% if can_create %}
+                        <a href="{% url 'shift:shift_create' %}" 
+                           class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+                            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                            Create Your First Shift
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
             {% endfor %}
         </div>
 
         <!-- Pagination -->
-        {% if is_paginated %}
+        {% if page_obj.has_other_pages %}
         <div class="mt-8 flex justify-center">
-            <nav class="flex space-x-2">
+            <nav class="relative z-0 inline-flex rounded-xl shadow-lg border border-gray-200 bg-white" aria-label="Pagination">
                 {% if page_obj.has_previous %}
-                <a href="?page=1" class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">First</a>
-                <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Previous</a>
+                <a href="?{% if search %}search={{ search }}&{% endif %}{% if is_active %}is_active={{ is_active }}&{% endif %}page={{ page_obj.previous_page_number }}" 
+                   class="relative inline-flex items-center px-4 py-3 rounded-l-xl border-r border-gray-200 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-colors duration-200">
+                    <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Previous
+                </a>
                 {% endif %}
                 
-                <span class="px-3 py-2 bg-blue-600 text-white rounded-lg">
-                    {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                <span class="relative inline-flex items-center px-6 py-3 border-r border-gray-200 bg-blue-50 text-sm font-semibold text-blue-700">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
                 </span>
                 
                 {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Next</a>
-                <a href="?page={{ page_obj.paginator.num_pages }}" class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Last</a>
+                <a href="?{% if search %}search={{ search }}&{% endif %}{% if is_active %}is_active={{ is_active }}&{% endif %}page={{ page_obj.next_page_number }}" 
+                   class="relative inline-flex items-center px-4 py-3 rounded-r-xl bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-colors duration-200">
+                    Next
+                    <svg class="h-5 w-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </a>
                 {% endif %}
             </nav>
         </div>
@@ -146,28 +245,43 @@
 </div>
 
 <script>
-function filterShifts() {
-    const searchTerm = document.getElementById('searchShifts').value.toLowerCase();
-    const statusFilter = document.getElementById('statusFilter').value;
-    const cards = document.querySelectorAll('.shift-card');
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form on filter change
+    const statusSelect = document.querySelector('select[name="is_active"]');
+    const searchForm = document.querySelector('form');
     
-    cards.forEach(card => {
-        const name = card.dataset.name;
-        const status = card.dataset.status;
-        
-        const matchesSearch = name.includes(searchTerm);
-        const matchesStatus = !statusFilter || status === statusFilter;
-        
-        if (matchesSearch && matchesStatus) {
-            card.style.display = 'block';
-        } else {
-            card.style.display = 'none';
-        }
+    if (statusSelect) {
+        statusSelect.addEventListener('change', function() {
+            searchForm.submit();
+        });
+    }
+    
+    // Enhanced search with debounce
+    const searchInput = document.querySelector('input[name="search"]');
+    if (searchInput) {
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            if (this.value === '') {
+                searchForm.submit();
+            }
+        });
+    }
+    
+    // Add loading states to buttons
+    const buttons = document.querySelectorAll('button[type="submit"], a[href*="create"]');
+    buttons.forEach(button => {
+        button.addEventListener('click', function() {
+            const spinner = document.createElement('div');
+            spinner.className = 'animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2';
+            
+            // Add spinner for submit buttons
+            if (this.type === 'submit') {
+                this.disabled = true;
+                this.insertBefore(spinner, this.firstChild);
+            }
+        });
     });
-}
-
-// Real-time search
-document.getElementById('searchShifts').addEventListener('input', filterShifts);
-document.getElementById('statusFilter').addEventListener('change', filterShifts);
+});
 </script>
 {% endblock %}

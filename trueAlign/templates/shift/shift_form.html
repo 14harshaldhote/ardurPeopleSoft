@@ -1,318 +1,172 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends "base.html" %}
 
-{% block title %}{% if form.instance.pk %}Edit Shift{% else %}Create Shift{% endif %} - TrueAlign{% endblock %}
+{% block page_title %}Create Shift{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <div class="bg-white shadow-sm">
-        <div class="max-w-4xl mx-auto px-4 py-6">
-            <div class="flex items-center">
-                <a href="{% url 'shift:list' %}" class="mr-4 text-gray-600 hover:text-gray-900">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                    </svg>
-                </a>
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-900">
-                        {% if form.instance.pk %}Edit Shift{% else %}Create New Shift{% endif %}
-                    </h1>
-                    <p class="text-gray-600">
-                        {% if form.instance.pk %}Update shift details{% else %}Create a new shift schedule{% endif %}
-                    </p>
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50">
+    <!-- Header Section -->
+    <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between py-6">
+                <div class="flex items-center space-x-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">Create New Shift</h1>
+                        <p class="text-gray-600">Define shift patterns and schedules</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'shift:shift_list' %}" 
+                       class="inline-flex items-center px-4 py-3 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-xl shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200">
+                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                        Back to Shifts
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Content -->
-    <div class="max-w-4xl mx-auto px-4 py-8">
-        <div class="bg-white rounded-lg shadow">
-            <form method="post" id="shiftForm">
-                {% csrf_token %}
-                
-                <div class="p-6 border-b border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900">Shift Details</h3>
-                </div>
-
-                <div class="p-6 space-y-6">
-                    <!-- Basic Information -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Shift Name <span class="text-red-500">*</span>
-                            </label>
-                            {{ form.name }}
-                            {% if form.name.errors %}
-                                <div class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                            {{ form.is_active }}
-                        </div>
-                    </div>
-
-                    <!-- Description -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                        {{ form.description }}
-                    </div>
-
-                    <!-- Time Settings -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Start Time <span class="text-red-500">*</span>
-                            </label>
-                            {{ form.start_time }}
-                            {% if form.start_time.errors %}
-                                <div class="mt-1 text-sm text-red-600">{{ form.start_time.errors.0 }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                End Time <span class="text-red-500">*</span>
-                            </label>
-                            {{ form.end_time }}
-                            {% if form.end_time.errors %}
-                                <div class="mt-1 text-sm text-red-600">{{ form.end_time.errors.0 }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <!-- Duration and Break -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Shift Duration (hours) <span class="text-red-500">*</span>
-                            </label>
-                            {{ form.shift_duration }}
-                            {% if form.shift_duration.errors %}
-                                <div class="mt-1 text-sm text-red-600">{{ form.shift_duration.errors.0 }}</div>
-                            {% endif %}
-                            <p class="mt-1 text-xs text-gray-500">Total working hours</p>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Break Duration (minutes) <span class="text-red-500">*</span>
-                            </label>
-                            {{ form.break_duration_minutes }}
-                            {% if form.break_duration_minutes.errors %}
-                                <div class="mt-1 text-sm text-red-600">{{ form.break_duration_minutes.errors.0 }}</div>
-                            {% endif %}
-                            <p class="mt-1 text-xs text-gray-500">Break time in minutes</p>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Grace Period (minutes) <span class="text-red-500">*</span>
-                            </label>
-                            {{ form.grace_period_minutes }}
-                            {% if form.grace_period_minutes.errors %}
-                                <div class="mt-1 text-sm text-red-600">{{ form.grace_period_minutes.errors.0 }}</div>
-                            {% endif %}
-                            <p class="mt-1 text-xs text-gray-500">Late arrival tolerance</p>
-                        </div>
-                    </div>
-
-                    <!-- Work Days and Settings -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Work Days <span class="text-red-500">*</span>
-                            </label>
-                            {{ form.work_days }}
-                            {% if form.work_days.errors %}
-                                <div class="mt-1 text-sm text-red-600">{{ form.work_days.errors.0 }}</div>
-                            {% endif %}
-                            <p class="mt-1 text-xs text-gray-500">Days per week</p>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Maximum Employees</label>
-                            {{ form.max_employees }}
-                            <p class="mt-1 text-xs text-gray-500">Leave empty for no limit</p>
-                        </div>
-                    </div>
-
-                    <!-- Overnight Shift Option -->
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <div class="flex items-start">
-                            <div class="flex items-center h-5">
-                                {{ form.is_overnight }}
-                            </div>
-                            <div class="ml-3">
-                                <label for="{{ form.is_overnight.id_for_label }}" class="font-medium text-blue-900">
-                                    Overnight Shift
-                                </label>
-                                <p class="text-sm text-blue-700">
-                                    Check this if the shift crosses midnight (e.g., 11 PM to 7 AM)
-                                </p>
-                            </div>
-                        </div>
-                        {% if form.is_overnight.errors %}
-                            <div class="mt-2 text-sm text-red-600">{{ form.is_overnight.errors.0 }}</div>
-                        {% endif %}
-                    </div>
-
-                    <!-- Duration Display -->
-                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                        <div class="flex items-center">
-                            <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <div>
-                                <p class="font-medium text-gray-900">Shift Summary</p>
-                                <p class="text-sm text-gray-700" id="shiftSummary">
-                                    Fill in the details to see shift summary
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Actions -->
-                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg flex justify-between">
-                    <a href="{% url 'shift:list' %}" class="btn btn-secondary">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white shadow-xl rounded-2xl border border-gray-100 overflow-hidden">
+            <!-- Header -->
+            <div class="px-8 py-6 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center mr-4">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
-                        Cancel
-                    </a>
-                    <div class="flex space-x-3">
-                        <button type="button" onclick="validateShift()" class="btn btn-outline-primary">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Validate
-                        </button>
-                        <button type="submit" class="btn btn-primary">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12"></path>
-                            </svg>
-                            {% if form.instance.pk %}Update Shift{% else %}Create Shift{% endif %}
-                        </button>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-900">Shift Configuration</h3>
+                        <p class="text-sm text-gray-600">Set up timing, duration, and work patterns</p>
                     </div>
                 </div>
-            </form>
-        </div>
+            </div>
+        
+        <form method="post" class="px-6 py-4 space-y-6">
+            {% csrf_token %}
+            
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700">Shift Name</label>
+                <input type="text" name="name" id="name" required 
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                       placeholder="e.g., Morning Shift">
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="start_time" class="block text-sm font-medium text-gray-700">Start Time</label>
+                    <input type="time" name="start_time" id="start_time" required 
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                </div>
+                
+                <div>
+                    <label for="end_time" class="block text-sm font-medium text-gray-700">End Time</label>
+                    <input type="time" name="end_time" id="end_time" required 
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                </div>
+            </div>
+            
+            <div>
+                <label for="work_days" class="block text-sm font-medium text-gray-700">Work Days</label>
+                <select name="work_days" id="work_days" 
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                    {% for choice in work_days_choices %}
+                    <option value="{{ choice.0 }}">{{ choice.1 }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div id="custom_days_field" class="hidden">
+                <label for="custom_work_days" class="block text-sm font-medium text-gray-700">Custom Work Days</label>
+                <input type="text" name="custom_work_days" id="custom_work_days" 
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                       placeholder="Monday,Tuesday,Wednesday">
+                <p class="mt-1 text-sm text-gray-500">Enter day names separated by commas</p>
+            </div>
+            
+            <div>
+                <label for="description" class="block text-sm font-medium text-gray-700">Description (Optional)</label>
+                <textarea name="description" id="description" rows="3" 
+                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                          placeholder="Brief description of this shift..."></textarea>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="color_code" class="block text-sm font-medium text-gray-700">Color Code</label>
+                    <input type="color" name="color_code" id="color_code" value="#3B82F6" 
+                           class="mt-1 block w-full h-10 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <p class="mt-1 text-sm text-gray-500">Color for UI display</p>
+                </div>
+                
+                <div class="flex items-center mt-6">
+                    <input type="checkbox" name="requires_approval" id="requires_approval" 
+                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    <label for="requires_approval" class="ml-2 block text-sm text-gray-900">
+                        Requires approval for assignments
+                    </label>
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <a href="{% url 'shift:shift_list' %}" 
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Cancel
+                </a>
+                <button type="submit" 
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Create Shift
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
 <script>
-// Update shift summary
-function updateShiftSummary() {
-    const startTime = document.querySelector('input[name="start_time"]').value;
-    const endTime = document.querySelector('input[name="end_time"]').value;
-    const duration = document.querySelector('input[name="shift_duration"]').value;
-    const breakDuration = document.querySelector('input[name="break_duration_minutes"]').value || 0;
-    const workDays = document.querySelector('input[name="work_days"]').value;
-    const isOvernight = document.querySelector('input[name="is_overnight"]').checked;
-    
-    let summary = '';
-    
-    if (startTime && endTime) {
-        summary += `${startTime} - ${endTime}`;
-        if (isOvernight) summary += ' (overnight)';
-    }
-    
-    if (duration) {
-        summary += ` | ${duration} hours`;
-    }
-    
-    if (breakDuration > 0) {
-        summary += ` | ${breakDuration} min break`;
-    }
-    
-    if (workDays) {
-        summary += ` | ${workDays} days/week`;
-    }
-    
-    document.getElementById('shiftSummary').textContent = summary || 'Fill in the details to see shift summary';
-}
-
-// Validate shift
-function validateShift() {
-    const errors = [];
-    
-    const name = document.querySelector('input[name="name"]').value;
-    const startTime = document.querySelector('input[name="start_time"]').value;
-    const endTime = document.querySelector('input[name="end_time"]').value;
-    const duration = document.querySelector('input[name="shift_duration"]').value;
-    const workDays = document.querySelector('input[name="work_days"]').value;
-    const breakDuration = document.querySelector('input[name="break_duration_minutes"]').value;
-    const gracePeriod = document.querySelector('input[name="grace_period_minutes"]').value;
-    
-    if (!name.trim()) errors.push('Shift name is required');
-    if (!startTime) errors.push('Start time is required');
-    if (!endTime) errors.push('End time is required');
-    if (!duration) errors.push('Shift duration is required');
-    if (!workDays) errors.push('Work days is required');
-    if (!breakDuration) errors.push('Break duration is required');
-    if (!gracePeriod) errors.push('Grace period is required');
-    
-    if (startTime && endTime && startTime === endTime) {
-        errors.push('Start time and end time cannot be the same');
-    }
-    
-    if (duration && (duration < 1 || duration > 24)) {
-        errors.push('Shift duration must be between 1 and 24 hours');
-    }
-    
-    if (workDays && (workDays < 1 || workDays > 7)) {
-        errors.push('Work days must be between 1 and 7');
-    }
-    
-    if (errors.length > 0) {
-        alert('Validation errors:\n' + errors.join('\n'));
-    } else {
-        alert('Shift validation passed! You can now save the shift.');
-    }
-}
-
-// Event listeners
 document.addEventListener('DOMContentLoaded', function() {
-    const inputs = ['start_time', 'end_time', 'shift_duration', 'break_duration_minutes', 'work_days', 'is_overnight'];
-    inputs.forEach(name => {
-        const element = document.querySelector(`[name="${name}"]`);
-        if (element) {
-            element.addEventListener('change', updateShiftSummary);
-            element.addEventListener('input', updateShiftSummary);
+    const workDaysSelect = document.getElementById('work_days');
+    const customDaysField = document.getElementById('custom_days_field');
+    
+    workDaysSelect.addEventListener('change', function() {
+        if (this.value === 'Custom') {
+            customDaysField.classList.remove('hidden');
+        } else {
+            customDaysField.classList.add('hidden');
         }
     });
     
-    updateShiftSummary();
+    // Calculate duration when times change
+    const startTime = document.getElementById('start_time');
+    const endTime = document.getElementById('end_time');
+    
+    function calculateDuration() {
+        if (startTime.value && endTime.value) {
+            const start = new Date(`2000-01-01T${startTime.value}`);
+            const end = new Date(`2000-01-01T${endTime.value}`);
+            
+            let diff = end - start;
+            if (diff < 0) {
+                // Handle overnight shifts
+                diff += 24 * 60 * 60 * 1000;
+            }
+            
+            const hours = diff / (1000 * 60 * 60);
+            console.log(`Shift duration: ${hours} hours`);
+        }
+    }
+    
+    startTime.addEventListener('change', calculateDuration);
+    endTime.addEventListener('change', calculateDuration);
 });
 </script>
-
-<style>
-.btn {
-    @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2;
-}
-
-.btn-primary {
-    @apply text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-500;
-}
-
-.btn-secondary {
-    @apply text-gray-700 bg-white border-gray-300 hover:bg-gray-50 focus:ring-blue-500;
-}
-
-.btn-outline-primary {
-    @apply text-blue-700 bg-blue-50 border-blue-300 hover:bg-blue-100 focus:ring-blue-500;
-}
-
-input, select, textarea {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500;
-}
-
-input[type="checkbox"] {
-    @apply w-auto h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded;
-}
-</style>
 {% endblock %}

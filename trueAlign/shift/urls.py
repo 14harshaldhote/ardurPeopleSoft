@@ -1,110 +1,85 @@
 """
-TrueAlign Shift Management URLs - Optimized
-Essential URL configuration for shift management system
-Simplified and maintainable URL structure
+URL Configuration for Shift Management
+Provides Django template-based interface
 """
 
-from django.urls import path, include
+from django.urls import path
 from . import views
 
 app_name = 'shift'
 
 urlpatterns = [
-    # ============================
-    # DASHBOARD AND OVERVIEW
-    # ============================
-    path('', views.shift_dashboard, name='dashboard'),
-    path('statistics/', views.shift_statistics, name='statistics'),
-
-    # ============================
-    # SHIFT MANAGEMENT
-    # ============================
-    path('shifts/', views.shift_list, name='list'),
-    path('shifts/create/', views.create_shift, name='create'),
-    path('shifts/<int:shift_id>/', views.shift_detail, name='detail'),
-    path('shifts/<int:shift_id>/edit/', views.update_shift, name='update'),
-    path('shifts/<int:shift_id>/delete/', views.delete_shift, name='delete'),
-
-    # ============================
-    # ASSIGNMENT MANAGEMENT
-    # ============================
-    path('assignments/', views.assignment_list, name='assignments'),
-    path('assignments/assign/', views.assign_shift, name='assign'),
-    path('assignments/bulk/', views.bulk_assign_shift, name='bulk_assign'),
-    path('assignments/<int:assignment_id>/end/', views.end_assignment, name='end_assignment'),
-
-    # CSV Operations
-    path('assignments/upload/', views.csv_upload_assignments, name='csv_upload'),
-    path('assignments/export/', views.export_assignments_csv, name='csv_export'),
-
-    # ============================
-    # CALENDAR AND SCHEDULE
-    # ============================
-    path('calendar/', views.user_shift_calendar, name='calendar'),
-    path('calendar/<int:user_id>/', views.user_shift_calendar, name='user_calendar_specific'),
-    path('schedule/', views.shift_schedule_view, name='schedule'),
-
-    # ============================
-    # HOLIDAY MANAGEMENT
-    # ============================
-    path('holidays/', views.holiday_list, name='holidays'),
-    path('holidays/create/', views.create_holiday, name='create_holiday'),
-    path('holidays/<int:holiday_id>/delete/', views.delete_holiday, name='delete_holiday'),
-
-    # ============================
-    # ESSENTIAL API ENDPOINTS
-    # ============================
-    path('api/', include([
-        # Core Data APIs
-        path('shifts/<int:shift_id>/', views.api_shift_details, name='api_shift_details'),
-        path('users/<int:user_id>/assignments/', views.api_user_assignments, name='api_user_assignments'),
-        path('schedule/', views.api_schedule_for_date, name='api_schedule'),
-
-        # Essential Validation APIs
-        path('validate/assignment/', views.api_validate_assignment, name='api_validate_assignment'),
-        path('validate-bulk-conflicts/', views.api_validate_bulk_conflicts, name='api_validate_bulk_conflicts'),
-        
-        # CSV Template
-        path('csv-template/', views.api_download_csv_template, name='api_csv_template'),
-        
-        # Search APIs
-        path('search-users/', views.api_search_users, name='api_search_users'),
-
-        # Basic Conflict Detection
-        path('conflicts/check/', views.api_check_conflicts, name='api_check_conflicts'),
-
-        # Holiday APIs
-        path('holidays/check/', views.api_is_holiday, name='api_is_holiday'),
-        path('holidays/list/', views.api_holidays_list, name='api_holidays_list'),
-    ])),
-
-    # ============================
-    # REPORTS
-    # ============================
-    path('reports/assignments/', views.report_assignments, name='report_assignments'),
+    # Dashboard
+    path('', views.dashboard, name='dashboard'),
+    
+    # Shift Management
+    path('shifts/', views.shift_list, name='shift_list'),
+    path('shifts/create/', views.shift_create, name='shift_create'),
+    path('shifts/<int:pk>/', views.shift_detail, name='shift_detail'),
+    
+    # Assignment Management
+    path('assignments/', views.assignment_list, name='assignment_list'),
+    path('assignments/create/', views.assignment_create, name='assignment_create'),
+    path('assignments/bulk-create/', views.bulk_assignment_create, name='bulk_assignment_create'),
+    path('assignments/<int:pk>/', views.assignment_detail, name='assignment_detail'),
+    path('assignments/<int:pk>/approve/', views.assignment_approve, name='assignment_approve'),
+    path('assignments/<int:pk>/reject/', views.assignment_reject, name='assignment_reject'),
+    
+    # Conflict Management
+    path('conflicts/', views.conflict_list, name='conflict_list'),
+    
+    # Calendar View
+    path('calendar/', views.calendar_view, name='calendar'),
+    
+    # API endpoints for fast data parsing
+    path('api/shifts/', views.api_shifts_list, name='api_shifts_list'),
+    path('api/assignments/', views.api_assignments_list, name='api_assignments_list'),
+    path('api/dashboard-stats/', views.api_dashboard_stats, name='api_dashboard_stats'),
 ]
 
-# Simplified URL Patterns for different access levels
-manager_patterns = [
-    'dashboard', 'statistics', 'list', 'create', 'detail', 'update', 'delete',
-    'assignments', 'assign', 'bulk_assign', 'end_assignment', 'csv_upload', 'csv_export',
-    'calendar', 'user_calendar_specific', 'schedule', 'holidays', 'create_holiday', 'delete_holiday',
-    'report_assignments'
-]
+# URL patterns for different operations:
+"""
+Shift Master URLs:
+- GET /api/shifts/ - List all shifts
+- POST /api/shifts/ - Create new shift
+- GET /api/shifts/{id}/ - Get shift details
+- PUT /api/shifts/{id}/ - Update shift
+- DELETE /api/shifts/{id}/ - Delete shift
+- POST /api/shifts/{id}/duplicate/ - Duplicate shift
+- GET /api/shifts/{id}/assignments/ - Get shift assignments
+- GET /api/shifts/statistics/ - Get shift statistics
 
-hr_patterns = [
-    'dashboard', 'statistics', 'list', 'detail', 'assignments', 'assign', 'bulk_assign',
-    'end_assignment', 'csv_upload', 'csv_export', 'calendar', 'user_calendar_specific', 'schedule',
-    'holidays', 'create_holiday', 'delete_holiday', 'report_assignments'
-]
+Shift Assignment URLs:
+- GET /api/assignments/ - List all assignments
+- POST /api/assignments/ - Create new assignment
+- GET /api/assignments/{id}/ - Get assignment details
+- PUT /api/assignments/{id}/ - Update assignment
+- DELETE /api/assignments/{id}/ - Delete assignment
+- POST /api/assignments/bulk_assign/ - Bulk assign shifts
+- POST /api/assignments/{id}/approve/ - Approve assignment
+- POST /api/assignments/{id}/reject/ - Reject assignment
+- GET /api/assignments/current_assignments/ - Get current assignments
+- GET /api/assignments/user_history/ - Get user assignment history
+- GET /api/assignments/calendar_view/ - Get calendar view
 
-employee_patterns = [
-    'dashboard', 'list', 'detail', 'assignments', 'calendar', 'schedule', 'holidays'
-]
+Shift Conflict URLs:
+- GET /api/conflicts/ - List all conflicts
+- GET /api/conflicts/{id}/ - Get conflict details
+- POST /api/conflicts/{id}/resolve/ - Resolve conflict
+- GET /api/conflicts/statistics/ - Get conflict statistics
 
-# Export patterns for permission checking
-URL_PERMISSION_MAP = {
-    'Manager': manager_patterns,
-    'HR': hr_patterns,
-    'Employee': employee_patterns,
-}
+Reports URLs:
+- POST /api/reports/assignment_report/ - Generate assignment report
+- GET /api/reports/dashboard_stats/ - Get dashboard statistics
+
+Query Parameters:
+- ?is_active=true/false - Filter by active status
+- ?shift_type=MORNING/EVENING/NIGHT/CUSTOM - Filter by shift type
+- ?status=ACTIVE/PENDING/APPROVED/REJECTED - Filter by status
+- ?user_id=123 - Filter by user
+- ?shift_id=456 - Filter by shift
+- ?start_date=2024-01-01 - Filter by start date
+- ?end_date=2024-12-31 - Filter by end date
+- ?search=keyword - Search by name/description
+- ?page=1&page_size=20 - Pagination
+"""

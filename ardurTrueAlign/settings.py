@@ -116,6 +116,7 @@ INSTALLED_APPS = [
     'trueAlign.support',
     'trueAlign.apprisal',
     'trueAlign.confrence',  # Conference Room Booking System
+    'trueAlign.shift',  # Shift Management System
     'rest_framework',
     'django_cron',
     'django_celery_beat',
