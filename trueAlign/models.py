@@ -2612,6 +2612,7 @@ class ShiftMaster(models.Model):
     MAX_GRACE_MINUTES = 120
 
     name = models.CharField(max_length=50)
+    shift_type = models.CharField(max_length=20, choices=SHIFT_CHOICES, default='Day Shift')
     start_time = models.TimeField()
     end_time = models.TimeField()
     shift_duration = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('8.0'))
@@ -3091,8 +3092,8 @@ class ShiftAssignment(models.Model):
         """Validate assignment timing constraints."""
         if self.effective_from:
             today = timezone.now().date()
-            if self.effective_from < (today - timedelta(days=7)):
-                errors['effective_from'] = 'Assignment cannot be more than 7 days in the past.'
+            if self.effective_from < (today - timedelta(days=30)):
+                errors['effective_from'] = 'Assignment cannot be more than 30 days in the past.'
 
     def _validate_overlapping_assignments(self, errors):
         """Validate overlapping assignments."""

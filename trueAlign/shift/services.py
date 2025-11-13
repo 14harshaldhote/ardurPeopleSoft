@@ -4,13 +4,14 @@ Provides high-level operations and business rules
 """
 
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from django.contrib.auth.models import User
 from datetime import datetime, timedelta, date
 from decimal import Decimal
 import logging
 
-from .models import ShiftMaster, ShiftAssignment, ShiftConflict, ShiftValidationRule
+from trueAlign.models import ShiftMaster, ShiftAssignment, ShiftConflict, ShiftValidationRule
 from .validators import ShiftAssignmentValidator, BulkAssignmentValidator
 
 logger = logging.getLogger(__name__)
@@ -44,18 +45,12 @@ class ShiftService:
         
         new_shift = ShiftMaster.objects.create(
             name=new_name,
-            shift_type=original_shift.shift_type,
             start_time=original_shift.start_time,
             end_time=original_shift.end_time,
-            shift_duration=original_shift.shift_duration,
             break_duration=original_shift.break_duration,
-            grace_period_in=original_shift.grace_period_in,
-            grace_period_out=original_shift.grace_period_out,
+            grace_period=original_shift.grace_period,
             work_days=original_shift.work_days,
             custom_work_days=original_shift.custom_work_days,
-            min_rest_hours=original_shift.min_rest_hours,
-            max_consecutive_days=original_shift.max_consecutive_days,
-            overtime_threshold=original_shift.overtime_threshold,
             color_code=original_shift.color_code,
             description=f"Duplicated from {original_shift.name}",
             created_by=created_by
@@ -109,6 +104,15 @@ class ShiftAssignmentService:
     @transaction.atomic
     def create_assignment(assignment_data, created_by=None):
         """Create a single shift assignment with full validation"""
+        # Convert string dates to date objects if needed
+        if 'effective_from' in assignment_data and isinstance(assignment_data['effective_from'], str):
+            from datetime import datetime
+            assignment_data['effective_from'] = datetime.strptime(assignment_data['effective_from'], '%Y-%m-%d').date()
+        
+        if 'effective_to' in assignment_data and assignment_data['effective_to'] and isinstance(assignment_data['effective_to'], str):
+            from datetime import datetime
+            assignment_data['effective_to'] = datetime.strptime(assignment_data['effective_to'], '%Y-%m-%d').date()
+        
         assignment = ShiftAssignment(**assignment_data)
         if created_by:
             assignment.created_by = created_by
@@ -485,7 +489,12 @@ class ReportingService:
             },
             'assignments': {
                 'total': ShiftAssignment.objects.count(),
-                'active_today': ShiftAssignment.get_active_assignments(today).count(),
+                'active_today': ShiftAssignment.objects.filter(
+                    effective_from__lte=today,
+                    status__in=['ACTIVE', 'APPROVED']
+                ).filter(
+                    Q(effective_to__gte=today) | Q(effective_to__isnull=True)
+                ).count(),
                 'pending_approval': ShiftAssignment.objects.filter(status='PENDING').count(),
                 'expiring_soon': ShiftAssignment.objects.filter(
                     effective_to__range=[today, today + timedelta(days=7)]

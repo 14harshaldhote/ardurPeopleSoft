@@ -23,6 +23,17 @@
                 </div>
                 
                 <div class="flex items-center space-x-3">
+                    {% if can_approve and assignment.status in 'ACTIVE,APPROVED' %}
+                    <button id="reassign-btn" 
+                            data-assignment-id="{{ assignment.pk }}"
+                            class="inline-flex items-center px-4 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                        </svg>
+                        Reassign
+                    </button>
+                    {% endif %}
+                    
                     {% if can_approve and assignment.status == 'PENDING' %}
                     <a href="{% url 'shift:assignment_approve' assignment.pk %}" 
                        class="inline-flex items-center px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
@@ -38,6 +49,18 @@
                         </svg>
                         Reject
                     </a>
+                    {% endif %}
+                    
+                    {% if can_approve and assignment.status in 'ACTIVE,APPROVED' and not assignment.effective_to %}
+                    <button id="end-assignment-btn" 
+                            data-assignment-id="{{ assignment.pk }}"
+                            class="inline-flex items-center px-4 py-3 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/>
+                        </svg>
+                        End Assignment
+                    </button>
                     {% endif %}
                     
                     <a href="{% url 'shift:assignment_list' %}" 
@@ -261,4 +284,261 @@
         </div>
     </div>
 </div>
+
+<!-- Assignment Reassignment Modal -->
+<div id="reassign-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-2xl bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <div class="w-8 h-8 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                        </svg>
+                    </div>
+                    Reassign to Different Shift
+                </h3>
+                <button id="close-reassign-modal" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="reassign-form">
+                <div class="mb-4">
+                    <label for="new-shift-select" class="block text-sm font-medium text-gray-700 mb-2">Select New Shift</label>
+                    <select id="new-shift-select" name="new_shift_id" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">Choose a shift...</option>
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="effective-from" class="block text-sm font-medium text-gray-700 mb-2">Effective From</label>
+                    <input type="date" id="effective-from" name="effective_from" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="reassign-reason" class="block text-sm font-medium text-gray-700 mb-2">Reason for Reassignment</label>
+                    <textarea id="reassign-reason" name="reason" rows="3"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                              placeholder="Enter reason for reassignment..."></textarea>
+                </div>
+                
+                <div class="flex items-center justify-end space-x-3 pt-4">
+                    <button type="button" id="cancel-reassign" 
+                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors duration-200">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            class="px-6 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white text-sm font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200">
+                        <span class="reassign-btn-text">Reassign</span>
+                        <span class="reassign-btn-loading hidden">
+                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Reassigning...
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Helper function to get CSRF token
+function getCsrfToken() {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+    return csrfToken ? csrfToken.value : '';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Assignment Reassignment Functionality
+    const reassignBtn = document.getElementById('reassign-btn');
+    const reassignModal = document.getElementById('reassign-modal');
+    const reassignForm = document.getElementById('reassign-form');
+    const closeReassignModal = document.getElementById('close-reassign-modal');
+    const cancelReassign = document.getElementById('cancel-reassign');
+    const newShiftSelect = document.getElementById('new-shift-select');
+    const effectiveFromInput = document.getElementById('effective-from');
+
+    if (reassignBtn) {
+        reassignBtn.addEventListener('click', async function() {
+            // Load available shifts
+            try {
+                const response = await fetch('{% url "shift:api_shifts_list" %}');
+                const data = await response.json();
+                
+                // Clear existing options
+                newShiftSelect.innerHTML = '<option value="">Choose a shift...</option>';
+                
+                // Add shift options
+                data.shifts.forEach(shift => {
+                    const option = document.createElement('option');
+                    option.value = shift.id;
+                    option.textContent = `${shift.name} (${shift.start_time} - ${shift.end_time})`;
+                    newShiftSelect.appendChild(option);
+                });
+                
+                // Set default effective date to tomorrow
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                effectiveFromInput.value = tomorrow.toISOString().split('T')[0];
+                
+                reassignModal.classList.remove('hidden');
+            } catch (error) {
+                console.error('Error loading shifts:', error);
+                alert('Error loading available shifts');
+            }
+        });
+    }
+
+    // Close modal handlers
+    [closeReassignModal, cancelReassign].forEach(btn => {
+        if (btn) {
+            btn.addEventListener('click', function() {
+                reassignModal.classList.add('hidden');
+            });
+        }
+    });
+
+    // Close modal on outside click
+    reassignModal.addEventListener('click', function(e) {
+        if (e.target === reassignModal) {
+            reassignModal.classList.add('hidden');
+        }
+    });
+
+    // Handle form submission
+    if (reassignForm) {
+        reassignForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const assignmentId = reassignBtn.dataset.assignmentId;
+            
+            // Get form elements with null checks
+            const newShiftSelectElement = document.getElementById('new-shift-select');
+            const effectiveFromElement = document.getElementById('effective-from');
+            const reasonElement = document.getElementById('reassign-reason');
+            
+            if (!newShiftSelectElement || !effectiveFromElement) {
+                console.error('Form elements not found');
+                alert('Form elements not found. Please refresh the page and try again.');
+                return;
+            }
+            
+            const newShiftId = newShiftSelectElement.value;
+            const effectiveFrom = effectiveFromElement.value;
+            const reason = reasonElement ? reasonElement.value : '';
+            
+            if (!newShiftId || !effectiveFrom) {
+                alert('Please select a shift and effective date');
+                return;
+            }
+
+            // Show loading state
+            const btnText = document.querySelector('.reassign-btn-text');
+            const btnLoading = document.querySelector('.reassign-btn-loading');
+            if (btnText) btnText.classList.add('hidden');
+            if (btnLoading) btnLoading.classList.remove('hidden');
+
+            try {
+                const response = await fetch(`{% url "shift:reassign_assignment" 0 %}`.replace('0', assignmentId), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify({
+                        new_shift_id: newShiftId,
+                        effective_from: effectiveFrom,
+                        reason: reason
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Success - redirect to new assignment
+                    window.location.href = `{% url "shift:assignment_detail" 0 %}`.replace('0', data.assignment.id);
+                } else {
+                    throw new Error(data.error || 'Failed to reassign');
+                }
+            } catch (error) {
+                console.error('Error reassigning:', error);
+                alert('Error reassigning: ' + error.message);
+                
+                // Reset button state
+                if (btnText) btnText.classList.remove('hidden');
+                if (btnLoading) btnLoading.classList.add('hidden');
+            }
+        });
+    }
+    
+    // End Assignment functionality
+    const endAssignmentBtn = document.getElementById('end-assignment-btn');
+    if (endAssignmentBtn) {
+        endAssignmentBtn.addEventListener('click', function() {
+            const assignmentId = this.dataset.assignmentId;
+            
+            // Create and show end assignment modal
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50';
+            modal.innerHTML = `
+                <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-2xl bg-white">
+                    <div class="mt-3">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">End Assignment</h3>
+                            <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <form method="post" action="${'{% url "shift:assignment_end" 0 %}'.replace('0', assignmentId)}">
+                            <input type="hidden" name="csrfmiddlewaretoken" value="${getCsrfToken()}">
+                            
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                                <input type="date" name="end_date" value="${new Date().toISOString().split('T')[0]}" required
+                                       class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:border-orange-500 focus:ring-orange-500">
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Reason</label>
+                                <textarea name="reason" rows="3" placeholder="Reason for ending assignment..."
+                                          class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:border-orange-500 focus:ring-orange-500"></textarea>
+                            </div>
+                            
+                            <div class="flex justify-end space-x-3">
+                                <button type="button" onclick="this.closest('.fixed').remove()"
+                                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+                                    Cancel
+                                </button>
+                                <button type="submit"
+                                        class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
+                                    End Assignment
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        });
+    }
+});
+</script>
+
+<!-- Hidden CSRF token for JavaScript -->
+<form style="display: none;">
+    {% csrf_token %}
+</form>
+
 {% endblock %}

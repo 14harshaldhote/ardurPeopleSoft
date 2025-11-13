@@ -16,6 +16,8 @@ urlpatterns = [
     path('shifts/', views.shift_list, name='shift_list'),
     path('shifts/create/', views.shift_create, name='shift_create'),
     path('shifts/<int:pk>/', views.shift_detail, name='shift_detail'),
+    path('shifts/<int:pk>/edit/', views.shift_edit, name='shift_edit'),
+    path('shifts/<int:pk>/delete/', views.shift_delete, name='shift_delete'),
     
     # Assignment Management
     path('assignments/', views.assignment_list, name='assignment_list'),
@@ -24,17 +26,34 @@ urlpatterns = [
     path('assignments/<int:pk>/', views.assignment_detail, name='assignment_detail'),
     path('assignments/<int:pk>/approve/', views.assignment_approve, name='assignment_approve'),
     path('assignments/<int:pk>/reject/', views.assignment_reject, name='assignment_reject'),
+    path('assignments/<int:pk>/end/', views.assignment_end, name='assignment_end'),
     
     # Conflict Management
     path('conflicts/', views.conflict_list, name='conflict_list'),
     
-    # Calendar View
-    path('calendar/', views.calendar_view, name='calendar'),
+    # Calendar view
+    path('calendar/', views.calendar_view, name='calendar_view'),
     
-    # API endpoints for fast data parsing
+    # Team assignments view
+    path('team-assignments/', views.team_assignments_view, name='team_assignments'),
+    
+    # Utilization reports view
+    path('reports/utilization/', views.utilization_reports_view, name='utilization_reports'),
+    
+    # Enhanced API endpoints with business logic
     path('api/shifts/', views.api_shifts_list, name='api_shifts_list'),
     path('api/assignments/', views.api_assignments_list, name='api_assignments_list'),
     path('api/dashboard-stats/', views.api_dashboard_stats, name='api_dashboard_stats'),
+    
+    # New enhanced API endpoints
+    path('api/conflicts/<int:conflict_id>/resolve/', views.resolve_conflict, name='resolve_conflict'),
+    path('api/assignments/history/<int:user_id>/', views.assignment_history, name='assignment_history'),
+    path('api/assignments/current/', views.current_assignments_api, name='current_assignments_api'),
+    path('api/shifts/<int:shift_id>/utilization/', views.shift_utilization_report, name='shift_utilization_report'),
+    path('api/shifts/<int:shift_id>/duplicate/', views.duplicate_shift, name='duplicate_shift'),
+    path('api/assignments/<int:assignment_id>/reassign/', views.reassign_assignment, name='reassign_assignment'),
+    path('api/reports/assignments/', views.assignment_report, name='assignment_report'),
+    path('api/conflicts/statistics/', views.conflict_statistics, name='conflict_statistics'),
 ]
 
 # URL patterns for different operations:

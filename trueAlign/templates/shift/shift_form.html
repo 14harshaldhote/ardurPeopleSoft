@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block page_title %}Create Shift{% endblock %}
+{% block page_title %}{% if shift %}Edit Shift{% else %}Create Shift{% endif %}{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50">
@@ -17,8 +17,8 @@
                         </div>
                     </div>
                     <div>
-                        <h1 class="text-3xl font-bold text-gray-900">Create New Shift</h1>
-                        <p class="text-gray-600">Define shift patterns and schedules</p>
+                        <h1 class="text-3xl font-bold text-gray-900">{% if shift %}Edit Shift{% else %}Create New Shift{% endif %}</h1>
+                        <p class="text-gray-600">{% if shift %}Modify shift patterns and schedules{% else %}Define shift patterns and schedules{% endif %}</p>
                     </div>
                 </div>
                 
@@ -59,20 +59,22 @@
                 <label for="name" class="block text-sm font-medium text-gray-700">Shift Name</label>
                 <input type="text" name="name" id="name" required 
                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                       placeholder="e.g., Morning Shift">
+                       placeholder="e.g., Morning Shift" value="{{ shift.name|default:'' }}">
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label for="start_time" class="block text-sm font-medium text-gray-700">Start Time</label>
                     <input type="time" name="start_time" id="start_time" required 
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                           value="{{ shift.start_time|time:'H:i'|default:'' }}">
                 </div>
                 
                 <div>
                     <label for="end_time" class="block text-sm font-medium text-gray-700">End Time</label>
                     <input type="time" name="end_time" id="end_time" required 
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                           value="{{ shift.end_time|time:'H:i'|default:'' }}">
                 </div>
             </div>
             
@@ -81,7 +83,7 @@
                 <select name="work_days" id="work_days" 
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
                     {% for choice in work_days_choices %}
-                    <option value="{{ choice.0 }}">{{ choice.1 }}</option>
+                    <option value="{{ choice.0 }}" {% if shift.work_days == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -90,7 +92,7 @@
                 <label for="custom_work_days" class="block text-sm font-medium text-gray-700">Custom Work Days</label>
                 <input type="text" name="custom_work_days" id="custom_work_days" 
                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                       placeholder="Monday,Tuesday,Wednesday">
+                       placeholder="Monday,Tuesday,Wednesday" value="{{ shift.custom_work_days|default:'' }}">
                 <p class="mt-1 text-sm text-gray-500">Enter day names separated by commas</p>
             </div>
             
@@ -98,23 +100,53 @@
                 <label for="description" class="block text-sm font-medium text-gray-700">Description (Optional)</label>
                 <textarea name="description" id="description" rows="3" 
                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                          placeholder="Brief description of this shift..."></textarea>
+                          placeholder="Brief description of this shift...">{{ shift.description|default:'' }}</textarea>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="break_duration" class="block text-sm font-medium text-gray-700">Break Duration (minutes)</label>
+                    <input type="number" name="break_duration" id="break_duration" min="0" max="120" 
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                           value="{{ break_duration_minutes|default:30 }}">
+                    <p class="mt-1 text-sm text-gray-500">Break time in minutes</p>
+                </div>
+                
+                <div>
+                    <label for="grace_period" class="block text-sm font-medium text-gray-700">Grace Period (minutes)</label>
+                    <input type="number" name="grace_period" id="grace_period" min="0" max="60" 
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                           value="{{ grace_period_minutes|default:15 }}">
+                    <p class="mt-1 text-sm text-gray-500">Grace period for late arrivals</p>
+                </div>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label for="color_code" class="block text-sm font-medium text-gray-700">Color Code</label>
-                    <input type="color" name="color_code" id="color_code" value="#3B82F6" 
+                    <input type="color" name="color_code" id="color_code" value="{{ shift.color_code|default:'#3B82F6' }}" 
                            class="mt-1 block w-full h-10 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     <p class="mt-1 text-sm text-gray-500">Color for UI display</p>
                 </div>
                 
-                <div class="flex items-center mt-6">
-                    <input type="checkbox" name="requires_approval" id="requires_approval" 
-                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                    <label for="requires_approval" class="ml-2 block text-sm text-gray-900">
-                        Requires approval for assignments
-                    </label>
+                <div class="space-y-3 mt-6">
+                    <div class="flex items-center">
+                        <input type="checkbox" name="requires_approval" id="requires_approval" 
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                               {% if shift.requires_approval %}checked{% endif %}>
+                        <label for="requires_approval" class="ml-2 block text-sm text-gray-900">
+                            Requires approval for assignments
+                        </label>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" name="is_active" id="is_active" 
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                               {% if shift.is_active or not shift %}checked{% endif %}>
+                        <label for="is_active" class="ml-2 block text-sm text-gray-900">
+                            Active shift (available for assignments)
+                        </label>
+                    </div>
                 </div>
             </div>
             
@@ -125,7 +157,7 @@
                 </a>
                 <button type="submit" 
                         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    Create Shift
+                    {% if shift %}Update Shift{% else %}Create Shift{% endif %}
                 </button>
             </div>
         </form>

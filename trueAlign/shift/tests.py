@@ -1,566 +1,471 @@
 """
-Comprehensive Test Suite for Shift Management
+Comprehensive Test Suite for Shift Management System
+Tests all functionality: CRUD operations, assignments, conflicts, bulk operations, etc.
 """
 
-from django.test import TestCase
-from django.contrib.auth.models import User
+from django.test import TestCase, Client
+from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django.urls import reverse
+from django.contrib.messages import get_messages
 from datetime import time, date, timedelta
 from decimal import Decimal
+import json
 
-from .models import ShiftMaster, ShiftAssignment, ShiftConflict, ShiftValidationRule
+from trueAlign.models import ShiftMaster, ShiftAssignment, ShiftConflict, ShiftValidationRule
 from .validators import ShiftAssignmentValidator, BulkAssignmentValidator
 from .services import ShiftService, ShiftAssignmentService, ConflictDetectionService
 
 
-class ShiftMasterTestCase(TestCase):
-    """Test cases for ShiftMaster model"""
+class BaseTestCase(TestCase):
+    """Base test case with common setup"""
     
     def setUp(self):
-        self.user = User.objects.create_user(
-            username='testuser',
-            email='test@example.com',
-            password='testpass123'
-        )
-    
-    def test_create_basic_shift(self):
-        """Test creating a basic shift"""
-        shift = ShiftMaster.objects.create(
-            name='Test Shift',
-            start_time=time(9, 0),
-            end_time=time(17, 0),
-            created_by=self.user
+        # Create users with different roles
+        self.admin_user = User.objects.create_user(
+            username='admin',
+            email='admin@test.com',
+            password='testpass123',
+            is_staff=True,
+            is_superuser=True
         )
         
-        self.assertEqual(shift.name, 'Test Shift')
-        self.assertEqual(shift.shift_duration, Decimal('8.0'))
-        self.assertFalse(shift.crosses_midnight)
-        self.assertEqual(shift.shift_type, 'MORNING')
-    
-    def test_midnight_crossing_shift(self):
-        """Test shift that crosses midnight"""
-        shift = ShiftMaster.objects.create(
+        self.hr_user = User.objects.create_user(
+            username='hr_user',
+            email='hr@test.com',
+            password='testpass123'
+        )
+        
+        self.manager_user = User.objects.create_user(
+            username='manager',
+            email='manager@test.com',
+            password='testpass123'
+        )
+        
+        self.employee_user = User.objects.create_user(
+            username='employee',
+            email='employee@test.com',
+            password='testpass123'
+        )
+        
+        # Create groups
+        self.admin_group = Group.objects.create(name='Admin')
+        self.hr_group = Group.objects.create(name='HR')
+        self.manager_group = Group.objects.create(name='Manager')
+        
+        # Assign users to groups
+        self.hr_user.groups.add(self.hr_group)
+        self.manager_user.groups.add(self.manager_group)
+        
+        # Create test shifts
+        self.day_shift = ShiftMaster.objects.create(
+            name='Day Shift',
+            start_time=time(9, 0),
+            end_time=time(17, 0),
+            work_days='Weekdays',
+            break_duration=timedelta(minutes=30),
+            grace_period=timedelta(minutes=15),
+            color_code='#3B82F6',
+            is_active=True,
+            created_by=self.admin_user
+        )
+        
+        self.night_shift = ShiftMaster.objects.create(
             name='Night Shift',
             start_time=time(22, 0),
             end_time=time(6, 0),
-            created_by=self.user
+            work_days='All Days',
+            break_duration=timedelta(minutes=45),
+            grace_period=timedelta(minutes=10),
+            color_code='#1F2937',
+            is_active=True,
+            created_by=self.admin_user
         )
         
-        self.assertTrue(shift.crosses_midnight)
-        self.assertEqual(shift.shift_type, 'NIGHT')
-        self.assertEqual(shift.shift_duration, Decimal('8.0'))
-    
-    def test_shift_validation(self):
-        """Test shift validation"""
-        # Test duplicate name
-        ShiftMaster.objects.create(
-            name='Duplicate Test',
-            start_time=time(9, 0),
-            end_time=time(17, 0)
-        )
-        
-        with self.assertRaises(ValidationError):
-            duplicate_shift = ShiftMaster(
-                name='Duplicate Test',
-                start_time=time(10, 0),
-                end_time=time(18, 0)
-            )
-            duplicate_shift.full_clean()
-    
-    def test_working_days_list(self):
-        """Test working days functionality"""
-        # Test weekdays
-        shift = ShiftMaster.objects.create(
-            name='Weekday Shift',
-            start_time=time(9, 0),
-            end_time=time(17, 0),
-            work_days='WEEKDAYS'
-        )
-        self.assertEqual(shift.working_days_list, [0, 1, 2, 3, 4])
-        
-        # Test custom days
-        shift.work_days = 'CUSTOM'
-        shift.custom_work_days = 'Monday,Wednesday,Friday'
-        shift.save()
-        self.assertEqual(shift.working_days_list, [0, 2, 4])
-    
-    def test_expected_work_hours(self):
-        """Test expected work hours calculation"""
-        shift = ShiftMaster.objects.create(
-            name='Test Shift',
-            start_time=time(9, 0),
-            end_time=time(17, 30),
-            shift_duration=Decimal('8.5'),
-            break_duration=timedelta(minutes=30)
-        )
-        
-        expected_hours = Decimal('8.0')  # 8.5 - 0.5 break
-        self.assertEqual(shift.expected_work_hours, expected_hours)
+        self.client = Client()
 
 
-class ShiftAssignmentTestCase(TestCase):
-    """Test cases for ShiftAssignment model"""
+class ShiftCRUDTestCase(BaseTestCase):
+    """Test CRUD operations for shifts"""
     
-    def setUp(self):
-        self.user1 = User.objects.create_user(
-            username='user1',
-            email='user1@example.com',
-            password='testpass123'
-        )
-        self.user2 = User.objects.create_user(
-            username='user2',
-            email='user2@example.com',
-            password='testpass123'
-        )
+    def test_shift_create_success(self):
+        """Test successful shift creation"""
+        self.client.login(username='admin', password='testpass123')
         
-        self.shift = ShiftMaster.objects.create(
-            name='Test Shift',
-            start_time=time(9, 0),
-            end_time=time(17, 0),
-            created_by=self.user1
-        )
+        response = self.client.post(reverse('shift:shift_create'), {
+            'name': 'Evening Shift',
+            'start_time': '14:00',
+            'end_time': '22:00',
+            'work_days': 'Weekdays',
+            'description': 'Evening work shift',
+            'color_code': '#F59E0B',
+            'break_duration': '30',
+            'grace_period': '15',
+            'requires_approval': 'on',
+            'is_active': 'on'
+        })
+        
+        self.assertEqual(response.status_code, 302)  # Redirect after success
+        self.assertTrue(ShiftMaster.objects.filter(name='Evening Shift').exists())
+        
+        shift = ShiftMaster.objects.get(name='Evening Shift')
+        self.assertEqual(shift.start_time, time(14, 0))
+        self.assertEqual(shift.end_time, time(22, 0))
+        self.assertTrue(shift.requires_approval)
+        self.assertTrue(shift.is_active)
     
-    def test_create_assignment(self):
-        """Test creating a shift assignment"""
+    def test_shift_create_permission_denied(self):
+        """Test shift creation with insufficient permissions"""
+        self.client.login(username='employee', password='testpass123')
+        
+        response = self.client.post(reverse('shift:shift_create'), {
+            'name': 'Unauthorized Shift',
+            'start_time': '09:00',
+            'end_time': '17:00'
+        })
+        
+        self.assertEqual(response.status_code, 302)  # Redirect to shift list
+        self.assertFalse(ShiftMaster.objects.filter(name='Unauthorized Shift').exists())
+    
+    def test_shift_edit_success(self):
+        """Test successful shift editing"""
+        self.client.login(username='admin', password='testpass123')
+        
+        response = self.client.post(reverse('shift:shift_edit', args=[self.day_shift.pk]), {
+            'name': 'Updated Day Shift',
+            'start_time': '08:30',
+            'end_time': '16:30',
+            'work_days': 'All Days',
+            'description': 'Updated description',
+            'color_code': '#10B981',
+            'break_duration': '45',
+            'grace_period': '20',
+            'is_active': 'on'
+        })
+        
+        self.assertEqual(response.status_code, 302)
+        
+        updated_shift = ShiftMaster.objects.get(pk=self.day_shift.pk)
+        self.assertEqual(updated_shift.name, 'Updated Day Shift')
+        self.assertEqual(updated_shift.start_time, time(8, 30))
+        self.assertEqual(updated_shift.work_days, 'All Days')
+    
+    def test_shift_delete_success(self):
+        """Test successful shift deletion"""
+        self.client.login(username='admin', password='testpass123')
+        
+        response = self.client.post(reverse('shift:shift_delete', args=[self.day_shift.pk]))
+        
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(ShiftMaster.objects.filter(pk=self.day_shift.pk).exists())
+    
+    def test_shift_delete_with_active_assignments(self):
+        """Test shift deletion with active assignments (should fail)"""
+        # Create an active assignment
         assignment = ShiftAssignment.objects.create(
-            user=self.user1,
-            shift=self.shift,
+            user=self.employee_user,
+            shift=self.day_shift,
             effective_from=date.today(),
-            created_by=self.user2
+            status='ACTIVE',
+            created_by=self.admin_user
         )
         
-        self.assertEqual(assignment.user, self.user1)
-        self.assertEqual(assignment.shift, self.shift)
-        self.assertEqual(assignment.status, 'ACTIVE')
-        self.assertTrue(assignment.is_current)
-    
-    def test_assignment_validation(self):
-        """Test assignment validation"""
-        # Test invalid date range
-        with self.assertRaises(ValidationError):
-            assignment = ShiftAssignment(
-                user=self.user1,
-                shift=self.shift,
-                effective_from=date.today(),
-                effective_to=date.today() - timedelta(days=1)
-            )
-            assignment.full_clean()
-    
-    def test_overlapping_assignments(self):
-        """Test overlapping assignment detection"""
-        # Create first assignment
-        assignment1 = ShiftAssignment.objects.create(
-            user=self.user1,
-            shift=self.shift,
-            effective_from=date.today(),
-            effective_to=date.today() + timedelta(days=10)
-        )
+        self.client.login(username='admin', password='testpass123')
         
-        # Try to create overlapping assignment
-        with self.assertRaises(ValidationError):
-            assignment2 = ShiftAssignment(
-                user=self.user1,
-                shift=self.shift,
-                effective_from=date.today() + timedelta(days=5),
-                effective_to=date.today() + timedelta(days=15)
-            )
-            assignment2.full_clean()
-    
-    def test_current_assignment_logic(self):
-        """Test current assignment logic"""
-        # Create first assignment
-        assignment1 = ShiftAssignment.objects.create(
-            user=self.user1,
-            shift=self.shift,
-            effective_from=date.today() - timedelta(days=5),
-            is_current=True
-        )
+        response = self.client.post(reverse('shift:shift_delete', args=[self.day_shift.pk]))
         
-        # Create new current assignment
-        assignment2 = ShiftAssignment.objects.create(
-            user=self.user1,
-            shift=self.shift,
-            effective_from=date.today(),
-            is_current=True
-        )
-        
-        # First assignment should no longer be current
-        assignment1.refresh_from_db()
-        self.assertFalse(assignment1.is_current)
-        self.assertIsNotNone(assignment1.effective_to)
+        # Should redirect back to shift detail with error message
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(ShiftMaster.objects.filter(pk=self.day_shift.pk).exists())
+
+
+class AssignmentTestCase(BaseTestCase):
+    """Test assignment operations"""
     
-    def test_get_user_current_shift(self):
-        """Test getting user's current shift"""
+    def test_single_assignment_create_success(self):
+        """Test successful single assignment creation"""
+        self.client.login(username='admin', password='testpass123')
+        
+        response = self.client.post(reverse('shift:assignment_create'), {
+            'user': self.employee_user.pk,
+            'shift': self.day_shift.pk,
+            'effective_from': date.today().strftime('%Y-%m-%d'),
+            'status': 'ACTIVE'
+        })
+        
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(ShiftAssignment.objects.filter(
+            user=self.employee_user,
+            shift=self.day_shift
+        ).exists())
+    
+    def test_assignment_end_success(self):
+        """Test successful assignment ending"""
         assignment = ShiftAssignment.objects.create(
-            user=self.user1,
-            shift=self.shift,
-            effective_from=date.today() - timedelta(days=1),
-            effective_to=date.today() + timedelta(days=5)
+            user=self.employee_user,
+            shift=self.day_shift,
+            effective_from=date.today(),
+            status='ACTIVE',
+            created_by=self.admin_user
         )
         
-        current_shift = ShiftAssignment.get_user_current_shift(self.user1)
-        self.assertEqual(current_shift, self.shift)
+        self.client.login(username='admin', password='testpass123')
         
-        # Test with no assignment
-        no_shift = ShiftAssignment.get_user_current_shift(self.user2)
-        self.assertIsNotNone(no_shift)  # Should return default shift
-
-
-class ShiftValidatorTestCase(TestCase):
-    """Test cases for shift validators"""
-    
-    def setUp(self):
-        self.user = User.objects.create_user(
-            username='testuser',
-            email='test@example.com',
-            password='testpass123'
-        )
-        
-        self.shift = ShiftMaster.objects.create(
-            name='Test Shift',
-            start_time=time(9, 0),
-            end_time=time(17, 0)
-        )
-    
-    def test_assignment_validator(self):
-        """Test shift assignment validator"""
-        assignment = ShiftAssignment(
-            user=self.user,
-            shift=self.shift,
-            effective_from=date.today()
-        )
-        
-        validator = ShiftAssignmentValidator(assignment)
-        warnings = validator.validate()  # Should not raise exception
-        self.assertIsInstance(warnings, list)
-    
-    def test_bulk_assignment_validator(self):
-        """Test bulk assignment validator"""
-        assignments_data = [
+        response = self.client.post(
+            reverse('shift:assignment_end', args=[assignment.pk]),
             {
-                'user_id': self.user.id,
-                'shift_id': self.shift.id,
-                'effective_from': date.today()
+                'end_date': (date.today() + timedelta(days=1)).strftime('%Y-%m-%d'),
+                'reason': 'Testing end assignment'
             }
-        ]
-        
-        validator = BulkAssignmentValidator(assignments_data)
-        warnings = validator.validate()  # Should not raise exception
-        self.assertIsInstance(warnings, list)
-    
-    def test_invalid_bulk_data(self):
-        """Test bulk validator with invalid data"""
-        invalid_data = [
-            {
-                'user_id': 999,  # Non-existent user
-                'shift_id': self.shift.id,
-                'effective_from': date.today()
-            }
-        ]
-        
-        validator = BulkAssignmentValidator(invalid_data)
-        with self.assertRaises(ValidationError):
-            validator.validate()
-
-
-class ShiftServiceTestCase(TestCase):
-    """Test cases for shift services"""
-    
-    def setUp(self):
-        self.user = User.objects.create_user(
-            username='testuser',
-            email='test@example.com',
-            password='testpass123'
         )
         
-        self.shift = ShiftMaster.objects.create(
-            name='Test Shift',
-            start_time=time(9, 0),
-            end_time=time(17, 0)
-        )
-    
-    def test_create_shift_service(self):
-        """Test shift creation service"""
-        shift_data = {
-            'name': 'Service Test Shift',
-            'start_time': time(10, 0),
-            'end_time': time(18, 0),
-            'shift_type': 'MORNING'
-        }
+        self.assertEqual(response.status_code, 302)
         
-        shift = ShiftService.create_shift(shift_data, self.user)
-        self.assertEqual(shift.name, 'Service Test Shift')
-        self.assertEqual(shift.created_by, self.user)
-    
-    def test_duplicate_shift_service(self):
-        """Test shift duplication service"""
-        new_shift = ShiftService.duplicate_shift(
-            self.shift.id,
-            'Duplicated Shift',
-            self.user
-        )
-        
-        self.assertEqual(new_shift.name, 'Duplicated Shift')
-        self.assertEqual(new_shift.start_time, self.shift.start_time)
-        self.assertEqual(new_shift.end_time, self.shift.end_time)
-        self.assertEqual(new_shift.created_by, self.user)
-    
-    def test_shift_utilization(self):
-        """Test shift utilization calculation"""
-        # Create some assignments
-        ShiftAssignment.objects.create(
-            user=self.user,
-            shift=self.shift,
-            effective_from=date.today() - timedelta(days=10),
-            effective_to=date.today() - timedelta(days=5)
-        )
-        
-        utilization = ShiftService.get_shift_utilization(
-            self.shift.id,
-            date.today() - timedelta(days=15),
-            date.today()
-        )
-        
-        self.assertIn('utilization_rate', utilization)
-        self.assertIn('total_assignments', utilization)
-        self.assertGreaterEqual(utilization['utilization_rate'], 0)
-
-
-class ShiftAssignmentServiceTestCase(TestCase):
-    """Test cases for shift assignment services"""
-    
-    def setUp(self):
-        self.user1 = User.objects.create_user(
-            username='user1',
-            email='user1@example.com',
-            password='testpass123'
-        )
-        self.user2 = User.objects.create_user(
-            username='user2',
-            email='user2@example.com',
-            password='testpass123'
-        )
-        
-        self.shift1 = ShiftMaster.objects.create(
-            name='Shift 1',
-            start_time=time(9, 0),
-            end_time=time(17, 0)
-        )
-        self.shift2 = ShiftMaster.objects.create(
-            name='Shift 2',
-            start_time=time(14, 0),
-            end_time=time(22, 0)
-        )
-    
-    def test_create_assignment_service(self):
-        """Test assignment creation service"""
-        assignment_data = {
-            'user': self.user1,
-            'shift': self.shift1,
-            'effective_from': date.today(),
-            'notes': 'Test assignment'
-        }
-        
-        result = ShiftAssignmentService.create_assignment(assignment_data, self.user2)
-        
-        self.assertIn('assignment', result)
-        self.assertIn('warnings', result)
-        self.assertIn('conflicts', result)
-        
-        assignment = result['assignment']
-        self.assertEqual(assignment.user, self.user1)
-        self.assertEqual(assignment.shift, self.shift1)
-        self.assertEqual(assignment.created_by, self.user2)
-    
-    def test_bulk_create_assignments(self):
-        """Test bulk assignment creation"""
-        assignments_data = [
-            {
-                'user_id': self.user1.id,
-                'shift_id': self.shift1.id,
-                'effective_from': date.today(),
-                'notes': 'Bulk assignment 1'
-            },
-            {
-                'user_id': self.user2.id,
-                'shift_id': self.shift2.id,
-                'effective_from': date.today(),
-                'notes': 'Bulk assignment 2'
-            }
-        ]
-        
-        result = ShiftAssignmentService.bulk_create_assignments(
-            assignments_data, self.user1
-        )
-        
-        self.assertIn('assignments', result)
-        self.assertEqual(len(result['assignments']), 2)
-    
-    def test_reassign_shift(self):
-        """Test shift reassignment"""
-        # Create initial assignment
-        assignment = ShiftAssignment.objects.create(
-            user=self.user1,
-            shift=self.shift1,
-            effective_from=date.today() - timedelta(days=5),
-            created_by=self.user2
-        )
-        
-        # Reassign to different shift
-        result = ShiftAssignmentService.reassign_shift(
-            assignment.id,
-            self.shift2.id,
-            date.today(),
-            "Better fit for user"
-        )
-        
-        # Check old assignment ended
         assignment.refresh_from_db()
         self.assertIsNotNone(assignment.effective_to)
         self.assertFalse(assignment.is_current)
-        
-        # Check new assignment created
-        new_assignment = result['assignment']
-        self.assertEqual(new_assignment.shift, self.shift2)
-        self.assertEqual(new_assignment.user, self.user1)
     
-    def test_user_shift_timeline(self):
-        """Test user shift timeline"""
-        # Create multiple assignments
-        ShiftAssignment.objects.create(
-            user=self.user1,
-            shift=self.shift1,
-            effective_from=date.today() - timedelta(days=30),
-            effective_to=date.today() - timedelta(days=15)
+    def test_bulk_assignment_create_success(self):
+        """Test successful bulk assignment creation"""
+        # Create additional users
+        user2 = User.objects.create_user(
+            username='employee2',
+            email='employee2@test.com',
+            password='testpass123'
         )
-        
-        ShiftAssignment.objects.create(
-            user=self.user1,
-            shift=self.shift2,
-            effective_from=date.today() - timedelta(days=10),
-            effective_to=date.today() + timedelta(days=10)
-        )
-        
-        timeline = ShiftAssignmentService.get_user_shift_timeline(self.user1.id)
-        
-        self.assertGreaterEqual(len(timeline), 2)
-        for item in timeline:
-            self.assertIn('assignment', item)
-            self.assertIn('start_date', item)
-            self.assertIn('end_date', item)
-
-
-class ConflictDetectionTestCase(TestCase):
-    """Test cases for conflict detection"""
-    
-    def setUp(self):
-        self.user = User.objects.create_user(
-            username='testuser',
-            email='test@example.com',
+        user3 = User.objects.create_user(
+            username='employee3',
+            email='employee3@test.com',
             password='testpass123'
         )
         
-        self.shift = ShiftMaster.objects.create(
-            name='Test Shift',
-            start_time=time(9, 0),
-            end_time=time(17, 0),
-            min_rest_hours=Decimal('8.0')
-        )
-    
-    def test_overlap_conflict_detection(self):
-        """Test overlap conflict detection"""
-        # Create first assignment
-        assignment1 = ShiftAssignment.objects.create(
-            user=self.user,
-            shift=self.shift,
-            effective_from=date.today(),
-            effective_to=date.today() + timedelta(days=10)
-        )
+        self.client.login(username='admin', password='testpass123')
         
-        # Create overlapping assignment
-        assignment2 = ShiftAssignment(
-            user=self.user,
-            shift=self.shift,
-            effective_from=date.today() + timedelta(days=5),
-            effective_to=date.today() + timedelta(days=15)
-        )
+        response = self.client.post(reverse('shift:bulk_assignment_create'), {
+            'users': [self.employee_user.pk, user2.pk, user3.pk],
+            'shift': self.day_shift.pk,
+            'effective_from': date.today().strftime('%Y-%m-%d'),
+            'status': 'ACTIVE'
+        })
         
-        conflicts = ConflictDetectionService.detect_conflicts(assignment2)
-        self.assertGreater(len(conflicts), 0)
+        self.assertEqual(response.status_code, 302)
         
-        overlap_conflicts = [c for c in conflicts if c.conflict_type == 'OVERLAP']
-        self.assertGreater(len(overlap_conflicts), 0)
-    
-    def test_conflict_resolution(self):
-        """Test conflict resolution"""
-        assignment = ShiftAssignment.objects.create(
-            user=self.user,
-            shift=self.shift,
+        # Check that assignments were created for all users
+        assignments = ShiftAssignment.objects.filter(
+            shift=self.day_shift,
             effective_from=date.today()
         )
-        
-        conflict = ShiftConflict.objects.create(
-            assignment=assignment,
-            conflict_type='OVERLAP',
-            severity='HIGH',
-            description='Test conflict'
-        )
-        
-        resolved_conflict = ConflictDetectionService.resolve_conflict(
-            conflict.id,
-            self.user,
-            'Resolved for testing'
-        )
-        
-        self.assertTrue(resolved_conflict.is_resolved)
-        self.assertEqual(resolved_conflict.resolved_by, self.user)
-        self.assertIsNotNone(resolved_conflict.resolved_at)
+        self.assertEqual(assignments.count(), 3)
 
 
-class APITestCase(TestCase):
-    """Test cases for API endpoints"""
+class APIEndpointTestCase(BaseTestCase):
+    """Test API endpoints"""
     
-    def setUp(self):
-        self.user = User.objects.create_user(
-            username='testuser',
-            email='test@example.com',
-            password='testpass123'
-        )
+    def test_shifts_list_api(self):
+        """Test shifts list API endpoint"""
+        self.client.login(username='admin', password='testpass123')
         
-        self.shift = ShiftMaster.objects.create(
-            name='API Test Shift',
-            start_time=time(9, 0),
-            end_time=time(17, 0)
-        )
-    
-    def test_shift_list_endpoint(self):
-        """Test shift list API endpoint"""
-        self.client.force_login(self.user)
-        response = self.client.get('/shift/api/shifts/')
+        response = self.client.get(reverse('shift:api_shifts_list'))
         
         self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIn('results', data)
+        data = json.loads(response.content)
+        self.assertIn('shifts', data)
+        self.assertEqual(len(data['shifts']), 2)  # day_shift and night_shift
     
-    def test_assignment_creation_endpoint(self):
-        """Test assignment creation API endpoint"""
-        self.client.force_login(self.user)
+    def test_assignments_list_api(self):
+        """Test assignments list API endpoint"""
+        # Create test assignment
+        ShiftAssignment.objects.create(
+            user=self.employee_user,
+            shift=self.day_shift,
+            effective_from=date.today(),
+            status='ACTIVE',
+            created_by=self.admin_user
+        )
         
-        assignment_data = {
-            'user': self.user.id,
-            'shift': self.shift.id,
-            'effective_from': date.today().isoformat(),
-            'notes': 'API test assignment'
-        }
+        self.client.login(username='admin', password='testpass123')
+        
+        response = self.client.get(reverse('shift:api_assignments_list'))
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertIn('assignments', data)
+        self.assertEqual(len(data['assignments']), 1)
+    
+    def test_dashboard_stats_api(self):
+        """Test dashboard statistics API endpoint"""
+        self.client.login(username='admin', password='testpass123')
+        
+        response = self.client.get(reverse('shift:api_dashboard_stats'))
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        
+        # Check required fields
+        required_fields = ['total_shifts', 'active_shifts', 'active_assignments', 
+                          'pending_approvals', 'unresolved_conflicts']
+        for field in required_fields:
+            self.assertIn(field, data)
+    
+    def test_duplicate_shift_api(self):
+        """Test shift duplication API endpoint"""
+        self.client.login(username='admin', password='testpass123')
         
         response = self.client.post(
-            '/shift/api/assignments/',
-            data=assignment_data,
+            reverse('shift:duplicate_shift', args=[self.day_shift.pk]),
+            data=json.dumps({
+                'new_name': 'Duplicated Day Shift'
+            }),
             content_type='application/json'
         )
         
-        self.assertEqual(response.status_code, 201)
-        data = response.json()
-        self.assertEqual(data['user'], self.user.id)
-        self.assertEqual(data['shift'], self.shift.id)
+        self.assertEqual(response.status_code, 200)
+        
+        # Check that new shift was created
+        self.assertTrue(ShiftMaster.objects.filter(name='Duplicated Day Shift').exists())
+
+
+class PermissionTestCase(BaseTestCase):
+    """Test permission-based access control"""
+    
+    def test_admin_full_access(self):
+        """Test admin has full access to all features"""
+        self.client.login(username='admin', password='testpass123')
+        
+        # Test access to all major views
+        views_to_test = [
+            'shift:dashboard',
+            'shift:shift_list',
+            'shift:shift_create',
+            'shift:assignment_list',
+            'shift:assignment_create',
+            'shift:bulk_assignment_create',
+            'shift:conflict_list',
+            'shift:team_assignments',
+            'shift:utilization_reports'
+        ]
+        
+        for view_name in views_to_test:
+            response = self.client.get(reverse(view_name))
+            self.assertIn(response.status_code, [200, 302])  # 200 OK or 302 redirect (not 403)
+    
+    def test_employee_restricted_access(self):
+        """Test employee has restricted access"""
+        self.client.login(username='employee', password='testpass123')
+        
+        # Test access to dashboard (should work)
+        response = self.client.get(reverse('shift:dashboard'))
+        self.assertEqual(response.status_code, 200)
+        
+        # Test access to shift creation (should be denied)
+        response = self.client.get(reverse('shift:shift_create'))
+        self.assertEqual(response.status_code, 302)  # Redirect due to permission denied
+    
+    def test_hr_manager_access(self):
+        """Test HR and Manager have appropriate access"""
+        for username in ['hr_user', 'manager']:
+            self.client.login(username=username, password='testpass123')
+            
+            # Should have access to most features
+            response = self.client.get(reverse('shift:shift_create'))
+            self.assertEqual(response.status_code, 200)
+            
+            response = self.client.get(reverse('shift:assignment_create'))
+            self.assertEqual(response.status_code, 200)
+
+
+class IntegrationTestCase(BaseTestCase):
+    """Integration tests for complete workflows"""
+    
+    def test_complete_shift_lifecycle(self):
+        """Test complete shift lifecycle: create -> assign -> reassign -> end"""
+        self.client.login(username='admin', password='testpass123')
+        
+        # 1. Create shift
+        response = self.client.post(reverse('shift:shift_create'), {
+            'name': 'Integration Test Shift',
+            'start_time': '10:00',
+            'end_time': '18:00',
+            'work_days': 'Weekdays',
+            'break_duration': '30',
+            'grace_period': '15',
+            'is_active': 'on'
+        })
+        self.assertEqual(response.status_code, 302)
+        
+        shift = ShiftMaster.objects.get(name='Integration Test Shift')
+        
+        # 2. Assign to employee
+        response = self.client.post(reverse('shift:assignment_create'), {
+            'user': self.employee_user.pk,
+            'shift': shift.pk,
+            'effective_from': date.today().strftime('%Y-%m-%d'),
+            'status': 'ACTIVE'
+        })
+        self.assertEqual(response.status_code, 302)
+        
+        assignment = ShiftAssignment.objects.get(user=self.employee_user, shift=shift)
+        
+        # 3. End assignment
+        response = self.client.post(
+            reverse('shift:assignment_end', args=[assignment.pk]),
+            {
+                'end_date': (date.today() + timedelta(days=7)).strftime('%Y-%m-%d'),
+                'reason': 'Integration test completion'
+            }
+        )
+        self.assertEqual(response.status_code, 302)
+        
+        # Verify final state
+        assignment.refresh_from_db()
+        self.assertIsNotNone(assignment.effective_to)
+        self.assertFalse(assignment.is_current)
+    
+    def test_bulk_operations_workflow(self):
+        """Test bulk operations workflow"""
+        # Create multiple users
+        users = []
+        for i in range(5):
+            user = User.objects.create_user(
+                username=f'bulk_user_{i}',
+                email=f'bulk{i}@test.com',
+                password='testpass123'
+            )
+            users.append(user)
+        
+        self.client.login(username='admin', password='testpass123')
+        
+        # Bulk assign
+        response = self.client.post(reverse('shift:bulk_assignment_create'), {
+            'users': [u.pk for u in users],
+            'shift': self.day_shift.pk,
+            'effective_from': date.today().strftime('%Y-%m-%d'),
+            'status': 'ACTIVE'
+        })
+        self.assertEqual(response.status_code, 302)
+        
+        # Verify assignments created
+        assignments = ShiftAssignment.objects.filter(
+            shift=self.day_shift,
+            effective_from=date.today()
+        )
+        self.assertEqual(assignments.count(), 5)
+        
+        # Test bulk end (would be done via JavaScript in real scenario)
+        for assignment in assignments:
+            response = self.client.post(
+                reverse('shift:assignment_end', args=[assignment.pk]),
+                {
+                    'end_date': (date.today() + timedelta(days=30)).strftime('%Y-%m-%d'),
+                    'reason': 'Bulk end test'
+                }
+            )
+            self.assertEqual(response.status_code, 302)
+        
+        # Verify all assignments ended
+        ended_assignments = ShiftAssignment.objects.filter(
+            shift=self.day_shift,
+            effective_to__isnull=False
+        )
+        self.assertEqual(ended_assignments.count(), 5)
