@@ -7,15 +7,20 @@
 {% block extra_css %}
 <style>
     .metric-card {
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid #e5e7eb;
     }
     .metric-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(16, 185, 129, 0.1), 0 10px 10px -5px rgba(16, 185, 129, 0.04);
+        border-color: #10b981;
     }
     .chart-container {
         position: relative;
-        height: 300px;
+        height: 350px;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 12px;
+        padding: 1rem;
     }
     .trend-up {
         color: #10b981;
@@ -28,8 +33,15 @@
     }
     .analytics-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
         gap: 1.5rem;
+    }
+    .gradient-bg {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+    .glass-effect {
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.9);
     }
 </style>
 {% endblock %}
@@ -40,15 +52,15 @@
     <div class="bg-white shadow-sm border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between py-6">
-                <div class="flex items-center space-x-3">
-                    <div class="p-3 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl shadow-sm">
-                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center shadow-lg">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                         </svg>
                     </div>
                     <div>
-                        <h1 class="text-3xl font-bold text-gray-900">Session Analytics</h1>
-                        <p class="text-gray-600 mt-1">Comprehensive insights and trends for session data</p>
+                        <h1 class="text-2xl font-semibold text-gray-900">Session Analytics</h1>
+                        <p class="text-gray-600">Comprehensive insights and trends for session data</p>
                     </div>
                 </div>
 
@@ -56,7 +68,7 @@
                 <div class="flex items-center space-x-4">
                     <div class="flex items-center space-x-2">
                         <label class="text-sm font-medium text-gray-700">Time Range:</label>
-                        <select id="date-range" class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <select id="date-range" class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
                             <option value="7" {% if date_range == 7 %}selected{% endif %}>Last 7 days</option>
                             <option value="30" {% if date_range == 30 %}selected{% endif %}>Last 30 days</option>
                             <option value="90" {% if date_range == 90 %}selected{% endif %}>Last 3 months</option>
@@ -64,7 +76,7 @@
                     </div>
                     <div class="flex items-center space-x-2">
                         <label class="text-sm font-medium text-gray-700">Office:</label>
-                        <select id="office-filter" class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <select id="office-filter" class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
                             <option value="all" {% if selected_office_id == 'all' %}selected{% endif %}>All Offices</option>
                             {% for office in all_offices %}
                             <option value="{{ office.id }}" {% if selected_office_id == office.id|stringformat:"s" %}selected{% endif %}>
@@ -83,104 +95,96 @@
         <!-- Performance Metrics Overview -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <!-- Average Session Duration -->
-            <div class="metric-card bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
+            <div class="metric-card bg-white overflow-hidden rounded-lg">
+                <div class="p-6">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
-                            <div class="p-3 bg-blue-100 rounded-lg">
-                                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
                             </div>
                         </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Avg Duration</dt>
-                                <dd class="text-lg font-medium text-gray-900">
-                                    {% if performance_metrics.avg_session_duration %}
-                                        {{ performance_metrics.avg_session_duration|duration_format }}
-                                    {% else %}
-                                        N/A
-                                    {% endif %}
-                                </dd>
-                            </dl>
+                        <div class="ml-4 flex-1">
+                            <dt class="text-sm font-medium text-gray-600">Avg Duration</dt>
+                            <dd class="text-2xl font-semibold text-gray-900 mt-1">
+                                {% if performance_metrics.avg_session_duration %}
+                                    {{ performance_metrics.avg_session_duration|duration_format }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </dd>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Total Working Time -->
-            <div class="metric-card bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
+            <div class="metric-card bg-white overflow-hidden rounded-lg">
+                <div class="p-6">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
-                            <div class="p-3 bg-green-100 rounded-lg">
-                                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="w-12 h-12 bg-lime-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-lime-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                                 </svg>
                             </div>
                         </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl></dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Working Time</dt>
-                                <dd class="text-lg font-medium text-gray-900">
-                                    {% if performance_metrics.total_working_time %}
-                                        {{ performance_metrics.total_working_time|duration_format }}
-                                    {% else %}
-                                        0h
-                                    {% endif %}
-                                </dd>
-                            </dl>
+                        <div class="ml-4 flex-1">
+                            <dt class="text-sm font-medium text-gray-600">Working Time</dt>
+                            <dd class="text-2xl font-semibold text-gray-900 mt-1">
+                                {% if performance_metrics.total_working_time %}
+                                    {{ performance_metrics.total_working_time|duration_format }}
+                                {% else %}
+                                    0h
+                                {% endif %}
+                            </dd>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Total Idle Time -->
-            <div class="metric-card bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
+            <div class="metric-card bg-white overflow-hidden rounded-lg">
+                <div class="p-6">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
-                            <div class="p-3 bg-yellow-100 rounded-lg">
-                                <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
                             </div>
                         </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Idle Time</dt>
-                                <dd class="text-lg font-medium text-gray-900">
-                                    {% if performance_metrics.total_idle_time %}
-                                        {{ performance_metrics.total_idle_time|duration_format }}
-                                    {% else %}
-                                        0h
-                                    {% endif %}
-                                </dd>
-                            </dl>
+                        <div class="ml-4 flex-1">
+                            <dt class="text-sm font-medium text-gray-600">Idle Time</dt>
+                            <dd class="text-2xl font-semibold text-gray-900 mt-1">
+                                {% if performance_metrics.total_idle_time %}
+                                    {{ performance_metrics.total_idle_time|duration_format }}
+                                {% else %}
+                                    0h
+                                {% endif %}
+                            </dd>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Completion Rate -->
-            <div class="metric-card bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
+            <div class="metric-card bg-white overflow-hidden rounded-lg">
+                <div class="p-6">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
-                            <div class="p-3 bg-purple-100 rounded-lg">
-                                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
                             </div>
                         </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl></dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Completion Rate</dt>
-                                <dd class="text-lg font-medium text-gray-900">
-                                    {{ performance_metrics.completion_rate|default:0 }}%
-                                </dd>
-                            </dl>
+                        <div class="ml-4 flex-1">
+                            <dt class="text-sm font-medium text-gray-600">Completion Rate</dt>
+                            <dd class="text-2xl font-semibold text-gray-900 mt-1">
+                                {{ performance_metrics.completion_rate|default:0 }}%
+                            </dd>
                         </div>
                     </div>
                 </div>
@@ -380,23 +384,23 @@
             <div class="p-6">
                 <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                     <a href="{% url 'sessions:export' %}?format=csv{% if selected_office_id != 'all' %}&office={{ selected_office_id }}{% endif %}"
-                       class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                       class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 transition-colors">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
                         Export CSV
                     </a>
                     <a href="{% url 'sessions:export' %}?format=json{% if selected_office_id != 'all' %}&office={{ selected_office_id }}{% endif %}"
-                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                         </svg>
                         Export JSON
                     </a>
                     <a href="{% url 'sessions:dashboard' %}{% if selected_office_id != 'all' %}?office={{ selected_office_id }}{% endif %}"
-                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                         </svg>
                         Back to Dashboard
                     </a>
@@ -455,8 +459,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 {
                     label: 'Total Sessions',
                     data: dailyData.map(d => d.total),
-                    borderColor: 'rgb(59, 130, 246)',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderColor: 'rgb(16, 185, 129)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
                     tension: 0.1
                 },
                 {
@@ -499,8 +503,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 {
                     label: 'Sessions',
                     data: hourlyData.map(h => h.sessions),
-                    backgroundColor: 'rgba(147, 51, 234, 0.8)',
-                    borderColor: 'rgb(147, 51, 234)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                    borderColor: 'rgb(16, 185, 129)',
                     borderWidth: 1
                 }
             ]

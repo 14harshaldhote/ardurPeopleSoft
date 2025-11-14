@@ -4,31 +4,30 @@
 {% block title %}System Configurations - TrueAlign Portal{% endblock %}
 
 {% block content %}
-<div class="min-h-screen py-6 px-4 lg:px-8 bg-gradient-to-br from-lime-50 via-emerald-50 to-green-100">
+<div class="min-h-screen py-8 px-4 lg:px-8 bg-gray-50">
     <div class="max-w-7xl mx-auto">
 
         <!-- Header Section -->
-        <div class="relative overflow-hidden mb-8 rounded-2xl bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl">
-            <div class="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-sky-500/5 to-violet-500/10"></div>
-            <div class="relative p-8">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
+            <div class="px-6 py-8">
                 <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center">
-                    <div class="flex items-center space-x-6">
-                        <div class="w-20 h-20 bg-gradient-to-br from-lime-500 to-green-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-lg">
-                            <i class="ri-settings-3-line"></i>
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <i class="ri-settings-3-line text-xl text-gray-600"></i>
                         </div>
                         <div>
-                            <h1 class="text-4xl font-bold text-slate-800 mb-2 tracking-wide">System Configurations</h1>
-                            <p class="text-slate-600 text-lg">Manage and configure various system settings and components</p>
+                            <h1 class="text-2xl font-semibold text-gray-900 mb-1">System Configurations</h1>
+                            <p class="text-gray-600">Manage and configure system settings and components</p>
                         </div>
                     </div>
-                    <div class="flex flex-wrap gap-3 mt-6 lg:mt-0">
-                        <div class="inline-flex items-center px-4 py-2 rounded-xl font-semibold text-sm bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-md">
-                            <i class="ri-admin-line mr-2"></i>
+                    <div class="flex items-center gap-3 mt-4 lg:mt-0">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <i class="ri-admin-line mr-1"></i>
                             Admin Access
-                        </div>
+                        </span>
                         <a href="{% url 'core:dashboard' %}"
-                           class="bg-white/80 backdrop-blur-sm hover:bg-white text-slate-700 hover:text-slate-900 px-6 py-3 rounded-xl border border-slate-200 transition-all duration-300 font-semibold tracking-wide shadow-md hover:shadow-lg">
-                            <i class="ri-dashboard-line mr-2"></i>Back to Dashboard
+                           class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+                            <i class="ri-arrow-left-line mr-2"></i>Back to Dashboard
                         </a>
                     </div>
                 </div>
@@ -36,89 +35,78 @@
         </div>
 
         <!-- Configuration Cards Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for section in config_sections %}
-            <div class="group relative bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105">
-                <!-- Card Background Gradient -->
-                <div class="absolute inset-0 bg-gradient-to-br from-{{ section.color|slice:"3:" }}/5 to-{{ section.color|slice:"3:" }}/10"></div>
-
-                <!-- Card Content -->
-                <div class="relative p-8">
+            <div class="bg-white rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-200">
+                <div class="p-6">
                     <!-- Icon and Header -->
-                    <div class="flex items-center justify-between mb-6">
-                        <div class="w-16 h-16 bg-gradient-to-br {{ section.color }} to-{{ section.color|slice:"3:" }}-600 rounded-2xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
-                            <i class="{{ section.icon }} text-2xl"></i>
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <i class="{{ section.icon }} text-lg text-gray-600"></i>
                         </div>
-                        <div class="w-3 h-3 rounded-full {{ section.color }} opacity-60 group-hover:opacity-100 transition-opacity duration-300"></div>
                     </div>
 
                     <!-- Content -->
                     <div class="mb-6">
-                        <h3 class="text-xl font-bold text-slate-800 mb-3 group-hover:text-slate-900 transition-colors duration-300">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">
                             {{ section.name }}
                         </h3>
-                        <p class="text-slate-600 text-sm leading-relaxed group-hover:text-slate-700 transition-colors duration-300">
+                        <p class="text-gray-600 text-sm leading-relaxed">
                             {{ section.description }}
                         </p>
                     </div>
 
                     <!-- Action Button -->
-                    <div class="flex items-center justify-between">
+                    <div class="pt-4 border-t border-gray-100">
                         <a href="{% url section.url %}"
-                           class="inline-flex items-center bg-emerald-800 text-white px-6 py-3 rounded-xl transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-{{ section.color|slice:"3:" }}-500/20">
+                           class="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                             <span>Configure</span>
-                            <i class="ri-arrow-right-line ml-2 group-hover:translate-x-1 transition-transform duration-300"></i>
+                            <i class="ri-arrow-right-line ml-2"></i>
                         </a>
-                        <div class="text-slate-400 group-hover:text-slate-600 transition-colors duration-300">
-                            <i class="ri-external-link-line text-lg"></i>
-                        </div>
                     </div>
                 </div>
-
-                <!-- Hover Effect -->
-                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out opacity-0 group-hover:opacity-100"></div>
             </div>
             {% endfor %}
         </div>
 
         <!-- Info Section -->
-        <div class="mt-12 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden">
-            <div class="bg-gradient-to-r from-yellow-500/10 via-amber-500/5 to-rose-500/10 px-8 py-6 border-b border-white/20">
-                <h3 class="text-2xl font-bold text-slate-800 flex items-center">
-                    <i class="ri-information-line mr-3 text-slate-600"></i>Configuration Guidelines
+        <div class="mt-8 bg-white rounded-lg border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="ri-information-line mr-2 text-gray-500"></i>Configuration Guidelines
                 </h3>
             </div>
-            <div class="p-8">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="p-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="space-y-4">
                         <div class="flex items-start space-x-3">
-                            <div class="w-2 h-2 bg-emerald-500 rounded-full mt-2 flex-shrink-0"></div>
+                            <div class="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                             <div>
-                                <h4 class="font-semibold text-slate-800 mb-1">Admin Access Required</h4>
-                                <p class="text-slate-600 text-sm">All configuration sections require administrator privileges to access and modify.</p>
+                                <h4 class="font-medium text-gray-900 mb-1">Admin Access Required</h4>
+                                <p class="text-gray-600 text-sm">All configuration sections require administrator privileges to access and modify.</p>
                             </div>
                         </div>
                         <div class="flex items-start space-x-3">
-                            <div class="w-2 h-2 bg-sky-500 rounded-full mt-2 flex-shrink-0"></div>
+                            <div class="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                             <div>
-                                <h4 class="font-semibold text-slate-800 mb-1">System Wide Impact</h4>
-                                <p class="text-slate-600 text-sm">Changes made in these configurations will affect the entire system and all users.</p>
+                                <h4 class="font-medium text-gray-900 mb-1">System Wide Impact</h4>
+                                <p class="text-gray-600 text-sm">Changes made in these configurations will affect the entire system and all users.</p>
                             </div>
                         </div>
                     </div>
                     <div class="space-y-4">
                         <div class="flex items-start space-x-3">
-                            <div class="w-2 h-2 bg-amber-500 rounded-full mt-2 flex-shrink-0"></div>
+                            <div class="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                             <div>
-                                <h4 class="font-semibold text-slate-800 mb-1">Backup Recommended</h4>
-                                <p class="text-slate-600 text-sm">It's recommended to backup current configurations before making significant changes.</p>
+                                <h4 class="font-medium text-gray-900 mb-1">Backup Recommended</h4>
+                                <p class="text-gray-600 text-sm">It's recommended to backup current configurations before making significant changes.</p>
                             </div>
                         </div>
                         <div class="flex items-start space-x-3">
-                            <div class="w-2 h-2 bg-violet-500 rounded-full mt-2 flex-shrink-0"></div>
+                            <div class="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                             <div>
-                                <h4 class="font-semibold text-slate-800 mb-1">Support Available</h4>
-                                <p class="text-slate-600 text-sm">Contact system administrators if you need assistance with any configuration.</p>
+                                <h4 class="font-medium text-gray-900 mb-1">Support Available</h4>
+                                <p class="text-gray-600 text-sm">Contact system administrators if you need assistance with any configuration.</p>
                             </div>
                         </div>
                     </div>
@@ -128,12 +116,12 @@
 
         {% if config_sections|length == 0 %}
         <!-- Empty State -->
-        <div class="text-center py-16 px-8">
-            <div class="w-24 h-24 bg-gradient-to-br from-lime-400 to-green-600 rounded-3xl flex items-center justify-center text-white text-3xl font-bold mx-auto mb-6">
-                <i class="ri-settings-3-line"></i>
+        <div class="text-center py-12">
+            <div class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <i class="ri-settings-3-line text-2xl text-gray-400"></i>
             </div>
-            <h3 class="text-2xl font-bold text-slate-800 mb-4">No Configurations Available</h3>
-            <p class="text-slate-600 mb-8 max-w-md mx-auto">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">No Configurations Available</h3>
+            <p class="text-gray-600 max-w-md mx-auto">
                 Configuration sections are currently being set up. Please check back later or contact your administrator.
             </p>
         </div>
@@ -141,32 +129,4 @@
     </div>
 </div>
 
-<style>
-.hover\:scale-105:hover {
-    transform: scale(1.05);
-}
-
-.hover\:translate-x-1:hover {
-    transform: translateX(0.25rem);
-}
-
-.transform {
-    transition-property: transform;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 300ms;
-}
-
-.backdrop-blur-sm {
-    backdrop-filter: blur(4px);
-}
-
-/* Custom hover animation for cards */
-.group:hover .group-hover\:translate-x-full {
-    transform: translateX(100%);
-}
-
-.group:hover .group-hover\:scale-110 {
-    transform: scale(1.1);
-}
-</style>
 {% endblock %}

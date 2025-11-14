@@ -1370,7 +1370,7 @@ def configurations_view(request):
     # Configuration sections available to admin users
     config_sections = [
         {
-            'name': 'Conference Room Settings',
+            'name': 'Manage Offices',
             'description': 'Manage office locations, conference rooms, and booking settings',
             'icon': 'ri-building-line',
             'url': 'core:manage_locations',
@@ -1378,7 +1378,7 @@ def configurations_view(request):
             'hover_color': 'hover:bg-blue-600'
         },
         {
-            'name': 'Conference Room Management',
+            'name': 'Conference Rooms',
             'description': 'Add, edit, and manage conference rooms across all locations',
             'icon': 'ri-door-open-line',
             'url': 'conference:admin_room_list',
