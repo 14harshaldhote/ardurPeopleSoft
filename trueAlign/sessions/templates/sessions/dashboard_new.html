@@ -1,0 +1,574 @@
+{% extends "base.html" %}
+{% load static %}
+{% load sessions_extras %}
+
+{% block title %}Command Center - TrueAlign{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #0f766e;
+        --primary-light: #14b8a6;
+        --secondary: #84cc16;
+        --accent: #f59e0b;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --glass: rgba(255, 255, 255, 0.1);
+        --glass-border: rgba(255, 255, 255, 0.2);
+    }
+
+    .command-center {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+        min-height: 100vh;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .command-center::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 20% 20%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(132, 204, 22, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 40% 60%, rgba(245, 158, 11, 0.05) 0%, transparent 50%);
+    }
+
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .neon-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        border-radius: 16px;
+        backdrop-filter: blur(10px);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .neon-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .neon-card:hover::before {
+        left: 100%;
+    }
+
+    .neon-card:hover {
+        transform: translateY(-4px) scale(1.02);
+        border-color: rgba(16, 185, 129, 0.6);
+        box-shadow: 0 20px 40px rgba(16, 185, 129, 0.2);
+    }
+
+    .metric-display {
+        position: relative;
+        z-index: 10;
+    }
+
+    .holographic-text {
+        background: linear-gradient(135deg, #10b981, #84cc16);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: 700;
+        text-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
+    }
+
+    .pulse-ring {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        border: 2px solid var(--success);
+        border-radius: 50%;
+        animation: pulse-ring 2s infinite;
+    }
+
+    @keyframes pulse-ring {
+        0% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        100% {
+            transform: scale(2);
+            opacity: 0;
+        }
+    }
+
+    .status-orb {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        position: relative;
+        display: inline-block;
+    }
+
+    .status-orb.active {
+        background: var(--success);
+        box-shadow: 0 0 20px var(--success);
+    }
+
+    .status-orb.idle {
+        background: var(--warning);
+        box-shadow: 0 0 20px var(--warning);
+    }
+
+    .status-orb.offline {
+        background: var(--danger);
+        box-shadow: 0 0 20px var(--danger);
+    }
+
+    .data-stream {
+        height: 200px;
+        background: linear-gradient(135deg, rgba(15, 118, 110, 0.1) 0%, rgba(132, 204, 22, 0.1) 100%);
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stream-line {
+        position: absolute;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--primary-light), transparent);
+        animation: stream-flow 3s infinite linear;
+    }
+
+    @keyframes stream-flow {
+        0% { left: -100%; width: 0%; }
+        50% { width: 100%; }
+        100% { left: 100%; width: 0%; }
+    }
+
+    .control-panel {
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        border-radius: 16px;
+        backdrop-filter: blur(10px);
+    }
+
+    .cyber-button {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        border: 1px solid var(--primary-light);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cyber-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .cyber-button:hover::before {
+        left: 100%;
+    }
+
+    .cyber-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+    }
+
+    .data-table {
+        background: rgba(15, 23, 42, 0.6);
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(16, 185, 129, 0.1);
+    }
+
+    .table-header {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(132, 204, 22, 0.2) 100%);
+        color: white;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        border: 2px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .activity-indicator {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .activity-indicator.active {
+        background: rgba(16, 185, 129, 0.2);
+        color: var(--success);
+        border: 1px solid var(--success);
+    }
+
+    .activity-indicator.idle {
+        background: rgba(245, 158, 11, 0.2);
+        color: var(--warning);
+        border: 1px solid var(--warning);
+    }
+
+    .system-status {
+        position: relative;
+        padding: 20px;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(132, 204, 22, 0.1) 100%);
+        border-radius: 16px;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .floating-widget {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+        transition: all 0.3s ease;
+        z-index: 1000;
+    }
+
+    .floating-widget:hover {
+        transform: scale(1.1);
+        box-shadow: 0 15px 40px rgba(16, 185, 129, 0.6);
+    }
+
+    .real-time-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        width: 20px;
+        height: 20px;
+        background: var(--danger);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 10px;
+        font-weight: 600;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="command-center">
+    <!-- Header Control Panel -->
+    <div class="relative z-20 p-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="glass-panel p-6">
+                <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <div class="w-16 h-16 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-2xl flex items-center justify-center">
+                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                </svg>
+                            </div>
+                            <div class="pulse-ring"></div>
+                        </div>
+                        <div>
+                            <h1 class="text-3xl font-bold text-white mb-2">
+                                Command <span class="holographic-text">Center</span>
+                            </h1>
+                            <p class="text-gray-300">Real-time session monitoring & analytics</p>
+                        </div>
+                    </div>
+
+                    <div class="control-panel p-4">
+                        <div class="flex items-center space-x-4">
+                            <div class="flex items-center space-x-2">
+                                <label class="text-sm font-medium text-gray-300">Office:</label>
+                                <select id="office-filter" class="bg-slate-800 border border-emerald-500/30 rounded-lg px-3 py-2 text-white text-sm focus:ring-2 focus:ring-emerald-500">
+                                    <option value="all">All Offices</option>
+                                    {% for office in all_offices %}
+                                    <option value="{{ office.id }}">{{ office.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="status-orb active"></div>
+                                <span class="text-sm text-gray-300">System Online</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Grid -->
+    <div class="relative z-10 max-w-7xl mx-auto px-6 pb-12">
+        <!-- Key Metrics Row -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="neon-card p-6">
+                <div class="metric-display">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-slate-600 to-slate-700 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-2xl font-bold text-white">{{ metrics.total_sessions|default:0 }}</div>
+                            <div class="text-xs text-gray-400 uppercase tracking-wide">Total Sessions</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="neon-card p-6">
+                <div class="metric-display">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-2xl font-bold holographic-text">{{ metrics.active_sessions|default:0 }}</div>
+                            <div class="text-xs text-gray-400 uppercase tracking-wide">Active Now</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="neon-card p-6">
+                <div class="metric-display">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-2xl font-bold text-amber-400">{{ metrics.idle_sessions|default:0 }}</div>
+                            <div class="text-xs text-gray-400 uppercase tracking-wide">Idle</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="neon-card p-6">
+                <div class="metric-display">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-lime-500 to-lime-600 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-2xl font-bold text-lime-400">{{ metrics.recent_24h|default:0 }}</div>
+                            <div class="text-xs text-gray-400 uppercase tracking-wide">24H Activity</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Active Users Table -->
+            <div class="lg:col-span-2">
+                <div class="glass-panel p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-bold text-white">Active Users</h3>
+                        <div class="real-time-badge">{{ metrics.active_sessions|default:0 }}</div>
+                    </div>
+                    
+                    <div class="data-table">
+                        <div class="table-header p-4">
+                            <div class="grid grid-cols-4 gap-4 text-sm">
+                                <div>User</div>
+                                <div>Status</div>
+                                <div>Sessions</div>
+                                <div>Duration</div>
+                            </div>
+                        </div>
+                        
+                        <div class="divide-y divide-gray-700/50">
+                            {% for user in top_users|slice:":8" %}
+                            <div class="p-4 hover:bg-slate-800/30 transition-colors">
+                                <div class="grid grid-cols-4 gap-4 items-center">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="user-avatar">
+                                            {{ user.user__first_name|default:user.user__username|slice:":1"|upper }}
+                                        </div>
+                                        <div>
+                                            <div class="text-white font-medium text-sm">
+                                                {% if user.user__first_name %}{{ user.user__first_name }} {{ user.user__last_name }}{% else %}{{ user.user__username }}{% endif %}
+                                            </div>
+                                            <div class="text-gray-400 text-xs">{{ user.user__username }}</div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        {% if user.active_sessions > 0 %}
+                                        <div class="activity-indicator active">
+                                            <div class="status-orb active mr-2"></div>
+                                            Active
+                                        </div>
+                                        {% else %}
+                                        <div class="activity-indicator idle">
+                                            <div class="status-orb idle mr-2"></div>
+                                            Idle
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-emerald-400 font-mono">{{ user.session_count }}</div>
+                                    <div class="text-gray-300 text-sm">{{ user.total_time_hours|default:0 }}h</div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="p-8 text-center text-gray-400">
+                                <svg class="w-12 h-12 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                                </svg>
+                                <p>No active users found</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Side Panels -->
+            <div class="space-y-6">
+                <!-- System Status -->
+                <div class="system-status">
+                    <h4 class="text-lg font-bold text-white mb-4">System Status</h4>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-300">Database</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="status-orb active"></div>
+                                <span class="text-emerald-400 text-sm">Online</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-300">API Services</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="status-orb active"></div>
+                                <span class="text-emerald-400 text-sm">Operational</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-300">Real-time Sync</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="status-orb active"></div>
+                                <span class="text-emerald-400 text-sm">Active</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="glass-panel p-6">
+                    <h4 class="text-lg font-bold text-white mb-4">Quick Actions</h4>
+                    <div class="space-y-3">
+                        <a href="{% url 'sessions:session_list' %}" class="cyber-button w-full text-center block">
+                            View All Sessions
+                        </a>
+                        <a href="{% url 'sessions:analytics' %}" class="cyber-button w-full text-center block" style="background: linear-gradient(135deg, var(--secondary) 0%, #65a30d 100%);">
+                            Analytics Hub
+                        </a>
+                        <a href="{% url 'sessions:export' %}" class="cyber-button w-full text-center block" style="background: linear-gradient(135deg, var(--accent) 0%, #d97706 100%);">
+                            Export Data
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Data Stream Visualization -->
+                <div class="glass-panel p-6">
+                    <h4 class="text-lg font-bold text-white mb-4">Live Data Stream</h4>
+                    <div class="data-stream">
+                        <div class="stream-line" style="top: 20%; animation-delay: 0s;"></div>
+                        <div class="stream-line" style="top: 40%; animation-delay: 1s;"></div>
+                        <div class="stream-line" style="top: 60%; animation-delay: 2s;"></div>
+                        <div class="stream-line" style="top: 80%; animation-delay: 0.5s;"></div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="text-center">
+                                <div class="text-2xl font-bold holographic-text">{{ metrics.active_sessions|default:0 }}</div>
+                                <div class="text-xs text-gray-400 uppercase tracking-wide">Live Sessions</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Refresh Widget -->
+    <div class="floating-widget" onclick="location.reload()">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Auto-refresh functionality
+    setInterval(() => {
+        // Update metrics via AJAX if needed
+        console.log("Refreshing dashboard data...");
+    }, 30000);
+
+    // Office filter change
+    document.getElementById('office-filter').addEventListener('change', function() {
+        const url = new URL(window.location);
+        url.searchParams.set('office', this.value);
+        window.location.href = url.toString();
+    });
+});
+</script>
+{% endblock %}
