@@ -18,6 +18,7 @@ from django.utils.decorators import method_decorator
 from django.utils import timezone
 from django.core.cache import cache
 from django.db import transaction
+from django.db.models import Sum
 from django.conf import settings
 from django.contrib import messages
 from django.urls import reverse_lazy
@@ -810,6 +811,71 @@ def dashboard_view(request):
         is_hr = user_groups.filter(name='HR').exists()
         is_employee = user_groups.filter(name__in=['Employee', 'User']).exists()
         is_client = user_groups.filter(name='Client').exists()
+        is_finance = user_groups.filter(name='Finance').exists()
+
+        # Get finance context for finance users
+        finance_context = {}
+        if is_finance:
+            try:
+                from trueAlign.models import DailyExpense, BankPayment, ClientInvoice, Subscription
+                from decimal import Decimal
+                from datetime import timedelta
+                
+                today = timezone.now().date()
+                this_month_start = today.replace(day=1)
+                
+                # Expenses
+                pending_expenses_count = DailyExpense.objects.filter(status='submitted').count()
+                this_month_expenses = DailyExpense.objects.filter(
+                    date__gte=this_month_start
+                ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+                
+                # Bank Payments
+                pending_payments_count = BankPayment.objects.filter(
+                    status__in=['pending', 'verified', 'approved']
+                ).count()
+                this_month_payments = BankPayment.objects.filter(
+                    payment_date__gte=this_month_start,
+                    status='executed'
+                ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+                
+                # Invoices
+                pending_invoice_count = ClientInvoice.objects.filter(status='draft').count()
+                overdue_invoice_count = ClientInvoice.objects.filter(status='overdue').count()
+                this_month_revenue = ClientInvoice.objects.filter(
+                    billing_cycle_start__gte=this_month_start,
+                    status='paid'
+                ).aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
+                
+                # Subscriptions
+                upcoming_subscriptions = Subscription.objects.filter(
+                    status='active',
+                    next_payment_date__gte=today,
+                    next_payment_date__lte=today + timedelta(days=30)
+                ).order_by('next_payment_date')[:5]
+                
+                finance_context = {
+                    'pending_expenses_count': pending_expenses_count,
+                    'this_month_expenses': this_month_expenses,
+                    'pending_payments_count': pending_payments_count,
+                    'this_month_payments': this_month_payments,
+                    'pending_invoice_count': pending_invoice_count,
+                    'overdue_invoice_count': overdue_invoice_count,
+                    'this_month_revenue': this_month_revenue,
+                    'upcoming_subscriptions': upcoming_subscriptions,
+                }
+            except Exception as finance_error:
+                logger.warning(f"Error loading finance context: {finance_error}")
+                finance_context = {
+                    'pending_expenses_count': 0,
+                    'this_month_expenses': Decimal('0'),
+                    'pending_payments_count': 0,
+                    'this_month_payments': Decimal('0'),
+                    'pending_invoice_count': 0,
+                    'overdue_invoice_count': 0,
+                    'this_month_revenue': Decimal('0'),
+                    'upcoming_subscriptions': [],
+                }
 
         context = {
             'user': user,
@@ -824,10 +890,13 @@ def dashboard_view(request):
             'is_hr': is_hr,
             'is_employee': is_employee,
             'is_client': is_client,
+            'is_finance': is_finance,
             # Conference booking context
             **conference_context,
             # Attendance context for the card
-            **attendance_context
+            **attendance_context,
+            # Finance context for finance users
+            **finance_context
         }
 
         return render(request, 'dashboard.html', context)

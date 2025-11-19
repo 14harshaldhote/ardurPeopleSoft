@@ -106,6 +106,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'trueAlign',
     'trueAlign.core',
     'trueAlign.sessions',
@@ -114,9 +115,10 @@ INSTALLED_APPS = [
     'trueAlign.notifications',
     'trueAlign.notes',
     'trueAlign.support',
+    'trueAlign.finance',
     'trueAlign.apprisal',
-    'trueAlign.confrence',  # Conference Room Booking System
-    'trueAlign.shift',  # Shift Management System
+    'trueAlign.confrence',
+    'trueAlign.shift',
     'rest_framework',
     'django_cron',
     'django_celery_beat',

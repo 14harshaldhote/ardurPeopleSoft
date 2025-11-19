@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Approve Expense - Finance - {{ block.super }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'finance:expense_list' %}">Expenses</a></li>
+<li class="breadcrumb-item"><a href="{% url 'finance:expense_detail' expense.pk %}">{{ expense.expense_id }}</a></li>
+<li class="breadcrumb-item active">Approve</li>
+{% endblock %}
+
+{% block content %}
+<div class="expense-approve-container">
+    <div class="page-header">
+        <h1><i class="fas fa-check-circle"></i> Approve/Reject Expense</h1>
+        <p class="text-muted">Review and approve or reject expense claim</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Expense Summary -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5>Expense Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Expense ID:</strong> {{ expense.expense_id }}</p>
+                            <p><strong>Date:</strong> {{ expense.date|date:"d M, Y" }}</p>
+                            <p><strong>Category:</strong> {{ expense.get_category_display }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Amount:</strong> ₹ {{ expense.amount|floatformat:2|intcomma }}</p>
+                            <p><strong>Submitted By:</strong> {{
+                                expense.paid_by.get_full_name|default:expense.paid_by.username }}</p>
+                            <p><strong>Department:</strong> {{ expense.department }}</p>
+                        </div>
+                    </div>
+                    <hr>
+                    <p><strong>Description:</strong></p>
+                    <p>{{ expense.description }}</p>
+
+                    {% if expense.attachments %}
+                    <p><strong>Attachments:</strong></p>
+                    <a href="{{ expense.attachments.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-paperclip"></i> View Attachment
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Approval Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h5>Approval Decision</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">
+                                Decision <span class="text-danger">*</span>
+                            </label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.status.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3" id="rejection-reason-field">
+                            <label for="{{ form.rejection_reason.id_for_label }}" class="form-label">
+                                Rejection Reason
+                            </label>
+                            {{ form.rejection_reason }}
+                            <small class="form-text text-muted">
+                                Required if rejecting the expense
+                            </small>
+                            {% if form.rejection_reason.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.rejection_reason.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="action-buttons">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check"></i> Submit Decision
+                            </button>
+                            <a href="{% url 'finance:expense_detail' expense.pk %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> Approval Guidelines</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Before Approving:</h6>
+                    <ul class="small">
+                        <li>Verify expense is business-related</li>
+                        <li>Check if receipts are attached</li>
+                        <li>Ensure amount matches documentation</li>
+                        <li>Confirm expense is within budget</li>
+                        <li>Verify submission date validity</li>
+                    </ul>
+
+                    <hr>
+
+                    <h6>Rejection Reasons:</h6>
+                    <ul class="small">
+                        <li>Missing or invalid documentation</li>
+                        <li>Personal expense claimed</li>
+                        <li>Amount exceeds policy limits</li>
+                        <li>Submitted after deadline</li>
+                        <li>Duplicate submission</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const statusField = document.getElementById('{{ form.status.id_for_label }}');
+        const rejectionField = document.getElementById('rejection-reason-field');
+
+        function toggleRejectionReason() {
+            if (statusField.value === 'rejected') {
+                rejectionField.style.display = 'block';
+            } else {
+                rejectionField.style.display = 'none';
+            }
+        }
+
+        statusField.addEventListener('change', toggleRejectionReason);
+        toggleRejectionReason(); // Initial check
+    });
+</script>
+{% endblock %}

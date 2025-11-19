@@ -1,0 +1,44 @@
+{% load humanize %}
+
+<div
+    class="backdrop-blur-xl bg-white/20 p-5 rounded-[16px] border border-black/10 shadow-inner hover:bg-white/25 transition-all duration-300">
+    <div class="flex justify-between items-start mb-4">
+        <div class="flex items-center gap-3">
+            <div class="p-3 backdrop-blur-sm bg-blue-500/20 rounded-xl border border-blue-500/30">
+                <svg class="w-6 h-6 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-sm font-semibold text-zinc-700">Cash Flow</h3>
+                <p class="text-2xl font-bold text-zinc-900">₹ {{ this_month_revenue|floatformat:0|intcomma }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+        <div class="backdrop-blur-sm bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2.5 text-center">
+            <div class="flex items-center justify-center gap-1 mb-1">
+                <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M7 11l5-5m0 0l5 5m-5-5v12" />
+                </svg>
+                <span class="text-xs font-medium text-emerald-700">Inflow</span>
+            </div>
+            <p class="text-sm font-bold text-emerald-700">₹ {{ this_month_revenue|floatformat:0|intcomma }}</p>
+        </div>
+        <div class="backdrop-blur-sm bg-red-500/10 border border-red-500/20 rounded-lg p-2.5 text-center">
+            <div class="flex items-center justify-center gap-1 mb-1">
+                <svg class="w-3 h-3 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 13l-5 5m0 0l-5-5m5 5V6" />
+                </svg>
+                <span class="text-xs font-medium text-red-700">Outflow</span>
+            </div>
+            <p class="text-sm font-bold text-red-700">₹ {{ this_month_expenses|floatformat:0|intcomma }}</p>
+        </div>
+    </div>
+    <div class="mt-3 text-xs text-blue-700 font-medium">
+        Net: ₹ {{ this_month_revenue|add:this_month_expenses|floatformat:0|intcomma }}
+    </div>
+</div>

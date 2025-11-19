@@ -1,0 +1,33 @@
+{% load humanize %}
+
+<div
+    class="backdrop-blur-xl bg-white/20 p-5 rounded-[16px] border border-black/10 shadow-inner hover:bg-white/25 transition-all duration-300">
+    <div class="flex justify-between items-start mb-4">
+        <div class="flex items-center gap-3">
+            <div class="p-3 backdrop-blur-sm bg-purple-500/20 rounded-xl border border-purple-500/30">
+                <svg class="w-6 h-6 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-sm font-semibold text-zinc-700">Pending Payments</h3>
+                <p class="text-2xl font-bold text-zinc-900">{{ pending_payments_count }}</p>
+            </div>
+        </div>
+        {% if pending_payments_count > 0 %}
+        <span
+            class="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-700 border border-purple-500/30">
+            {{ pending_payments_count }} Awaiting
+        </span>
+        {% endif %}
+    </div>
+    <div class="flex justify-between items-center pt-3 border-t border-white/20">
+        <span class="text-sm text-zinc-600">This Month Paid</span>
+        <span class="text-sm font-bold text-zinc-800">₹ {{ this_month_payments|floatformat:2|intcomma }}</span>
+    </div>
+    <a href="{% url 'finance:bank_payment_list' %}"
+        class="mt-3 inline-flex items-center text-sm text-blue-700 hover:text-blue-900 font-medium transition-colors duration-200">
+        View All <i class="ri-arrow-right-line ml-1"></i>
+    </a>
+</div>

@@ -1,0 +1,32 @@
+{% load humanize %}
+
+<div
+    class="backdrop-blur-xl bg-white/20 p-5 rounded-[16px] border border-black/10 shadow-inner hover:bg-white/25 transition-all duration-300">
+    <div class="flex justify-between items-start mb-4">
+        <div class="flex items-center gap-3">
+            <div class="p-3 backdrop-blur-sm bg-emerald-500/20 rounded-xl border border-emerald-500/30">
+                <svg class="w-6 h-6 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-sm font-semibold text-zinc-700">Monthly Spend</h3>
+                <p class="text-2xl font-bold text-zinc-900">₹ {{ this_month_expenses|floatformat:0|intcomma }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="space-y-2">
+        <div class="flex justify-between items-center text-xs text-zinc-600">
+            <span>Budget Utilization</span>
+            <span class="font-medium">75%</span>
+        </div>
+        <div class="w-full bg-white/30 rounded-full h-2 border border-white/20 overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-1000"
+                style="width: 75%"></div>
+        </div>
+    </div>
+    <div class="mt-3 text-xs text-emerald-700 font-medium">
+        <i class="ri-arrow-down-line"></i> 12% less than last month
+    </div>
+</div>

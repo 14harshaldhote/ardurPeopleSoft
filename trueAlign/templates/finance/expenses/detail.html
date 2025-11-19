@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}{{ expense.expense_id }} - Expense Detail - Finance - {{ block.super }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'finance:expense_list' %}">Expenses</a></li>
+<li class="breadcrumb-item active">{{ expense.expense_id }}</li>
+{% endblock %}
+
+{% block ontent %}
+<div class="expense-detail-container">
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h1><i class="fas fa-receipt"></i> Expense: {{ expense.expense_id }}</h1>
+                <p class="text-muted mb-0">
+                    Created on {{ expense.created_at|date:"d M, Y H:i" }}
+                </p>
+            </div>
+            <div>
+                {% if expense.status == 'draft' %}
+                <span class="badge bg-secondary p-2 fs-6">DRAFT</span>
+                {% elif expense.status == 'submitted' %}
+                <span class="badge bg-info p-2 fs-6">SUBMITTED</span>
+                {% elif expense.status == 'approved' %}
+                <span class="badge bg-success p-2 fs-6">APPROVED</span>
+                {% elif expense.status == 'rejected' %}
+                <span class="badge bg-danger p-2 fs-6">REJECTED</span>
+                {% elif expense.status == 'paid' %}
+                <span class="badge bg-primary p-2 fs-6">PAID</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Expense Details -->
+            <div class="detail-section">
+                <h4><i class="fas fa-info-circle"></i> Expense Information</h4>
+
+                <div class="detail-row">
+                    <div class="detail-label">Expense ID:</div>
+                    <div class="detail-value"><strong>{{ expense.expense_id }}</strong></div>
+                </div>
+
+                <div class="detail-row">
+                    <div class="detail-label">Date:</div>
+                    <div class="detail-value">{{ expense.date|date:"d M, Y" }}</div>
+                </div>
+
+                <div class="detail-row">
+                    <div class="detail-label">Department:</div>
+                    <div class="detail-value">{{ expense.department }}</div>
+                </div>
+
+                <div class="detail-row">
+                    <div class="detail-label">Category:</div>
+                    <div class="detail-value">
+                        <span class="badge bg-secondary">{{ expense.get_category_display }}</span>
+                    </div>
+                </div>
+
+                <div class="detail-row">
+                    <div class="detail-label">Amount:</div>
+                    <div class="detail-value">
+                        <strong class="text-primary fs-5">₹ {{ expense.amount|floatformat:2|intcomma }}</strong>
+                    </div>
+                </div>
+
+                <div class="detail-row">
+                    <div class="detail-label">Description:</div>
+                    <div class="detail-value">{{ expense.description }}</div>
+                </div>
+
+                <div class="detail-row">
+                    <div class="detail-label">Submitted By:</div>
+                    <div class="detail-value">{{ expense.paid_by.get_full_name|default:expense.paid_by.username }}</div>
+                </div>
+
+                {% if expense.attachments %}
+                <div class="detail-row">
+                    <div class="detail-label">Attachments:</div>
+                    <div class="detail-value">
+                        <a href="{{ expense.attachments.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-paperclip"></i> View Attachment
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Approval Information -->
+            {% if expense.approved_by or expense.rejection_reason %}
+            <div class="detail-section">
+                <h4><i class="fas fa-check-circle"></i> Approval Information</h4>
+
+                {% if expense.approved_by %}
+                <div class="detail-row">
+                    <div class="detail-label">Reviewed By:</div>
+                    <div class="detail-value">{{ expense.approved_by.get_full_name|default:expense.approved_by.username
+                        }}</div>
+                </div>
+
+                <div class="detail-row">
+                    <div class="detail-label">Reviewed At:</div>
+                    <div class="detail-value">{{ expense.approved_at|date:"d M, Y H:i" }}</div>
+                </div>
+                {% endif %}
+
+                {% if expense.rejection_reason %}
+                <div class="detail-row">
+                    <div class="detail-label">Rejection Reason:</div>
+                    <div class="detail-value">
+                        <div class="alert alert-danger mb-0">
+                            {{ expense.rejection_reason }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-4">
+            <!-- Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-tasks"></i> Actions</h5>
+                </div>
+                <div class="card-body">
+                    {% if expense.paid_by == request.user and expense.status == 'draft' %}
+                    <form method="post" action="{% url 'finance:expense_submit' expense.pk %}" class="mb-2">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-paper-plane"></i> Submit for Approval
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    {% if expense.status == 'submitted' and perms.finance.can_approve_expense %}
+                    <a href="{% url 'finance:expense_approve' expense.pk %}" class="btn btn-success w-100 mb-2">
+                        <i class="fas fa-check"></i> Approve/Reject
+                    </a>
+                    {% endif %}
+
+                    {% if expense.status == 'approved' and perms.finance.can_mark_paid %}
+                    <form method="post" action="{% url 'finance:expense_mark_paid' expense.pk %}" class="mb-2">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="fas fa-money-bill-wave"></i> Mark as Paid
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    <a href="{% url 'finance:expense_print_pdf' expense.pk %}"
+                        class="btn btn-outline-secondary w-100 mb-2">
+                        <i class="fas fa-print"></i> Print PDF
+                    </a>
+
+                    <a href="{% url 'finance:expense_list' %}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-arrow-left"></i> Back to List
+                    </a>
+                </div>
+            </div>
+
+            <!-- Timeline -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5><i class="fas fa-history"></i> Timeline</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content">
+                                <small class="text-muted">{{ expense.created_at|date:"d M, Y H:i" }}</small>
+                                <p class="mb-0">Expense created</p>
+                            </div>
+                        </div>
+
+                        {% if expense.status != 'draft' %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-info"></div>
+                            <div class="timeline-content">
+                                <small class="text-muted">{{ expense.updated_at|date:"d M, Y H:i" }}</small>
+                                <p class="mb-0">Submitted for approval</p>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if expense.approved_by %}
+                        <div class="timeline-item">
+                            <div
+                                class="timeline-marker {% if expense.status == 'approved' %}bg-success{% elif expense.status == 'rejected' %}bg-danger{% endif %}">
+                            </div>
+                            <div class="timeline-content">
+                                <small class="text-muted">{{ expense.approved_at|date:"d M, Y H:i" }}</small>
+                                <p class="mb-0">{{ expense.get_status_display }} by {{
+                                    expense.approved_by.get_full_name|default:expense.approved_by.username }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if expense.status == 'paid' %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content">
+                                <small class="text-muted">{{ expense.updated_at|date:"d M, Y H:i" }}</small>
+                                <p class="mb-0">Payment processed</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-bottom: 20px;
+    }
+
+    .timeline-item:last-child {
+        padding-bottom: 0;
+    }
+
+    .timeline-marker {
+        position: absolute;
+        left: -30px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: 2px solid white;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -25px;
+        top: 12px;
+        bottom: -8px;
+        width: 2px;
+        background: #e9ecef;
+    }
+
+    .timeline-item:last-child::before {
+        display: none;
+    }
+
+    .timeline-content {
+        padding-left: 8px;
+    }
+</style>
+{% endblock %}

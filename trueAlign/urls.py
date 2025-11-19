@@ -30,6 +30,7 @@ urlpatterns = [
     path('support/', include('trueAlign.support.urls')),
     path('conference/', include('trueAlign.confrence.urls')),  # Conference Room Booking
     path('appraisal/', include('trueAlign.apprisal.urls')),  # Appraisal System
+    path('finance/', include('trueAlign.finance.urls')),
 
     # API endpoints
     path('api/', include('trueAlign.leave_management.api_urls')),
