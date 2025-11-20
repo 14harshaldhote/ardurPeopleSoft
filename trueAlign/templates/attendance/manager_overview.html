@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Team Attendance Overview - Ardur Home{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- Header -->
+    <div
+        class="relative overflow-hidden rounded-2xl bg-white/20 backdrop-blur-xl border border-white/30 shadow-lg mb-8 transition-all">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-white/10"></div>
+
+        <div class="relative p-6 sm:p-8">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <!-- Left Section -->
+                <div class="space-y-3">
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight">
+                            Team Overview
+                        </h1>
+                        <p class="text-lg sm:text-xl font-semibold text-gray-700 mt-1">
+                            <span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                                {{ today|date:"l, F d, Y" }}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Right Buttons -->
+                <div class="flex flex-wrap gap-3">
+                    <a href="{% url 'attendance:dashboard' %}"
+                        class="inline-flex items-center px-5 py-2.5 bg-white text-gray-700 rounded-lg shadow hover:bg-gray-50 transition-all duration-200 font-medium border border-gray-200">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+        <!-- Total Team -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-medium text-gray-500">Total Team</h3>
+                <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">All</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900">{{ team_stats.total_team }}</p>
+        </div>
+
+        <!-- Present -->
+        <div class="bg-green-50 rounded-xl shadow-sm border border-green-100 p-4">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-medium text-green-800">Present</h3>
+                <span class="bg-green-200 text-green-900 text-xs font-medium px-2.5 py-0.5 rounded-full">{{ team_stats.attendance_rate }}%</span>
+            </div>
+            <p class="text-2xl font-bold text-green-900">{{ team_stats.present_today }}</p>
+        </div>
+
+        <!-- Late -->
+        <div class="bg-yellow-50 rounded-xl shadow-sm border border-yellow-100 p-4">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-medium text-yellow-800">Late</h3>
+            </div>
+            <p class="text-2xl font-bold text-yellow-900">{{ team_stats.late_today }}</p>
+        </div>
+
+        <!-- On Leave -->
+        <div class="bg-purple-50 rounded-xl shadow-sm border border-purple-100 p-4">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-medium text-purple-800">On Leave</h3>
+            </div>
+            <p class="text-2xl font-bold text-purple-900">{{ team_stats.on_leave_today }}</p>
+        </div>
+
+        <!-- Absent -->
+        <div class="bg-red-50 rounded-xl shadow-sm border border-red-100 p-4">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-medium text-red-800">Absent</h3>
+            </div>
+            <p class="text-2xl font-bold text-red-900">{{ team_stats.absent_today }}</p>
+        </div>
+    </div>
+
+    <!-- Team List -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+            <h3 class="text-lg font-bold text-gray-900">Team Members</h3>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Employee</th>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status</th>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check
+                            In</th>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check
+                            Out</th>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for item in team_data %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10">
+                                    <div
+                                        class="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                                        {{ item.user.first_name|first }}{{ item.user.last_name|first }}
+                                    </div>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ item.user.get_full_name }}</div>
+                                    <div class="text-xs text-gray-500">{{ item.user.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if item.attendance %}
+                            {% if item.attendance.status == 'Present' %}
+                            <span
+                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Present</span>
+                            {% elif 'Late' in item.attendance.status %}
+                            <span
+                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                {{ item.attendance.status }}</span>
+                            {% elif item.attendance.status == 'Absent' %}
+                            <span
+                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Absent</span>
+                            {% elif item.attendance.status == 'On Leave' %}
+                            <span
+                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">On
+                                Leave</span>
+                            {% else %}
+                            <span
+                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">{{item.attendance.status }}</span>
+                            {% endif %}
+                            {% else %}
+                            <span
+                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Not
+                                Marked</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ item.attendance.clock_in_time|time:"g:i A"|default:"—" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ item.attendance.clock_out_time|time:"g:i A"|default:"—" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {% if item.attendance and item.attendance.total_hours %}
+                            <span class="font-medium text-gray-900">{{ item.attendance.total_hours|floatformat:1 }}h</span>
+                            {% else %}
+                            —
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
