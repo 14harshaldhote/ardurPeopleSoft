@@ -56,8 +56,7 @@
         <div class="bg-green-50 rounded-xl shadow-sm border border-green-100 p-4">
             <div class="flex items-center justify-between mb-2">
                 <h3 class="text-sm font-medium text-green-800">Present</h3>
-                <span class="bg-green-200 text-green-900 text-xs font-medium px-2.5 py-0.5 rounded-full">{{
-                    team_stats.attendance_rate }}%</span>
+                <span class="bg-green-200 text-green-900 text-xs font-medium px-2.5 py-0.5 rounded-full">{{ team_stats.attendance_rate }}%</span>
             </div>
             <p class="text-2xl font-bold text-green-900">{{ team_stats.present_today }}</p>
         </div>
@@ -115,43 +114,41 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    {% for member in team_members %}
-                    {% with attendance=today_attendance|filter_by_user:member %}
+                    {% for item in team_data %}
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0 h-10 w-10">
                                     <div
                                         class="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
-                                        {{ member.first_name|first }}{{ member.last_name|first }}
+                                        {{ item.user.first_name|first }}{{ item.user.last_name|first }}
                                     </div>
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">{{ member.get_full_name }}</div>
-                                    <div class="text-xs text-gray-500">{{ member.email }}</div>
+                                    <div class="text-sm font-medium text-gray-900">{{ item.user.get_full_name }}</div>
+                                    <div class="text-xs text-gray-500">{{ item.user.email }}</div>
                                 </div>
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            {% if attendance %}
-                            {% if attendance.status == 'Present' %}
+                            {% if item.attendance %}
+                            {% if item.attendance.status == 'Present' %}
                             <span
                                 class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Present</span>
-                            {% elif 'Late' in attendance.status %}
+                            {% elif 'Late' in item.attendance.status %}
                             <span
-                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">{{
-                                attendance.status }}</span>
-                            {% elif attendance.status == 'Absent' %}
+                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                {{ item.attendance.status }}</span>
+                            {% elif item.attendance.status == 'Absent' %}
                             <span
                                 class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Absent</span>
-                            {% elif attendance.status == 'On Leave' %}
+                            {% elif item.attendance.status == 'On Leave' %}
                             <span
                                 class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">On
                                 Leave</span>
                             {% else %}
                             <span
-                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">{{
-                                attendance.status }}</span>
+                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">{{item.attendance.status }}</span>
                             {% endif %}
                             {% else %}
                             <span
@@ -160,20 +157,19 @@
                             {% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ attendance.clock_in_time|time:"g:i A"|default:"—" }}
+                            {{ item.attendance.clock_in_time|time:"g:i A"|default:"—" }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ attendance.clock_out_time|time:"g:i A"|default:"—" }}
+                            {{ item.attendance.clock_out_time|time:"g:i A"|default:"—" }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {% if attendance and attendance.total_hours %}
-                            <span class="font-medium text-gray-900">{{ attendance.total_hours|floatformat:1 }}h</span>
+                            {% if item.attendance and item.attendance.total_hours %}
+                            <span class="font-medium text-gray-900">{{ item.attendance.total_hours|floatformat:1 }}h</span>
                             {% else %}
                             —
                             {% endif %}
                         </td>
                     </tr>
-                    {% endwith %}
                     {% endfor %}
                 </tbody>
             </table>

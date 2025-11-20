@@ -511,9 +511,19 @@ def manager_attendance_overview(request):
         late_today = today_attendance.filter(status__contains="Late").count()
         on_leave_today = today_attendance.filter(status="On Leave").count()
 
+        # Create a map of user_id -> attendance record for O(1) lookup
+        attendance_map = {att.user_id: att for att in today_attendance}
+
+        # Prepare team data list
+        team_data = []
+        for member in team_members:
+            team_data.append({
+                'user': member,
+                'attendance': attendance_map.get(member.id)
+            })
+
         context = {
-            "team_members": team_members,
-            "today_attendance": today_attendance,
+            "team_data": team_data,
             "team_stats": {
                 "total_team": total_team,
                 "present_today": present_today,
