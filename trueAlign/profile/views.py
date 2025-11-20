@@ -17,7 +17,7 @@ import pandas as pd
 import json
 from io import BytesIO
 
-from trueAlign.models import UserDetails, UserActionLog, OfficeLocation, UserSession, SessionActivity, LayoutPreference
+from trueAlign.models import UserDetails, UserActionLog, OfficeLocation, UserSession, SessionActivity
 from .utilities import generate_employee_id, send_welcome_email
 from .forms import UserDetailsCreateForm, UserDetailsUpdateForm, CSVImportForm, UserProfileForm
 
@@ -107,12 +107,7 @@ def hr_dashboard(request):
         new_hires_count = User.objects.filter(date_joined__gte=thirty_days_ago).count()
 
     # Get user's saved layout preferences
-    saved_layout = {}
-    try:
-        layout_preference = LayoutPreference.objects.get(user=request.user)
-        saved_layout = layout_preference.layout
-    except LayoutPreference.DoesNotExist:
-        pass
+
 
     context = {
         'total_users': total_users,
@@ -964,10 +959,7 @@ def save_dashboard_layout(request):
         data = json.loads(request.body)
         layout_data = data.get('layout', {})
 
-        layout_preference, created = LayoutPreference.objects.get_or_create(
-            user=request.user,
-            defaults={'layout': layout_data}
-        )
+    
 
         if not created:
             layout_preference.layout = layout_data
