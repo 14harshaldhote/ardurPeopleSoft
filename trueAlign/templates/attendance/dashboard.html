@@ -4,76 +4,96 @@
 
 {% block content %}
 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6" x-data="attendanceDashboard()" x-init="init()">
-    
+
     <!-- Header -->
-    <div class="relative overflow-hidden rounded-2xl bg-white/20 backdrop-blur-xl border border-white/30 shadow-lg mb-8 transition-all">
+    <div
+        class="relative overflow-hidden rounded-2xl bg-white/20 backdrop-blur-xl border border-white/30 shadow-lg mb-8 transition-all">
         <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-white/10"></div>
 
         <div class="relative p-6 sm:p-8">
-           
+
 
             <!-- Welcome -->
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-               <!-- Left Section -->
-    <div class="space-y-3">
-        <!-- Title + Username -->
-        <div>
-            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight">
-                Attendance
-            </h1>
-            <p class="text-lg sm:text-xl font-semibold text-gray-700 mt-1">
-                <span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                    {{ user.get_full_name|default:user.username }}
-                </span>
-            </p>
-        </div>
+                <!-- Left Section -->
+                <div class="space-y-3">
+                    <!-- Title + Username -->
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight">
+                            Attendance
+                        </h1>
+                        <p class="text-lg sm:text-xl font-semibold text-gray-700 mt-1">
+                            <span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                                {{ user.get_full_name|default:user.username }}
+                            </span>
+                        </p>
+                    </div>
 
-        <!-- Info Tags -->
-        <div class="flex flex-wrap items-center gap-3 text-sm font-medium text-gray-800">
-            <!-- Department -->
-            <div class="flex items-center gap-2 bg-white/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20 shadow-sm hover:bg-white/60 transition-all">
-                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2H6a2 2 0 00-2 2v2"/>
-                </svg>
-                <span>{{ user.profile.department|default:"Employee" }}</span>
-            </div>
+                    <!-- Info Tags -->
+                    <div class="flex flex-wrap items-center gap-3 text-sm font-medium text-gray-800">
+                        <!-- Department -->
+                        <div
+                            class="flex items-center gap-2 bg-white/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20 shadow-sm hover:bg-white/60 transition-all">
+                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2H6a2 2 0 00-2 2v2" />
+                            </svg>
+                            <span>{{ user.profile.department|default:"Employee" }}</span>
+                        </div>
 
-            <!-- Active Session -->
-            <div class="flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100 shadow-sm hover:bg-emerald-100 transition-all">
-                <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                <span class="text-emerald-700">Active Session</span>
-            </div>
+                        <!-- Active Session -->
+                        <div
+                            class="flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100 shadow-sm hover:bg-emerald-100 transition-all">
+                            <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                            <span class="text-emerald-700">Active Session</span>
+                        </div>
 
-            <!-- Current Date -->
-            <div class="flex items-center gap-2 bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-100 shadow-sm hover:bg-purple-100 transition-all">
-                <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M8 7V3m8 4V3m-9 8h10M5 21h14V7H5v14z"/>
-                </svg>
-                <span x-text="currentDate" class="text-purple-800"></span>
-            </div>
-        </div>
-    </div>
+                        <!-- Current Date -->
+                        <div
+                            class="flex items-center gap-2 bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-100 shadow-sm hover:bg-purple-100 transition-all">
+                            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14V7H5v14z" />
+                            </svg>
+                            <span x-text="currentDate" class="text-purple-800"></span>
+                        </div>
+                    </div>
+                </div>
 
-    <!-- Right Buttons -->
-    <div class="flex flex-wrap gap-3">
-        <a href="{% url 'attendance:calendar' %}"
-           class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow hover:scale-105 transition-all duration-200 font-medium">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M5 21h14V7H5v14z"/>
-            </svg>
-            Calendar
-        </a>
+                <!-- Right Buttons -->
+                <div class="flex flex-wrap gap-3">
+                    <a href="{% url 'attendance:calendar' %}"
+                        class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow hover:scale-105 transition-all duration-200 font-medium">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M5 21h14V7H5v14z" />
+                        </svg>
+                        Calendar
+                    </a>
 
-        <a href="{% url 'attendance:search' %}"
-           class="inline-flex items-center px-5 py-2.5 backdrop-blur-md bg-white/40 text-gray-900 rounded-lg border border-white/30 hover:bg-white/60 shadow-sm transition-all font-medium">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0z"/>
-            </svg>
-            Search
-        </a>
-    </div>
+                    {% if user.groups.all.0.name == "Manager" or user.is_superuser %}
+                    <a href="{% url 'attendance:manager_overview' %}"
+                        class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg shadow hover:scale-105 transition-all duration-200 font-medium">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        Team Attendance
+                    </a>
+                    {% endif %}
+
+                    <a href="{% url 'attendance:search' %}"
+                        class="inline-flex items-center px-5 py-2.5 backdrop-blur-md bg-white/40 text-gray-900 rounded-lg border border-white/30 hover:bg-white/60 shadow-sm transition-all font-medium">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0z" />
+                        </svg>
+                        Search
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -89,8 +109,10 @@
                         <h2 class="text-2xl font-extrabold text-gray-900">Today's Session</h2>
                         <p class="text-gray-500 text-sm">{{ today|date:"l, F d, Y" }}</p>
                     </div>
-                    <div class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl px-5 py-3 border border-blue-100 text-center">
-                        <div class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent" x-text="currentTime"></div>
+                    <div
+                        class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl px-5 py-3 border border-blue-100 text-center">
+                        <div class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
+                            x-text="currentTime"></div>
                         <div class="text-xs text-gray-600 mt-1">Live Time</div>
                     </div>
                 </div>
@@ -119,20 +141,23 @@
                 </div>
 
                 <!-- Status + Correction Button -->
-                <div class="flex flex-col sm:flex-row justify-between items-center mt-6 bg-blue-50 rounded-xl p-4 border border-blue-100">
+                <div
+                    class="flex flex-col sm:flex-row justify-between items-center mt-6 bg-blue-50 rounded-xl p-4 border border-blue-100">
                     <div>
                         <p class="text-sm text-gray-600 font-medium">Current Status</p>
-                        <p class="text-lg font-bold text-gray-900">{{ attendance_today.status|default:"Not Marked" }}</p>
+                        <p class="text-lg font-bold text-gray-900">{{ attendance_today.status|default:"Not Marked" }}
+                        </p>
                     </div>
                     <a href="{% url 'attendance:request_regularization_specific' attendance_today.id %}"
-                       class="mt-3 sm:mt-0 inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:scale-105 transition shadow">
+                        class="mt-3 sm:mt-0 inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:scale-105 transition shadow">
                         Request Correction
                     </a>
                 </div>
                 {% else %}
                 <div class="text-center py-10 text-gray-600">
-                    <svg class="w-16 h-16 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0z"/>
+                    <svg class="w-16 h-16 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" stroke-width="2"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0z" />
                     </svg>
                     <p>No attendance record yet today.</p>
                 </div>
@@ -143,22 +168,29 @@
             <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-bold text-gray-900">Last 7 Days</h3>
-                    <a href="{% url 'attendance:calendar' %}" class="text-sm text-blue-600 hover:underline">View All →</a>
+                    <a href="{% url 'attendance:calendar' %}" class="text-sm text-blue-600 hover:underline">View All
+                        →</a>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {% for record in recent_attendance %}
-                    <div class="bg-gradient-to-br from-gray-50 to-white border border-gray-100 rounded-xl p-4 hover:shadow-md transition">
+                    <div
+                        class="bg-gradient-to-br from-gray-50 to-white border border-gray-100 rounded-xl p-4 hover:shadow-md transition">
                         <div class="flex justify-between items-center mb-2">
                             <p class="font-semibold text-gray-700">{{ record.date|date:"l" }}</p>
-                            <span class="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">{{ record.date|date:"M d" }}</span>
+                            <span class="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">
+                                {{ record.date|date:"M d" }}</span>
                         </div>
                         <p class="text-lg font-bold text-gray-900">{{ record.status }}</p>
                         <div class="text-sm text-gray-600 mt-2 space-y-1">
-                            <div class="flex justify-between"><span>In:</span><span>{{ record.clock_in_time|time:"g:i A"|default:"—" }}</span></div>
-                            <div class="flex justify-between"><span>Out:</span><span>{{ record.clock_out_time|time:"g:i A"|default:"—" }}</span></div>
+                            <div class="flex justify-between"><span>In:</span><span>
+                                {{ record.clock_in_time|time:"g:i A"|default:"—" }}</span></div>
+                            <div class="flex justify-between"><span>Out:</span><span>
+                                {{ record.clock_out_time|time:"g:i A"|default:"—" }}</span></div>
                             {% if record.total_hours %}
-                            <div class="flex justify-between border-t border-gray-200 pt-1"><span>Total:</span><span class="text-blue-600 font-semibold">{{ record.total_hours|floatformat:1 }}h</span></div>
+                            <div class="flex justify-between border-t border-gray-200 pt-1"><span>Total:</span><span
+                                    class="text-blue-600 font-semibold">{{ record.total_hours|floatformat:1 }}h</span>
+                            </div>
                             {% endif %}
                         </div>
                     </div>
@@ -175,7 +207,8 @@
             <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
                 <h3 class="text-lg font-bold text-gray-900 mb-4">This Month</h3>
                 <div class="text-center mb-6">
-                    <div class="text-4xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    <div
+                        class="text-4xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                         {{ monthly_stats.attendance_rate|floatformat:0 }}%
                     </div>
                     <p class="text-xs text-gray-500 mt-1">Attendance Rate</p>
@@ -204,13 +237,16 @@
             <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
                 <h3 class="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
                 <div class="space-y-3">
-                    <a href="{% url 'attendance:request_regularization' %}" class="block px-4 py-3 bg-blue-50 border border-blue-100 rounded-lg hover:shadow transition text-blue-700 font-medium">
+                    <a href="{% url 'attendance:request_regularization' %}"
+                        class="block px-4 py-3 bg-blue-50 border border-blue-100 rounded-lg hover:shadow transition text-blue-700 font-medium">
                         Request Correction
                     </a>
-                    <a href="{% url 'attendance:export_csv' %}" class="block px-4 py-3 bg-green-50 border border-green-100 rounded-lg hover:shadow transition text-green-700 font-medium">
+                    <a href="{% url 'attendance:export_csv' %}"
+                        class="block px-4 py-3 bg-green-50 border border-green-100 rounded-lg hover:shadow transition text-green-700 font-medium">
                         Download Report
                     </a>
-                    <a href="{% url 'attendance:search' %}" class="block px-4 py-3 bg-purple-50 border border-purple-100 rounded-lg hover:shadow transition text-purple-700 font-medium">
+                    <a href="{% url 'attendance:search' %}"
+                        class="block px-4 py-3 bg-purple-50 border border-purple-100 rounded-lg hover:shadow transition text-purple-700 font-medium">
                         Search Records
                     </a>
                 </div>
