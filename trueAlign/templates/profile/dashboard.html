@@ -4,274 +4,321 @@
 {% block content %}
 <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Header -->
+        <!-- Header & Search -->
         <div class="mb-8">
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900">HR Dashboard</h1>
                     <p class="text-gray-600 mt-1">Overview of employee data and statistics</p>
                 </div>
+
+                <!-- Search Bar -->
+                <div class="flex-1 max-w-lg">
+                    <form action="{% url 'profile:dashboard' %}" method="GET" class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                        <input type="text" name="search" value="{{ search_query }}"
+                            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            placeholder="Search employees by name, email, or ID...">
+                    </form>
+                </div>
+
                 <div class="flex space-x-3">
-                    <a href="{% url 'profile:user-create' %}" 
-                       class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <a href="{% url 'profile:user-create' %}"
+                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
                         Add User
-                    </a>
-                    <a href="{% url 'profile:user-list' %}" 
-                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                        </svg>
-                        View All Users
                     </a>
                 </div>
             </div>
         </div>
 
-        <!-- Stats Cards -->
+        <!-- Stats Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <!-- Total Users -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+            <div
+                class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-300">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="bg-blue-50 p-3 rounded-lg">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Total Users</p>
-                        <p class="text-2xl font-semibold text-gray-900">{{ total_users }}</p>
-                    </div>
+                    <span class="text-sm font-medium text-gray-500 bg-gray-50 px-2 py-1 rounded-full">Total</span>
                 </div>
+                <h3 class="text-3xl font-bold text-gray-900">{{ total_users }}</h3>
+                <p class="text-sm text-gray-500 mt-1">Total Employees</p>
             </div>
 
             <!-- Active Users -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            <div
+                class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-300">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="bg-green-50 p-3 rounded-lg">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Active Users</p>
-                        <p class="text-2xl font-semibold text-gray-900">{{ active_users }}</p>
-                    </div>
+                    <span class="text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">Active</span>
                 </div>
+                <h3 class="text-3xl font-bold text-gray-900">{{ active_users }}</h3>
+                <p class="text-sm text-gray-500 mt-1">Active Employees</p>
             </div>
 
             <!-- Inactive Users -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            <div
+                class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-300">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="bg-red-50 p-3 rounded-lg">
+                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Inactive Users</p>
-                        <p class="text-2xl font-semibold text-gray-900">{{ inactive_users }}</p>
-                    </div>
+                    <span class="text-sm font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full">Inactive</span>
                 </div>
+                <h3 class="text-3xl font-bold text-gray-900">{{ inactive_users }}</h3>
+                <p class="text-sm text-gray-500 mt-1">Former Employees</p>
             </div>
 
             <!-- New Hires -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+            <div
+                class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-300">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="bg-purple-50 p-3 rounded-lg">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                         </svg>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">New Hires (30 days)</p>
-                        <p class="text-2xl font-semibold text-gray-900">{{ new_hires_count }}</p>
-                    </div>
+                    <span class="text-sm font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded-full">This
+                        Month</span>
                 </div>
+                <h3 class="text-3xl font-bold text-gray-900">{{ new_hires_count }}</h3>
+                <p class="text-sm text-gray-500 mt-1">New Joiners</p>
             </div>
         </div>
 
         <!-- Content Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Location Statistics -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-medium text-gray-900">Users by Location</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column (2/3 width) -->
+            <div class="lg:col-span-2 space-y-8">
+                <!-- Recent Logins -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="text-lg font-medium text-gray-900">Recent Logins</h3>
+                        <a href="{% url 'profile:audit-logs' %}" class="text-sm text-blue-600 hover:text-blue-800">View
+                            Logs</a>
+                    </div>
+                    <div class="p-6">
+                        {% if recent_logins %}
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead>
+                                    <tr>
+                                        <th
+                                            class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            User</th>
+                                        <th
+                                            class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Email</th>
+                                        <th
+                                            class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    {% for user in recent_logins %}
+                                    <tr>
+                                        <td class="px-4 py-3 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div
+                                                    class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600 mr-3">
+                                                    {{ user.first_name.0|default:user.username.0|upper }}
+                                                </div>
+                                                <div class="text-sm font-medium text-gray-900">{{
+                                                    user.get_full_name|default:user.username }}</div>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ user.email }}
+                                        </td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-500">{{
+                                            user.last_login|timesince }} ago</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <p class="text-gray-500 text-center py-4">No recent login data available</p>
+                        {% endif %}
+                    </div>
                 </div>
-                <div class="p-6">
-                    {% if location_stats %}
+
+                <!-- New Users List -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-900">Recently Joined</h3>
+                    </div>
+                    <div class="p-6">
+                        {% if new_users %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {% for user_data in new_users %}
+                            <div class="flex items-center p-3 border border-gray-100 rounded-lg hover:bg-gray-50">
+                                <div
+                                    class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium mr-3">
+                                    {% if user_data.user %}
+                                    {{ user_data.user.first_name.0|default:user_data.user.username.0|upper }}
+                                    {% else %}
+                                    {{ user_data.first_name.0|default:"U" }}
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">
+                                        {% if user_data.user %}
+                                        <a href="{% url 'profile:user-detail' user_data.user.id %}"
+                                            class="hover:text-blue-600">
+                                            {{ user_data.user.get_full_name|default:user_data.user.username }}
+                                        </a>
+                                        {% else %}
+                                        {{ user_data.get_full_name|default:"Unknown User" }}
+                                        {% endif %}
+                                    </p>
+                                    <p class="text-xs text-gray-500">
+                                        Joined {% if user_data.created_at %}{{ user_data.created_at|date:"M d, Y" }}{%
+                                        else %}{{ user_data.user.date_joined|date:"M d, Y" }}{% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-gray-500 text-center py-4">No new users in the last 30 days</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column (1/3 width) -->
+            <div class="space-y-8">
+                <!-- Quick Actions -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-900">Quick Actions</h3>
+                    </div>
+                    <div class="p-4 space-y-3">
+                        <a href="{% url 'profile:user-create' %}"
+                            class="flex items-center p-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-md transition-colors group">
+                            <div class="p-2 bg-gray-100 rounded-md group-hover:bg-blue-100 mr-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                                </svg>
+                            </div>
+                            <span class="font-medium">Add New User</span>
+                        </a>
+
+                        <a href="{% url 'profile:bulk-upload' %}"
+                            class="flex items-center p-3 text-gray-700 hover:bg-green-50 hover:text-green-700 rounded-md transition-colors group">
+                            <div class="p-2 bg-gray-100 rounded-md group-hover:bg-green-100 mr-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                </svg>
+                            </div>
+                            <span class="font-medium">Bulk Upload</span>
+                        </a>
+
+                        <a href="{% url 'profile:export-csv' %}"
+                            class="flex items-center p-3 text-gray-700 hover:bg-purple-50 hover:text-purple-700 rounded-md transition-colors group">
+                            <div class="p-2 bg-gray-100 rounded-md group-hover:bg-purple-100 mr-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            <span class="font-medium">Export Data</span>
+                        </a>
+
+                        <a href="{% url 'profile:audit-logs' %}"
+                            class="flex items-center p-3 text-gray-700 hover:bg-orange-50 hover:text-orange-700 rounded-md transition-colors group">
+                            <div class="p-2 bg-gray-100 rounded-md group-hover:bg-orange-100 mr-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            <span class="font-medium">Audit Logs</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Location Stats -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-900">By Location</h3>
+                    </div>
+                    <div class="p-6">
+                        {% if location_stats %}
                         <div class="space-y-4">
                             {% for stat in location_stats %}
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center">
-                                    <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                    </svg>
-                                    <span class="text-sm font-medium text-gray-900">{{ stat.office_location__name|default:"Unknown" }}</span>
+                                    <span class="w-2 h-2 bg-gray-400 rounded-full mr-2"></span>
+                                    <span class="text-sm text-gray-700">{{ stat.office_location__name|default:"Unknown"
+                                        }}</span>
                                 </div>
-                                <span class="text-sm text-gray-600">{{ stat.count }} users</span>
+                                <span class="text-sm font-medium text-gray-900">{{ stat.count }}</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                                <div class="bg-blue-600 h-1.5 rounded-full"
+                                    style="width: {% widthratio stat.count total_users 100 %}%"></div>
                             </div>
                             {% endfor %}
                         </div>
-                    {% else %}
-                        <p class="text-gray-500 text-center py-4">No location data available</p>
-                    {% endif %}
+                        {% else %}
+                        <p class="text-gray-500 text-center text-sm">No location data</p>
+                        {% endif %}
+                    </div>
                 </div>
-            </div>
 
-            <!-- Employment Status -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-medium text-gray-900">Employment Status</h3>
-                </div>
-                <div class="p-6">
-                    {% if status_stats %}
+                <!-- Status Stats -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-900">By Status</h3>
+                    </div>
+                    <div class="p-6">
+                        {% if status_stats %}
                         <div class="space-y-4">
                             {% for stat in status_stats %}
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center">
-                                    <div class="w-3 h-3 rounded-full mr-3 
-                                        {% if stat.employment_status == 'active' %}bg-green-500
-                                        {% elif stat.employment_status == 'inactive' %}bg-red-500
-                                        {% elif stat.employment_status == 'probation' %}bg-yellow-500
-                                        {% else %}bg-gray-500{% endif %}">
-                                    </div>
-                                    <span class="text-sm font-medium text-gray-900 capitalize">{{ stat.employment_status|default:"Unknown" }}</span>
+                                    <span class="w-2 h-2 rounded-full mr-2 
+                                            {% if stat.employment_status == 'active' %}bg-green-500
+                                            {% elif stat.employment_status == 'inactive' %}bg-red-500
+                                            {% elif stat.employment_status == 'probation' %}bg-yellow-500
+                                            {% else %}bg-gray-500{% endif %}">
+                                    </span>
+                                    <span class="text-sm text-gray-700 capitalize">{{
+                                        stat.employment_status|default:"Unknown" }}</span>
                                 </div>
-                                <span class="text-sm text-gray-600">{{ stat.count }} users</span>
+                                <span class="text-sm font-medium text-gray-900">{{ stat.count }}</span>
                             </div>
                             {% endfor %}
                         </div>
-                    {% else %}
-                        <p class="text-gray-500 text-center py-4">No status data available</p>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Recent Logins -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-medium text-gray-900">Recent Logins</h3>
-                </div>
-                <div class="p-6">
-                    {% if recent_logins %}
-                        <div class="space-y-3">
-                            {% for user in recent_logins %}
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center">
-                                    <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mr-3">
-                                        <span class="text-xs font-medium text-gray-600">{{ user.first_name.0|default:user.username.0 }}</span>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-900">{{ user.get_full_name|default:user.username }}</p>
-                                        <p class="text-xs text-gray-500">{{ user.email }}</p>
-                                    </div>
-                                </div>
-                                <span class="text-xs text-gray-500">{{ user.last_login|timesince }} ago</span>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <p class="text-gray-500 text-center py-4">No recent login data available</p>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- New Users -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-medium text-gray-900">New Users (Last 30 Days)</h3>
-                </div>
-                <div class="p-6">
-                    {% if new_users %}
-                        <div class="space-y-3">
-                            {% for user_data in new_users %}
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center">
-                                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                                        <span class="text-xs font-medium text-blue-600">
-                                            {% if user_data.user %}
-                                                {{ user_data.user.first_name.0|default:user_data.user.username.0 }}
-                                            {% else %}
-                                                {{ user_data.first_name.0|default:"U" }}
-                                            {% endif %}
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-900">
-                                            {% if user_data.user %}
-                                                {{ user_data.user.get_full_name|default:user_data.user.username }}
-                                            {% else %}
-                                                {{ user_data.get_full_name|default:"Unknown User" }}
-                                            {% endif %}
-                                        </p>
-                                        <p class="text-xs text-gray-500">
-                                            {% if user_data.user %}
-                                                {{ user_data.user.email }}
-                                            {% else %}
-                                                {{ user_data.email|default:"No email" }}
-                                            {% endif %}
-                                        </p>
-                                    </div>
-                                </div>
-                                <span class="text-xs text-gray-500">
-                                    {% if user_data.created_at %}
-                                        {{ user_data.created_at|timesince }} ago
-                                    {% else %}
-                                        {{ user_data.user.date_joined|timesince }} ago
-                                    {% endif %}
-                                </span>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <p class="text-gray-500 text-center py-4">No new users in the last 30 days</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="mt-8 bg-white rounded-lg shadow-sm border border-gray-200">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">Quick Actions</h3>
-            </div>
-            <div class="p-6">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <a href="{% url 'profile:user-create' %}" 
-                       class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                        <svg class="w-6 h-6 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-                        </svg>
-                        <span class="text-sm font-medium text-gray-900">Add New User</span>
-                    </a>
-                    
-                    <a href="{% url 'profile:bulk-upload' %}" 
-                       class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                        <svg class="w-6 h-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                        </svg>
-                        <span class="text-sm font-medium text-gray-900">Bulk Upload</span>
-                    </a>
-                    
-                    <a href="{% url 'profile:export-csv' %}" 
-                       class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                        <svg class="w-6 h-6 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        <span class="text-sm font-medium text-gray-900">Export Data</span>
-                    </a>
-                    
-                    <a href="{% url 'profile:audit-logs' %}" 
-                       class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                        <svg class="w-6 h-6 text-orange-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        <span class="text-sm font-medium text-gray-900">Audit Logs</span>
-                    </a>
+                        {% else %}
+                        <p class="text-gray-500 text-center text-sm">No status data</p>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>

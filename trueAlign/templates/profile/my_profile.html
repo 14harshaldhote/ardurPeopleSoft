@@ -2,269 +2,306 @@
 {% block title %}My Profile - TrueAlign Portal{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-gray-50 py-8" x-data="{ activeTab: 'overview' }">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
-        <div class="mb-8">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-900">My Profile</h1>
-                    <p class="text-gray-600 mt-1">View and manage your personal information</p>
-                </div>
-                <div class="flex space-x-3">
-             
-                    <a href="{% url 'core:dashboard' %}" 
-                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                        </svg>
-                        Back to Dashboard
-                    </a>
-                </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 overflow-hidden">
+            <div class="relative h-32 bg-gradient-to-r from-blue-600 to-indigo-700">
+                <div class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black/20 to-transparent"></div>
             </div>
-        </div>
-
-        <!-- Profile Card -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-            <div class="px-6 py-6">
-                <div class="flex items-center space-x-6">
-                    <!-- Profile Avatar -->
-                    <div class="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center text-white text-3xl font-bold">
-                        {{ user.first_name|first|default:user.username|first|upper }}
+            <div class="px-8 pb-8">
+                <div class="relative flex items-end -mt-12 mb-6">
+                    <div class="w-24 h-24 bg-white rounded-xl p-1 shadow-lg">
+                        <div
+                            class="w-full h-full bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 text-3xl font-bold">
+                            {{ user.first_name|first|default:user.username|first|upper }}
+                        </div>
                     </div>
-                    
-                    <!-- Basic Info -->
-                    <div class="flex-1">
-                        <h2 class="text-2xl font-bold text-gray-900">
-                            {{ user.get_full_name|default:user.username }}
-                        </h2>
-                        <p class="text-gray-600">{{ user_profile.get_role_display|default:"Employee" }}</p>
-                        <p class="text-sm text-gray-500">{{ user.username }}</p>
-                        
-                        <!-- Status Badge -->
-                        <div class="mt-2">
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
-                                {% if user_profile.employment_status == 'active' %}bg-green-100 text-green-800
-                                {% elif user_profile.employment_status == 'inactive' %}bg-red-100 text-red-800
-                                {% elif user_profile.employment_status == 'probation' %}bg-yellow-100 text-yellow-800
-                                {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                {{ user_profile.get_employment_status_display|default:"Unknown" }}
-                            </span>
+                    <div class="ml-6 mb-1 flex-1">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-900">{{ user.get_full_name|default:user.username
+                                    }}</h1>
+                                <div class="flex items-center space-x-4 mt-1 text-sm text-gray-600">
+                                    <span class="flex items-center">
+                                        <svg class="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                        {{ user_profile.get_role_display|default:"Employee" }}
+                                    </span>
+                                    <span class="flex items-center">
+                                        <svg class="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                        {{ user.email }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="flex space-x-3">
+                                <a href="{% url 'profile:edit-my-profile' %}"
+                                    class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                    </svg>
+                                    Edit Profile
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Tabs -->
+                <div class="border-b border-gray-200">
+                    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                        <button @click="activeTab = 'overview'"
+                            :class="{'border-blue-500 text-blue-600': activeTab === 'overview', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'overview'}"
+                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                            Overview
+                        </button>
+                        <button @click="activeTab = 'personal'"
+                            :class="{'border-blue-500 text-blue-600': activeTab === 'personal', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'personal'}"
+                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                            Personal Info
+                        </button>
+                        <button @click="activeTab = 'employment'"
+                            :class="{'border-blue-500 text-blue-600': activeTab === 'employment', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'employment'}"
+                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                            Employment
+                        </button>
+                        <button @click="activeTab = 'address'"
+                            :class="{'border-blue-500 text-blue-600': activeTab === 'address', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'address'}"
+                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                            Address
+                        </button>
+                    </nav>
+                </div>
             </div>
         </div>
 
-        <!-- Profile Details -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Personal Information -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-medium text-gray-900">Personal Information</h3>
+        <!-- Tab Contents -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Main Content -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- Overview Tab -->
+                <div x-show="activeTab === 'overview'" class="space-y-6">
+                    <!-- Quick Stats -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <div class="text-sm font-medium text-gray-500">Tenure</div>
+                            <div class="mt-2 text-2xl font-bold text-gray-900">
+                                {% if user_profile.hire_date %}
+                                {{ user_profile.hire_date|timesince }}
+                                {% else %}
+                                New Joiner
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <div class="text-sm font-medium text-gray-500">Status</div>
+                            <div class="mt-2">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    {% if user_profile.employment_status == 'active' %}bg-green-100 text-green-800
+                                    {% elif user_profile.employment_status == 'probation' %}bg-yellow-100 text-yellow-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ user_profile.get_employment_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <div class="text-sm font-medium text-gray-500">Office</div>
+                            <div class="mt-2 text-2xl font-bold text-gray-900">{{
+                                user_profile.office_location.name|default:"Remote" }}</div>
+                        </div>
+                    </div>
+
+                    <!-- About -->
+                    {% if user_profile.job_description %}
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">About Role</h3>
+                        <p class="text-gray-600 whitespace-pre-wrap">{{ user_profile.job_description }}</p>
+                    </div>
+                    {% endif %}
                 </div>
-                <div class="px-6 py-4 space-y-4">
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Full Name</label>
-                        <p class="text-gray-900">{{ user.get_full_name|default:"Not provided" }}</p>
+
+                <!-- Personal Info Tab -->
+                <div x-show="activeTab === 'personal'"
+                    class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                        <h3 class="text-lg font-medium text-gray-900">Personal Details</h3>
                     </div>
-                    
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Email</label>
-                        <p class="text-gray-900">{{ user.email|default:"Not provided" }}</p>
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Full Name</label>
+                            <div class="mt-1 text-sm text-gray-900">{{ user.get_full_name }}</div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Date of Birth</label>
+                            <div class="mt-1 text-sm text-gray-900">{{ user_profile.dob|date:"F d, Y"|default:"-" }}
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Notice Period</label>
+                            <div class="mt-1 text-sm text-gray-900">{{ user_profile.notice_period_days|default:"0" }}
+                                days</div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Gender</label>
+                            <div class="mt-1 text-sm text-gray-900">{{ user_profile.get_gender_display|default:"-" }}
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Marital Status</label>
+                            <div class="mt-1 text-sm text-gray-900">{{
+                                user_profile.get_marital_status_display|default:"-" }}</div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Blood Group</label>
+                            <div class="mt-1 text-sm text-gray-900">{{ user_profile.blood_group|default:"-" }}</div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Personal Email</label>
+                            <div class="mt-1 text-sm text-gray-900">{{ user_profile.personal_email|default:"-" }}</div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Phone Number</label>
+                            <div class="mt-1 text-sm text-gray-900">{{ user_profile.contact_number_primary|default:"-"
+                                }}</div>
+                        </div>
                     </div>
-                    
-                    {% if user_profile.personal_email %}
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Personal Email</label>
-                        <p class="text-gray-900">{{ user_profile.personal_email }}</p>
-                    </div>
-                    {% endif %}
-                    
-                    {% if user_profile.contact_number_primary %}
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Phone Number</label>
-                        <p class="text-gray-900">{{ user_profile.contact_number_primary }}</p>
-                    </div>
-                    {% endif %}
-                    
-                    {% if user_profile.dob %}
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Date of Birth</label>
-                        <p class="text-gray-900">{{ user_profile.dob|date:"F d, Y" }}</p>
-                    </div>
-                    {% endif %}
-                    
-                    {% if user_profile.gender %}
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Gender</label>
-                        <p class="text-gray-900">{{ user_profile.gender }}</p>
-                    </div>
-                    {% endif %}
                 </div>
+
+                <!-- Employment Tab -->
+                <div x-show="activeTab === 'employment'"
+                    class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                        <h3 class="text-lg font-medium text-gray-900">Employment Details</h3>
+                    </div>
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Employee ID</label>
+                            <div class="mt-1 text-sm text-gray-900">{{ user_profile.employee_id|default:"-" }}</div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Department</label>
+                            <div class="mt-1 text-sm text-gray-900">
+                                {% for group in user.groups.all %}
+                                {{ group.name }}{% if not forloop.last %}, {% endif %}
+                                {% empty %}
+                                -
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Role</label>
+                            <div class="mt-1 text-sm text-gray-900">{{ user_profile.get_role_display }}</div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Reporting Manager</label>
+                            <div class="mt-1 text-sm text-gray-900">{{
+                                user_profile.reporting_manager.get_full_name|default:"-" }}</div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Date of Joining</label>
+                            <div class="mt-1 text-sm text-gray-900">{{ user_profile.hire_date|date:"F d, Y"|default:"-"
+                                }}</div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Work Location</label>
+                            <div class="mt-1 text-sm text-gray-900">{{
+                                user_profile.office_location.name|default:"Remote" }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Address Tab -->
+                <div x-show="activeTab === 'address'" class="space-y-6">
+                    <!-- Current Address -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                            <h3 class="text-lg font-medium text-gray-900">Current Address</h3>
+                        </div>
+                        <div class="p-6">
+                            <p class="text-gray-900">
+                                {{ user_profile.current_address_line1|default:"" }}<br>
+                                {% if user_profile.current_address_line2 %}{{ user_profile.current_address_line2
+                                }}<br>{% endif %}
+                                {{ user_profile.current_city|default:"" }}, {{ user_profile.current_state|default:"" }}
+                                {{ user_profile.current_postal_code|default:"" }}<br>
+                                {{ user_profile.current_country|default:"" }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Permanent Address -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                            <h3 class="text-lg font-medium text-gray-900">Permanent Address</h3>
+                        </div>
+                        <div class="p-6">
+                            <p class="text-gray-900">
+                                {{ user_profile.permanent_address_line1|default:"" }}<br>
+                                {% if user_profile.permanent_address_line2 %}{{ user_profile.permanent_address_line2
+                                }}<br>{% endif %}
+                                {{ user_profile.permanent_city|default:"" }}, {{ user_profile.permanent_state|default:""
+                                }} {{ user_profile.permanent_postal_code|default:"" }}<br>
+                                {{ user_profile.permanent_country|default:"" }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
-            <!-- Employment Information -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-medium text-gray-900">Employment Information</h3>
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <!-- Emergency Contact -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                        <h3 class="text-lg font-medium text-gray-900">Emergency Contact</h3>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <div>
+                            <div class="text-sm font-medium text-gray-500">Name</div>
+                            <div class="text-sm text-gray-900">{{ user_profile.emergency_contact_name|default:"-" }}
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium text-gray-500">Relationship</div>
+                            <div class="text-sm text-gray-900">{{
+                                user_profile.emergency_contact_relationship|default:"-" }}</div>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium text-gray-500">Phone</div>
+                            <div class="text-sm text-gray-900">{{ user_profile.emergency_contact_number|default:"-" }}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="px-6 py-4 space-y-4">
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Employee ID</label>
-                        <p class="text-gray-900">{{ user.username }}</p>
-                    </div>
-                    
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Role</label>
-                        <p class="text-gray-900">{{ user_profile.get_role_display|default:"Not assigned" }}</p>
-                    </div>
-                    
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Employee Type</label>
-                        <p class="text-gray-900">{{ user_profile.get_employee_type_display|default:"Not specified" }}</p>
-                    </div>
-                    
-                    {% if user_profile.office_location %}
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Office Location</label>
-                        <p class="text-gray-900">{{ user_profile.office_location.name }}</p>
-                    </div>
-                    {% endif %}
-                    
-                    {% if user_profile.hire_date %}
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Hire Date</label>
-                        <p class="text-gray-900">{{ user_profile.hire_date|date:"F d, Y" }}</p>
-                    </div>
-                    {% endif %}
-                    
-                    {% if user_profile.start_date %}
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Start Date</label>
-                        <p class="text-gray-900">{{ user_profile.start_date|date:"F d, Y" }}</p>
-                    </div>
-                    {% endif %}
-                    
-                    {% if user_profile.reporting_manager %}
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Reporting Manager</label>
-                        <p class="text-gray-900">{{ user_profile.reporting_manager.get_full_name|default:user_profile.reporting_manager.username }}</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
 
-            <!-- Address Information -->
-            {% if user_profile.current_address_line1 or user_profile.current_city %}
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-medium text-gray-900">Address Information</h3>
-                </div>
-                <div class="px-6 py-4 space-y-4">
-                    {% if user_profile.current_address_line1 %}
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Current Address</label>
-                        <p class="text-gray-900">
-                            {{ user_profile.current_address_line1 }}
-                            {% if user_profile.current_address_line2 %}<br>{{ user_profile.current_address_line2 }}{% endif %}
-                            {% if user_profile.current_city %}<br>{{ user_profile.current_city }}{% endif %}
-                            {% if user_profile.current_state %}, {{ user_profile.current_state }}{% endif %}
-                            {% if user_profile.current_postal_code %} {{ user_profile.current_postal_code }}{% endif %}
-                        </p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-            {% endif %}
-
-            <!-- Emergency Contact -->
-            {% if user_profile.emergency_contact_name %}
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-medium text-gray-900">Emergency Contact</h3>
-                </div>
-                <div class="px-6 py-4 space-y-4">
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Name</label>
-                        <p class="text-gray-900">{{ user_profile.emergency_contact_name }}</p>
-                    </div>
-                    
-                    {% if user_profile.emergency_contact_number %}
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Phone Number</label>
-                        <p class="text-gray-900">{{ user_profile.emergency_contact_number }}</p>
-                    </div>
-                    {% endif %}
-                    
-                    {% if user_profile.emergency_contact_relationship %}
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Relationship</label>
-                        <p class="text-gray-900">{{ user_profile.emergency_contact_relationship }}</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-            {% endif %}
-        </div>
-
-        <!-- Additional Information -->
-        {% if user_profile.job_description or user_profile.skills %}
-        <div class="mt-6 bg-white rounded-lg shadow-sm border border-gray-200">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">Additional Information</h3>
-            </div>
-            <div class="px-6 py-4 space-y-4">
-                {% if user_profile.job_description %}
-                <div>
-                    <label class="text-sm font-medium text-gray-500">Job Description</label>
-                    <p class="text-gray-900 whitespace-pre-wrap">{{ user_profile.job_description }}</p>
-                </div>
-                {% endif %}
-                
+                <!-- Skills -->
                 {% if user_profile.skills %}
-                <div>
-                    <label class="text-sm font-medium text-gray-500">Skills</label>
-                    <p class="text-gray-900 whitespace-pre-wrap">{{ user_profile.skills }}</p>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                        <h3 class="text-lg font-medium text-gray-900">Skills</h3>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex flex-wrap gap-2">
+                            {% for skill in user_profile.skills.splitlines %}
+                            <span
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {{ skill }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
                 {% endif %}
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Account Information -->
-        <div class="mt-6 bg-white rounded-lg shadow-sm border border-gray-200">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">Account Information</h3>
-            </div>
-            <div class="px-6 py-4 space-y-4">
-                <div>
-                    <label class="text-sm font-medium text-gray-500">Username</label>
-                    <p class="text-gray-900">{{ user.username }}</p>
-                </div>
-                
-                <div>
-                    <label class="text-sm font-medium text-gray-500">Account Created</label>
-                    <p class="text-gray-900">{{ user.date_joined|date:"F d, Y" }}</p>
-                </div>
-                
-                {% if user.last_login %}
-                <div>
-                    <label class="text-sm font-medium text-gray-500">Last Login</label>
-                    <p class="text-gray-900">{{ user.last_login|date:"F d, Y g:i A" }}</p>
-                </div>
-                {% endif %}
-                
-                <div>
-                    <label class="text-sm font-medium text-gray-500">Account Status</label>
-                    <p class="text-gray-900">
-                        {% if user.is_active %}
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
-                        {% else %}
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Inactive</span>
-                        {% endif %}
-                    </p>
-                </div>
             </div>
         </div>
     </div>

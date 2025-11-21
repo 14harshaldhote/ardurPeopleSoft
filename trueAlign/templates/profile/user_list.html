@@ -12,24 +12,27 @@
                     <p class="text-gray-600 mt-1">Manage employee profiles and access permissions</p>
                 </div>
                 <div class="flex space-x-3">
-                    <a href="{% url 'profile:user-create' %}" 
-                       class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <a href="{% url 'profile:user-create' %}"
+                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
                         Add User
                     </a>
-                    <a href="{% url 'profile:bulk-upload' %}" 
-                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <a href="{% url 'profile:bulk-upload' %}"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
                         Bulk Upload
                     </a>
-                    <a href="{% url 'profile:export-csv' %}" 
-                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <a href="{% url 'profile:export-csv' %}?{{ request.GET.urlencode }}"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                         Export CSV
                     </a>
@@ -39,26 +42,31 @@
 
         <!-- Filters -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-            <div class="px-6 py-4 border-b border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                 <h2 class="text-lg font-medium text-gray-900">Filters</h2>
+                {% if current_status or current_location or current_employee_type or search_query %}
+                <a href="{% url 'profile:user-list' %}"
+                    class="text-sm text-blue-600 hover:text-blue-800 font-medium">Clear All</a>
+                {% endif %}
             </div>
             <div class="p-6">
                 <form method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <!-- Search -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Search Users</label>
-                        <input type="text" name="search" value="{{ search_query }}"
-                               placeholder="Name, email, username..."
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <input type="text" name="search" value="{{ search_query }}" placeholder="Name, email, ID..."
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
 
                     <!-- Status Filter -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Employment Status</label>
-                        <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <select name="status"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <option value="">All Statuses</option>
                             {% for value, label in status_choices %}
-                                <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>
+                            <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
@@ -66,10 +74,11 @@
                     <!-- Location Filter -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Office Location</label>
-                        <select name="location" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <select name="location"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <option value="">All Locations</option>
                             {% for location in locations %}
-                                <option value="{{ location.id }}" {% if current_location == location.id|stringformat:"s" %}selected{% endif %}>{{ location.name }}</option>
+                            <option value="{{ location.id }}" {% if current_location == location.id|stringformat:"s" %}selected{% endif %}>{{ location.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -77,32 +86,51 @@
                     <!-- Employee Type Filter -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Employee Type</label>
-                        <select name="employee_type" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <select name="employee_type"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <option value="">All Types</option>
-                            {% for value, label in employee_types %}
-                                <option value="{{ value }}" {% if current_employee_type == value %}selected{% endif %}>{{ label }}</option>
+                            {% for value, label in type_choices %}
+                            <option value="{{ value }}" {% if current_employee_type == value %}selected{% endif %}>
+                                {{ label }}</option>
                             {% endfor %}
                         </select>
                     </div>
 
                     <!-- Filter Actions -->
-                    <div class="md:col-span-2 lg:col-span-4 flex space-x-3 pt-4">
-                        <button type="submit" 
-                                class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <div class="md:col-span-2 lg:col-span-4 flex justify-end pt-2">
+                        <button type="submit"
+                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                             Apply Filters
                         </button>
-                        <a href="{% url 'profile:user-list' %}" 
-                           class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                            Clear Filters
-                        </a>
                     </div>
                 </form>
+
+                <!-- Active Filters Pills -->
+                {% if current_status or current_location or current_employee_type or search_query %}
+                <div class="mt-4 flex flex-wrap gap-2">
+                    {% if search_query %}
+                    <span
+                        class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                        Search: {{ search_query }}
+                        <a href="?{% if current_status %}status={{ current_status }}&{% endif %}{% if current_location %}location={{ current_location }}&{% endif %}{% if current_employee_type %}employee_type={{ current_employee_type }}{% endif %}"
+                            class="ml-2 text-blue-600 hover:text-blue-900">×</a>
+                    </span>
+                    {% endif %}
+                    {% if current_status %}
+                    <span
+                        class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                        Status: {{ current_status|title }}
+                        <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if current_location %}location={{ current_location }}&{% endif %}{% if current_employee_type %}employee_type={{ current_employee_type }}{% endif %}"
+                            class="ml-2 text-green-600 hover:text-green-900">×</a>
+                    </span>
+                    {% endif %}
+                    <!-- Add similar pills for other filters if needed -->
+                </div>
+                {% endif %}
             </div>
         </div>
 
@@ -113,7 +141,7 @@
                     <h2 class="text-lg font-medium text-gray-900">
                         Users Directory
                         {% if page_obj %}
-                            <span class="text-sm font-normal text-gray-600">({{ page_obj.paginator.count }} total)</span>
+                        <span class="text-sm font-normal text-gray-600">({{ page_obj.paginator.count }} total)</span>
                         {% endif %}
                     </h2>
                 </div>
@@ -124,12 +152,19 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role & Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                User</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Contact</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Role & Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Location</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Joined</th>
+                            <th
+                                class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -137,14 +172,15 @@
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
-                                    <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
+                                    <div
+                                        class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
                                         {{ user_profile.user.first_name|first|default:user_profile.user.username|first|upper }}
                                     </div>
                                     <div class="ml-4">
                                         <div class="text-sm font-medium text-gray-900">
                                             {{ user_profile.user.get_full_name|default:user_profile.user.username }}
                                         </div>
-                                        <div class="text-sm text-gray-500">{{ user_profile.user.username }}</div>
+                                        <div class="text-sm text-gray-500">{{ user_profile.employee_id|default:user_profile.user.username }}</div>
                                     </div>
                                 </div>
                             </td>
@@ -169,24 +205,27 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {% if user_profile.hire_date %}
-                                    {{ user_profile.hire_date|date:"M d, Y" }}
+                                {{ user_profile.hire_date|date:"M d, Y" }}
                                 {% else %}
-                                    {{ user_profile.user.date_joined|date:"M d, Y" }}
+                                {{ user_profile.user.date_joined|date:"M d, Y" }}
                                 {% endif %}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                 <div class="flex items-center justify-center space-x-2">
-                                    <a href="{% url 'profile:user-detail' user_profile.user.id %}" 
-                                       class="text-blue-600 hover:text-blue-900">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    <a href="{% url 'profile:user-detail' user_profile.user.id %}"
+                                        class="text-blue-600 hover:text-blue-900" title="View Profile">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                         </svg>
                                     </a>
-                                    <a href="{% url 'profile:user-update' user_profile.user.id %}" 
-                                       class="text-green-600 hover:text-green-900">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    <a href="{% url 'profile:user-update' user_profile.user.id %}"
+                                        class="text-green-600 hover:text-green-900" title="Edit Profile">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                         </svg>
                                     </a>
                                 </div>
@@ -202,25 +241,27 @@
             <div class="px-6 py-4 border-t border-gray-200">
                 <div class="flex items-center justify-between">
                     <div class="text-sm text-gray-700">
-                        Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} results
+                        Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+                        results
                     </div>
                     <div class="flex space-x-2">
                         {% if page_obj.has_previous %}
-                            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}{% if request.GET.employee_type %}&employee_type={{ request.GET.employee_type }}{% endif %}" 
-                               class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                                Previous
-                            </a>
+                        <a href="?page={{ page_obj.previous_page_number }}&{{ current_filters.urlencode }}"
+                            class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                            Previous
+                        </a>
                         {% endif %}
-                        
-                        <span class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-gray-50">
+
+                        <span
+                            class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-gray-50">
                             Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
                         </span>
-                        
+
                         {% if page_obj.has_next %}
-                            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}{% if request.GET.employee_type %}&employee_type={{ request.GET.employee_type }}{% endif %}" 
-                               class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                                Next
-                            </a>
+                        <a href="?page={{ page_obj.next_page_number }}&{{ current_filters.urlencode }}"
+                            class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                            Next
+                        </a>
                         {% endif %}
                     </div>
                 </div>
@@ -230,14 +271,16 @@
             {% else %}
             <div class="px-6 py-12 text-center">
                 <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
                 <h3 class="text-lg font-medium text-gray-900 mb-2">No users found</h3>
                 <p class="text-gray-600 mb-4">Try adjusting your search criteria or add a new user.</p>
-                <a href="{% url 'profile:user-create' %}" 
-                   class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <a href="{% url 'profile:user-create' %}"
+                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
                     Add First User
                 </a>

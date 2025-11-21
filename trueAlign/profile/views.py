@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse_lazy
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User, Group
@@ -44,80 +45,62 @@ class HRAdminRequiredMixin(UserPassesTestMixin):
 # Dashboard View
 @login_required
 def hr_dashboard(request):
-    """HR Dashboard with user statistics"""
-    if not is_hr_or_admin(request.user):
-        messages.error(request, "You don't have permission to access the HR dashboard.")
-        return redirect('core:home')
+    """
+    Dashboard view for HR and Admins.
+    Displays key statistics and quick actions.
+    """
+    # Check if user is HR or Admin
+    if not (request.user.is_superuser or request.user.groups.filter(name='HR').exists()):
+        messages.error(request, "You do not have permission to access the HR Dashboard.")
+        return redirect('profile:my-profile')
 
-    from datetime import datetime, timedelta
-    from django.utils import timezone
+    # Base queryset
+    users = UserDetails.objects.select_related('user', 'office_location').all()
 
-    # Get overall stats - count both User and UserDetails
-    total_users = User.objects.filter(is_active=True).count()
-    user_details_count = UserDetails.objects.count()
+    # Search functionality
+    search_query = request.GET.get('search', '')
+    if search_query:
+        users = users.filter(
+            Q(user__first_name__icontains=search_query) |
+            Q(user__last_name__icontains=search_query) |
+            Q(user__email__icontains=search_query) |
+            Q(employee_id__icontains=search_query)
+        )
 
-    # Use the higher count to show all users
-    if user_details_count > total_users:
-        total_users = user_details_count
+    # Calculate statistics
+    total_users = users.count()
+    active_users = users.filter(employment_status='active').count()
+    inactive_users = users.filter(employment_status__in=['inactive', 'terminated', 'resigned']).count()
+    
+    # New hires (joined in last 30 days)
+    thirty_days_ago = timezone.now().date() - timedelta(days=30)
+    new_hires = users.filter(hire_date__gte=thirty_days_ago).count()
 
-    # Get active users based on employment status
-    active_users = UserDetails.objects.filter(employment_status='active').count()
-
-    # If no UserDetails records, check User.is_active
-    if active_users == 0:
-        active_users = User.objects.filter(is_active=True).count()
-
-    # Calculate inactive users
-    inactive_users = total_users - active_users if total_users > active_users else 0
-
-    # Get stats by office location
-    location_stats = UserDetails.objects.values('office_location__name')\
-        .annotate(count=Count('id'))\
-        .order_by('-count')
-
-    # Get stats by employment status
-    status_stats = UserDetails.objects.values('employment_status')\
-        .annotate(count=Count('id'))\
-        .order_by('-count')
-
-    # Get recent logins - from User model
-    recent_logins = User.objects.filter(last_login__isnull=False)\
-        .order_by('-last_login')[:10]
-
-    # Get new users this month
-    thirty_days_ago = timezone.now() - timedelta(days=30)
-    new_users = UserDetails.objects.filter(created_at__gte=thirty_days_ago)\
-        .order_by('-created_at')[:10]
-
-    # If no UserDetails with created_at, check User.date_joined
-    if not new_users.exists():
-        new_users_from_auth = User.objects.filter(date_joined__gte=thirty_days_ago)\
-            .order_by('-date_joined')[:10]
-        # Create a simple structure for new users
-        new_users = []
-        for user in new_users_from_auth:
-            new_users.append({
-                'user': user,
-                'created_at': user.date_joined
+    # Department/Group distribution
+    department_stats = []
+    for group in Group.objects.all():
+        count = User.objects.filter(groups=group, profile__isnull=False).count()
+        if count > 0:
+            department_stats.append({
+                'name': group.name,
+                'count': count
             })
 
-    # Count new hires this month
-    new_hires_count = UserDetails.objects.filter(created_at__gte=thirty_days_ago).count()
-    if new_hires_count == 0:
-        new_hires_count = User.objects.filter(date_joined__gte=thirty_days_ago).count()
+    # Recent activities (last 5)
+    recent_activities = UserActionLog.objects.select_related('user', 'action_by').order_by('-timestamp')[:5]
 
-    # Get user's saved layout preferences
-
+    # Pending tasks (example: users with missing essential info)
+    pending_onboarding = users.filter(employment_status='probation').count()
 
     context = {
         'total_users': total_users,
         'active_users': active_users,
         'inactive_users': inactive_users,
-        'new_hires_count': new_hires_count,
-        'location_stats': location_stats,
-        'status_stats': status_stats,
-        'recent_logins': recent_logins,
-        'new_users': new_users,
+        'new_hires': new_hires,
+        'department_stats': department_stats,
+        'recent_activities': recent_activities,
+        'pending_onboarding': pending_onboarding,
+        'search_query': search_query,
     }
 
     return render(request, 'profile/dashboard.html', context)
@@ -127,51 +110,51 @@ class UserListView(LoginRequiredMixin, ListView):
     model = UserDetails
     template_name = 'profile/user_list.html'
     context_object_name = 'users'
-    paginate_by = 25
+    paginate_by = 10
 
     def get_queryset(self):
-        queryset = UserDetails.objects.select_related('user', 'office_location', 'reporting_manager')
-
-        # Apply filters from GET parameters
-        status = self.request.GET.get('status')
-        location = self.request.GET.get('location')
-        employee_type = self.request.GET.get('employee_type')
+        queryset = UserDetails.objects.select_related('user', 'office_location').all().order_by('-created_at')
+        
+        # Search
         search_query = self.request.GET.get('search')
-
-        if status:
-            queryset = queryset.filter(employment_status=status)
-
-        if location:
-            queryset = queryset.filter(office_location_id=location)
-
-        if employee_type:
-            queryset = queryset.filter(employee_type=employee_type)
-
         if search_query:
             queryset = queryset.filter(
-                Q(user__username__icontains=search_query) |
                 Q(user__first_name__icontains=search_query) |
                 Q(user__last_name__icontains=search_query) |
                 Q(user__email__icontains=search_query) |
-                Q(company_email__icontains=search_query) |
-                Q(personal_email__icontains=search_query) |
-                Q(contact_number_primary__icontains=search_query)
+                Q(employee_id__icontains=search_query)
             )
+        
+        # Filter by Status
+        status = self.request.GET.get('status')
+        if status:
+            queryset = queryset.filter(employment_status=status)
+            
+        # Filter by Location
+        location = self.request.GET.get('location')
+        if location:
+            queryset = queryset.filter(office_location__id=location)
+            
+        # Filter by Employee Type
+        emp_type = self.request.GET.get('type')
+        if emp_type:
+            queryset = queryset.filter(employee_type=emp_type)
 
-        return queryset.order_by('user__username')
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        
+        # Add filter choices to context
         context['status_choices'] = UserDetails.EMPLOYMENT_STATUS_CHOICES
-        context['employee_types'] = UserDetails.EMPLOYEE_TYPE_CHOICES
+        context['type_choices'] = UserDetails.EMPLOYEE_TYPE_CHOICES
         context['locations'] = OfficeLocation.objects.filter(is_active=True)
-
-        # Get current filter values for the template
-        context['current_status'] = self.request.GET.get('status', '')
-        context['current_location'] = self.request.GET.get('location', '')
-        context['current_employee_type'] = self.request.GET.get('employee_type', '')
-        context['search_query'] = self.request.GET.get('search', '')
-
+        
+        # Preserve filter parameters for pagination
+        context['current_filters'] = self.request.GET.copy()
+        if 'page' in context['current_filters']:
+            del context['current_filters']['page']
+            
         return context
 
 # User Detail View
@@ -180,178 +163,145 @@ class UserDetailView(LoginRequiredMixin, DetailView):
     template_name = 'profile/user_detail.html'
     context_object_name = 'user_profile'
 
-    def get_object(self):
-        return get_object_or_404(
-            UserDetails.objects.select_related('user', 'office_location', 'reporting_manager'),
-            user__id=self.kwargs['pk']
-        )
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user_profile = self.get_object()
-
-        # Get user action logs for this user
-        context['action_logs'] = UserActionLog.objects.filter(
-            user=user_profile.user
-        ).order_by('-timestamp')[:20]
-
-        # Check if current user is HR/Admin or the user's manager
-        is_manager = False
-        try:
-            if self.request.user == user_profile.reporting_manager:
-                is_manager = True
-        except:
-            pass
-
-        # Set context variables for template
-        context['is_hr'] = is_hr_or_admin(self.request.user)
-        context['can_edit'] = is_hr_or_admin(self.request.user) or is_manager
-
+        user = self.object.user
+        
+        # Add action logs
+        context['action_logs'] = UserActionLog.objects.filter(user=user).order_by('-timestamp')
+        
+        # Check if user is a manager and get direct reports
+        context['direct_reports'] = UserDetails.objects.filter(reporting_manager=user)
+        
+        # Permissions flags for template
+        is_hr = self.request.user.groups.filter(name='HR').exists() or self.request.user.is_superuser
+        context['is_hr'] = is_hr
+        context['can_edit'] = is_hr or self.request.user == user
+        
         return context
 
 # User Create View - HR/Admin only
-class UserCreateView(LoginRequiredMixin, HRAdminRequiredMixin, CreateView):
+class UserCreateView(LoginRequiredMixin, CreateView):
     model = UserDetails
     form_class = UserDetailsCreateForm
     template_name = 'profile/user_form.html'
+    success_url = reverse_lazy('profile:user-list')
+
+    def dispatch(self, request, *args, **kwargs):
+        # Only HR and Admin can create users
+        if not (request.user.is_superuser or request.user.groups.filter(name='HR').exists()):
+            messages.error(request, "You do not have permission to create users.")
+            return redirect('profile:dashboard')
+        return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        # Get form data
-        email = form.cleaned_data.get('email')
-        password = form.cleaned_data.get('password')
-        first_name = form.cleaned_data.get('first_name')
-        last_name = form.cleaned_data.get('last_name')
-        work_location = form.cleaned_data.get('office_location')
-        group = form.cleaned_data.get('group')
-        role = form.cleaned_data.get('role')
-
         try:
-            # Generate employee ID based on location and role
-            username = generate_employee_id(work_location=str(work_location) if work_location else None, group_id=str(group.id) if group else None)
+            with transaction.atomic():
+                # Create User instance
+                user = User.objects.create_user(
+                    username=form.cleaned_data['email'],  # Use email as username
+                    email=form.cleaned_data['email'],
+                    password=form.cleaned_data['password'],
+                    first_name=form.cleaned_data['first_name'],
+                    last_name=form.cleaned_data['last_name']
+                )
 
-            # Create user
-            user = User.objects.create_user(
-                username=username,
-                email=email,
-                password=password,
-                first_name=first_name,
-                last_name=last_name
-            )
+                # Add to group
+                group = form.cleaned_data['group']
+                if group:
+                    user.groups.add(group)
 
-            # Add user to the selected group
-            if group:
-                user.groups.add(group)
+                # Create UserDetails instance
+                user_details = form.save(commit=False)
+                user_details.user = user
+                
+                # Generate Employee ID
+                work_location = user_details.office_location.city if user_details.office_location else "Remote"
+                user_details.employee_id = generate_employee_id(work_location, str(group.id) if group else "1")
+                
+                user_details.save()
 
-            # Associate user with the profile
-            user_profile = form.save(commit=False)
-            user_profile.user = user
-            user_profile.onboarded_by = self.request.user
+                # Log action
+                UserActionLog.objects.create(
+                    user=user,
+                    action_type='create',
+                    action_by=self.request.user,
+                    details=f"User created by {self.request.user.username}"
+                )
 
-            # Sync role with selected group
-            if group and not role:
-                user_profile.role = group.name.lower()
-            elif role:
-                user_profile.role = role
+                # Send welcome email
+                send_welcome_email(user, form.cleaned_data['password'])
 
-            user_profile.save()
-
-            # Send welcome email
-            try:
-                send_welcome_email(user, password)
-                messages.success(self.request, f'User account created for {username} and welcome email sent')
-            except Exception as email_error:
-                messages.warning(self.request, f'User account created for {username} but email failed: {str(email_error)}')
-
-            # Log the action
-            UserActionLog.objects.create(
-                user=user,
-                action_type='create',
-                action_by=self.request.user,
-                details=f"User created by {self.request.user.username}"
-            )
-
-            return redirect('profile:user-detail', pk=user.id)
+                messages.success(self.request, f"User {user.get_full_name()} created successfully.")
+                return redirect('profile:user-list')
+                
         except Exception as e:
-            messages.error(self.request, f'Error creating user: {str(e)}')
+            messages.error(self.request, f"Error creating user: {str(e)}")
             return self.form_invalid(form)
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Create New User'
-        # Add office locations for the dropdown
-        context['office_locations'] = OfficeLocation.objects.filter(is_active=True).order_by('name')
-        # Add available groups
-        context['groups'] = Group.objects.all().order_by('name')
-        return context
-
 # User Update View
-class UserUpdateView(LoginRequiredMixin, HRAdminRequiredMixin, UpdateView):
+class UserUpdateView(LoginRequiredMixin, UpdateView):
     model = UserDetails
     form_class = UserDetailsUpdateForm
     template_name = 'profile/user_form.html'
 
-    def get_object(self):
-        return get_object_or_404(UserDetails, user__id=self.kwargs['pk'])
+    def get_success_url(self):
+        return reverse_lazy('profile:user-detail', kwargs={'pk': self.object.pk})
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.get_object().user
-        return kwargs
+    def dispatch(self, request, *args, **kwargs):
+        # Check permissions
+        obj = self.get_object()
+        is_hr = request.user.groups.filter(name='HR').exists() or request.user.is_superuser
+        if not (is_hr or request.user == obj.user):
+            messages.error(request, "You do not have permission to edit this profile.")
+            return redirect('profile:dashboard')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_initial(self):
+        initial = super().get_initial()
+        user = self.object.user
+        initial['first_name'] = user.first_name
+        initial['last_name'] = user.last_name
+        initial['email'] = user.email
+        if user.groups.exists():
+            initial['group'] = user.groups.first()
+        return initial
 
     def form_valid(self, form):
-        user_profile = form.save()
+        try:
+            with transaction.atomic():
+                # Save UserDetails fields
+                user_profile = form.save(commit=False)
+                
+                # Update User model fields
+                user = user_profile.user
+                user.first_name = form.cleaned_data.get('first_name')
+                user.last_name = form.cleaned_data.get('last_name')
+                user.email = form.cleaned_data.get('email')
+                user.save()
 
-        # Update the User model fields if provided
-        user = user_profile.user
-        first_name = form.cleaned_data.get('first_name')
-        last_name = form.cleaned_data.get('last_name')
-        email = form.cleaned_data.get('email')
-        group = form.cleaned_data.get('group')
-        role = form.cleaned_data.get('role')
+                # Update Group
+                group = form.cleaned_data.get('group')
+                if group:
+                    user.groups.clear()
+                    user.groups.add(group)
 
-        if first_name:
-            user.first_name = first_name
-        if last_name:
-            user.last_name = last_name
-        if email:
-            user.email = email
+                user_profile.save()
 
-        # Update user group if provided
-        if group:
-            user.groups.clear()  # Remove all existing groups
-            user.groups.add(group)  # Add the new group
+                # Log the action
+                UserActionLog.objects.create(
+                    user=user,
+                    action_type='update',
+                    action_by=self.request.user,
+                    details=f"User profile updated by {self.request.user.username}"
+                )
 
-        user.save()
-
-        # Sync role with selected group
-        user_profile = form.save(commit=False)
-        if group and not role:
-            user_profile.role = group.name.lower()
-        elif role:
-            user_profile.role = role
-        user_profile.save()
-
-        # Log the action
-        UserActionLog.objects.create(
-            user=user,
-            action_type='update',
-            action_by=self.request.user,
-            details=f"User profile updated by {self.request.user.username}"
-        )
-
-        messages.success(self.request, 'User profile has been updated')
-        return redirect('profile:user-detail', pk=user.id)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Update User'
-        user_profile = self.get_object()
-        context['user_data'] = user_profile.user
-        # Add office locations for the dropdown
-        context['office_locations'] = OfficeLocation.objects.filter(is_active=True).order_by('name')
-        # Add available groups
-        context['groups'] = Group.objects.all().order_by('name')
-        return context
+                messages.success(self.request, 'User profile has been updated successfully.')
+                return super().form_valid(form)
+                
+        except Exception as e:
+            messages.error(self.request, f"Error updating profile: {str(e)}")
+            return self.form_invalid(form)
 
 # User Status Change View
 @login_required

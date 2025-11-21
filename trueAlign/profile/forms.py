@@ -43,7 +43,7 @@ class UserDetailsCreateForm(forms.ModelForm):
             'is_current_same_as_permanent',
             'emergency_contact_name', 'emergency_contact_number', 'emergency_contact_relationship',
             'employee_type', 'role', 'reporting_manager', 'hire_date', 'start_date',
-            'probation_end_date', 'job_description',
+            'probation_end_date', 'notice_period_days', 'job_description',
             'office_location', 'employment_status',
             'pan_number', 'aadhar_number', 'passport_number', 'passport_expiry',
             'bank_name', 'bank_account_number', 'bank_ifsc',

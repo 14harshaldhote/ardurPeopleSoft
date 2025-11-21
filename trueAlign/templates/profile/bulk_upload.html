@@ -1,319 +1,170 @@
-{% extends 'base.html' %} {% load static %} {% block title %}Bulk Upload Users -
-TrueAlign Portal{% endblock %} {% block content %}
+{% extends 'base.html' %}
+{% load static %}
 
-<div
-    class="min-h-screen py-6 px-4 lg:px-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100"
->
-    <div class="max-w-5xl mx-auto">
-        <!-- Header Section -->
-        <div
-            class="relative overflow-hidden mb-8 rounded-2xl bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl"
-        >
-            <div
-                class="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-pink-500/10"
-            ></div>
-            <div class="relative p-8">
-                <div
-                    class="flex flex-col lg:flex-row justify-between items-start lg:items-center"
-                >
-                    <div class="flex items-center space-x-6">
-                        <div
-                            class="w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-lg"
-                        >
-                            <i class="fas fa-upload"></i>
-                        </div>
-                        <div>
-                            <h1
-                                class="text-4xl font-bold text-slate-800 mb-2 tracking-wide"
-                            >
-                                Bulk Upload Users
-                            </h1>
-                            <p class="text-slate-600 text-lg">
-                                Import multiple user profiles from CSV file
-                            </p>
-                        </div>
+{% block title %}Bulk Upload Users - TrueAlign Portal{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-semibold text-gray-900">Bulk Upload Users</h1>
+                        <p class="text-sm text-gray-600 mt-1">Import multiple user profiles from a CSV file</p>
                     </div>
-                    <div class="flex flex-wrap gap-3 mt-6 lg:mt-0">
-                        <a
-                            href="{% url 'profile:user-list' %}"
-                            class="bg-white/80 backdrop-blur-sm hover:bg-white text-slate-700 hover:text-slate-900 px-6 py-3 rounded-xl border border-slate-200 transition-all duration-300 font-semibold tracking-wide shadow-md hover:shadow-lg"
-                        >
-                            <i class="fas fa-arrow-left mr-2"></i>Back to List
+                    <div class="flex space-x-3">
+                        <a href="{% url 'profile:user-list' %}"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            Back to List
                         </a>
-                        <a
-                            href="{% url 'profile:user-create' %}"
-                            class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-6 py-3 rounded-xl transition-all duration-300 font-semibold tracking-wide shadow-lg hover:shadow-xl transform hover:scale-105"
-                        >
-                            <i class="fas fa-plus mr-2"></i>Add Single User
-                        </a>
+                        <button onclick="downloadSample()"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Download Sample CSV
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Upload Form -->
-        <div
-            class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden transition-all duration-300 hover:shadow-2xl"
-        >
-            <div
-                class="bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-green-500/10 px-8 py-6 border-b border-white/20"
-            >
-                <h3 class="text-2xl font-bold text-slate-800 flex items-center">
-                    <i class="fas fa-file-csv mr-3 text-emerald-600"></i>CSV
-                    File Upload
-                </h3>
-                <p class="text-slate-600 mt-2">
-                    Select a CSV file containing user information to import
-                    multiple users at once
-                </p>
-            </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-            <div class="p-8">
-                <form
-                    method="post"
-                    enctype="multipart/form-data"
-                    class="space-y-6"
-                >
-                    {% csrf_token %}
+            <!-- Upload Area (Left Column) -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 h-full">
+                    <div class="p-6">
+                        <form method="post" enctype="multipart/form-data" id="uploadForm" class="h-full flex flex-col">
+                            {% csrf_token %}
 
-                    <!-- File Input Section -->
-                    <div class="relative">
-                        <label
-                            class="block text-sm font-semibold text-slate-600 uppercase tracking-wide mb-3"
-                        >
-                            <i class="fas fa-paperclip mr-2"></i>Select CSV File
-                        </label>
-                        <div class="relative">
-                            <input
-                                type="file"
-                                name="csv_file"
-                                accept=".csv"
-                                class="block w-full text-slate-600 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-gradient-to-r file:from-emerald-500 file:to-teal-600 file:text-white hover:file:from-emerald-600 hover:file:to-teal-700 file:shadow-lg hover:file:shadow-xl file:transition-all file:duration-300 file:cursor-pointer bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500"
-                                required
-                            />
-                            <div
-                                class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none"
-                            >
-                                <i
-                                    class="fas fa-cloud-upload-alt text-slate-400 text-lg"
-                                ></i>
+                            <div class="flex-1 flex flex-col justify-center items-center border-2 border-dashed border-gray-300 rounded-lg p-12 hover:border-blue-500 transition-colors duration-200"
+                                id="dropZone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
+                                ondrop="handleDrop(event)">
+
+                                <div class="text-center" id="uploadPrompt">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none"
+                                        viewBox="0 0 48 48">
+                                        <path
+                                            d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    <p class="mt-1 text-sm text-gray-600">
+                                        <span class="font-medium text-blue-600 hover:text-blue-500 cursor-pointer"
+                                            onclick="document.getElementById('fileInput').click()">
+                                            Upload a file
+                                        </span>
+                                        or drag and drop
+                                    </p>
+                                    <p class="mt-1 text-xs text-gray-500">CSV up to 10MB</p>
+                                </div>
+
+                                <div id="filePreview" class="hidden w-full">
+                                    <div
+                                        class="flex items-center justify-between bg-blue-50 p-4 rounded-lg border border-blue-100">
+                                        <div class="flex items-center">
+                                            <svg class="w-8 h-8 text-blue-500 mr-3" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                            <div>
+                                                <p class="text-sm font-medium text-blue-900" id="fileName">filename.csv
+                                                </p>
+                                                <p class="text-xs text-blue-700" id="fileSize">0 KB</p>
+                                            </div>
+                                        </div>
+                                        <button type="button" onclick="clearFile()"
+                                            class="text-blue-500 hover:text-blue-700">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <input type="file" name="csv_file" id="fileInput" accept=".csv" class="hidden"
+                                    onchange="handleFileSelect(event)" required>
                             </div>
-                        </div>
-                        {% if form.csv_file.errors %}
-                        <div
-                            class="mt-2 bg-red-100 border border-red-200 rounded-lg p-3"
-                        >
-                            <p
-                                class="text-sm text-red-700 font-medium flex items-center"
-                            >
-                                <i class="fas fa-exclamation-triangle mr-2"></i>
-                                {{ form.csv_file.errors.0 }}
-                            </p>
-                        </div>
-                        {% endif %}
-                        <p class="mt-2 text-sm text-slate-500">
-                            <i class="fas fa-info-circle mr-1"></i>
-                            Only CSV files are accepted. Maximum file size: 10MB
-                        </p>
-                    </div>
 
-                    <!-- Upload Button -->
-                    <div class="flex justify-center pt-4">
-                        <button
-                            type="submit"
-                            class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-8 py-4 rounded-xl transition-all duration-300 font-bold text-lg tracking-wide shadow-lg hover:shadow-xl transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-emerald-500/20"
-                        >
-                            <i class="fas fa-upload mr-3"></i>Upload and Process
-                            CSV
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Instructions Section -->
-        <div
-            class="mt-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden"
-        >
-            <div
-                class="bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-purple-500/10 px-8 py-6 border-b border-white/20"
-            >
-                <h3 class="text-2xl font-bold text-slate-800 flex items-center">
-                    <i class="fas fa-lightbulb mr-3 text-blue-600"></i>Upload
-                    Instructions
-                </h3>
-            </div>
-
-            <div class="p-8">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <!-- CSV Format Requirements -->
-                    <div class="space-y-6">
-                        <div>
-                            <h4
-                                class="text-lg font-semibold text-slate-800 mb-4 flex items-center"
-                            >
-                                <i class="fas fa-table mr-2 text-indigo-600"></i
-                                >CSV Format Requirements
-                            </h4>
-                            <div class="space-y-3">
-                                <div class="flex items-start space-x-3">
-                                    <div
-                                        class="w-2 h-2 bg-emerald-500 rounded-full mt-2 flex-shrink-0"
-                                    ></div>
-                                    <p class="text-slate-600">
-                                        The CSV file must contain a header row
-                                        with column names
-                                    </p>
-                                </div>
-                                <div class="flex items-start space-x-3">
-                                    <div
-                                        class="w-2 h-2 bg-emerald-500 rounded-full mt-2 flex-shrink-0"
-                                    ></div>
-                                    <p class="text-slate-600">
-                                        Each row should represent one user's
-                                        information
-                                    </p>
-                                </div>
-                                <div class="flex items-start space-x-3">
-                                    <div
-                                        class="w-2 h-2 bg-emerald-500 rounded-full mt-2 flex-shrink-0"
-                                    ></div>
-                                    <p class="text-slate-600">
-                                        Use UTF-8 encoding to prevent character
-                                        issues
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Required Columns -->
-                    <div class="space-y-6">
-                        <div>
-                            <h4
-                                class="text-lg font-semibold text-slate-800 mb-4 flex items-center"
-                            >
-                                <i
-                                    class="fas fa-list-check mr-2 text-teal-600"
-                                ></i
-                                >Required Columns
-                            </h4>
-                            <div class="bg-slate-50 rounded-xl p-6">
-                                <div class="space-y-3 text-sm">
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <span
-                                            class="font-semibold text-slate-700"
-                                            >first_name</span
-                                        >
-                                        <span class="text-slate-600"
-                                            >First Name</span
-                                        >
+                            {% if form.csv_file.errors %}
+                            <div class="mt-4 p-4 bg-red-50 rounded-md border border-red-200">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd"
+                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                                clip-rule="evenodd" />
+                                        </svg>
                                     </div>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <span
-                                            class="font-semibold text-slate-700"
-                                            >last_name</span
-                                        >
-                                        <span class="text-slate-600"
-                                            >Last Name</span
-                                        >
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <span
-                                            class="font-semibold text-slate-700"
-                                            >email</span
-                                        >
-                                        <span class="text-slate-600"
-                                            >Email Address</span
-                                        >
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <span
-                                            class="font-semibold text-slate-700"
-                                            >username</span
-                                        >
-                                        <span class="text-slate-600"
-                                            >Username</span
-                                        >
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <span
-                                            class="font-semibold text-slate-700"
-                                            >employee_id</span
-                                        >
-                                        <span class="text-slate-600"
-                                            >Employee ID</span
-                                        >
+                                    <div class="ml-3">
+                                        <h3 class="text-sm font-medium text-red-800">Upload Error</h3>
+                                        <div class="mt-2 text-sm text-red-700">
+                                            {{ form.csv_file.errors.0 }}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                            {% endif %}
+
+                            <div class="mt-6">
+                                <button type="submit" id="submitBtn" disabled
+                                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    Upload and Process
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
+            </div>
 
-                <!-- Sample CSV -->
-                <div class="mt-8">
-                    <div class="flex justify-between items-center mb-4">
-                        <h4
-                            class="text-lg font-semibold text-slate-800 flex items-center"
-                        >
-                            <i class="fas fa-file-code mr-2 text-purple-600"></i
-                            >Sample CSV Format
-                        </h4>
-                        <button
-                            onclick="downloadSample()"
-                            class="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white px-4 py-2 rounded-lg transition-all duration-300 font-medium shadow-md hover:shadow-lg text-sm"
-                        >
-                            <i class="fas fa-download mr-2"></i>Download Sample
-                        </button>
-                    </div>
-                    <div class="bg-slate-50 rounded-xl p-6 overflow-x-auto">
-                        <pre
-                            class="text-sm text-slate-700 whitespace-pre"
-                        ><code>first_name,last_name,email,username,employee_id,department,position
-John,Doe,john.doe@company.com,johndoe,EMP001,Engineering,Developer
-Jane,Smith,jane.smith@company.com,janesmith,EMP002,Marketing,Manager
-Bob,Johnson,bob.johnson@company.com,bobjohnson,EMP003,Sales,Representative</code></pre>
-                    </div>
-                </div>
+            <!-- Instructions (Right Column) -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 h-full">
+                    <div class="p-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Instructions</h3>
 
-                <!-- Important Notes -->
-                <div
-                    class="mt-8 bg-amber-50 border border-amber-200 rounded-xl p-6"
-                >
-                    <h5
-                        class="text-lg font-semibold text-amber-800 mb-3 flex items-center"
-                    >
-                        <i class="fas fa-exclamation-triangle mr-2"></i
-                        >Important Notes
-                    </h5>
-                    <div class="space-y-2 text-sm text-amber-700">
-                        <div class="flex items-start space-x-2">
-                            <i
-                                class="fas fa-info-circle mt-1 text-amber-600"
-                            ></i>
-                            <p>
-                                Duplicate email addresses will be skipped
-                                automatically
-                            </p>
-                        </div>
-                        <div class="flex items-start space-x-2">
-                            <i
-                                class="fas fa-info-circle mt-1 text-amber-600"
-                            ></i>
-                            <p>
-                                Users will be created with a default temporary
-                                password that they must change on first login
-                            </p>
-                        </div>
-                        <div class="flex items-start space-x-2">
-                            <i
-                                class="fas fa-info-circle mt-1 text-amber-600"
-                            ></i>
-                            <p>
-                                Invalid data in any row will cause that specific
-                                user to be skipped with an error message
-                            </p>
+                        <div class="space-y-4">
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-900">Required Columns</h4>
+                                <div
+                                    class="mt-2 bg-gray-50 rounded-md p-3 text-xs font-mono text-gray-600 border border-gray-200">
+                                    first_name<br>
+                                    last_name<br>
+                                    email<br>
+                                    username<br>
+                                    employee_id<br>
+                                    department<br>
+                                    position
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-900">Important Notes</h4>
+                                <ul class="mt-2 text-sm text-gray-600 list-disc pl-5 space-y-1">
+                                    <li>File must be in CSV format.</li>
+                                    <li>First row must contain column headers.</li>
+                                    <li>Duplicate emails will be skipped.</li>
+                                    <li>Users are created with a default password.</li>
+                                    <li>Maximum file size is 10MB.</li>
+                                </ul>
+                            </div>
+
+                            <div class="pt-4 border-t border-gray-200">
+                                <h4 class="text-sm font-medium text-gray-900 mb-2">Need Help?</h4>
+                                <p class="text-sm text-gray-600">
+                                    Ensure your CSV file uses UTF-8 encoding to prevent character display issues.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -323,43 +174,89 @@ Bob,Johnson,bob.johnson@company.com,bobjohnson,EMP003,Sales,Representative</code
 </div>
 
 <script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const uploadPrompt = document.getElementById('uploadPrompt');
+    const filePreview = document.getElementById('filePreview');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const submitBtn = document.getElementById('submitBtn');
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.add('border-blue-500', 'bg-blue-50');
+    }
+
+    function handleDragLeave(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            showPreview(files[0]);
+        }
+    }
+
+    function handleFileSelect(e) {
+        const files = e.target.files;
+        if (files.length > 0) {
+            showPreview(files[0]);
+        }
+    }
+
+    function showPreview(file) {
+        if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+            alert('Please upload a CSV file.');
+            clearFile();
+            return;
+        }
+
+        fileName.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+
+        uploadPrompt.classList.add('hidden');
+        filePreview.classList.remove('hidden');
+        submitBtn.disabled = false;
+    }
+
+    function clearFile() {
+        fileInput.value = '';
+        uploadPrompt.classList.remove('hidden');
+        filePreview.classList.add('hidden');
+        submitBtn.disabled = true;
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
     function downloadSample() {
         const csvContent = `first_name,last_name,email,username,employee_id,department,position
 John,Doe,john.doe@company.com,johndoe,EMP001,Engineering,Developer
-Jane,Smith,jane.smith@company.com,janesmith,EMP002,Marketing,Manager
-Bob,Johnson,bob.johnson@company.com,bobjohnson,EMP003,Sales,Representative`;
+Jane,Smith,jane.smith@company.com,janesmith,EMP002,Marketing,Manager`;
 
-        const blob = new Blob([csvContent], {
-            type: "text/csv;charset=utf-8;",
-        });
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
         link.setAttribute("href", url);
         link.setAttribute("download", "sample_users.csv");
-        link.style.visibility = "hidden";
+        link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     }
 </script>
-
-<style>
-    .hover\:scale-105:hover {
-        transform: scale(1.05);
-    }
-
-    .transform {
-        transition-property: transform;
-        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-        transition-duration: 300ms;
-    }
-
-    .backdrop-blur-sm {
-        backdrop-filter: blur(4px);
-    }
-
-    .file\:transition-all::file-selector-button {
-        transition: all 0.3s ease;
-    }
-</style>
 {% endblock %}

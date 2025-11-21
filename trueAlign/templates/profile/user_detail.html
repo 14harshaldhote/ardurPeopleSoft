@@ -3,175 +3,429 @@
 
 {% block content %}
 <div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
             <div class="px-6 py-6">
-                <div class="flex items-center justify-between">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div class="flex items-center space-x-6">
                         <!-- Profile Avatar -->
-                        <div class="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                        <div
+                            class="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-md">
                             {{ user_profile.user.first_name|first|default:user_profile.user.username|first|upper }}
                         </div>
-                        
+
                         <!-- Basic Info -->
                         <div>
                             <h1 class="text-3xl font-bold text-gray-900">
-                                {{ user_profile.full_name|default:user_profile.user.get_full_name|default:user_profile.user.username }}
+                                {{user_profile.full_name|default:user_profile.user.get_full_name|default:user_profile.user.username }}
                             </h1>
-                            <p class="text-gray-600">{{ user_profile.user.email }}</p>
-                            <p class="text-sm text-gray-500">{{ user_profile.user.username }}</p>
-                            
+                            <div class="flex items-center space-x-4 mt-1">
+                                <p class="text-gray-600 flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                    {{ user_profile.user.email }}
+                                </p>
+                                <p class="text-gray-500 flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0c0 .884-.896 1.679-2 1.679-1.105 0-2-.795-2-1.679s.895-1.679 2-1.679c1.104 0 2 .795 2 1.679z" />
+                                    </svg>
+                                    {{ user_profile.get_role_display|default:"Employee" }}
+                                </p>
+                            </div>
+
                             <!-- Status Badge -->
-                            <div class="mt-2">
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
+                            <div class="mt-3">
+                                <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full 
                                     {% if user_profile.employment_status == 'active' %}bg-green-100 text-green-800
                                     {% elif user_profile.employment_status == 'inactive' %}bg-red-100 text-red-800
                                     {% elif user_profile.employment_status == 'probation' %}bg-yellow-100 text-yellow-800
                                     {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                    {{ user_profile.get_employment_status_display|default:"Unknown" }}
+                                    {{ user_profile.get_employment_status_display|default:"Unknown Status" }}
                                 </span>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Action Buttons -->
-                    <div class="flex space-x-3">
+                    <div class="flex flex-wrap gap-3">
                         {% if can_edit %}
-                        <a href="{% url 'profile:user-update' user_profile.user.id %}" 
-                           class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <a href="{% url 'profile:user-update' user_profile.user.id %}"
+                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                             Edit Profile
                         </a>
                         {% endif %}
-                        
-                        <a href="{% url 'profile:user-list' %}" 
-                           class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+
+                        <a href="{% url 'profile:user-list' %}"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                             </svg>
                             Back to List
                         </a>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Profile Details -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Personal Information -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-medium text-gray-900">Personal Information</h3>
-                </div>
-                <div class="px-6 py-4 space-y-4">
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Full Name</label>
-                        <p class="text-gray-900">{{ user_profile.full_name|default:user_profile.user.get_full_name|default:"Not provided" }}</p>
-                    </div>
-                    
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Email</label>
-                        <p class="text-gray-900">{{ user_profile.user.email|default:"Not provided" }}</p>
-                    </div>
-                    
-                    {% if user_profile.personal_email %}
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Personal Email</label>
-                        <p class="text-gray-900">{{ user_profile.personal_email }}</p>
-                    </div>
+            <!-- Tabs Navigation -->
+            <div class="border-t border-gray-200 px-6">
+                <nav class="-mb-px flex space-x-8 overflow-x-auto" aria-label="Tabs">
+                    <button onclick="switchTab('overview')" id="tab-overview"
+                        class="tab-btn border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        Overview
+                    </button>
+                    <button onclick="switchTab('personal')" id="tab-personal"
+                        class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        Personal
+                    </button>
+                    <button onclick="switchTab('employment')" id="tab-employment"
+                        class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        Employment
+                    </button>
+                    <button onclick="switchTab('address')" id="tab-address"
+                        class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        Address
+                    </button>
+                    <button onclick="switchTab('emergency')" id="tab-emergency"
+                        class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        Emergency
+                    </button>
+                    <button onclick="switchTab('documents')" id="tab-documents"
+                        class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        Documents
+                    </button>
+                    <button onclick="switchTab('financial')" id="tab-financial"
+                        class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        Financial
+                    </button>
+                    {% if is_hr %}
+                    <button onclick="switchTab('hr-notes')" id="tab-hr-notes"
+                        class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        HR Notes
+                    </button>
                     {% endif %}
-                    
-                    {% if user_profile.contact_number_primary %}
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Phone Number</label>
-                        <p class="text-gray-900">{{ user_profile.contact_number_primary }}</p>
-                    </div>
-                    {% endif %}
-                    
-                    {% if user_profile.dob %}
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Date of Birth</label>
-                        <p class="text-gray-900">{{ user_profile.dob|date:"F d, Y" }}</p>
-                    </div>
-                    {% endif %}
-                    
-                    {% if user_profile.gender %}
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Gender</label>
-                        <p class="text-gray-900">{{ user_profile.gender }}</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Employment Information -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-medium text-gray-900">Employment Information</h3>
-                </div>
-                <div class="px-6 py-4 space-y-4">
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Employee ID</label>
-                        <p class="text-gray-900">{{ user_profile.user.username }}</p>
-                    </div>
-                    
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Role</label>
-                        <p class="text-gray-900">{{ user_profile.get_role_display|default:"Not assigned" }}</p>
-                    </div>
-                    
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Employee Type</label>
-                        <p class="text-gray-900">{{ user_profile.get_employee_type_display|default:"Not specified" }}</p>
-                    </div>
-                    
-                    {% if user_profile.office_location %}
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Office Location</label>
-                        <p class="text-gray-900">{{ user_profile.office_location.name }}</p>
-                    </div>
-                    {% endif %}
-                    
-                    {% if user_profile.hire_date %}
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Hire Date</label>
-                        <p class="text-gray-900">{{ user_profile.hire_date|date:"F d, Y" }}</p>
-                    </div>
-                    {% endif %}
-                    
-                    {% if user_profile.start_date %}
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Start Date</label>
-                        <p class="text-gray-900">{{ user_profile.start_date|date:"F d, Y" }}</p>
-                    </div>
-                    {% endif %}
-                    
-                    {% if user_profile.reporting_manager %}
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Reporting Manager</label>
-                        <p class="text-gray-900">{{ user_profile.reporting_manager.get_full_name|default:user_profile.reporting_manager.username }}</p>
-                    </div>
-                    {% endif %}
-                </div>
+                </nav>
             </div>
         </div>
 
-        <!-- Status Change Actions (HR Only) -->
-        {% if is_hr %}
-        <div class="mt-6 bg-white rounded-lg shadow-sm border border-gray-200">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">HR Actions</h3>
+        <!-- Tab Contents -->
+        <div class="space-y-6">
+            <!-- Overview Tab -->
+            <div id="content-overview" class="tab-content block space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Quick Info -->
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Quick Information</h3>
+                        <dl class="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Full Name</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ user_profile.full_name|default:user_profile.user.get_full_name }}</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Employee ID</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ user_profile.employee_id|default:"-" }}</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Department</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ user_profile.department|default:"-" }}</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Designation</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ user_profile.designation|default:"-" }}</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Work Location</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ user_profile.office_location.name|default:"Remote" }}</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Reporting Manager</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ user_profile.reporting_manager.get_full_name|default:"-" }}</dd>
+                            </div>
+                        </dl>
+                    </div>
+
+                    <!-- Contact Info -->
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Contact Details</h3>
+                        <dl class="grid grid-cols-1 gap-x-4 gap-y-4">
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Work Email</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ user_profile.company_email|default:user_profile.user.email }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Personal Email</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ user_profile.personal_email|default:"-" }}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Primary Phone</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ user_profile.contact_number_primary|default:"-" }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Secondary Phone</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ user_profile.contact_number_secondary|default:"-" }}</dd>
+                            </div>
+                        </dl>
+                    </div>
+                </div>
+
+                <!-- Recent Activity (Overview Only) -->
+                {% if action_logs %}
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Recent Activity</h3>
+                    <div class="flow-root">
+                        <ul class="-mb-8">
+                            {% for log in action_logs|slice:":5" %}
+                            <li>
+                                <div class="relative pb-8">
+                                    {% if not forloop.last %}<span
+                                        class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"
+                                        aria-hidden="true"></span>{% endif %}
+                                    <div class="relative flex space-x-3">
+                                        <div>
+                                            <span
+                                                class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-8 ring-white">
+                                                <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                            </span>
+                                        </div>
+                                        <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                                            <div>
+                                                <p class="text-sm text-gray-500">{{ log.details }}</p>
+                                            </div>
+                                            <div class="text-right text-sm whitespace-nowrap text-gray-500">
+                                                <time datetime="{{ log.timestamp }}">{{ log.timestamp|timesince }}
+                                                    ago</time>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
             </div>
-            <div class="px-6 py-4">
-                <div class="flex flex-wrap gap-3">
-                    <!-- Status Change Form -->
-                    <form method="post" action="{% url 'profile:change-status' user_profile.user.id %}" class="inline">
-                        {% csrf_token %}
-                        <div class="flex items-center space-x-2">
-                            <select name="status" class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+
+            <!-- Personal Tab -->
+            <div id="content-personal"
+                class="tab-content hidden bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Personal Details</h3>
+                <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-6">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Date of Birth</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user_profile.dob|date:"F d, Y"|default:"-" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Gender</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user_profile.gender|default:"-" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Marital Status</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user_profile.marital_status|default:"-" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Blood Group</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user_profile.blood_group|default:"-" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Nationality</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user_profile.nationality|default:"-" }}</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <!-- Employment Tab -->
+            <div id="content-employment"
+                class="tab-content hidden bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Employment Details</h3>
+                <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-6">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Date of Joining</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user_profile.date_of_joining|date:"F d, Y"|default:"-" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Confirmation Date</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user_profile.confirmation_date|date:"F d, Y"|default:"-" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Employment Type</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user_profile.get_employee_type_display|default:"-" }}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Probation Period</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user_profile.probation_period|default:"0" }} months
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Notice Period</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user_profile.notice_period_days|default:"0" }} days
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Work Shift</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user_profile.work_shift|default:"General" }}</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <!-- Address Tab -->
+            <div id="content-address" class="tab-content hidden space-y-6">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Current Address</h3>
+                    <p class="text-sm text-gray-900">
+                        {{ user_profile.current_address_line1|default:"" }}<br>
+                        {% if user_profile.current_address_line2 %}{{ user_profile.current_address_line2 }}<br>{% endif %}
+                        {{ user_profile.current_city|default:"" }}, {{ user_profile.current_state|default:"" }}<br>
+                        {{ user_profile.current_country|default:"" }} - {{ user_profile.current_postal_code|default:"" }}
+                    </p>
+                </div>
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Permanent Address</h3>
+                    <p class="text-sm text-gray-900">
+                        {{ user_profile.permanent_address_line1|default:"" }}<br>
+                        {% if user_profile.permanent_address_line2 %}{{ user_profile.permanent_address_line2 }}<br>{% endif %}
+                        {{ user_profile.permanent_city|default:"" }}, {{ user_profile.permanent_state|default:"" }}<br>
+                        {{ user_profile.permanent_country|default:"" }} - {{ user_profile.permanent_postal_code|default:"" }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Emergency Tab -->
+            <div id="content-emergency"
+                class="tab-content hidden bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Emergency Contacts</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="border p-4 rounded-md">
+                        <h4 class="text-sm font-bold text-gray-700 mb-2">Primary Contact</h4>
+                        <dl class="space-y-2">
+                            <div>
+                                <dt class="text-xs text-gray-500">Name</dt>
+                                <dd class="text-sm font-medium">{{ user_profile.emergency_contact_name_1|default:"-" }}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-xs text-gray-500">Relationship</dt>
+                                <dd class="text-sm font-medium">{{ user_profile.emergency_contact_relation_1|default:"-" }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-xs text-gray-500">Phone</dt>
+                                <dd class="text-sm font-medium">{{ user_profile.emergency_contact_phone_1|default:"-" }}
+                                </dd>
+                            </div>
+                        </dl>
+                    </div>
+                    <div class="border p-4 rounded-md">
+                        <h4 class="text-sm font-bold text-gray-700 mb-2">Secondary Contact</h4>
+                        <dl class="space-y-2">
+                            <div>
+                                <dt class="text-xs text-gray-500">Name</dt>
+                                <dd class="text-sm font-medium">{{ user_profile.emergency_contact_name_2|default:"-" }}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-xs text-gray-500">Relationship</dt>
+                                <dd class="text-sm font-medium">{{ user_profile.emergency_contact_relation_2|default:"-" }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-xs text-gray-500">Phone</dt>
+                                <dd class="text-sm font-medium">{{ user_profile.emergency_contact_phone_2|default:"-" }}
+                                </dd>
+                            </div>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents Tab -->
+            <div id="content-documents"
+                class="tab-content hidden bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Identity Documents</h3>
+                <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-6">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Aadhar Number</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user_profile.aadhar_number|default:"-" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">PAN Number</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user_profile.pan_number|default:"-" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Passport Number</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user_profile.passport_number|default:"-" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Passport Expiry</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user_profile.passport_expiry|date:"F d, Y"|default:"-" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Driving License</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user_profile.driving_license|default:"-" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">UAN Number</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user_profile.uan_number|default:"-" }}</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <!-- Financial Tab -->
+            <div id="content-financial"
+                class="tab-content hidden bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Bank Details</h3>
+                <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-6">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Account Holder Name</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user_profile.bank_account_holder_name|default:"-" }}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Bank Name</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user_profile.bank_name|default:"-" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Account Number</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user_profile.bank_account_number|default:"-" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">IFSC Code</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user_profile.bank_ifsc_code|default:"-" }}</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <!-- HR Notes Tab (Restricted) -->
+            {% if is_hr %}
+            <div id="content-hr-notes"
+                class="tab-content hidden bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Confidential HR Notes</h3>
+                <div class="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+                    <p class="text-sm text-gray-800 whitespace-pre-wrap">{{ user_profile.notes|default:"No notes available." }}</p>
+                </div>
+
+                <!-- Status Change Actions -->
+                <div class="mt-8 border-t border-gray-200 pt-6">
+                    <h4 class="text-md font-medium text-gray-900 mb-4">Administrative Actions</h4>
+                    <div class="flex flex-wrap gap-4">
+                        <form method="post" action="{% url 'profile:change-status' user_profile.user.id %}"
+                            class="flex items-center space-x-2">
+                            {% csrf_token %}
+                            <select name="status"
+                                class="px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 <option value="">Change Status</option>
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
@@ -179,51 +433,52 @@
                                 <option value="terminated">Terminated</option>
                                 <option value="resigned">Resigned</option>
                             </select>
-                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                Update Status
+                            <button type="submit"
+                                class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Update
                             </button>
-                        </div>
-                    </form>
-                    
-                    <!-- Password Reset Form -->
-                    <form method="post" action="{% url 'profile:reset-password' user_profile.user.id %}" class="inline">
-                        {% csrf_token %}
-                        <div class="flex items-center space-x-2">
-                            <input type="password" name="new_password" placeholder="New Password" class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        </form>
+
+                        <form method="post" action="{% url 'profile:reset-password' user_profile.user.id %}"
+                            class="flex items-center space-x-2">
+                            {% csrf_token %}
+                            <input type="password" name="new_password" placeholder="New Password"
+                                class="px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <button type="submit"
+                                class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                                 Reset Password
                             </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Action Logs -->
-        {% if action_logs %}
-        <div class="mt-6 bg-white rounded-lg shadow-sm border border-gray-200">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">Recent Activity</h3>
-            </div>
-            <div class="px-6 py-4">
-                <div class="space-y-3">
-                    {% for log in action_logs %}
-                    <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                        <div>
-                            <p class="text-sm font-medium text-gray-900">{{ log.get_action_type_display }}</p>
-                            <p class="text-xs text-gray-500">{{ log.details }}</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-xs text-gray-500">{{ log.timestamp|date:"M d, Y g:i A" }}</p>
-                            <p class="text-xs text-gray-400">by {{ log.action_by.get_full_name|default:log.action_by.username }}</p>
-                        </div>
+                        </form>
                     </div>
-                    {% endfor %}
                 </div>
             </div>
+            {% endif %}
         </div>
-        {% endif %}
     </div>
 </div>
+
+<script>
+    function switchTab(tabId) {
+        // Hide all contents
+        document.querySelectorAll('.tab-content').forEach(el => {
+            el.classList.add('hidden');
+            el.classList.remove('block');
+        });
+
+        // Show selected content
+        document.getElementById('content-' + tabId).classList.remove('hidden');
+        document.getElementById('content-' + tabId).classList.add('block');
+
+        // Reset all tab styles
+        document.querySelectorAll('.tab-btn').forEach(el => {
+            el.classList.remove('border-blue-500', 'text-blue-600');
+            el.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+        });
+
+        // Highlight active tab
+        const activeTab = document.getElementById('tab-' + tabId);
+        activeTab.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+        activeTab.classList.add('border-blue-500', 'text-blue-600');
+    }
+</script>
 {% endblock %}
