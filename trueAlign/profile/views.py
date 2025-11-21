@@ -89,7 +89,6 @@ def hr_dashboard(request):
     # Recent activities (last 5)
     recent_activities = UserActionLog.objects.select_related('user', 'action_by').order_by('-timestamp')[:5]
 
-    # Pending tasks (example: users with missing essential info)
     pending_onboarding = users.filter(employment_status='probation').count()
 
     context = {
