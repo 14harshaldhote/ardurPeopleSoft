@@ -1394,7 +1394,14 @@ def _calculate_attendance_status(attendance):
             # Calculate total hours if both times available
             if attendance.clock_in_time and attendance.clock_out_time:
                 duration = attendance.clock_out_time - attendance.clock_in_time
-                attendance.total_hours = Decimal(str(duration.total_seconds() / 3600))
+                total_hours = duration.total_seconds() / 3600
+                
+                # Cap total hours at 24.0 to prevent validation errors
+                if total_hours > 24.0:
+                    logger.warning(f"Total hours {total_hours} capped at 24.0 for attendance {attendance.id}")
+                    total_hours = 24.0
+                    
+                attendance.total_hours = Decimal(str(round(total_hours, 2)))
 
             attendance.save()
 

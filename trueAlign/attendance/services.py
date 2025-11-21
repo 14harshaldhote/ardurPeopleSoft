@@ -106,6 +106,129 @@ class BaseAttendanceService:
         ]
         cache.delete_many(cache_keys)
 
+    def _get_attendance_defaults(self, user: 'UserType', target_date: date) -> Dict[str, Any]:
+        """Get default attendance values based on business rules"""
+        
+        # FIX #14: CHECK FOR EXISTING SESSIONS FIRST!
+        existing_sessions = UserSession.objects.filter(
+            user=user,
+            login_time__date=target_date
+        )
+        
+        if existing_sessions.exists():
+            # User has sessions, create with present status and session data
+            first_session = existing_sessions.order_by('login_time').first()
+            defaults: Dict[str, Any] = {
+                'status': 'Present',
+                'clock_in_time': first_session.login_time,
+                'first_session': first_session,
+                'regularization_reason': 'Auto-created from existing session'
+            }
+            logger.info(f"Creating attendance with session data for {user.username} on {target_date}")
+            return defaults
+        
+        # No sessions, continue with standard defaults
+        defaults: Dict[str, Any] = {
+            'status': 'Not Marked',
+            'regularization_reason': 'Auto-created attendance record'
+        }
+
+        # Check for leave
+        if self._is_user_on_leave(user, target_date):
+            leave_request = LeaveRequest.objects.filter(
+                user=user,
+                status='Approved',
+                start_date__lte=target_date,
+                end_date__gte=target_date
+            ).select_related('leave_type').first()
+
+            leave_update: Dict[str, Any] = {
+                'status': 'On Leave',
+                'leave_type': leave_request.leave_type.name if leave_request else 'Leave',
+                'regularization_reason': f'On {leave_request.leave_type.name} leave' if leave_request else 'On Leave'
+            }
+            defaults.update(leave_update)
+            return defaults
+
+        # Check for holiday
+        if self._is_holiday(target_date):
+            try:
+                holiday = Holiday.objects.get(date=target_date)
+                holiday_update: Dict[str, Any] = {
+                    'status': 'Holiday',
+                    'is_holiday': True,
+                    'holiday_name': str(holiday.name),
+                    'regularization_reason': f'Holiday: {holiday.name}'
+                }
+                defaults.update(holiday_update)
+            except Exception:  # Handle DoesNotExist safely
+                holiday_update: Dict[str, Any] = {
+                    'status': 'Holiday',
+                    'is_holiday': True,
+                    'holiday_name': 'Holiday',
+                    'regularization_reason': 'Holiday'
+                }
+                defaults.update(holiday_update)
+            return defaults
+
+        # Check for weekend
+        if self._is_weekend(user, target_date):
+            weekend_update: Dict[str, Any] = {
+                'status': 'Weekend',
+                'is_weekend': True,
+                'regularization_reason': 'Weekend'
+            }
+            defaults.update(weekend_update)
+            return defaults
+
+        # Set shift information
+        try:
+            shift = ShiftAssignment.objects.filter(
+                user=user,
+                start_date__lte=target_date,
+                end_date__gte=target_date
+            ).select_related('shift').first()
+
+            if shift and shift.shift:
+                # FIX #8: Use actual shift duration instead of hardcoded value
+                expected_hrs = shift.shift.shift_duration if hasattr(shift.shift, 'shift_duration') else Decimal('8.0')
+                shift_update: Dict[str, Any] = {
+                    'shift': shift.shift,
+                    'expected_hours': expected_hrs
+                }
+                defaults.update(shift_update)
+                logger.debug(f"Set expected_hours to {expected_hrs} from shift")
+        except Exception as e:
+            logger.warning(f"Could not set shift for {user.username}: {e}")
+
+        return defaults
+
+    def _is_user_on_leave(self, user: 'UserType', target_date: date) -> bool:
+        """Check if user is on approved leave"""
+        return LeaveRequest.objects.filter(
+            user=user,
+            status='Approved',
+            start_date__lte=target_date,
+            end_date__gte=target_date
+        ).exists()
+
+    def _is_holiday(self, target_date: date) -> bool:
+        """Check if date is a holiday"""
+        return Holiday.objects.filter(date=target_date).exists()
+
+    def _is_weekend(self, user: 'UserType', target_date: date) -> bool:
+        """Check if date is weekend for user"""
+        return target_date.weekday() >= 5  # Saturday (5) or Sunday (6)
+
+    def _should_mark_absent(self, attendance: Attendance) -> bool:
+        """Determine if attendance should be marked as absent"""
+        # If it's past business hours and no clock-in, mark as absent
+        current_time = timezone.now().astimezone(self.ist)
+        if attendance.date < current_time.date():
+            return not attendance.clock_in_time
+        return False
+
+
 
 class AttendanceAutoMarkingService(BaseAttendanceService):
     """
@@ -224,102 +347,8 @@ class AttendanceAutoMarkingService(BaseAttendanceService):
             logger.error(f"Error creating missing records: {e}")
             return 0
 
-    def _get_attendance_defaults(self, user: 'UserType', target_date: date) -> Dict[str, Any]:
-        """Get default attendance values based on business rules"""
-        
-        # FIX #14: CHECK FOR EXISTING SESSIONS FIRST!
-        existing_sessions = UserSession.objects.filter(
-            user=user,
-            login_time__date=target_date
-        )
-        
-        if existing_sessions.exists():
-            # User has sessions, create with present status and session data
-            first_session = existing_sessions.order_by('login_time').first()
-            defaults: Dict[str, Any] = {
-                'status': 'Present',
-                'clock_in_time': first_session.login_time,
-                'first_session': first_session,
-                'regularization_reason': 'Auto-created from existing session'
-            }
-            logger.info(f"Creating attendance with session data for {user.username} on {target_date}")
-            return defaults
-        
-        # No sessions, continue with standard defaults
-        defaults: Dict[str, Any] = {
-            'status': 'Not Marked',
-            'regularization_reason': 'Auto-created attendance record'
-        }
+    # Methods moved to BaseAttendanceService
 
-        # Check for leave
-        if self._is_user_on_leave(user, target_date):
-            leave_request = LeaveRequest.objects.filter(
-                user=user,
-                status='Approved',
-                start_date__lte=target_date,
-                end_date__gte=target_date
-            ).select_related('leave_type').first()
-
-            leave_update: Dict[str, Any] = {
-                'status': 'On Leave',
-                'leave_type': leave_request.leave_type.name if leave_request else 'Leave',
-                'regularization_reason': f'On {leave_request.leave_type.name} leave' if leave_request else 'On Leave'
-            }
-            defaults.update(leave_update)
-            return defaults
-
-        # Check for holiday
-        if self._is_holiday(target_date):
-            try:
-                holiday = Holiday.objects.get(date=target_date)
-                holiday_update: Dict[str, Any] = {
-                    'status': 'Holiday',
-                    'is_holiday': True,
-                    'holiday_name': str(holiday.name),
-                    'regularization_reason': f'Holiday: {holiday.name}'
-                }
-                defaults.update(holiday_update)
-            except Exception:  # Handle DoesNotExist safely
-                holiday_update: Dict[str, Any] = {
-                    'status': 'Holiday',
-                    'is_holiday': True,
-                    'holiday_name': 'Holiday',
-                    'regularization_reason': 'Holiday'
-                }
-                defaults.update(holiday_update)
-            return defaults
-
-        # Check for weekend
-        if self._is_weekend(user, target_date):
-            weekend_update: Dict[str, Any] = {
-                'status': 'Weekend',
-                'is_weekend': True,
-                'regularization_reason': 'Weekend'
-            }
-            defaults.update(weekend_update)
-            return defaults
-
-        # Set shift information
-        try:
-            shift = ShiftAssignment.objects.filter(
-                user=user,
-                start_date__lte=target_date,
-                end_date__gte=target_date
-            ).select_related('shift').first()
-
-            if shift and shift.shift:
-                # FIX #8: Use actual shift duration instead of hardcoded value
-                expected_hrs = shift.shift.shift_duration if hasattr(shift.shift, 'shift_duration') else Decimal('8.0')
-                shift_update: Dict[str, Any] = {
-                    'shift': shift.shift,
-                    'expected_hours': expected_hrs
-                }
-                defaults.update(shift_update)
-                logger.debug(f"Set expected_hours to {expected_hrs} from shift")
-        except Exception as e:
-            logger.warning(f"Could not set shift for {user.username}: {e}")
-
-        return defaults
 
     def _process_records_batch(self, records_queryset, target_date: date) -> tuple:
         """
@@ -606,30 +635,8 @@ class AttendanceAutoMarkingService(BaseAttendanceService):
         except Exception as e:
             logger.error(f"Error in real-time attendance update: {e}")
 
-    def _is_user_on_leave(self, user: 'UserType', target_date: date) -> bool:
-        """Check if user is on approved leave"""
-        return LeaveRequest.objects.filter(
-            user=user,
-            status='Approved',
-            start_date__lte=target_date,
-            end_date__gte=target_date
-        ).exists()
+    # Methods moved to BaseAttendanceService
 
-    def _is_holiday(self, target_date: date) -> bool:
-        """Check if date is a holiday"""
-        return Holiday.objects.filter(date=target_date).exists()
-
-    def _is_weekend(self, user: 'UserType', target_date: date) -> bool:
-        """Check if date is weekend for user"""
-        return target_date.weekday() >= 5  # Saturday (5) or Sunday (6)
-
-    def _should_mark_absent(self, attendance: Attendance) -> bool:
-        """Determine if attendance should be marked as absent"""
-        # If it's past business hours and no clock-in, mark as absent
-        current_time = timezone.now().astimezone(self.ist)
-        if attendance.date < current_time.date():
-            return not attendance.clock_in_time
-        return False
 
     def _calculate_attendance_status(self, attendance: Attendance) -> bool:
         """Enhanced attendance status calculation with comprehensive business rules"""
@@ -728,6 +735,12 @@ class AttendanceAutoMarkingService(BaseAttendanceService):
             if attendance.clock_in_time and attendance.clock_out_time:
                 duration = attendance.clock_out_time - attendance.clock_in_time
                 total_hours = duration.total_seconds() / 3600
+                
+                # Cap total hours at 24.0 to prevent validation errors
+                if total_hours > 24.0:
+                    logger.warning(f"Total hours {total_hours} capped at 24.0 for attendance {attendance.id}")
+                    total_hours = 24.0
+                    
                 attendance.total_hours = Decimal(str(round(total_hours, 2)))
 
                 # FIX #2: Calculate overtime if applicable - CORRECTED FIELD NAME
