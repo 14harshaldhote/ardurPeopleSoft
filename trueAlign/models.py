@@ -4606,6 +4606,39 @@ class Attendance(models.Model):
             if self.shift and self.clock_out_time:
                 self._calculate_early_departure()
 
+    # Public methods called by services
+    def initialize_defaults(self):
+        """Public wrapper for initializing defaults"""
+        self._initialize_attendance_defaults()
+
+    def calculate_all_fields(self):
+        """Public wrapper for calculating all fields"""
+        self._calculate_time_fields()
+        self._update_status_logic()
+
+    def acquire_processing_lock(self, lock_duration_minutes=5):
+        """
+        Attempt to acquire a processing lock for this record.
+        Returns True if lock acquired, False otherwise.
+        """
+        now = timezone.now()
+        
+        # Check if currently locked and lock hasn't expired
+        if self.is_being_processed and self.processing_lock_expires and self.processing_lock_expires > now:
+            return False
+            
+        # Acquire lock
+        self.is_being_processed = True
+        self.processing_lock_expires = now + timedelta(minutes=lock_duration_minutes)
+        self.save(update_fields=['is_being_processed', 'processing_lock_expires'])
+        return True
+
+    def release_processing_lock(self):
+        """Release the processing lock"""
+        self.is_being_processed = False
+        self.last_processed_at = timezone.now()
+        self.save(update_fields=['is_being_processed', 'last_processed_at'])
+
     # In ardurPeopleSoft/trueAlign/models.py - Replace the _update_status_logic method
 
     def _update_status_logic(self):
