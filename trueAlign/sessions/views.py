@@ -9,6 +9,7 @@ from django.db.models import (
     Case, When, Value, IntegerField, F, ExpressionWrapper,
     DateTimeField, DurationField
 )
+from django.db.models.functions import ExtractHour
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
@@ -22,7 +23,7 @@ from operator import itemgetter
 
 # Import models from the main trueAlign app
 from trueAlign.models import (
-    UserSession, OfficeLocation,
+    UserSession, OfficeLocation, ShiftAssignment
 )
 
 
@@ -142,16 +143,21 @@ def get_user_shift_info(user, date=None):
             user=user
         ).order_by('-effective_from')[:5]
 
-        shift_info['shift_history'] = [
-            {
+        shift_info['shift_history'] = []
+        for assignment in shift_history:
+            is_current = False
+            if assignment.effective_from and assignment.effective_to:
+                is_current = assignment.effective_from <= date <= assignment.effective_to
+            elif assignment.effective_from:
+                is_current = assignment.effective_from <= date
+
+            shift_info['shift_history'].append({
                 'shift_name': assignment.shift.name if assignment.shift else 'Unknown',
                 'effective_from': assignment.effective_from,
                 'effective_to': assignment.effective_to,
-                'is_current': assignment.effective_from <= date <= assignment.effective_to,
+                'is_current': is_current,
                 'shift_type': getattr(assignment.shift, 'shift_type', 'unknown') if assignment.shift else 'unknown'
-            }
-            for assignment in shift_history
-        ]
+            })
 
         if shift_history.exists():
             shift_info['has_shift_data'] = True
@@ -206,7 +212,8 @@ def get_filtered_sessions_queryset(office_id=None, admin_office=None):
                 pass
 
         return queryset
-    except Exception:
+    except Exception as e:
+        print(f"Error in get_filtered_sessions_queryset: {e}")
         # If anything goes wrong, return empty queryset
         return UserSession.objects.none()
 
@@ -384,9 +391,104 @@ def get_location_statistics(sessions_queryset):
     )
 
 
-# ============================================================================
-# MAIN DASHBOARD VIEWS
-# ============================================================================
+def get_hourly_activity(sessions_queryset):
+    """
+    Get active session count per hour for the last 24 hours.
+    """
+    now = timezone.now()
+    last_24h = now - timedelta(hours=24)
+    
+    # Initialize 24-hour buckets
+    hourly_data = OrderedDict()
+    for i in range(24):
+        hour_key = (last_24h + timedelta(hours=i)).strftime('%H:00')
+        hourly_data[hour_key] = 0
+
+    # Aggregate data
+    # Note: This is a simplified approximation. For precise concurrency, 
+    # we'd need time-series database or more complex queries.
+    # Here we count sessions active during that hour.
+    
+    # For simplicity in this iteration, we'll just count sessions *created* or *active* 
+    # around those times, or just group current active sessions by their start time hour 
+    # if they started in last 24h.
+    
+    # Better approach for "Activity Trend": Group by created_at hour for new sessions
+    # Better approach for "Activity Trend": Group by created_at hour for new sessions
+    activity_data = (
+        sessions_queryset
+        .filter(created_at__gte=last_24h)
+        .annotate(hour=ExtractHour('created_at'))
+        .values('hour')
+        .annotate(count=Count('id'))
+        .order_by('hour')
+    )
+    
+    # Convert to list for chart
+    # We will return labels and series
+    labels = []
+    series = []
+    
+    # Simple 24h loop
+    current_hour = now.hour
+    for i in range(23, -1, -1):
+        h = (current_hour - i) % 24
+        labels.append(f"{h:02d}:00")
+        
+        # Find count
+        count = 0
+        for item in activity_data:
+            if item['hour'] is not None and int(item['hour']) == h:
+                count = item['count']
+                break
+        series.append(count)
+        
+    return {
+        'labels': labels,
+        'series': series
+    }
+
+
+
+def get_office_distribution(sessions_queryset):
+    """
+    Get session distribution by office location.
+    """
+    distribution = (
+        sessions_queryset
+        .values(
+            name=F('user__profile__office_location__name')
+        )
+        .annotate(count=Count('id'))
+        .order_by('-count')
+    )
+    
+    labels = []
+    series = []
+    
+    for item in distribution:
+        name = item['name'] if item['name'] else 'No Office'
+        labels.append(name)
+        series.append(item['count'])
+        
+    return {
+        'labels': labels,
+        'series': series
+    }
+
+
+def get_status_distribution(sessions_queryset):
+    """
+    Get session distribution by status (Active, Idle, Ended).
+    """
+    active = sessions_queryset.filter(is_active=True, is_idle=False).count()
+    idle = sessions_queryset.filter(is_active=True, is_idle=True).count()
+    ended = sessions_queryset.filter(is_active=False).count()
+    
+    return {
+        'labels': ['Active', 'Idle', 'Ended'],
+        'series': [active, idle, ended]
+    }
 
 @admin_required
 def session_dashboard(request):
@@ -438,6 +540,11 @@ def session_dashboard(request):
         # Get location statistics
         location_stats = get_location_statistics(sessions_queryset)
 
+        # Get Chart Data
+        hourly_activity = get_hourly_activity(sessions_queryset)
+        office_distribution = get_office_distribution(sessions_queryset)
+        status_distribution = get_status_distribution(sessions_queryset)
+
         # Get office information
         if selected_office:
             office_info = {
@@ -484,6 +591,9 @@ def session_dashboard(request):
             'top_users': top_users,
             'device_stats': device_stats,
             'location_stats': location_stats,
+            'hourly_activity': json.dumps(hourly_activity),
+            'office_distribution': json.dumps(office_distribution),
+            'status_distribution': json.dumps(status_distribution),
             'office_info': office_info,
             'recent_activity': recent_activity,
             'system_health': system_health,
@@ -520,7 +630,7 @@ def session_dashboard(request):
             'selected_office_id': 'all'
         })
 
-    return render(request, 'sessions/dashboard.html', context)
+    return render(request, 'sessions/dashboard_new.html', context)
 
 
 @admin_required
@@ -545,6 +655,11 @@ def dashboard_ajax_update(request):
         # Get device stats
         device_stats = get_device_statistics(sessions_queryset)
 
+        # Get Chart Data
+        hourly_activity = get_hourly_activity(sessions_queryset)
+        office_distribution = get_office_distribution(sessions_queryset)
+        status_distribution = get_status_distribution(sessions_queryset)
+
         # System health
         system_health = {
             'status': 'operational',
@@ -558,6 +673,9 @@ def dashboard_ajax_update(request):
             'metrics': metrics,
             'top_users': top_users,
             'device_stats': device_stats,
+            'hourly_activity': hourly_activity,
+            'office_distribution': office_distribution,
+            'status_distribution': status_distribution,
             'system_health': system_health,
             'timestamp': timezone.now().isoformat()
         })
@@ -625,8 +743,10 @@ def session_list(request):
             Q(user__username__icontains=search_query) |
             Q(user__first_name__icontains=search_query) |
             Q(user__last_name__icontains=search_query) |
-            Q(user__email__icontains=search_query)
+            Q(user__email__icontains=search_query) |
+            Q(user__shift_assignments__shift__name__icontains=search_query)
         )
+
 
     # Apply date filtering
     if date_filter:
@@ -706,14 +826,14 @@ def session_list(request):
     elif sort_by == 'total_count':
         session_groups.sort(key=lambda x: x['total_count'])
 
-    # Paginate results
-    paginator = Paginator(session_groups, 25)
+    # Pagination
+    paginator = Paginator(session_groups, 10)
     try:
-        session_groups_page = paginator.page(page)
+        sessions_page = paginator.page(page)
     except PageNotAnInteger:
-        session_groups_page = paginator.page(1)
+        sessions_page = paginator.page(1)
     except EmptyPage:
-        session_groups_page = paginator.page(paginator.num_pages)
+        sessions_page = paginator.page(paginator.num_pages)
 
     # Get summary statistics
     total_sessions = sessions_queryset.count()
@@ -729,13 +849,19 @@ def session_list(request):
     all_users = sessions_queryset.values('user__id', 'user__username', 'user__first_name', 'user__last_name').distinct().order_by('user__username')
 
     context = {
-        'page_title': 'Session List (Grouped)',
+        'page_title': 'Session History',
         'active_tab': 'sessions',
-        'session_groups': session_groups_page,
+        'sessions_grouped': sessions_page,
         'summary_stats': summary_stats,
         'all_offices': OfficeLocation.objects.filter(is_active=True).order_by('name'),
         'all_users': all_users,
         'admin_office': admin_office,
+        'selected_office_id': office_id if office_id else 'all',
+        'selected_status': status_filter,
+        'search_query': search_query,
+        'date_filter': date_filter,
+        'user_filter': user_filter,
+        'sort_by': sort_by,
         'filters': {
             'office': office_id or 'all',
             'status': status_filter,
@@ -1008,9 +1134,10 @@ def render_daily_session_detail(request, user, target_date, daily_sessions):
     login_logout_events.sort(key=lambda x: x['time'])
 
     # Calculate totals in minutes
-    total_working_minutes = int(total_working_time.total_seconds() / 60)
-    total_idle_minutes = int(total_idle_time.total_seconds() / 60)
-    total_session_minutes = int(total_session_time.total_seconds() / 60)
+    # Calculate totals in minutes
+    total_working_minutes = int(total_working_time.total_seconds() / 60) if total_working_time else 0
+    total_idle_minutes = int(total_idle_time.total_seconds() / 60) if total_idle_time else 0
+    total_session_minutes = int(total_session_time.total_seconds() / 60) if total_session_time else 0
 
     # Get shift information
     shift_info = get_user_shift_info(user)

@@ -1,664 +1,458 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% load static %}
-{% load sessions_extras %}
 
-{% block title %}Session Dashboard - TrueAlign{% endblock %}
-
-{% block extra_css %}
-<style>
-  .metric-card {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid #e5e7eb;
-  }
-  .metric-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 25px -5px rgba(16, 185, 129, 0.1), 0 10px 10px -5px rgba(16, 185, 129, 0.04);
-    border-color: #10b981;
-  }
-  .pulse-animation {
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse {
-    0%, 100% {
-      opacity: 1;
-      transform: scale(1);
-    }
-    50% {
-      opacity: 0.8;
-      transform: scale(1.05);
-    }
-  }
-  .loading-spinner {
-    animation: spin 1s linear infinite;
-  }
-  @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-  .status-indicator {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 6px;
-  }
-  .status-operational {
-    background-color: #10b981;
-    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
-  }
-  .status-warning {
-    background-color: #f59e0b;
-    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
-  }
-  .status-error {
-    background-color: #ef4444;
-    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
-  }
-  .gradient-bg {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  }
-  .glass-card {
-    backdrop-filter: blur(10px);
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-  }
-</style>
-{% endblock %}
+{% block title %}{{ page_title }} | TrueAlign{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
-  <div class="bg-white shadow-sm border-b border-gray-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-        <div>
-          <div class="flex items-center space-x-3">
-            <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center shadow-lg">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-              </svg>
-            </div>
-            <div>
-              <h1 class="text-2xl font-semibold text-gray-900">Session Dashboard</h1>
-              <p class="text-gray-600">Real-time monitoring and analytics for user sessions</p>
-            </div>
-          </div>
-        </div>
-        <div id="office-info-display" class="p-4 bg-emerald-50 rounded-lg border border-emerald-200">
-          <div class="flex items-center justify-between space-x-6">
-            <div class="flex items-center space-x-3">
-              <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-              </svg>
-              <div>
-                <p id="office-name" class="text-sm font-medium text-emerald-900">{{ office_info.name }}</p>
-                <p id="office-details" class="text-xs text-emerald-700">{{ office_info.location }} • {{ office_info.total_employees }} employees</p>
-              </div>
-            </div>
-            <div id="system-health" class="flex items-center space-x-2">
-              <span class="status-indicator {% if system_health.status == 'operational' %}status-operational{% elif system_health.status == 'warning' %}status-warning{% else %}status-error{% endif %}"></span>
-              <span class="text-xs font-medium text-emerald-900">{% if system_health.active_tracking %}Tracking Active{% else %}System Idle{% endif %}</span>
-            </div>
-          </div>
+<div class="min-h-screen bg-gray-50/50 p-6">
+  <!-- Header & Global Filter -->
+  <div class="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Session Monitor</h1>
+      <p class="text-sm text-gray-500">Real-time activity tracking across all offices</p>
+    </div>
+
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <!-- Office Filter -->
+      <div class="relative">
+        <select id="officeFilter" onchange="updateDashboard()"
+          class="h-10 w-full appearance-none rounded-lg border border-gray-200 bg-white px-4 pr-8 text-sm font-medium text-gray-700 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:w-48">
+          <option value="all" {% if selected_office_id == 'all' %}selected{% endif %}>All Offices</option>
+          {% for office in all_offices %}
+          <option value="{{ office.id }}" {% if selected_office_id == office.id|stringformat:"s" %}selected{% endif %}>
+            {{ office.name }}
+          </option>
+          {% endfor %}
+        </select>
+        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
         </div>
       </div>
+
+      <!-- Global Search -->
+      <form action="{% url 'sessions:session_list' %}" method="GET" class="relative"
+        onsubmit="this.office.value = document.getElementById('officeFilter').value">
+        <input type="hidden" name="office" value="">
+        <input type="text" name="search" placeholder="Search user, shift..."
+          class="h-10 w-full rounded-lg border border-gray-200 bg-white pl-10 pr-4 text-sm text-gray-700 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:w-64">
+        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </div>
+      </form>
+
+      <!-- Refresh Button -->
+      <button onclick="updateDashboard()"
+        class="inline-flex h-10 items-center justify-center rounded-lg border border-gray-200 bg-white px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+        <svg class="mr-2 h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+          </path>
+        </svg>
+        Refresh
+      </button>
     </div>
   </div>
 
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-8">
-        <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div class="flex-grow flex flex-col sm:flex-row items-center gap-4">
-                <div class="flex items-center space-x-3">
-                    <label for="office-filter" class="text-sm font-medium text-gray-700 flex-shrink-0">Filter by Office:</label>
-                    <select id="office-filter" class="block w-full sm:w-48 px-3 py-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
-                        <option value="all" {% if selected_office_id == 'all' %}selected{% endif %}>All Offices</option>
-                        {% for office in all_offices %}
-                        <option value="{{ office.id }}" {% if selected_office_id == office.id|stringformat:"s" %}selected{% endif %}>{{ office.name }} ({{ office.code }})</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <div id="loading-indicator" class="hidden">
-                        <svg class="loading-spinner h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                    </div>
-                    <span id="filter-status" class="text-sm text-gray-500">Last updated: <span id="last-update-time">{{ system_health.last_update|date:"H:i:s" }}</span></span>
-                </div>
-            </div>
-            <div class="flex items-center space-x-3 flex-shrink-0">
-                <label class="flex items-center">
-                    <input type="checkbox" id="auto-refresh" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" {% if refresh_enabled %}checked{% endif %}>
-                    <span class="ml-2 text-sm font-medium text-gray-700">Auto-refresh</span>
-                </label>
-                <select id="refresh-interval" class="text-sm border border-gray-300 rounded px-2 py-1 bg-white">
-                    <option value="30">30s</option>
-                    <option value="60" selected>1m</option>
-                    <option value="300">5m</option>
-                </select>
-            </div>
+  <!-- Summary Cards -->
+  <div class="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+    <!-- Total Active -->
+    <a href="{% url 'sessions:session_list' %}?status=active"
+      class="group relative overflow-hidden rounded-xl bg-white p-6 shadow-sm transition-all hover:shadow-md">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-500">Active Sessions</p>
+          <h3 class="mt-2 text-3xl font-bold text-gray-900" id="metric-active">{{ metrics.active_sessions }}</h3>
         </div>
-    </div>
-    
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <div class="metric-card bg-white overflow-hidden rounded-lg">
-        <div class="p-6">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                </svg>
-              </div>
-            </div>
-            <div class="ml-4 flex-1">
-              <dt class="text-sm font-medium text-gray-600">Total Sessions</dt>
-              <dd id="total-sessions" class="text-2xl font-semibold text-gray-900 mt-1">{{ metrics.total_sessions|default:0 }}</dd>
-            </div>
-          </div>
+        <div class="rounded-full bg-green-50 p-3 text-green-600 group-hover:bg-green-100">
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+            </path>
+          </svg>
         </div>
       </div>
-      <div class="metric-card bg-white overflow-hidden rounded-lg">
-        <div class="p-6">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
-                <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                </svg>
-              </div>
-            </div>
-            <div class="ml-4 flex-1">
-              <dt class="text-sm font-medium text-gray-600">Active Sessions</dt>
-              <dd id="active-sessions" class="text-2xl font-semibold text-gray-900 mt-1">
-                <span class="{% if metrics.active_sessions > 0 %}pulse-animation{% endif %}">{{ metrics.active_sessions|default:0 }}</span>
-              </dd>
-            </div>
-          </div>
+      <div class="mt-4 flex items-center text-sm text-green-600">
+        <span class="font-medium">Live Now</span>
+      </div>
+    </a>
+
+    <!-- Total Idle -->
+    <a href="{% url 'sessions:session_list' %}?status=idle"
+      class="group relative overflow-hidden rounded-xl bg-white p-6 shadow-sm transition-all hover:shadow-md">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-500">Idle Users</p>
+          <h3 class="mt-2 text-3xl font-bold text-gray-900" id="metric-idle">{{ metrics.idle_sessions }}</h3>
+        </div>
+        <div class="rounded-full bg-yellow-50 p-3 text-yellow-600 group-hover:bg-yellow-100">
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
         </div>
       </div>
-      <div class="metric-card bg-white overflow-hidden rounded-lg">
-        <div class="p-6">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-                <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-              </div>
-            </div>
-            <div class="ml-4 flex-1">
-              <dt class="text-sm font-medium text-gray-600">Idle Sessions</dt>
-              <dd id="idle-sessions" class="text-2xl font-semibold text-gray-900 mt-1">{{ metrics.idle_sessions|default:0 }}</dd>
-            </div>
-          </div>
+      <div class="mt-4 flex items-center text-sm text-yellow-600">
+        <span class="font-medium">Needs Attention</span>
+      </div>
+    </a>
+
+    <!-- Productivity -->
+    <div class="group relative overflow-hidden rounded-xl bg-white p-6 shadow-sm transition-all hover:shadow-md">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-500">Productivity</p>
+          <h3 class="mt-2 text-3xl font-bold text-gray-900" id="metric-productivity">{{ metrics.productivity_ratio }}%
+          </h3>
+        </div>
+        <div class="rounded-full bg-indigo-50 p-3 text-indigo-600 group-hover:bg-indigo-100">
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6">
+            </path>
+          </svg>
         </div>
       </div>
-      <div class="metric-card bg-white overflow-hidden rounded-lg">
-        <div class="p-6">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <div class="w-12 h-12 bg-lime-100 rounded-lg flex items-center justify-center">
-                <svg class="w-6 h-6 text-lime-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-              </div>
-            </div>
-            <div class="ml-4 flex-1">
-              <dt class="text-sm font-medium text-gray-600">Recent (24h)</dt>
-              <dd id="recent-sessions" class="text-2xl font-semibold text-gray-900 mt-1">{{ metrics.recent_24h|default:0 }}</dd>
-            </div>
-          </div>
-        </div>
+      <div class="mt-4 w-full rounded-full bg-gray-100 h-1.5">
+        <div class="h-1.5 rounded-full bg-indigo-600 transition-all duration-500"
+          style="width: {{ metrics.productivity_ratio }}%"></div>
       </div>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="p-5">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-            </div>
-            <div class="ml-5">
-              <h3 class="text-lg leading-6 font-medium text-gray-900">Avg Duration</h3>
-              <p id="avg-duration" class="text-2xl font-semibold text-indigo-600">
-                {% if metrics.avg_duration_minutes %} {{ metrics.avg_duration_minutes }} min {% else %} N/A {% endif %}
-              </p>
-            </div>
-          </div>
+
+    <!-- Total Today -->
+    <a href="{% url 'sessions:session_list' %}?date={% now 'Y-m-d' %}"
+      class="group relative overflow-hidden rounded-xl bg-white p-6 shadow-sm transition-all hover:shadow-md">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-500">Total Today</p>
+          <h3 class="mt-2 text-3xl font-bold text-gray-900" id="metric-total">{{ metrics.recent_24h }}</h3>
+        </div>
+        <div class="rounded-full bg-blue-50 p-3 text-blue-600 group-hover:bg-blue-100">
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+            </path>
+          </svg>
         </div>
       </div>
-      <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="p-5">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-              </svg>
-            </div>
-            <div class="ml-5">
-              <h3 class="text-lg leading-6 font-medium text-gray-900">Productivity</h3>
-              <p id="productivity-ratio" class="text-2xl font-semibold text-green-600">{{ metrics.productivity_ratio|default:0 }}%</p>
-            </div>
-          </div>
-        </div>
+      <div class="mt-4 flex items-center text-sm text-gray-500">
+        Last 24 Hours
       </div>
-      <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="p-5">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <svg class="w-8 h-8 {% if system_health.status == 'operational' %}text-green-600{% else %}text-red-600{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-            </div>
-            <div class="ml-5">
-              <h3 class="text-lg leading-6 font-medium text-gray-900">System Status</h3>
-              <p id="system-status" class="text-lg font-semibold {% if system_health.status == 'operational' %}text-green-600{% else %}text-red-600{% endif %} capitalize">{{ system_health.status|default:"unknown" }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+    </a>
+  </div>
+
+  <!-- Charts Grid -->
+  <div class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <!-- Activity Trend (Line Chart) -->
+    <div class="rounded-xl bg-white p-6 shadow-sm lg:col-span-2">
+      <h3 class="mb-4 text-lg font-semibold text-gray-900">Activity Trend (24h)</h3>
+      <div id="activityChart" class="h-80 w-full"></div>
     </div>
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <div class="lg:col-span-2">
-        <div class="bg-white shadow rounded-lg">
-          <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Top Active Users <span class="text-sm font-normal text-gray-500">(by session count)</span></h3>
-            <div id="top-users-container">
-              {% if top_users %}
-              <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                  <thead class="bg-gray-50">
-                    <tr>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sessions</th>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Active</th>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shift</th>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Time</th>
-                    </tr>
-                  </thead>
-                  <tbody id="top-users-tbody" class="bg-white divide-y divide-gray-200">
-                    {% for user in top_users %}
-                    <tr>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                          <div class="flex-shrink-0 h-8 w-8">
-                            <div class="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
-                              <span class="text-sm font-medium text-gray-700">{{ user.user__first_name|default:user.user__username|slice:":1"|upper }}</span>
-                            </div>
-                          </div>
-                          <div class="ml-4">
-                            <div class="text-sm font-medium text-gray-900">
-                              {% if user.user__first_name %} {{ user.user__first_name }} {{ user.user__last_name }} {% else %} {{ user.user__username }} {% endif %}
-                            </div>
-                            <div class="text-sm text-gray-500">{{ user.user__username }}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">{{ user.session_count }}</span>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {% if user.active_sessions > 0 %}
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">{{ user.active_sessions }}</span>
-                        {% else %}
-                        <span class="text-gray-400">0</span>
-                        {% endif %}
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {% if user.has_shift_data %}
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if user.is_day_shift %}bg-amber-100 text-amber-800{% else %}bg-lime-100 text-lime-800{% endif %}">{{ user.current_shift }}</span>
-                        {% else %}
-                        <span class="text-gray-400">No shift</span>
-                        {% endif %}
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {% if user.total_time_hours %} {{ user.total_time_hours }}h {% else %} - {% endif %}
-                      </td>
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-              {% else %}
-              <div class="text-center py-12">
-                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-                </svg>
-                <h3 class="mt-2 text-sm font-medium text-gray-900">No users found</h3>
-                <p class="mt-1 text-sm text-gray-500">No session data available for the selected office.</p>
-              </div>
-              {% endif %}
-            </div>
-          </div>
-        </div>
+
+    <!-- Status Distribution (Donut Chart) -->
+    <div class="rounded-xl bg-white p-6 shadow-sm">
+      <h3 class="mb-4 text-lg font-semibold text-gray-900">Current Status</h3>
+      <div id="statusChart" class="flex h-80 w-full items-center justify-center"></div>
+    </div>
+  </div>
+
+  <div class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <!-- Office Distribution (Bar Chart) -->
+    <div class="rounded-xl bg-white p-6 shadow-sm">
+      <h3 class="mb-4 text-lg font-semibold text-gray-900">Users by Office</h3>
+      <div id="officeChart" class="h-80 w-full"></div>
+    </div>
+
+    <!-- Top Users Table -->
+    <div class="rounded-xl bg-white shadow-sm">
+      <div class="border-b border-gray-100 px-6 py-4">
+        <h3 class="text-lg font-semibold text-gray-900">Top Active Users</h3>
       </div>
-      <div class="space-y-8">
-        <div class="bg-white shadow rounded-lg">
-          <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Device Distribution</h3>
-            <div id="device-stats-container">
-              {% if device_stats %}
-              <div class="space-y-3">
-                {% for device in device_stats %}
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                      {% if device.device_type == 'Mac' %}
-                      <svg class="h-5 w-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.993 4.21a1.494 1.494 0 012.396 1.1c-.02.193-.06.38-.12.558-.09.264-.2.513-.33.748-.13.235-.28.455-.45.66-.17.204-.37.383-.59.547-.22.163-.48.297-.76.4-.28.103-.59.177-.92.223-.33.046-.68.065-1.03.055-.35-.01-.7-.05-1.04-.12-.34-.07-.67-.18-.98-.33-.31-.15-.59-.34-.85-.57-.26-.23-.48-.5-.67-.81-.19-.31-.33-.66-.42-1.04-.09-.38-.13-.79-.11-1.21.02-.42.1-.83.23-1.22.13-.39.31-.76.54-1.1.23-.34.5-.66.82-.94.32-.28.68-.53 1.07-.73.39-.2.81-.35 1.25-.45.44-.1.9-.15 1.35-.15.25 0 .5.01.74.04zM5.19 14.28a.75.75 0 001.06-1.06l-1.06 1.06zM6.25 13.22l5.47-5.47a.75.75 0 10-1.06-1.06L5.19 12.16a.75.75 0 001.06 1.06z" clip-rule="evenodd"></path></svg>
-                      {% elif device.device_type == 'Windows' %}
-                      <svg class="h-5 w-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h9v9H0V0zm11 0h9v9h-9V0zM0 11h9v9H0v-9zm11 11h9v-9h-9v9z"></path></svg>
-                      {% else %}
-                       <svg class="h-5 w-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10.75 2.75a.75.75 0 00-1.5 0v8.586l-1.97-1.97a.75.75 0 10-1.06 1.06l3.25 3.25a.75.75 0 001.06 0l3.25-3.25a.75.75 0 10-1.06-1.06l-1.97 1.97V2.75zM2 15.25a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75a.75.75 0 01-.75-.75z"></path></svg>
-                      {% endif %}
-                    </div>
-                    <span class="ml-3 text-sm font-medium text-gray-900">{{ device.device_type }}</span>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-gray-50 text-gray-500">
+            <tr>
+              <th class="px-6 py-3 font-medium">User</th>
+              <th class="px-6 py-3 font-medium">Shift</th>
+              <th class="px-6 py-3 font-medium">Status</th>
+              <th class="px-6 py-3 font-medium text-right">Duration</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100" id="topUsersTable">
+            {% for user in top_users %}
+            <tr class="group hover:bg-gray-50">
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">
+                    {{ user.user__first_name|first }}{{ user.user__last_name|first }}
                   </div>
-                  <div class="flex items-center space-x-2">
-                    <span class="text-sm text-gray-500">{{ device.session_count }}</span>
-                    {% if device.active_count > 0 %}
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">{{ device.active_count }} active</span>
-                    {% endif %}
-                  </div>
-                </div>
-                {% endfor %}
-              </div>
-              {% else %}
-              <p class="text-sm text-gray-500 text-center py-4">No device data available</p>
-              {% endif %}
-            </div>
-          </div>
-        </div>
-        {% if location_stats %}
-        <div class="bg-white shadow rounded-lg">
-          <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Top Locations</h3>
-            <div id="location-stats-container">
-              <div class="space-y-3">
-                {% for location in location_stats|slice:":5" %}
-                <div class="flex items-center justify-between">
                   <div>
-                    <p class="text-sm font-medium text-gray-900">{{ location.location_city }}</p>
-                    {% if location.location_country %}
-                    <p class="text-xs text-gray-500">{{ location.location_country }}</p>
-                    {% endif %}
+                    <div class="font-medium text-gray-900">{{ user.user__first_name }} {{ user.user__last_name }}</div>
+                    <div class="text-xs text-gray-500">@{{ user.user__username }}</div>
                   </div>
-                  <span class="text-sm text-gray-500">{{ location.session_count }}</span>
                 </div>
-                {% endfor %}
-              </div>
-            </div>
-          </div>
-        </div>
-        {% endif %}
-        <div class="bg-white shadow rounded-lg">
-          <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Quick Actions</h3>
-            <div class="space-y-3">
-              <a href="{% url 'sessions:session_list' %}{% if selected_office_id != 'all' %}?office={{ selected_office_id }}{% endif %}" class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 transition-colors">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg> View All Sessions
-              </a>
-              <a href="{% url 'sessions:analytics' %}{% if selected_office_id != 'all' %}?office={{ selected_office_id }}{% endif %}" class="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                </svg> Analytics
-              </a>
-              <a href="{% url 'sessions:export' %}{% if selected_office_id != 'all' %}?office={{ selected_office_id }}{% endif %}" class="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg> Export CSV
-              </a>
-            </div>
-          </div>
-        </div>
+              </td>
+              <td class="px-6 py-4">
+                <span
+                  class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                  {{ user.current_shift }}
+                </span>
+              </td>
+              <td class="px-6 py-4">
+                {% if user.active_sessions > 0 %}
+                <span
+                  class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                  <span class="h-1.5 w-1.5 rounded-full bg-green-600"></span> Active
+                </span>
+                {% else %}
+                <span
+                  class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                  Offline
+                </span>
+                {% endif %}
+              </td>
+              <td class="px-6 py-4 text-right font-medium text-gray-900">
+                {{ user.total_time_hours }}h
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="px-6 py-8 text-center text-gray-500">No active users found</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="border-t border-gray-100 px-6 py-3 text-center">
+        <a href="{% url 'sessions:session_list' %}"
+          class="text-sm font-medium text-indigo-600 hover:text-indigo-700">View All Users &rarr;</a>
       </div>
     </div>
   </div>
 </div>
 
-<form style="display: none">{% csrf_token %}</form>
+<!-- ApexCharts -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    // Elements
-    const officeFilter = document.getElementById("office-filter");
-    const loadingIndicator = document.getElementById("loading-indicator");
-    const lastUpdateTime = document.getElementById("last-update-time");
-    const autoRefreshCheckbox = document.getElementById("auto-refresh");
-    const refreshInterval = document.getElementById("refresh-interval");
-    let refreshTimer = null;
-    let currentOfficeId = officeFilter.value;
+  // Initialize Charts Data
+  const hourlyData = JSON.parse('{{ hourly_activity|safe }}');
+  const officeData = JSON.parse('{{ office_distribution|safe }}');
+  const statusData = JSON.parse('{{ status_distribution|safe }}');
 
-    // Handle office filter change
-    officeFilter.addEventListener("change", function() {
-        const selectedOfficeId = this.value;
-        currentOfficeId = selectedOfficeId;
-        // Update URL without page reload
-        const url = new URL(window.location);
-        url.searchParams.set('office', selectedOfficeId);
-        window.history.pushState({}, '', url);
-        // Reload page with new office filter
-        window.location.reload();
-    });
+  // Chart Options
+  const commonOptions = {
+    fontFamily: 'Inter, sans-serif',
+    toolbar: { show: false },
+  };
 
-    // Auto-refresh functionality
-    function updateDashboard() {
-        if (!autoRefreshCheckbox.checked) return;
-        showLoading(true);
-        fetch(`/sessions/dashboard/ajax/?office=${currentOfficeId}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    updateMetrics(data.metrics);
-                    updateTopUsers(data.top_users);
-                    updateDeviceStats(data.device_stats);
-                    updateSystemHealth(data.system_health);
-                    updateLastUpdateTime();
-                } else {
-                    console.error('Error updating dashboard:', data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching dashboard data:', error);
-            })
-            .finally(() => {
-                showLoading(false);
-            });
+  // 1. Activity Trend Chart
+  const activityOptions = {
+    ...commonOptions,
+    series: [{
+      name: 'Active Sessions',
+      data: hourlyData.series
+    }],
+    chart: {
+      type: 'area',
+      height: 320,
+      toolbar: { show: false },
+      zoom: { enabled: false }
+    },
+    dataLabels: { enabled: false },
+    stroke: {
+      curve: 'smooth',
+      width: 2
+    },
+    xaxis: {
+      categories: hourlyData.labels,
+      axisBorder: { show: false },
+      axisTicks: { show: false },
+      labels: { style: { colors: '#64748b', fontSize: '12px' } }
+    },
+    yaxis: {
+      labels: { style: { colors: '#64748b', fontSize: '12px' } }
+    },
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.4,
+        opacityTo: 0.05,
+        stops: [0, 100]
+      }
+    },
+    colors: ['#4f46e5'],
+    grid: {
+      borderColor: '#f1f5f9',
+      strokeDashArray: 4,
+      yaxis: { lines: { show: true } }
+    }
+  };
+
+  // 2. Status Distribution Chart
+  const statusOptions = {
+    ...commonOptions,
+    series: statusData.series,
+    labels: statusData.labels,
+    chart: {
+      type: 'donut',
+      height: 320
+    },
+    colors: ['#22c55e', '#eab308', '#94a3b8'],
+    plotOptions: {
+      pie: {
+        donut: {
+          size: '75%',
+          labels: {
+            show: true,
+            total: {
+              show: true,
+              label: 'Total',
+              formatter: function (w) {
+                return w.globals.seriesTotals.reduce((a, b) => a + b, 0)
+              }
+            }
+          }
+        }
+      }
+    },
+    legend: {
+      position: 'bottom',
+      fontFamily: 'Inter, sans-serif',
+    },
+    dataLabels: { enabled: false }
+  };
+
+  // 3. Office Distribution Chart
+  const officeOptions = {
+    ...commonOptions,
+    series: [{
+      name: 'Users',
+      data: officeData.series
+    }],
+    chart: {
+      type: 'bar',
+      height: 320,
+      toolbar: { show: false }
+    },
+    plotOptions: {
+      bar: {
+        borderRadius: 4,
+        horizontal: true,
+        barHeight: '60%',
+        distributed: true
+      }
+    },
+    colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+    dataLabels: { enabled: false },
+    xaxis: {
+      categories: officeData.labels,
+      labels: { style: { colors: '#64748b' } }
+    },
+    yaxis: {
+      labels: { style: { colors: '#64748b' } }
+    },
+    grid: {
+      borderColor: '#f1f5f9',
+      xaxis: { lines: { show: true } },
+      yaxis: { lines: { show: false } }
+    },
+    legend: { show: false }
+  };
+
+  // Render Charts
+  const activityChart = new ApexCharts(document.querySelector("#activityChart"), activityOptions);
+  activityChart.render();
+
+  const statusChart = new ApexCharts(document.querySelector("#statusChart"), statusOptions);
+  statusChart.render();
+
+  const officeChart = new ApexCharts(document.querySelector("#officeChart"), officeOptions);
+  officeChart.render();
+
+  // Dashboard Update Logic
+  function updateDashboard() {
+    const officeId = document.getElementById('officeFilter').value;
+    const btn = document.querySelector('button[onclick="updateDashboard()"]');
+
+    // Add loading state
+    btn.classList.add('opacity-75', 'cursor-wait');
+
+    fetch(`{% url 'sessions:dashboard_ajax_update' %}?office=${officeId}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Update Metrics
+          document.getElementById('metric-active').textContent = data.metrics.active_sessions;
+          document.getElementById('metric-idle').textContent = data.metrics.idle_sessions;
+          document.getElementById('metric-productivity').textContent = data.metrics.productivity_ratio + '%';
+          document.getElementById('metric-total').textContent = data.metrics.recent_24h;
+
+          // Update Charts
+          activityChart.updateSeries([{ data: data.hourly_activity.series }]);
+          statusChart.updateSeries(data.status_distribution.series);
+          officeChart.updateSeries([{ data: data.office_distribution.series }]);
+          officeChart.updateOptions({ xaxis: { categories: data.office_distribution.labels } });
+
+          // Update Table (Simplified for demo, ideally re-render rows)
+          // In a real app, you might want to use a JS framework or partial HTML rendering
+          // For now, we'll just reload the page if structure changes significantly
+          // or implement a simple row builder here.
+          updateTopUsersTable(data.top_users);
+        }
+      })
+      .catch(error => console.error('Error updating dashboard:', error))
+      .finally(() => {
+        btn.classList.remove('opacity-75', 'cursor-wait');
+      });
+  }
+
+  function updateTopUsersTable(users) {
+    const tbody = document.getElementById('topUsersTable');
+    tbody.innerHTML = '';
+
+    if (users.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500">No active users found</td></tr>';
+      return;
     }
 
-    function updateMetrics(metrics) {
-        document.getElementById("total-sessions").textContent = metrics.total_sessions || 0;
-        document.getElementById("active-sessions").innerHTML = `<span class="${metrics.active_sessions > 0 ? 'pulse-animation' : ''}">${metrics.active_sessions || 0}</span>`;
-        document.getElementById("idle-sessions").textContent = metrics.idle_sessions || 0;
-        document.getElementById("recent-sessions").textContent = metrics.recent_24h || 0;
-        const avgDurationElement = document.getElementById("avg-duration");
-        if (avgDurationElement) {
-            avgDurationElement.textContent = metrics.avg_duration_minutes ? `${metrics.avg_duration_minutes} min` : 'N/A';
-        }
-        const productivityElement = document.getElementById("productivity-ratio");
-        if (productivityElement) {
-            productivityElement.textContent = `${metrics.productivity_ratio || 0}%`;
-        }
-    }
-
-    function updateTopUsers(topUsers) {
-        const tbody = document.getElementById("top-users-tbody");
-        const container = document.getElementById("top-users-container");
-
-        if (!tbody || !container) return;
-        
-        if (topUsers && topUsers.length > 0) {
-            let html = `
-              <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                  <thead class="bg-gray-50">
-                    <tr>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sessions</th>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Active</th>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shift</th>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Time</th>
-                    </tr>
-                  </thead>
-                  <tbody id="top-users-tbody" class="bg-white divide-y divide-gray-200">`;
-            
-            topUsers.forEach(user => {
-                const name = user.user__first_name && user.user__last_name ? `${user.user__first_name} ${user.user__last_name}` : user.user__username;
-                const initial = user.user__first_name ? user.user__first_name.charAt(0).toUpperCase() : user.user__username.charAt(0).toUpperCase();
-                html += `
-                <tr>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 h-8 w-8">
-                                <div class="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
-                                    <span class="text-sm font-medium text-gray-700">${initial}</span>
-                                </div>
+    users.forEach(user => {
+      const row = `
+                <tr class="group hover:bg-gray-50">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">
+                                ${user.user__first_name[0] || ''}${user.user__last_name[0] || ''}
                             </div>
-                            <div class="ml-4">
-                                <div class="text-sm font-medium text-gray-900">${name}</div>
-                                <div class="text-sm text-gray-500">${user.user__username}</div>
+                            <div>
+                                <div class="font-medium text-gray-900">${user.user__first_name} ${user.user__last_name}</div>
+                                <div class="text-xs text-gray-500">@${user.user__username}</div>
                             </div>
                         </div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">${user.session_count}</span></td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${user.active_sessions > 0 ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">${user.active_sessions}</span>` : '<span class="text-gray-400">0</span>'}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.has_shift_data ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.is_day_shift ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'}">${user.current_shift}</span>` : '<span class="text-gray-400">No shift</span>'}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.total_time_hours ? `${user.total_time_hours}h` : '-'}</td>
-                </tr>`;
-            });
-            
-            html += `</tbody></table></div>`;
-            container.innerHTML = html;
-        } else {
-            container.innerHTML = `
-              <div class="text-center py-12">
-                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-                </svg>
-                <h3 class="mt-2 text-sm font-medium text-gray-900">No users found</h3>
-                <p class="mt-1 text-sm text-gray-500">No session data available for the selected office.</p>
-              </div>`;
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                            ${user.current_shift}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        ${user.active_sessions > 0
+          ? `<span class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800"><span class="h-1.5 w-1.5 rounded-full bg-green-600"></span> Active</span>`
+          : `<span class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">Offline</span>`
         }
-    }
-
-    function updateDeviceStats(deviceStats) {
-        const container = document.getElementById("device-stats-container");
-        if (container && deviceStats && deviceStats.length > 0) {
-            let html = '<div class="space-y-3">';
-            deviceStats.forEach(device => {
-                 const iconHtml = device.device_type === 'Mac' ? 
-                    '<svg class="h-5 w-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.993 4.21a1.494 1.494 0 012.396 1.1c-.02.193-.06.38-.12.558-.09.264-.2.513-.33.748-.13.235-.28.455-.45.66-.17.204-.37.383-.59.547-.22.163-.48.297-.76.4-.28.103-.59.177-.92.223-.33.046-.68.065-1.03.055-.35-.01-.7-.05-1.04-.12-.34-.07-.67-.18-.98-.33-.31-.15-.59-.34-.85-.57-.26-.23-.48-.5-.67-.81-.19-.31-.33-.66-.42-1.04-.09-.38-.13-.79-.11-1.21.02-.42.1-.83.23-1.22.13-.39.31-.76.54-1.1.23-.34.5-.66.82-.94.32-.28.68-.53 1.07-.73.39-.2.81-.35 1.25-.45.44-.1.9-.15 1.35-.15.25 0 .5.01.74.04zM5.19 14.28a.75.75 0 001.06-1.06l-1.06 1.06zM6.25 13.22l5.47-5.47a.75.75 0 10-1.06-1.06L5.19 12.16a.75.75 0 001.06 1.06z" clip-rule="evenodd"></path></svg>' :
-                 device.device_type === 'Windows' ?
-                    '<svg class="h-5 w-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h9v9H0V0zm11 0h9v9h-9V0zM0 11h9v9H0v-9zm11 11h9v-9h-9v9z"></path></svg>' :
-                    '<svg class="h-5 w-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10.75 2.75a.75.75 0 00-1.5 0v8.586l-1.97-1.97a.75.75 0 10-1.06 1.06l3.25 3.25a.75.75 0 001.06 0l3.25-3.25a.75.75 0 10-1.06-1.06l-1.97 1.97V2.75zM2 15.25a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75a.75.75 0 01-.75-.75z"></path></svg>';
-                
-                html += `
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">${iconHtml}</div>
-                        <span class="ml-3 text-sm font-medium text-gray-900">${device.device_type}</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <span class="text-sm text-gray-500">${device.session_count}</span>
-                        ${device.active_count > 0 ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">${device.active_count} active</span>` : ''}
-                    </div>
-                </div>`;
-            });
-            html += '</div>';
-            container.innerHTML = html;
-        } else {
-            container.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">No device data available</p>';
-        }
-    }
-
-    function updateSystemHealth(systemHealth) {
-        // Main status card
-        const statusElement = document.getElementById("system-status");
-        if (statusElement) {
-            statusElement.textContent = systemHealth.status || 'unknown';
-            statusElement.className = `text-lg font-semibold capitalize ${ systemHealth.status === 'operational' ? 'text-green-600' : 'text-red-600' }`;
-            
-            const icon = statusElement.closest('.flex.items-center').querySelector('svg');
-            if(icon) {
-                 icon.className = `w-8 h-8 ${ systemHealth.status === 'operational' ? 'text-green-600' : 'text-red-600' }`;
-            }
-        }
-        
-        // Header indicator
-        const healthIndicator = document.getElementById("system-health");
-        if (healthIndicator) {
-            const indicator = healthIndicator.querySelector('.status-indicator');
-            if (indicator) {
-                indicator.className = `status-indicator ${ systemHealth.status === 'operational' ? 'status-operational' : systemHealth.status === 'warning' ? 'status-warning' : 'status-error' }`;
-            }
-            const statusText = healthIndicator.querySelector('span:last-child');
-            if (statusText) {
-                statusText.textContent = systemHealth.active_tracking ? 'Tracking Active' : 'System Idle';
-            }
-        }
-    }
-
-    function updateLastUpdateTime() {
-        const now = new Date();
-        lastUpdateTime.textContent = now.toLocaleTimeString();
-    }
-
-    function showLoading(show) {
-        if (show) {
-            loadingIndicator.classList.remove("hidden");
-        } else {
-            loadingIndicator.classList.add("hidden");
-        }
-    }
-
-    function startAutoRefresh() {
-        if (refreshTimer) {
-            clearInterval(refreshTimer);
-        }
-        if (autoRefreshCheckbox.checked) {
-            const interval = parseInt(refreshInterval.value) * 1000;
-            refreshTimer = setInterval(updateDashboard, interval);
-        }
-    }
-
-    function stopAutoRefresh() {
-        if (refreshTimer) {
-            clearInterval(refreshTimer);
-            refreshTimer = null;
-        }
-    }
-
-    // Event listeners
-    autoRefreshCheckbox.addEventListener("change", function() {
-        if (this.checked) {
-            startAutoRefresh();
-            updateDashboard(); // Immediate update
-        } else {
-            stopAutoRefresh();
-        }
+                    </td>
+                    <td class="px-6 py-4 text-right font-medium text-gray-900">
+                        ${user.total_time_hours}h
+                    </td>
+                </tr>
+            `;
+      tbody.insertAdjacentHTML('beforeend', row);
     });
-
-    refreshInterval.addEventListener("change", function() {
-        if (autoRefreshCheckbox.checked) {
-            startAutoRefresh();
-        }
-    });
-
-    // Initialize auto-refresh if enabled
-    if (autoRefreshCheckbox.checked) {
-        startAutoRefresh();
-    }
-
-    // Clean up on page unload
-    window.addEventListener("beforeunload", function() {
-        stopAutoRefresh();
-    });
-});
+  }
 </script>
 {% endblock %}

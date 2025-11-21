@@ -593,6 +593,23 @@ class UserSession(models.Model):
     location_longitude = models.FloatField(null=True, blank=True)
     location_accuracy = models.FloatField(null=True, blank=True)
     location_type = models.CharField(max_length=20, null=True, blank=True)
+    
+    # Office location link - Direct FK for performance
+    current_office_location = models.ForeignKey(
+        'OfficeLocation',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='active_sessions',
+        help_text="Office where this session is taking place (resolved from GPS or IP)"
+    )
+    
+    # Geo-velocity tracking for security
+    last_location_latitude = models.FloatField(null=True, blank=True)
+    last_location_longitude = models.FloatField(null=True, blank=True)
+    last_location_time = models.DateTimeField(null=True, blank=True)
+    impossible_travel_detected = models.BooleanField(default=False)
+    travel_velocity_kmh = models.FloatField(null=True, blank=True, help_text="Speed between last two locations")
 
     # Page and tab (stored as JSON for multiple tabs)
     tab_title = models.JSONField(default=list, blank=True)
@@ -955,16 +972,155 @@ class UserSession(models.Model):
         """
         Calculate distance between two points using Haversine formula
         """
-        # Convert decimal degrees to radians
-        lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+        if not (isinstance(lat1, (int, float)) and isinstance(lon1, (int, float)) and isinstance(lat2, (int, float)) and isinstance(lon2, (int, float))):
+            logger.warning(f"Invalid coordinates for distance calculation: lat1={lat1}, lon1={lon1}, lat2={lat2}, lon2={lon2}")
+            return float('inf')  # Return large distance for invalid coordinates
 
-        # Haversine formula
-        dlon = lon2 - lon1
-        dlat = lat2 - lat1
-        a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
-        c = 2 * math.asin(math.sqrt(a))
-        r = 6371  # Radius of earth in kilometers
-        return c * r
+        try:
+            R = 6371  # Radius of Earth in kilometers
+
+            lat1_rad = math.radians(lat1)
+            lon1_rad = math.radians(lon1)
+            lat2_rad = math.radians(lat2)
+            lon2_rad = math.radians(lon2)
+
+            dlat = lat2_rad - lat1_rad
+            dlon = lon2_rad - lon1_rad
+
+            a = math.sin(dlat / 2) ** 2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon / 2) ** 2
+            c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+            distance = R * c
+            return distance
+        except Exception as e:
+            logger.error(f"Error calculating distance: {str(e)}")
+            return float('inf')
+    
+    def check_geo_velocity(self, new_lat, new_lon):
+        """
+        Check if user has traveled impossibly fast between locations.
+        Returns (is_suspicious, details)
+        """
+        if not self.last_location_latitude or not self.last_location_time:
+            # First location update - store it
+            self.last_location_latitude = new_lat
+            self.last_location_longitude = new_lon
+            self.last_location_time = timezone.now()
+            return False, None
+        
+        # Calculate time difference in hours
+        time_diff = (timezone.now() - self.last_location_time).total_seconds() / 3600
+        
+        if time_diff == 0:
+            return False, None
+        
+        # Calculate distance
+        distance_km = self.calculate_distance(
+            self.last_location_latitude,
+            self.last_location_longitude,
+            new_lat,
+            new_lon
+        )
+        
+        # Calculate velocity
+        velocity_kmh = distance_km / time_diff if time_diff > 0 else 0
+        
+        # Max realistic travel speed: 900 km/h (commercial airplane)
+        # If distance < 500km use car speed limit: 120 km/h
+        max_realistic_speed = 120 if distance_km < 500 else 900
+        
+        is_suspicious = velocity_kmh > max_realistic_speed
+        
+        if is_suspicious:
+            details = {
+                'distance_km': round(distance_km, 2),
+                'time_hours': round(time_diff, 2),
+                'velocity_kmh': round(velocity_kmh, 2),
+                'max_realistic_speed': max_realistic_speed,
+                'previous_location': {
+                    'lat': self.last_location_latitude,
+                    'lon': self.last_location_longitude,
+                    'time': self.last_location_time.isoformat()
+                },
+                'new_location': {
+                    'lat': new_lat,
+                    'lon': new_lon,
+                    'time': timezone.now().isoformat()
+                }
+            }
+            
+            # Flag the session
+            self.impossible_travel_detected = True
+            self.travel_velocity_kmh = velocity_kmh
+            self.save(update_fields=['impossible_travel_detected', 'travel_velocity_kmh'])
+            
+            logger.warning(f"Impossible travel detected for user {self.user.username}: {velocity_kmh:.0f} km/h")
+            
+            return True, details
+        
+        # Update last location
+        self.last_location_latitude = new_lat
+        self.last_location_longitude = new_lon
+        self.last_location_time = timezone.now()
+        self.travel_velocity_kmh = velocity_kmh
+        self.save(update_fields=[
+            'last_location_latitude',
+            'last_location_longitude',
+            'last_location_time',
+            'travel_velocity_kmh'
+        ])
+        
+        return False, None
+    
+    def resolve_office_location(self):
+        """
+        Determine which office location the user is at based on GPS coordinates.
+        Sets current_office_location field.
+        Returns the resolved OfficeLocation or None if remote.
+        """
+        if not self.location_latitude or not self.location_longitude:
+            # No GPS data - try to use user's default office
+            if hasattr(self.user, 'profile') and hasattr(self.user.profile, 'office_location'):
+                self.current_office_location = self.user.profile.office_location
+                self.save(update_fields=['current_office_location'])
+                return self.current_office_location
+            return None
+        
+        # Get all active offices
+        offices = OfficeLocation.objects.filter(is_active=True)
+        
+        closest_office = None
+        min_distance = float('inf')
+        OFFICE_RADIUS_KM = 0.5  # 500 meters
+        
+        for office in offices:
+            # Skip offices without coordinates
+            if not hasattr(office, 'latitude') or not hasattr(office, 'longitude'):
+                continue
+            if not office.latitude or not office.longitude:
+                continue
+                
+            distance = self.calculate_distance(
+                self.location_latitude,
+                self.location_longitude,
+                float(office.latitude),
+                float(office.longitude)
+            )
+            
+            if distance < min_distance and distance < OFFICE_RADIUS_KM:
+                min_distance = distance
+                closest_office = office
+        
+        # Update the session's office location
+        self.current_office_location = closest_office
+        self.save(update_fields=['current_office_location'])
+        
+        if closest_office:
+            logger.info(f"Resolved office location for {self.user.username}: {closest_office.name} ({min_distance*1000:.0f}m away)")
+        else:
+            logger.info(f"User {self.user.username} is remote (no office within {OFFICE_RADIUS_KM}km)")
+        
+        return closest_office
 
     def update_activity(self, activity_time, is_idle=False):
         """Update the last activity timestamp and idle status"""
@@ -1805,7 +1961,124 @@ class UserSession(models.Model):
         if not self._skip_log:
             logger.info(f"Session saved: {self.id} for user {self.user.username}, active: {self.is_active}, idle: {self.is_idle}")
 
+
+
+class UserDevice(models.Model):
+    """
+    Model for tracking user devices and implementing 'Trusted Device' functionality
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='devices'
+    )
+    
+    # Device identification
+    device_fingerprint = models.CharField(
+        max_length=255,
+        unique=True,
+        help_text="Unique fingerprint generated from device characteristics"
+    )
+    device_name = models.CharField(
+        max_length=200,
+        help_text="Human-readable device name (e.g., 'Chrome on MacBook Pro')"
+    )
+    
+    # Device details
+    browser = models.CharField(max_length=100, null=True, blank=True)
+    os = models.CharField(max_length=100, null=True, blank=True)
+    device_type = models.CharField(max_length=20, null=True, blank=True)  # mobile, tablet, desktop
+    
+    # Trust and security
+    is_trusted = models.BooleanField(default=False)
+    trust_level = models.IntegerField(default=0, help_text="0-100 trust score")
+    
+    # Tracking
+    first_seen = models.DateTimeField(auto_now_add=True)
+    last_seen = models.DateTimeField(auto_now=True)
+    last_ip = models.GenericIPAddressField(null=True, blank=True)
+    ip_addresses = models.JSONField(
+        default=list,
+        help_text="Historical list of IP addresses used by this device"
+    )
+    
+    # Location history
+    locations_used = models.JSONField(
+        default=list,
+        help_text="List of locations this device has been used from"
+    )
+    
+    # Usage statistics
+    session_count = models.IntegerField(default=0)
+    last_session_id = models.UUIDField(null=True, blank=True)
+    
+    # Security flags
+    suspicious_activity_count = models.IntegerField(default=0)
+    is_blocked = models.BooleanField(default=False)
+    blocked_reason = models.TextField(null=True, blank=True)
+    
+    class Meta:
+        db_table = 'trueAlign_userdevice'
+        ordering = ['-last_seen']
+        indexes = [
+            models.Index(fields=['user', 'device_fingerprint'], name='user_device_fp_idx'),
+            models.Index(fields=['is_trusted'], name='device_trusted_idx'),
+            models.Index(fields=['last_seen'], name='device_last_seen_idx'),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.device_name}"
+    
+    @classmethod
+    def get_or_create_device(cls, user, fingerprint, device_info):
+        """
+        Get existing device or create new one
+        """
+        device, created = cls.objects.get_or_create(
+            user=user,
+            device_fingerprint=fingerprint,
+            defaults={
+                'device_name': f"{device_info.get('browser', 'Unknown')} on {device_info.get('os', 'Unknown')}",
+                'browser': device_info.get('browser'),
+                'os': device_info.get('os'),
+                'device_type': device_info.get('device_type'),
+                'last_ip': device_info.get('ip_address'),
+            }
+        )
+        
+        if not created:
+            # Update last seen and IP
+            device.last_seen = timezone.now()
+            if device_info.get('ip_address'):
+                device.last_ip = device_info['ip_address']
+                if device_info['ip_address'] not in device.ip_addresses:
+                    device.ip_addresses.append(device_info['ip_address'])
+            device.session_count += 1
+            device.save()
+        
+        return device, created
+    
+    def mark_as_trusted(self):
+        """Mark device as trusted"""
+        self.is_trusted = True
+        self.trust_level = min(100, self.trust_level + 20)
+        self.save(update_fields=['is_trusted', 'trust_level'])
+    
+    def report_suspicious_activity(self, reason):
+        """Report suspicious activity from this device"""
+        self.suspicious_activity_count += 1
+        self.trust_level = max(0, self.trust_level - 10)
+        
+        # Auto-block after 5 suspicious activities
+        if self.suspicious_activity_count >= 5:
+            self.is_blocked = True
+            self.blocked_reason = f"Auto-blocked after {self.suspicious_activity_count} suspicious activities"
+        
+        self.save()
+
+
 class SessionActivity(models.Model):
+
     """
     Separate model for tracking user activities to improve performance
     """
@@ -1893,6 +2166,26 @@ class SessionActivity(models.Model):
                         activity_data = {'data': str(activity_data)}
                 except json.JSONDecodeError:
                     activity_data = {'raw_data': str(activity_data)}
+            
+            # === PII SCRUBBING ===
+            from trueAlign.core.pii_scrubber import scrub_url, scrub_title, scrub_activity_data
+            
+            # Scrub URL
+            if url:
+                original_url = url
+                url = scrub_url(url)
+                if url != original_url:
+                    logger.debug(f"Scrubbed PII from URL")
+            
+            # Scrub title
+            if title:
+                original_title = title
+                title = scrub_title(title)
+                if title != original_title:
+                    logger.debug(f"Scrubbed PII from title")
+            
+            # Scrub activity data
+            activity_data = scrub_activity_data(activity_data)
 
             # Validate and truncate URL if too long
             if url and len(url) > 2000:
@@ -1904,6 +2197,20 @@ class SessionActivity(models.Model):
                 logger.warning(f"Title too long ({len(title)} chars), truncating to 500 chars")
                 title = title[:500]
 
+            # === PII SCRUBBING ===
+            from trueAlign.core.pii_scrubber import scrub_url, scrub_title, scrub_activity_data
+            
+            # Scrub URL to remove sensitive query parameters
+            if url:
+                url = scrub_url(url)
+            
+            # Scrub title to remove PII patterns
+            if title:
+                title = scrub_title(title)
+            
+            # Scrub activity data
+            activity_data = scrub_activity_data(activity_data)
+            
             # Add timestamp to activity_data if not present
             if 'timestamp' not in activity_data:
                 activity_data['timestamp'] = timezone.now().isoformat()
@@ -1913,7 +2220,47 @@ class SessionActivity(models.Model):
             location_sync = get_location_synchronizer()
             session_logger = get_session_logger()
 
-            # Use batch writer for efficient activity recording
+            # Determine if immediate write is needed
+            is_critical = activity_type in ['session_end', 'logout', 'error', 'security_alert']
+            use_immediate_write = (not batch_writer) or is_critical
+
+            if use_immediate_write:
+                # Immediate database write for critical activities or when batch writer unavailable
+                try:
+                    activity_obj = cls.objects.create(
+                        session=session,
+                        user=session.user,
+                        activity_type=activity_type,
+                        activity_data=activity_data,
+                        url=url,
+                        title=title,
+                        location_latitude=location_data.get('latitude') if location_data else None,
+                        location_longitude=location_data.get('longitude') if location_data else None,
+                        location_accuracy=location_data.get('accuracy') if location_data else None,
+                        activity_time=timezone.now()
+                    )
+                    logger.info(f"Immediately wrote {activity_type} activity {activity_obj.id} for session {session.id}")
+                    
+                    # Still queue in batch writer if available for redundancy
+                    if batch_writer and not is_critical:
+                        batch_writer.add_activity(
+                            user_id=session.user.id,
+                            session_id=session.id,
+                            activity_type=activity_type,
+                            activity_data=activity_data,
+                            location_data=location_data,
+                            url=url,
+                            title=title
+                        )
+                    
+                    # Return real activity object
+                    return activity_obj
+                    
+                except Exception as write_error:
+                    logger.error(f"Failed to write activity immediately: {write_error}")
+                    # Fall through to batch writer as backup
+            
+            # Use batch writer for efficient activity recording (non-critical)
             if batch_writer:
                 batch_writer.add_activity(
                     user_id=session.user.id,
@@ -1924,6 +2271,27 @@ class SessionActivity(models.Model):
                     url=url,
                     title=title
                 )
+                logger.debug(f"Queued {activity_type} activity for session {session.id} in batch writer")
+            else:
+                # Batch writer not available and immediate write failed - try one more time
+                try:
+                    activity_obj = cls.objects.create(
+                        session=session,
+                        user=session.user,
+                        activity_type=activity_type,
+                        activity_data=activity_data,
+                        url=url,
+                        title=title,
+                        location_latitude=location_data.get('latitude') if location_data else None,
+                        location_longitude=location_data.get('longitude') if location_data else None,
+                        location_accuracy=location_data.get('accuracy') if location_data else None,
+                        activity_time=timezone.now()
+                    )
+                    logger.warning(f"Batch writer unavailable - wrote {activity_type} directly: {activity_obj.id}")
+                    return activity_obj
+                except Exception as fallback_error:
+                    logger.error(f"CRITICAL: All write methods failed for activity: {fallback_error}")
+                    return None
 
             # Queue location update for synchronization if location data exists
             if location_data and isinstance(location_data, dict):

@@ -1,0 +1,293 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Export Sessions Data | TrueAlign{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 p-6">
+
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Export Sessions Data</h1>
+        <p class="mt-2 text-sm text-gray-600">Select fields and filters to customize your export</p>
+    </div>
+
+    <!-- Export Form -->
+    <form method="POST" action="{% url 'sessions:export_excel' %}" id="exportForm">
+        {% csrf_token %}
+
+        <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+
+            <!-- Field Selection Panel -->
+            <div class="lg:col-span-2">
+                <div class="rounded-xl bg-white p-6 shadow-md">
+                    <div class="mb-6 flex items-center justify-between">
+                        <h2 class="text-xl font-bold text-gray-900">Select Fields to Export</h2>
+                        <div class="flex gap-2">
+                            <button type="button" onclick="selectAllFields()"
+                                class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                                Select All
+                            </button>
+                            <span class="text-gray-300">|</span>
+                            <button type="button" onclick="deselectAllFields()"
+                                class="text-sm text-gray-600 hover:text-gray-800 font-medium">
+                                Deselect All
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Field Categories -->
+                    <div class="space-y-6">
+
+                        <!-- User Information -->
+                        <div>
+                            <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700">User
+                                Information</h3>
+                            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <label
+                                    class="flex items-center gap-3 rounded-lg border-2 border-gray-200 p-3 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition">
+                                    <input type="checkbox" name="fields[]" value="user__username" checked
+                                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">Username</span>
+                                </label>
+                                <label
+                                    class="flex items-center gap-3 rounded-lg border-2 border-gray-200 p-3 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition">
+                                    <input type="checkbox" name="fields[]" value="user__first_name" checked
+                                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">First Name</span>
+                                </label>
+                                <label
+                                    class="flex items-center gap-3 rounded-lg border-2 border-gray-200 p-3 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition">
+                                    <input type="checkbox" name="fields[]" value="user__last_name" check
+                                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">Last Name</span>
+                                </label>
+                                <label
+                                    class="flex items-center gap-3 rounded-lg border-2 border-gray-200 p-3 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition">
+                                    <input type="checkbox" name="fields[]" value="user__email"
+                                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">Email</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Session Information -->
+                        <div>
+                            <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700">Session
+                                Information</h3>
+                            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <label
+                                    class="flex items-center gap-3 rounded-lg border-2 border-gray-200 p-3 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition">
+                                    <input type="checkbox" name="fields[]" value="login_time" checked
+                                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">Login Time</span>
+                                </label>
+                                <label
+                                    class="flex items-center gap-3 rounded-lg border-2 border-gray-200 p-3 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition">
+                                    <input type="checkbox" name="fields[]" value="ended_at" checked
+                                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">End Time</span>
+                                </label>
+                                <label
+                                    class="flex items-center gap-3 rounded-lg border-2 border-gray-200 p-3 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition">
+                                    <input type="checkbox" name="fields[]" value="duration" checked
+                                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">Duration</span>
+                                </label>
+                                <label
+                                    class="flex items-center gap-3 rounded-lg border-2 border-gray-200 p-3 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition">
+                                    <input type="checkbox" name="fields[]" value="is_active" checked
+                                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">Is Active</span>
+                                </label>
+                                <label
+                                    class="flex items-center gap-3 rounded-lg border-2 border-gray-200 p-3 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition">
+                                    <input type="checkbox" name="fields[]" value="is_idle"
+                                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">Is Idle</span>
+                                </label>
+                                <label
+                                    class="flex items-center gap-3 rounded-lg border-2 border-gray-200 p-3 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition">
+                                    <input type="checkbox" name="fields[]" value="session_key"
+                                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">Session Key</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Location & Device -->
+                        <div>
+                            <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700">Location &
+                                Device</h3>
+                            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <label
+                                    class="flex items-center gap-3 rounded-lg border-2 border-gray-200 p-3 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition">
+                                    <input type="checkbox" name="fields[]" value="current_office_location__name" checked
+                                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">Office Location</span>
+                                </label>
+                                <label
+                                    class="flex items-center gap-3 rounded-lg border-2 border-gray-200 p-3 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition">
+                                    <input type="checkbox" name="fields[]" value="device_type" checked
+                                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">Device Type</span>
+                                </label>
+                                <label
+                                    class="flex items-center gap-3 rounded-lg border-2 border-gray-200 p-3 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition">
+                                    <input type="checkbox" name="fields[]" value="browser"
+                                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">Browser</span>
+                                </label>
+                                <label
+                                    class="flex items-center gap-3 rounded-lg border-2 border-gray-200 p-3 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition">
+                                    <input type="checkbox" name="fields[]" value="os"
+                                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">Operating System</span>
+                                </label>
+                                <label
+                                    class="flex items-center gap-3 rounded-lg border-2 border-gray-200 p-3 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition">
+                                    <input type="checkbox" name="fields[]" value="ip_address"
+                                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">IP Address</span>
+                                </label>
+                                <label
+                                    class="flex items-center gap-3 rounded-lg border-2 border-gray-200 p-3 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition">
+                                    <input type="checkbox" name="fields[]" value="location_latitude"
+                                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">Latitude</span>
+                                </label>
+                                <label
+                                    class="flex items-center gap-3 rounded-lg border-2 border-gray-200 p-3 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition">
+                                    <input type="checkbox" name="fields[]" value="location_longitude"
+                                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">Longitude</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Performance Metrics -->
+                        <div>
+                            <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700">Performance
+                                Metrics</h3>
+                            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <label
+                                    class="flex items-center gap-3 rounded-lg border-2 border-gray-200 p-3 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition">
+                                    <input type="checkbox" name="fields[]" value="productivity_score"
+                                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">Productivity Score</span>
+                                </label>
+                                <label
+                                    class="flex items-center gap-3 rounded-lg border-2 border-gray-200 p-3 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition">
+                                    <input type="checkbox" name="fields[]" value="engagement_score"
+                                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">Engagement Score</span>
+                                </label>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Panel -->
+            <div class="lg:col-span-1">
+                <div class="sticky top-6 space-y-6">
+
+                    <!-- Filters Card -->
+                    <div class="rounded-xl bg-white p-6 shadow-md">
+                        <h2 class="mb-4 text-xl font-bold text-gray-900">Export Filters</h2>
+
+                        <div class="space-y-4">
+
+                            <!-- Office Filter -->
+                            <div>
+                                <label class="mb-2 block text-sm font-medium text-gray-700">Office</label>
+                                <select name="office_id"
+                                    class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+                                    <option value="">All Offices</option>
+                                    {% for office in all_offices %}
+                                    <option value="{{ office.id }}">{{ office.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Date Range -->
+                            <div>
+                                <label class="mb-2 block text-sm font-medium text-gray-700">Date From</label>
+                                <input type="date" name="date_from"
+                                    class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+                            </div>
+
+                            <div>
+                                <label class="mb-2 block text-sm font-medium text-gray-700">Date To</label>
+                                <input type="date" name="date_to"
+                                    class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+                            </div>
+
+                            <!-- Status Filter -->
+                            <div>
+                                <label class="mb-2 block text-sm font-medium text-gray-700">Status</label>
+                                <select name="status"
+                                    class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+                                    <option value="">All Statuses</option>
+                                    <option value="active">Active Only</option>
+                                    <option value="idle">Idle Only</option>
+                                    <option value="ended">Ended Only</option>
+                                </select>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Export Button -->
+                    <div class="rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white shadow-md">
+                        <h3 class="mb-2 text-lg font-bold">Ready to Export?</h3>
+                        <p class="mb-4 text-sm text-blue-100">Your data will be exported in Excel format (.xlsx)</p>
+
+                        <button type="submit"
+                            class="w-full rounded-lg bg-white py-3 px-4 font-semibold text-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-600 transition-all">
+                            <svg class="mr-2 inline h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Download Excel
+                        </button>
+                    </div>
+
+                    <!-- Info Card -->
+                    <div class="rounded-xl bg-blue-50 p-6">
+                        <svg class="mb-2 h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <h4 class="mb-2 text-sm font-semibold text-blue-900">Export Tips</h4>
+                        <ul class="space-y-1 text-xs text-blue-800">
+                            <li>• Select only needed fields for faster exports</li>
+                            <li>• Use date filters for large datasets</li>
+                            <li>• Excel format preserves all formatting</li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </form>
+
+</div>
+
+<script>
+    function selectAllFields() {
+        document.querySelectorAll('input[name="fields[]"]').forEach(checkbox => {
+            checkbox.checked = true;
+        });
+    }
+
+    function deselectAllFields() {
+        document.querySelectorAll('input[name="fields[]"]').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+    }
+</script>
+
+{% endblock %}

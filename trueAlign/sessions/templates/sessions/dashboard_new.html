@@ -1,574 +1,883 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% load static %}
-{% load sessions_extras %}
 
-{% block title %}Command Center - TrueAlign{% endblock %}
+{% block title %}Session Analytics Dashboard | TrueAlign{% endblock %}
 
 {% block extra_css %}
 <style>
-    :root {
-        --primary: #0f766e;
-        --primary-light: #14b8a6;
-        --secondary: #84cc16;
-        --accent: #f59e0b;
-        --success: #10b981;
-        --warning: #f59e0b;
-        --danger: #ef4444;
-        --glass: rgba(255, 255, 255, 0.1);
-        --glass-border: rgba(255, 255, 255, 0.2);
-    }
-
-    .command-center {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
-        min-height: 100vh;
+    /* Custom Dashboard Styles */
+    .stat-card {
+        cursor: pointer;
+        transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
     }
 
-    .command-center::before {
+    .stat-card::before {
         content: '';
         position: absolute;
         top: 0;
         left: 0;
-        right: 0;
-        bottom: 0;
-        background: 
-            radial-gradient(circle at 20% 20%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 80% 80%, rgba(132, 204, 22, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 40% 60%, rgba(245, 158, 11, 0.05) 0%, transparent 50%);
-    }
-
-    .glass-panel {
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 20px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
-
-    .neon-card {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-        border: 1px solid rgba(16, 185, 129, 0.3);
-        border-radius: 16px;
-        backdrop-filter: blur(10px);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .neon-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
         width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.2), transparent);
-        transition: left 0.5s;
+        height: 4px;
+        background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
     }
 
-    .neon-card:hover::before {
-        left: 100%;
+    .stat-card:hover::before {
+        transform: scaleX(1);
     }
 
-    .neon-card:hover {
-        transform: translateY(-4px) scale(1.02);
-        border-color: rgba(16, 185, 129, 0.6);
-        box-shadow: 0 20px 40px rgba(16, 185, 129, 0.2);
-    }
-
-    .metric-display {
-        position: relative;
-        z-index: 10;
-    }
-
-    .holographic-text {
-        background: linear-gradient(135deg, #10b981, #84cc16);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        font-weight: 700;
-        text-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
-    }
-
-    .pulse-ring {
-        position: absolute;
-        width: 60px;
-        height: 60px;
-        border: 2px solid var(--success);
-        border-radius: 50%;
-        animation: pulse-ring 2s infinite;
-    }
-
-    @keyframes pulse-ring {
-        0% {
-            transform: scale(1);
-            opacity: 1;
-        }
-        100% {
-            transform: scale(2);
-            opacity: 0;
-        }
-    }
-
-    .status-orb {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        position: relative;
-        display: inline-block;
-    }
-
-    .status-orb.active {
-        background: var(--success);
-        box-shadow: 0 0 20px var(--success);
-    }
-
-    .status-orb.idle {
-        background: var(--warning);
-        box-shadow: 0 0 20px var(--warning);
-    }
-
-    .status-orb.offline {
-        background: var(--danger);
-        box-shadow: 0 0 20px var(--danger);
-    }
-
-    .data-stream {
-        height: 200px;
-        background: linear-gradient(135deg, rgba(15, 118, 110, 0.1) 0%, rgba(132, 204, 22, 0.1) 100%);
-        border-radius: 12px;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .stream-line {
-        position: absolute;
-        height: 2px;
-        background: linear-gradient(90deg, transparent, var(--primary-light), transparent);
-        animation: stream-flow 3s infinite linear;
-    }
-
-    @keyframes stream-flow {
-        0% { left: -100%; width: 0%; }
-        50% { width: 100%; }
-        100% { left: 100%; width: 0%; }
-    }
-
-    .control-panel {
-        background: rgba(15, 23, 42, 0.8);
-        border: 1px solid rgba(16, 185, 129, 0.2);
-        border-radius: 16px;
-        backdrop-filter: blur(10px);
-    }
-
-    .cyber-button {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-        border: 1px solid var(--primary-light);
-        color: white;
-        padding: 12px 24px;
-        border-radius: 8px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .cyber-button::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-        transition: left 0.5s;
-    }
-
-    .cyber-button:hover::before {
-        left: 100%;
-    }
-
-    .cyber-button:hover {
+    .stat-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     }
 
-    .data-table {
-        background: rgba(15, 23, 42, 0.6);
-        border-radius: 12px;
-        overflow: hidden;
-        border: 1px solid rgba(16, 185, 129, 0.1);
-    }
-
-    .table-header {
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(132, 204, 22, 0.2) 100%);
-        color: white;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    .user-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--primary), var(--secondary));
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: 600;
-        border: 2px solid rgba(16, 185, 129, 0.3);
-    }
-
-    .activity-indicator {
-        display: inline-flex;
-        align-items: center;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .activity-indicator.active {
-        background: rgba(16, 185, 129, 0.2);
-        color: var(--success);
-        border: 1px solid var(--success);
-    }
-
-    .activity-indicator.idle {
-        background: rgba(245, 158, 11, 0.2);
-        color: var(--warning);
-        border: 1px solid var(--warning);
-    }
-
-    .system-status {
+    .chart-container {
         position: relative;
-        padding: 20px;
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(132, 204, 22, 0.1) 100%);
-        border-radius: 16px;
-        border: 1px solid rgba(16, 185, 129, 0.3);
+        min-height: 300px;
     }
 
-    .floating-widget {
+    .loading-skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s ease-in-out infinite;
+    }
+
+    @keyframes loading {
+        0% {
+            background-position: 200% 0;
+        }
+
+        100% {
+            background-position: -200% 0;
+        }
+    }
+
+    .modal {
+        display: none;
         position: fixed;
-        bottom: 30px;
-        right: 30px;
-        width: 60px;
-        height: 60px;
-        background: linear-gradient(135deg, var(--primary), var(--primary-light));
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
-        transition: all 0.3s ease;
         z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
     }
 
-    .floating-widget:hover {
-        transform: scale(1.1);
-        box-shadow: 0 15px 40px rgba(16, 185, 129, 0.6);
-    }
-
-    .real-time-badge {
-        position: absolute;
-        top: -5px;
-        right: -5px;
-        width: 20px;
-        height: 20px;
-        background: var(--danger);
-        border-radius: 50%;
+    .modal.active {
         display: flex;
         align-items: center;
         justify-content: center;
-        color: white;
-        font-size: 10px;
-        font-weight: 600;
-        animation: pulse 2s infinite;
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        border-radius: 16px;
+        max-width: 90%;
+        max-height: 90%;
+        overflow: hidden;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-50px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .pulse-dot {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
 
     @keyframes pulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.1); }
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="command-center">
-    <!-- Header Control Panel -->
-    <div class="relative z-20 p-6">
-        <div class="max-w-7xl mx-auto">
-            <div class="glass-panel p-6">
-                <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
-                    <div class="flex items-center space-x-4">
-                        <div class="relative">
-                            <div class="w-16 h-16 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-2xl flex items-center justify-center">
-                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                                </svg>
-                            </div>
-                            <div class="pulse-ring"></div>
-                        </div>
-                        <div>
-                            <h1 class="text-3xl font-bold text-white mb-2">
-                                Command <span class="holographic-text">Center</span>
-                            </h1>
-                            <p class="text-gray-300">Real-time session monitoring & analytics</p>
-                        </div>
-                    </div>
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 p-6">
 
-                    <div class="control-panel p-4">
-                        <div class="flex items-center space-x-4">
-                            <div class="flex items-center space-x-2">
-                                <label class="text-sm font-medium text-gray-300">Office:</label>
-                                <select id="office-filter" class="bg-slate-800 border border-emerald-500/30 rounded-lg px-3 py-2 text-white text-sm focus:ring-2 focus:ring-emerald-500">
-                                    <option value="all">All Offices</option>
-                                    {% for office in all_offices %}
-                                    <option value="{{ office.id }}">{{ office.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <div class="status-orb active"></div>
-                                <span class="text-sm text-gray-300">System Online</span>
-                            </div>
-                        </div>
+    <!-- ========== HEADER & FILTERS ========== -->
+    <div class="mb-8">
+        <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+
+            <!-- Title Section -->
+            <div>
+                <h1
+                    class="text-3xl font-bold text-gray-900 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    Session Analytics Dashboard
+                </h1>
+                <p class="mt-2 text-sm text-gray-600">
+                    Real-time monitoring • Live updates every 30s
+                </p>
+            </div>
+
+            <!-- Global Filters -->
+            <div class="flex flex-wrap gap-3">
+
+                <!-- Office Filter -->
+                <select id="officeFilter"
+                    class="h-11 rounded-lg border-2 border-gray-200 bg-white px-4 text-sm font-medium shadow-sm hover:border-blue-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition">
+                    <option value="">All Offices</option>
+                    {% for office in all_offices %}
+                    <option value="{{ office.id }}">{{ office.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <!-- Date Range -->
+                <input type="date" id="dateFrom"
+                    class="h-11 rounded-lg border-2 border-gray-200 bg-white px-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition">
+                <input type="date" id="dateTo"
+                    class="h-11 rounded-lg border-2 border-gray-200 bg-white px-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition">
+
+                <!-- User Search -->
+                <div class="relative">
+                    <input type="text" id="userSearch" placeholder="Search users..." autocomplete="off"
+                        class="h-11 w-64 rounded-lg border-2 border-gray-200 bg-white pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition">
+                    <svg class="absolute left-3 top-3.5 h-4 w-4 text-gray-400" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <div id="userSearchResults"
+                        class="absolute top-full mt-2 w-full rounded-lg bg-white shadow-lg border border-gray-200 hidden max-h-60 overflow-y-auto z-50">
                     </div>
                 </div>
+
+                <!-- Apply Filters Button -->
+                <button onclick="applyFilters()"
+                    class="h-11 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-6 text-sm font-semibold text-white shadow-md hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all">
+                    Apply Filters
+                </button>
+
+                <!-- Refresh -->
+                <button onclick="refreshDashboard()"
+                    class="h-11 rounded-lg border-2 border-gray-200 bg-white px-4 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition">
+                    <svg class="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                </button>
+
+                <!-- Export Data Button -->
+                <a href="{% url 'sessions:export' %}"
+                    class="h-11 rounded-lg border-2 border-green-200 bg-white px-4 text-sm font-medium text-green-700 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500/20 transition flex items-center gap-2">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Export
+                </a>
+
+                <!-- Analytics Page Button -->
+                <a href="{% url 'sessions:analytics' %}"
+                    class="h-11 rounded-lg border border-purple-200 bg-white px-4 text-sm font-medium text-purple-700 hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition flex items-center gap-2">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Analytics
+                </a>
+
             </div>
         </div>
     </div>
 
-    <!-- Main Dashboard Grid -->
-    <div class="relative z-10 max-w-7xl mx-auto px-6 pb-12">
-        <!-- Key Metrics Row -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div class="neon-card p-6">
-                <div class="metric-display">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="w-12 h-12 bg-gradient-to-br from-slate-600 to-slate-700 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                            </svg>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-2xl font-bold text-white">{{ metrics.total_sessions|default:0 }}</div>
-                            <div class="text-xs text-gray-400 uppercase tracking-wide">Total Sessions</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <!-- ========== KPI CARDS ========== -->
+    <div class="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
 
-            <div class="neon-card p-6">
-                <div class="metric-display">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                            </svg>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-2xl font-bold holographic-text">{{ metrics.active_sessions|default:0 }}</div>
-                            <div class="text-xs text-gray-400 uppercase tracking-wide">Active Now</div>
-                        </div>
-                    </div>
+        <!-- Active Sessions -->
+        <div class="stat-card rounded-2xl bg-white p-6 shadow-md" onclick="drillDown('active')" data-drill="active">
+            <div class="flex items-center justify-between">
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Active Sessions</p>
+                    <h3 class="mt-2 text-4xl font-bold text-gray-900" id="stat-active">
+                        <span class="loading-skeleton inline-block h-10 w-20 rounded"></span>
+                    </h3>
+                    <p class="mt-2 flex items-center text-sm text-green-600">
+                        <span class="pulse-dot mr-1.5 h-2 w-2 rounded-full bg-green-600"></span>
+                        Live now
+                    </p>
                 </div>
-            </div>
-
-            <div class="neon-card p-6">
-                <div class="metric-display">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-2xl font-bold text-amber-400">{{ metrics.idle_sessions|default:0 }}</div>
-                            <div class="text-xs text-gray-400 uppercase tracking-wide">Idle</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="neon-card p-6">
-                <div class="metric-display">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="w-12 h-12 bg-gradient-to-br from-lime-500 to-lime-600 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-2xl font-bold text-lime-400">{{ metrics.recent_24h|default:0 }}</div>
-                            <div class="text-xs text-gray-400 uppercase tracking-wide">24H Activity</div>
-                        </div>
-                    </div>
+                <div class="rounded-full bg-green-100 p-4">
+                    <svg class="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                 </div>
             </div>
         </div>
 
-        <!-- Main Content Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Active Users Table -->
-            <div class="lg:col-span-2">
-                <div class="glass-panel p-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-xl font-bold text-white">Active Users</h3>
-                        <div class="real-time-badge">{{ metrics.active_sessions|default:0 }}</div>
-                    </div>
-                    
-                    <div class="data-table">
-                        <div class="table-header p-4">
-                            <div class="grid grid-cols-4 gap-4 text-sm">
-                                <div>User</div>
-                                <div>Status</div>
-                                <div>Sessions</div>
-                                <div>Duration</div>
-                            </div>
-                        </div>
-                        
-                        <div class="divide-y divide-gray-700/50">
-                            {% for user in top_users|slice:":8" %}
-                            <div class="p-4 hover:bg-slate-800/30 transition-colors">
-                                <div class="grid grid-cols-4 gap-4 items-center">
-                                    <div class="flex items-center space-x-3">
-                                        <div class="user-avatar">
-                                            {{ user.user__first_name|default:user.user__username|slice:":1"|upper }}
-                                        </div>
-                                        <div>
-                                            <div class="text-white font-medium text-sm">
-                                                {% if user.user__first_name %}{{ user.user__first_name }} {{ user.user__last_name }}{% else %}{{ user.user__username }}{% endif %}
-                                            </div>
-                                            <div class="text-gray-400 text-xs">{{ user.user__username }}</div>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        {% if user.active_sessions > 0 %}
-                                        <div class="activity-indicator active">
-                                            <div class="status-orb active mr-2"></div>
-                                            Active
-                                        </div>
-                                        {% else %}
-                                        <div class="activity-indicator idle">
-                                            <div class="status-orb idle mr-2"></div>
-                                            Idle
-                                        </div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="text-emerald-400 font-mono">{{ user.session_count }}</div>
-                                    <div class="text-gray-300 text-sm">{{ user.total_time_hours|default:0 }}h</div>
-                                </div>
-                            </div>
-                            {% empty %}
-                            <div class="p-8 text-center text-gray-400">
-                                <svg class="w-12 h-12 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-                                </svg>
-                                <p>No active users found</p>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
+        <!-- Idle Sessions -->
+        <div class="stat-card rounded-2xl bg-white p-6 shadow-md" onclick="drillDown('idle')" data-drill="idle">
+            <div class="flex items-center justify-between">
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Idle Sessions</p>
+                    <h3 class="mt-2 text-4xl font-bold text-gray-900" id="stat-idle">
+                        <span class="loading-skeleton inline-block h-10 w-20 rounded"></span>
+                    </h3>
+                    <p class="mt-2 text-sm text-yellow-600">Needs attention</p>
+                </div>
+                <div class="rounded-full bg-yellow-100 p-4">
+                    <svg class="h-8 w-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                 </div>
             </div>
+        </div>
 
-            <!-- Side Panels -->
-            <div class="space-y-6">
-                <!-- System Status -->
-                <div class="system-status">
-                    <h4 class="text-lg font-bold text-white mb-4">System Status</h4>
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-gray-300">Database</span>
-                            <div class="flex items-center space-x-2">
-                                <div class="status-orb active"></div>
-                                <span class="text-emerald-400 text-sm">Online</span>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-gray-300">API Services</span>
-                            <div class="flex items-center space-x-2">
-                                <div class="status-orb active"></div>
-                                <span class="text-emerald-400 text-sm">Operational</span>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-gray-300">Real-time Sync</span>
-                            <div class="flex items-center space-x-2">
-                                <div class="status-orb active"></div>
-                                <span class="text-emerald-400 text-sm">Active</span>
-                            </div>
-                        </div>
-                    </div>
+        <!-- Total Users -->
+        <div class="stat-card rounded-2xl bg-white p-6 shadow-md">
+            <div class="flex items-center justify-between">
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Users</p>
+                    <h3 class="mt-2 text-4xl font-bold text-gray-900" id="stat-users">
+                        <span class="loading-skeleton inline-block h-10 w-20 rounded"></span>
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600">Unique today</p>
                 </div>
-
-                <!-- Quick Actions -->
-                <div class="glass-panel p-6">
-                    <h4 class="text-lg font-bold text-white mb-4">Quick Actions</h4>
-                    <div class="space-y-3">
-                        <a href="{% url 'sessions:session_list' %}" class="cyber-button w-full text-center block">
-                            View All Sessions
-                        </a>
-                        <a href="{% url 'sessions:analytics' %}" class="cyber-button w-full text-center block" style="background: linear-gradient(135deg, var(--secondary) 0%, #65a30d 100%);">
-                            Analytics Hub
-                        </a>
-                        <a href="{% url 'sessions:export' %}" class="cyber-button w-full text-center block" style="background: linear-gradient(135deg, var(--accent) 0%, #d97706 100%);">
-                            Export Data
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Data Stream Visualization -->
-                <div class="glass-panel p-6">
-                    <h4 class="text-lg font-bold text-white mb-4">Live Data Stream</h4>
-                    <div class="data-stream">
-                        <div class="stream-line" style="top: 20%; animation-delay: 0s;"></div>
-                        <div class="stream-line" style="top: 40%; animation-delay: 1s;"></div>
-                        <div class="stream-line" style="top: 60%; animation-delay: 2s;"></div>
-                        <div class="stream-line" style="top: 80%; animation-delay: 0.5s;"></div>
-                        <div class="absolute inset-0 flex items-center justify-center">
-                            <div class="text-center">
-                                <div class="text-2xl font-bold holographic-text">{{ metrics.active_sessions|default:0 }}</div>
-                                <div class="text-xs text-gray-400 uppercase tracking-wide">Live Sessions</div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="rounded-full bg-blue-100 p-4">
+                    <svg class="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
                 </div>
             </div>
+        </div>
+
+        <!-- Avg Duration -->
+        <div class="stat-card rounded-2xl bg-white p-6 shadow-md">
+            <div class="flex items-center justify-between">
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Avg Duration</p>
+                    <h3 class="mt-2 text-4xl font-bold text-gray-900" id="stat-avg-duration">
+                        <span class="loading-skeleton inline-block h-10 w-20 rounded"></span>
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600">Per session</p>
+                </div>
+                <div class="rounded-full bg-purple-100 p-4">
+                    <svg class="h-8 w-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========== CHARTS GRID ========== -->
+    <div class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+
+        <!-- Hourly Activity Chart (spans 2 columns) -->
+        <div class="lg:col-span-2 rounded-2xl bg-white p-6 shadow-md">
+            <div class="mb-4 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-gray-900">Hourly Activity (24h)</h3>
+                <span class="text-xs text-gray-500">Click points for details</span>
+            </div>
+            <div class="chart-container">
+                <canvas id="hourlyChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Office Distribution Pie Chart -->
+        <div class="rounded-2xl bg-white p-6 shadow-md">
+            <div class="mb-4 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-gray-900">Office Distribution</h3>
+                <span class="text-xs text-gray-500">Click slices</span>
+            </div>
+            <div class="chart-container">
+                <canvas id="officeChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========== SECOND ROW CHARTS ========== -->
+    <div class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+
+        <!-- Activity Timeline (Office-wise) -->
+        <div class="rounded-2xl bg-white p-6 shadow-md">
+            <div class="mb-4 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-gray-900">Activity Timeline</h3>
+                <span class="text-xs text-gray-500">Office-wise comparison</span>
+            </div>
+            <div class="chart-container">
+                <canvas id="timelineChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Device Statistics -->
+        <div class="rounded-2xl bg-white p-6 shadow-md">
+            <div class="mb-4 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-gray-900">Device Statistics</h3>
+                <span class="text-xs text-gray-500">Click bars</span>
+            </div>
+            <div class="chart-container">
+                <canvas id="deviceChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========== LIVE ACTIVITY FEED ========== -->
+    <div class="mb-8 rounded-2xl bg-white p-6 shadow-md">
+        <div class="mb-4 flex items-center justify-between">
+            <h3 class="text-lg font-bold text-gray-900">Live Activity Feed</h3>
+            <span class="flex items-center text-xs text-gray-500">
+                <span class="pulse-dot mr-1.5 h-2 w-2 rounded-full bg-blue-600"></span>
+                Auto-updating
+            </span>
+        </div>
+        <div id="activityFeed" class="space-y-3 max-h-96 overflow-y-auto">
+            <!-- Feed items will be inserted here -->
         </div>
     </div>
 
-    <!-- Floating Refresh Widget -->
-    <div class="floating-widget" onclick="location.reload()">
-        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-        </svg>
+</div>
+
+<!-- ========== DRILL-DOWN MODAL ========== -->
+<div id="drillDownModal" class="modal">
+    <div class="modal-content w-full lg:w-4/5 xl:w-3/4">
+
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+            <h3 class="text-xl font-bold text-gray-900" id="modalTitle">Session Details</h3>
+            <button onclick="closeModal()" class="rounded-lg p-2 hover:bg-gray-100 transition">
+                <svg class="h-6 w-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="px-6 py-4">
+            <div class="mb-4 flex gap-4">
+                <input type="text" id="modalSearch" placeholder="Search in results..."
+                    class="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+                <select id="modalSort" class="rounded-lg border border-gray-300 px-4 py-2 text-sm">
+                    <option value="login_time">Sort by Login Time</option>
+                    <option value="duration">Sort by Duration</option>
+                    <option value="user">Sort by User</option>
+                </select>
+            </div>
+
+            <div class="overflow-x-auto max-h-[60vh] overflow-y-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="sticky top-0 bg-gray-50 text-xs uppercase text-gray-700">
+                        <tr>
+                            <th class="px-6 py-3">User</th>
+                            <th class="px-6 py-3">Office</th>
+                            <th class="px-6 py-3">Login Time</th>
+                            <th class="px-6 py-3">Duration</th>
+                            <th class="px-6 py-3">Device</th>
+                            <th class="px-6 py-3">Status</th>
+                            <th class="px-6 py-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modalTableBody" class="divide-y divide-gray-200">
+                        <!-- Table rows will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="mt-4 flex items-center justify-between border-t border-gray-200 pt-4">
+                <div class="text-sm text-gray-600">
+                    Showing <span id="modalShowingFrom">0</span> to <span id="modalShowingTo">0</span> of <span
+                        id="modalTotal">0</span> results
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="previousPage()" id="prevPageBtn"
+                        class="rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Previous
+                    </button>
+                    <button onclick="nextPage()" id="nextPageBtn"
+                        class="rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Next
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    // Auto-refresh functionality
-    setInterval(() => {
-        // Update metrics via AJAX if needed
-        console.log("Refreshing dashboard data...");
-    }, 30000);
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-    // Office filter change
-    document.getElementById('office-filter').addEventListener('change', function() {
-        const url = new URL(window.location);
-        url.searchParams.set('office', this.value);
-        window.location.href = url.toString();
+<script>
+    // ========== GLOBAL STATE ==========
+    const state = {
+        filters: {
+            office_id: '',
+            date_from: '',
+            date_to: '',
+            user_id: '',
+            status: ''
+        },
+        currentModal: null,
+        currentPage: 1,
+        pageSize: 50,
+        charts: {},
+        lastUpdate: null,
+        officeData: []  // Store office data for drill-down
+    };
+
+    // ========== CHART.JS CONFIGURATION ==========
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.color = '#64748b';
+
+    // Initialize all charts
+    function initCharts() {
+
+        // Hourly Activity Chart
+        const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+        state.charts.hourly = new Chart(hourlyCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Total',
+                    data: [],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }, {
+                    label: 'Active',
+                    data: [],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }, {
+                    label: 'Idle',
+                    data: [],
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: { mode: 'index', intersect: false }
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                },
+                onClick: (event, elements) => {
+                    if (elements.length > 0) {
+                        const dataIndex = elements[0].index;
+                        const hour = state.charts.hourly.data.labels[dataIndex];
+                        console.log('Clicked hour:', hour);
+                        // TODO: Drill-down to hour detail
+                    }
+                }
+            }
+        });
+
+        // Office Distribution Pie Chart
+        const officeCtx = document.getElementById('officeChart').getContext('2d');
+        state.charts.office = new Chart(officeCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [],
+                datasets: [{
+                    data: [],
+                    backgroundColor: [
+                        '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+                        '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                },
+                onClick: (event, elements) => {
+                    if (elements.length > 0) {
+                        const dataIndex = elements[0].index;
+                        const officeId = state.officeData[dataIndex].id;
+                        drillDownOffice(officeId);
+                    }
+                }
+            }
+        });
+
+        // Activity Timeline Chart (Office-wise)
+        const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+        state.charts.timeline = new Chart(timelineCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: []
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        // Device Statistics Bar Chart
+        const deviceCtx = document.getElementById('deviceChart').getContext('2d');
+        state.charts.device = new Chart(deviceCtx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Sessions',
+                    data: [],
+                    backgroundColor: '#3b82f6'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    // ========== DATA LOADING ==========
+    async function loadDashboardStats() {
+        try {
+            const params = new URLSearchParams(state.filters);
+            const response = await fetch(`{% url 'sessions:api_stats' %}?${params}`);
+            const data = await response.json();
+
+            // Update KPI cards
+            document.getElementById('stat-active').textContent = data.active_sessions;
+            document.getElementById('stat-idle').textContent = data.idle_sessions;
+            document.getElementById('stat-users').textContent = data.total_users;
+            document.getElementById('stat-avg-duration').textContent = data.avg_duration_minutes + 'm';
+
+        } catch (error) {
+            console.error('Error loading stats:', error);
+        }
+    }
+
+    async function loadHourlyChart() {
+        try {
+            const params = new URLSearchParams(state.filters);
+            const response = await fetch(`{% url 'sessions:api_hourly' %}?${params}`);
+            const data = await response.json();
+
+            state.charts.hourly.data.labels = data.labels;
+            state.charts.hourly.data.datasets[0].data = data.total;
+            state.charts.hourly.data.datasets[1].data = data.active;
+            state.charts.hourly.data.datasets[2].data = data.idle;
+            state.charts.hourly.update();
+
+        } catch (error) {
+            console.error('Error loading hourly chart:', error);
+        }
+    }
+
+    async function loadOfficeChart() {
+        try {
+            const params = new URLSearchParams(state.filters);
+            const response = await fetch(`{% url 'sessions:api_office_dist' %}?${params}`);
+            const data = await response.json();
+
+            // Store office data with real IDs from API
+            state.officeData = data.offices || [];
+
+            state.charts.office.data.labels = data.labels;
+            state.charts.office.data.datasets[0].data = data.data;
+            state.charts.office.update();
+
+        } catch (error) {
+            console.error('Error loading office chart:', error);
+        }
+    }
+
+    async function loadTimelineChart() {
+        try {
+            const params = new URLSearchParams(state.filters);
+            const response = await fetch(`{% url 'sessions:api_timeline' %}?${params}`);
+            const data = await response.json();
+
+            state.charts.timeline.data.labels = data.labels;
+            state.charts.timeline.data.datasets = data.datasets;
+            state.charts.timeline.update();
+
+        } catch (error) {
+            console.error('Error loading timeline chart:', error);
+        }
+    }
+
+    async function loadDeviceChart() {
+        try {
+            const params = new URLSearchParams(state.filters);
+            const response = await fetch(`{% url 'sessions:api_device_stats' %}?${params}`);
+            const data = await response.json();
+
+            state.charts.device.data.labels = data.labels;
+            state.charts.device.data.datasets[0].data = data.data;
+            state.charts.device.update();
+
+        } catch (error) {
+            console.error('Error loading device chart:', error);
+        }
+    }
+
+    async function loadActivityFeed() {
+        try {
+            const params = new URLSearchParams({
+                ...state.filters,
+                last_update: state.lastUpdate || ''
+            });
+            const response = await fetch(`{% url 'sessions:api_live_feed' %}?${params}`);
+            const data = await response.json();
+
+            const feedContainer = document.getElementById('activityFeed');
+
+            if (data.activities.length === 0 && !state.lastUpdate) {
+                feedContainer.innerHTML = '<p class="text-center text-gray-500 py-8">No recent activity</p>';
+                return;
+            }
+
+            // Prepend new activities
+            data.activities.reverse().forEach(activity => {
+                const item = document.createElement('div');
+                item.className = 'flex items-start gap-3 rounded-lg border border-gray-200 p-3 hover:bg-gray-50 transition';
+                item.innerHTML = `
+        <div class="mt-1 h-2 w-2 rounded-full bg-blue-500"></div>
+        <div class="flex-1">
+          <p class="text-sm text-gray-900">${activity.message}</p>
+          <p class="mt-1 text-xs text-gray-500">${activity.time_ago}</p>
+        </div>
+      `;
+                feedContainer.insertBefore(item, feedContainer.firstChild);
+            });
+
+            // Keep only last 50 items
+            while (feedContainer.children.length > 50) {
+                feedContainer.removeChild(feedContainer.lastChild);
+            }
+
+            state.lastUpdate = data.timestamp;
+
+        } catch (error) {
+            console.error('Error loading activity feed:', error);
+        }
+    }
+
+    // ========== DRILL-DOWN FUNCTIONS ==========
+    async function drillDown(type) {
+        let endpoint = '';
+        let title = '';
+
+        if (type === 'active') {
+            endpoint = '{% url "sessions:api_drill_active" %}';
+            title = 'Active Sessions';
+        } else if (type === 'idle') {
+            endpoint = '{% url "sessions:api_drill_idle" %}';
+            title = 'Idle Sessions';
+        }
+
+        document.getElementById('modalTitle').textContent = title;
+        state.currentModal = type;
+        state.currentPage = 1;
+
+        await loadModalData(endpoint);
+        document.getElementById('drillDownModal').classList.add('active');
+    }
+
+    async function loadModalData(endpoint) {
+        try {
+            const params = new URLSearchParams({
+                ...state.filters,
+                page: state.currentPage,
+                page_size: state.pageSize
+            });
+
+            const response = await fetch(`${endpoint}?${params}`);
+            const data = await response.json();
+
+            const tbody = document.getElementById('modalTableBody');
+            tbody.innerHTML = '';
+
+            data.sessions.forEach(session => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+        <td class="px-6 py-4">
+          <div class="font-medium text-gray-900">${session.user.full_name}</div>
+          <div class="text-xs text-gray-500">@${session.user.username}</div>
+        </td>
+        <td class="px-6 py-4 text-gray-700">${session.office}</td>
+        <td class="px-6 py-4 text-gray-700">${new Date(session.login_time).toLocaleString()}</td>
+        <td class="px-6 py-4 text-gray-700">${session.duration_minutes} min</td>
+        <td class="px-6 py-4">
+          <span class="rounded-full bg-gray-100 px-2 py-1 text-xs">${session.device_type}</span>
+        </td>
+        <td class="px-6 py-4">
+          <span class="rounded-full ${session.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'} px-2 py-1 text-xs font-medium">
+            ${session.status}
+          </span>
+        </td>
+        <td class="px-6 py-4">
+          <a href="/sessions/sessions/${session.id}/" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View</a>
+        </td>
+      `;
+                tbody.appendChild(row);
+            });
+
+            // Update pagination
+            document.getElementById('modalShowingFrom').textContent = ((state.currentPage - 1) * state.pageSize) + 1;
+            document.getElementById('modalShowingTo').textContent = Math.min(state.currentPage * state.pageSize, data.total);
+            document.getElementById('modalTotal').textContent = data.total;
+
+            document.getElementById('prevPageBtn').disabled = state.currentPage === 1;
+            document.getElementById('nextPageBtn').disabled = state.currentPage >= data.total_pages;
+
+        } catch (error) {
+            console.error('Error loading modal data:', error);
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('drillDownModal').classList.remove('active');
+    }
+
+    function previousPage() {
+        if (state.currentPage > 1) {
+            state.currentPage--;
+            loadModalData(getCurrentEndpoint());
+        }
+    }
+
+    function nextPage() {
+        state.currentPage++;
+        loadModalData(getCurrentEndpoint());
+    }
+
+    function getCurrentEndpoint() {
+        if (state.currentModal === 'active') return '{% url "sessions:api_drill_active" %}';
+        if (state.currentModal === 'idle') return '{% url "sessions:api_drill_idle" %}';
+        return '';
+    }
+
+    // ========== USER SEARCH ==========
+    let searchTimeout;
+    document.getElementById('userSearch').addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        const query = e.target.value.trim();
+
+        if (query.length < 2) {
+            document.getElementById('userSearchResults').classList.add('hidden');
+            return;
+        }
+
+        searchTimeout = setTimeout(async () => {
+            try {
+                const response = await fetch(`{% url 'sessions:api_user_search' %}?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+
+                const resultsDiv = document.getElementById('userSearchResults');
+                resultsDiv.innerHTML = '';
+
+                if (data.users.length === 0) {
+                    resultsDiv.innerHTML = '<div class="px-4 py-2 text-sm text-gray-500">No users found</div>';
+                } else {
+                    data.users.forEach(user => {
+                        const item = document.createElement('div');
+                        item.className = 'cursor-pointer px-4 py-2 hover:bg-gray-100';
+                        item.textContent = `${user.full_name} (@${user.username})`;
+                        item.onclick = () => {
+                            state.filters.user_id = user.id;
+                            document.getElementById('userSearch').value = user.full_name;
+                            resultsDiv.classList.add('hidden');
+                            applyFilters();
+                        };
+                        resultsDiv.appendChild(item);
+                    });
+                }
+
+                resultsDiv.classList.remove('hidden');
+
+            } catch (error) {
+                console.error('Error searching users:', error);
+            }
+        }, 300);
     });
-});
+
+    // ========== FILTER MANAGEMENT ==========
+    function applyFilters() {
+        state.filters.office_id = document.getElementById('officeFilter').value;
+        state.filters.date_from = document.getElementById('dateFrom').value;
+        state.filters.date_to = document.getElementById('dateTo').value;
+
+        refreshDashboard();
+    }
+
+    function refreshDashboard() {
+        loadDashboardStats();
+        loadHourlyChart();
+        loadOfficeChart();
+        loadTimelineChart();
+        loadDeviceChart();
+        loadActivityFeed();
+    }
+
+    // ========== INITIALIZATION ==========
+    document.addEventListener('DOMContentLoaded', () => {
+        initCharts();
+        refreshDashboard();
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            loadDashboardStats();
+            loadActivityFeed();
+        }, 30000);
+    });
+
+    // Close modal on outside click
+    document.getElementById('drillDownModal').addEventListener('click', (e) => {
+        if (e.target.id === 'drillDownModal') {
+            closeModal();
+        }
+    });
 </script>
+
 {% endblock %}

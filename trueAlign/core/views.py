@@ -236,6 +236,69 @@ def optimized_session_heartbeat(request):
         if not session:
             logger.error("Failed to get or create session")
             return JsonResponse({'error': 'Could not create session'}, status=500)
+        
+        # === NEW INTEGRATIONS ===
+        
+        # 1. Register/Update Device
+        if session_fingerprint:
+            from trueAlign.models import UserDevice
+            try:
+                device_info = {
+                    'browser': data.get('browser'),
+                    'os': data.get('os'),
+                    'device_type': data.get('device_type'),
+                    'ip_address': client_data['ip_address']
+                }
+                device, device_created = UserDevice.get_or_create_device(
+                    user=request.user,
+                    fingerprint=session_fingerprint,
+                    device_info=device_info
+                )
+                device.last_session_id = session.id
+                device.save(update_fields=['last_session_id'])
+                
+                # Check if device is blocked
+                if device.is_blocked:
+                    logger.warning(f"Blocked device attempted access: {device.device_name}")
+                    return JsonResponse({
+                        'error': 'Device blocked',
+                        'reason': device.blocked_reason
+                    }, status=403)
+                    
+            except Exception as device_error:
+                logger.error(f"Device tracking error: {device_error}")
+        
+        # 2. Check Geo-Velocity (Impossible Travel Detection)
+        if client_data.get('location_data'):
+            try:
+                loc_data = client_data['location_data']
+                new_lat = loc_data.get('latitude')
+                new_lon = loc_data.get('longitude')
+                
+                if new_lat and new_lon:
+                    is_suspicious, travel_details = session.check_geo_velocity(
+                        float(new_lat),
+                        float(new_lon)
+                    )
+                    
+                    if is_suspicious:
+                        logger.warning(f"Impossible travel detected for {request.user.username}: {travel_details}")
+                        # Report to device if available
+                        if session_fingerprint and device:
+                            device.report_suspicious_activity(
+                                f"Impossible travel: {travel_details['velocity_kmh']:.0f} km/h"
+                            )
+            except Exception as geo_error:
+                logger.error(f"Geo-velocity check error: {geo_error}")
+        
+        # 3. Resolve Office Location
+        if client_data.get('location_data'):
+            try:
+                office = session.resolve_office_location()
+                if office:
+                    logger.debug(f"User {request.user.username} detected at {office.name}")
+            except Exception as office_error:
+                logger.error(f"Office resolution error: {office_error}")
 
         # Record heartbeat activity
         try:

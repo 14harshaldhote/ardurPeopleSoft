@@ -251,15 +251,18 @@ class EnhancedBatchWriter:
                             logger.warning(f"Session {activity['session_id']} not found for activity")
                             continue
                         
-                        # Create activity object
+                        # Create activity object with correct field names
                         activity_obj = SessionActivity(
                             session=session,
+                            user=session.user,
                             activity_type=activity['activity_type'],
                             activity_data=activity['activity_data'],
                             url=activity['url'],
                             title=activity['title'],
-                            location_data=activity['location_data'],
-                            timestamp=datetime.fromisoformat(activity['timestamp'].replace('Z', '+00:00'))
+                            location_latitude=activity['location_data'].get('latitude') if activity.get('location_data') else None,
+                            location_longitude=activity['location_data'].get('longitude') if activity.get('location_data') else None,
+                            location_accuracy=activity['location_data'].get('accuracy') if activity.get('location_data') else None,
+                            activity_time=datetime.fromisoformat(activity['timestamp'].replace('Z', '+00:00'))
                         )
                         activity_objects.append(activity_obj)
                         
