@@ -618,61 +618,113 @@ def api_drill_office(request, office_id):
 def api_live_activity_feed(request):
     """
     Get recent session activities for live feed.
-    Returns last 50 activities since last_update timestamp.
+    Returns last 50 activities (or sessions if SessionActivity doesn't exist).
     """
     try:
         last_update = request.GET.get('last_update')
         office_id = request.GET.get('office_id')
         
-        # Get recent activities
-        activities = SessionActivity.objects.select_related(
-            'session__user',
-            'session__current_office_location'
-        ).order_by('-created_at')[:50]
-        
-        if last_update:
-            last_update_dt = datetime.fromisoformat(last_update.replace('Z', '+00:00'))
-            activities = activities.filter(created_at__gt=last_update_dt)
-        
-        if office_id:
-            activities = activities.filter(session__current_office_location_id=office_id)
-        
-        # Build feed items
-        feed_items = []
-        for activity in activities:
-            user_name = activity.session.user.get_full_name() or activity.session.user.username
-            office = 'Remote'
-            if activity.session.current_office_location:
-                office = activity.session.current_office_location.name
+        # Try to use SessionActivity if it exists, else fall back to UserSession
+        try:
+            from trueAlign.models import SessionActivity
             
-            # Format activity message
-            if activity.activity_type == 'heartbeat':
-                message = f"{user_name} is active at {office}"
-            elif activity.activity_type == 'page_view':
-                message = f"{user_name} viewed a page at {office}"
-            elif activity.activity_type == 'idle_state':
-                message = f"{user_name} went idle at {office}"
-            else:
-                message = f"{user_name} - {activity.activity_type} at {office}"
+            # Get recent activities
+            activities = SessionActivity.objects.select_related(
+                'session__user',
+                'session__current_office_location'
+            ).order_by('-created_at')
             
-            # Time ago
-            time_diff = timezone.now() - activity.created_at
-            if time_diff.seconds < 60:
-                time_ago = f"{time_diff.seconds}s ago"
-            elif time_diff.seconds < 3600:
-                time_ago = f"{time_diff.seconds // 60}m ago"
-            else:
-                time_ago = f"{time_diff.seconds // 3600}h ago"
+            if last_update:
+                try:
+                    # Handle timezone-aware datetime
+                    last_update_dt = datetime.fromisoformat(last_update.replace('Z', '+00:00'))
+                    activities = activities.filter(created_at__gt=last_update_dt)
+                except (ValueError, TypeError):
+                    pass  # Ignore invalid datetime
             
-            feed_items.append({
-                'id': activity.id,
-                'message': message,
-                'time_ago': time_ago,
-                'timestamp': activity.created_at.isoformat(),
-                'activity_type': activity.activity_type,
-                'user_id': activity.session.user.id,
-                'session_id': str(activity.session.id),
-            })
+            if office_id:
+                activities = activities.filter(session__current_office_location_id=office_id)
+            
+            activities = activities[:50]
+            
+            # Build feed items
+            feed_items = []
+            for activity in activities:
+                user_name = activity.session.user.get_full_name() or activity.session.user.username
+                office = 'Remote'
+                if activity.session.current_office_location:
+                    office = activity.session.current_office_location.name
+                
+                # Format activity message
+                if activity.activity_type == 'heartbeat':
+                    message = f"{user_name} is active at {office}"
+                elif activity.activity_type == 'page_view':
+                    message = f"{user_name} viewed a page at {office}"
+                elif activity.activity_type == 'idle_state':
+                    message = f"{user_name} went idle at {office}"
+                else:
+                    message = f"{user_name} - {activity.activity_type} at {office}"
+                
+                # Time ago
+                time_diff = timezone.now() - activity.created_at
+                if time_diff.seconds < 60:
+                    time_ago = f"{time_diff.seconds}s ago"
+                elif time_diff.seconds < 3600:
+                    time_ago = f"{time_diff.seconds // 60}m ago"
+                else:
+                    time_ago = f"{time_diff.seconds // 3600}h ago"
+                
+                feed_items.append({
+                    'id': activity.id,
+                    'message': message,
+                    'time_ago': time_ago,
+                    'timestamp': activity.created_at.isoformat(),
+                    'activity_type': activity.activity_type,
+                    'user_id': activity.session.user.id,
+                    'session_id': str(activity.session.id),
+                })
+                
+        except ImportError:
+            # SessionActivity doesn't exist, use UserSession instead
+            sessions = UserSession.objects.select_related(
+                'user',
+                'current_office_location'
+            ).order_by('-login_time')[:50]
+            
+            if office_id:
+                sessions = sessions.filter(current_office_location_id=office_id)
+            
+            feed_items = []
+            for session in sessions:
+                user_name = session.user.get_full_name() or session.user.username
+                office = session.current_office_location.name if session.current_office_location else 'Remote'
+                
+                # Activity message
+                if session.is_active and not session.is_idle:
+                    message = f"{user_name} logged in at {office}"
+                elif session.is_idle:
+                    message = f"{user_name} is idle at {office}"
+                else:
+                    message = f"{user_name} ended session at {office}"
+                
+                # Time ago
+                time_diff = timezone.now() - session.login_time
+                if time_diff.seconds < 60:
+                    time_ago = f"{time_diff.seconds}s ago"
+                elif time_diff.seconds < 3600:
+                    time_ago = f"{time_diff.seconds // 60}m ago"
+                else:
+                    time_ago = f"{time_diff.seconds // 3600}h ago"
+                
+                feed_items.append({
+                    'id': session.id,
+                    'message': message,
+                    'time_ago': time_ago,
+                    'timestamp': session.login_time.isoformat(),
+                    'activity_type': 'login',
+                    'user_id': session.user.id,
+                    'session_id': str(session.id),
+                })
         
         return JsonResponse({
             'activities': feed_items,
@@ -681,7 +733,15 @@ def api_live_activity_feed(request):
         })
         
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        import traceback
+        print(f"Error in live feed API: {str(e)}")
+        print(traceback.format_exc())
+        return JsonResponse({
+            'activities': [],
+            'count': 0,
+            'timestamp': timezone.now().isoformat(),
+            'error': str(e)
+        }, status=500)
 
 
 # ============================================================================

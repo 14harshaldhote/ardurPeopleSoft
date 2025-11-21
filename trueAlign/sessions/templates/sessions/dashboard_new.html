@@ -55,45 +55,23 @@
         }
     }
 
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 1000;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(4px);
+    /* Custom Scrollbar for Modal */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 8px;
     }
 
-    .modal.active {
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
     }
 
-    .modal-content {
-        background-color: #fefefe;
-        border-radius: 16px;
-        max-width: 90%;
-        max-height: 90%;
-        overflow: hidden;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        animation: slideIn 0.3s ease;
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
     }
 
-    @keyframes slideIn {
-        from {
-            opacity: 0;
-            transform: translateY(-50px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
     }
 
     .pulse-dot {
@@ -110,6 +88,22 @@
         50% {
             opacity: 0.5;
         }
+    }
+
+    /* Quick Actions Tabs */
+    .quick-tab {
+        color: #6b7280;
+        background: transparent;
+    }
+
+    .quick-tab.active {
+        color: #2564eb68;
+        background: #eff6ff;
+        font-weight: 600;
+    }
+
+    .quick-tab:hover:not(.active) {
+        background: #f9fafb;
     }
 </style>
 {% endblock %}
@@ -199,6 +193,166 @@
                     Analytics
                 </a>
 
+                <!-- Quick Actions Dropdown -->
+                <button onclick="toggleQuickActions()"
+                    class="h-11 rounded-lg border-2 border-blue-200 bg-white px-4 text-sm font-medium text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition flex items-center gap-2">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Quick Actions
+                </button>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== QUICK ACTIONS PANEL ========== -->
+    <div id="quickActionsPanel"
+        class="hidden mb-6 rounded-xl bg-white shadow-lg border border-gray-200 overflow-hidden">
+        <div class="border-b border-gray-200">
+            <div class="flex gap-1 p-2" role="tablist">
+                <button onclick="switchQuickTab('export')" data-tab="export"
+                    class="quick-tab active px-4 py-2 rounded-lg text-sm font-medium transition">
+                    Export Data
+                </button>
+                <button onclick="switchQuickTab('history')" data-tab="history"
+                    class="quick-tab px-4 py-2 rounded-lg text-sm font-medium transition">
+                    Office History
+                </button>
+                <button onclick="switchQuickTab('reports')" data-tab="reports"
+                    class="quick-tab px-4 py-2 rounded-lg text-sm font-medium transition">
+                    Reports
+                </button>
+                <button onclick="switchQuickTab('settings')" data-tab="settings"
+                    class="quick-tab px-4 py-2 rounded-lg text-sm font-medium transition">
+                    Settings
+                </button>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="p-6">
+            <!-- Export Tab -->
+            <div id="tab-export" class="quick-tab-content">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Export Session Data</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <a href="{% url 'sessions:export' %}"
+                        class="block p-4 border-2 border-green-200 rounded-lg hover:bg-green-50 transition">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-green-100 rounded-lg">
+                                <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="font-medium text-gray-900">Excel Export</div>
+                                <div class="text-xs text-gray-500">Download as .xlsx</div>
+                            </div>
+                        </div>
+                    </a>
+                    <div class="block p-4 border-2 border-gray-200 rounded-lg opacity-60 cursor-not-allowed">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-gray-100 rounded-lg">
+                                <svg class="h-6 w-6 text-gray-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="font-medium text-gray-600">CSV Export</div>
+                                <div class="text-xs text-gray-400">Coming soon</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="block p-4 border-2 border-gray-200 rounded-lg opacity-60 cursor-not-allowed">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-gray-100 rounded-lg">
+                                <svg class="h-6 w-6 text-gray-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="font-medium text-gray-600">PDF Report</div>
+                                <div class="text-xs text-gray-400">Coming soon</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Office History Tab -->
+            <div id="tab-history" class="quick-tab-content hidden">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Office-wise Session History</h3>
+                <p class="text-gray-600 mb-4">View historical session data by office location</p>
+                <div class="space-y-2">
+                    {% for office in all_offices %}
+                    <button onclick="drillDownOffice({{ office.id }})"
+                        class="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition">
+                        <div class="font-medium text-gray-900">{{ office.name }}</div>
+                        <div class="text-xs text-gray-500">Click to view sessions</div>
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Reports Tab -->
+            <div id="tab-reports" class="quick-tab-content hidden">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Analytics & Reports</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <a href="{% url 'sessions:analytics' %}"
+                        class="block p-4 border-2 border-purple-200 rounded-lg hover:bg-purple-50 transition">
+                        <div class="font-medium text-gray-900 mb-1">Advanced Analytics</div>
+                        <div class="text-sm text-gray-600">Deep dive into session trends</div>
+                    </a>
+                    <div class="block p-4 border border-gray-200 rounded-lg bg-gray-50 opacity-60">
+                        <div class="font-medium text-gray-500 mb-1">User Productivity</div>
+                        <div class="text-sm text-gray-400">Coming soon</div>
+                    </div>
+                    <div class="block p-4 border border-gray-200 rounded-lg bg-gray-50 opacity-60">
+                        <div class="font-medium text-gray-500 mb-1">Peak Hours Analysis</div>
+                        <div class="text-sm text-gray-400">Coming soon</div>
+                    </div>
+                    <div class="block p-4 border border-gray-200 rounded-lg bg-gray-50 opacity-60">
+                        <div class="font-medium text-gray-500 mb-1">Device Usage Report</div>
+                        <div class="text-sm text-gray-400">Coming soon</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="tab-settings" class="quick-tab-content hidden">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Dashboard Settings</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Auto-refresh Interval</label>
+                        <select id="refreshInterval" class="w-full rounded-lg border-gray-300 text-sm">
+                            <option value="30">30 seconds</option>
+                            <option value="60">1 minute</option>
+                            <option value="300">5 minutes</option>
+                            <option value="0">Disabled</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Default Date Range</label>
+                        <select class="w-full rounded-lg border-gray-300 text-sm">
+                            <option>Today</option>
+                            <option>Last 7 days</option>
+                            <option>Last 30 days</option>
+                            <option>Custom</option>
+                        </select>
+                    </div>
+                    <div class="pt-4">
+                        <button onclick="alert('Settings saved! (Demo)')"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">Save
+                            Settings</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -355,74 +509,123 @@
         </div>
     </div>
 
-</div>
+<!-- Modal Backdrop -->
+<div id="drillDownModal" class="hidden fixed inset-0 z-[9999] overflow-y-auto" aria-labelledby="modal-title"
+    role="dialog" aria-modal="true">
 
-<!-- ========== DRILL-DOWN MODAL ========== -->
-<div id="drillDownModal" class="modal">
-    <div class="modal-content w-full lg:w-4/5 xl:w-3/4">
+    <!-- Backdrop overlay with fade animation -->
+    <div class="fixed inset-0 bg-gray-100 bg-opacity-90 backdrop-blur-sm transition-opacity duration-300 ease-out"
+        onclick="closeModal()" id="modalBackdrop"></div>
 
-        <!-- Modal Header -->
-        <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-            <h3 class="text-xl font-bold text-gray-900" id="modalTitle">Session Details</h3>
-            <button onclick="closeModal()" class="rounded-lg p-2 hover:bg-gray-100 transition">
-                <svg class="h-6 w-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-        </div>
+    <!-- Modal Container - Centers the modal -->
+    <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
 
-        <!-- Modal Body -->
-        <div class="px-6 py-4">
-            <div class="mb-4 flex gap-4">
-                <input type="text" id="modalSearch" placeholder="Search in results..."
-                    class="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
-                <select id="modalSort" class="rounded-lg border border-gray-300 px-4 py-2 text-sm">
-                    <option value="login_time">Sort by Login Time</option>
-                    <option value="duration">Sort by Duration</option>
-                    <option value="user">Sort by User</option>
-                </select>
+        <!-- Modal Content with scale animation -->
+        <div id="modalContent" class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all duration-300 ease-out w-full max-w-6xl
+                    scale-95 opacity-0" style="max-height: 90vh;">
+
+            <!-- Modal Header -->
+            <div
+                class="flex items-center justify-between border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50 px-6 py-4">
+                <h3 class="text-xl font-bold text-gray-900" id="modalTitle">
+                    <span class="flex items-center gap-2">
+                        <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Session Details
+                    </span>
+                </h3>
+                <button onclick="closeModal()"
+                    class="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all duration-200 transform hover:scale-110"
+                    aria-label="Close modal">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
             </div>
 
-            <div class="overflow-x-auto max-h-[60vh] overflow-y-auto">
-                <table class="w-full text-left text-sm">
-                    <thead class="sticky top-0 bg-gray-50 text-xs uppercase text-gray-700">
-                        <tr>
-                            <th class="px-6 py-3">User</th>
-                            <th class="px-6 py-3">Office</th>
-                            <th class="px-6 py-3">Login Time</th>
-                            <th class="px-6 py-3">Duration</th>
-                            <th class="px-6 py-3">Device</th>
-                            <th class="px-6 py-3">Status</th>
-                            <th class="px-6 py-3">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="modalTableBody" class="divide-y divide-gray-200">
-                        <!-- Table rows will be inserted here -->
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            <div class="mt-4 flex items-center justify-between border-t border-gray-200 pt-4">
-                <div class="text-sm text-gray-600">
-                    Showing <span id="modalShowingFrom">0</span> to <span id="modalShowingTo">0</span> of <span
-                        id="modalTotal">0</span> results
+            <!-- Modal Body -->
+            <div class="px-6 py-4 bg-gray-50">
+                <!-- Search and Sort Controls -->
+                <div class="mb-4 flex flex-col sm:flex-row gap-3">
+                    <input type="text" id="modalSearch" placeholder="🔍 Search in results..." class="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm 
+                                  focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20
+                                  transition-all duration-200">
+                    <select id="modalSort" class="rounded-lg border border-gray-300 px-4 py-2.5 text-sm
+                                   focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20
+                                   transition-all duration-200">
+                        <option value="login_time">📅 Sort by Login Time</option>
+                        <option value="duration">⏱️ Sort by Duration</option>
+                        <option value="user">👤 Sort by User</option>
+                    </select>
                 </div>
-                <div class="flex gap-2">
-                    <button onclick="previousPage()" id="prevPageBtn"
-                        class="rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                        Previous
-                    </button>
-                    <button onclick="nextPage()" id="nextPageBtn"
-                        class="rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                        Next
-                    </button>
+
+                <!-- Table Container with Custom Scrollbar -->
+                <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                    <div class="overflow-x-auto">
+                        <div class="max-h-[50vh] overflow-y-auto custom-scrollbar">
+                            <table class="w-full text-left text-sm">
+                                <thead
+                                    class="sticky top-0 bg-gradient-to-r from-gray-50 to-gray-100 text-xs uppercase text-gray-700 shadow-sm z-10">
+                                    <tr>
+                                        <th class="px-6 py-4 font-semibold">User</th>
+                                        <th class="px-6 py-4 font-semibold">Office</th>
+                                        <th class="px-6 py-4 font-semibold">Login Time</th>
+                                        <th class="px-6 py-4 font-semibold">Duration</th>
+                                        <th class="px-6 py-4 font-semibold">Device</th>
+                                        <th class="px-6 py-4 font-semibold">Status</th>
+                                        <th class="px-6 py-4 font-semibold">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="modalTableBody" class="divide-y divide-gray-200">
+                                    <!-- Table rows will be inserted here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div
+                    class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-lg border border-gray-200 px-4 py-3">
+                    <div class="text-sm text-gray-600">
+                        Showing <span class="font-semibold text-gray-900" id="modalShowingFrom">0</span>
+                        to <span class="font-semibold text-gray-900" id="modalShowingTo">0</span>
+                        of <span class="font-semibold text-gray-900" id="modalTotal">0</span> results
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="previousPage()" id="prevPageBtn" class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 
+                                       hover:bg-gray-50 hover:border-gray-400 
+                                       disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white
+                                       transition-all duration-200">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 19l-7-7 7-7" />
+                            </svg>
+                            Previous
+                        </button>
+                        <button onclick="nextPage()" id="nextPageBtn" class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 
+                                       hover:bg-gray-50 hover:border-gray-400 
+                                       disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white
+                                       transition-all duration-200">
+                            Next
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
 
+        </div>
     </div>
 </div>
+
+</div>
+<!-- ========== ANIMATED MODAL (Tailwind CSS with Scale Animation) ========== -->
 
 <!-- Chart.js Library -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -442,7 +645,8 @@
         pageSize: 50,
         charts: {},
         lastUpdate: null,
-        officeData: []  // Store office data for drill-down
+        officeData: [],  // Store office data for drill-down
+        currentOfficeId: null  // Track current office for drill-down
     };
 
     // ========== CHART.JS CONFIGURATION ==========
@@ -703,81 +907,191 @@
     }
 
     // ========== DRILL-DOWN FUNCTIONS ==========
-    async function drillDown(type) {
-        let endpoint = '';
-        let title = '';
-
-        if (type === 'active') {
-            endpoint = '{% url "sessions:api_drill_active" %}';
-            title = 'Active Sessions';
-        } else if (type === 'idle') {
-            endpoint = '{% url "sessions:api_drill_idle" %}';
-            title = 'Idle Sessions';
-        }
-
-        document.getElementById('modalTitle').textContent = title;
-        state.currentModal = type;
-        state.currentPage = 1;
-
-        await loadModalData(endpoint);
-        document.getElementById('drillDownModal').classList.add('active');
-    }
-
     async function loadModalData(endpoint) {
         try {
-            const params = new URLSearchParams({
-                ...state.filters,
-                page: state.currentPage,
-                page_size: state.pageSize
-            });
+            const url = new URL(endpoint, window.location.origin);
+            url.searchParams.set('page', state.currentPage);
 
-            const response = await fetch(`${endpoint}?${params}`);
+            // Add current filters to the request
+            if (state.filters.office_id) url.searchParams.set('office_id', state.filters.office_id);
+            if (state.filters.date_from) url.searchParams.set('date_from', state.filters.date_from);
+            if (state.filters.date_to) url.searchParams.set('date_to', state.filters.date_to);
+
+            console.log('Fetching modal data from:', url.toString());
+            const response = await fetch(url);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
             const data = await response.json();
+            console.log('Modal data received:', data);
 
+            // Update table
             const tbody = document.getElementById('modalTableBody');
-            tbody.innerHTML = '';
 
-            data.sessions.forEach(session => {
-                const row = document.createElement('tr');
-                row.className = 'hover:bg-gray-50';
-                row.innerHTML = `
-        <td class="px-6 py-4">
-          <div class="font-medium text-gray-900">${session.user.full_name}</div>
-          <div class="text-xs text-gray-500">@${session.user.username}</div>
-        </td>
-        <td class="px-6 py-4 text-gray-700">${session.office}</td>
-        <td class="px-6 py-4 text-gray-700">${new Date(session.login_time).toLocaleString()}</td>
-        <td class="px-6 py-4 text-gray-700">${session.duration_minutes} min</td>
-        <td class="px-6 py-4">
-          <span class="rounded-full bg-gray-100 px-2 py-1 text-xs">${session.device_type}</span>
-        </td>
-        <td class="px-6 py-4">
-          <span class="rounded-full ${session.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'} px-2 py-1 text-xs font-medium">
-            ${session.status}
-          </span>
-        </td>
-        <td class="px-6 py-4">
-          <a href="/sessions/sessions/${session.id}/" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View</a>
-        </td>
-      `;
-                tbody.appendChild(row);
-            });
+            if (!data.sessions || data.sessions.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                            No sessions found
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('prevPageBtn').disabled = true;
+                document.getElementById('nextPageBtn').disabled = true;
+                return;
+            }
+
+            tbody.innerHTML = data.sessions.map(session => `
+                <tr class="hover:bg-gray-50 transition-colors duration-150">
+                    <td class="px-6 py-4">
+                        <div class="font-medium text-gray-900">${session.user_name}</div>
+                        <div class="text-xs text-gray-500">@${session.username}</div>
+                    </td>
+                    <td class="px-6 py-4 text-gray-700">${session.office || 'Remote'}</td>
+                    <td class="px-6 py-4 text-gray-700">${session.login_time}</td>
+                    <td class="px-6 py-4 text-gray-700">${session.duration}</td>
+                    <td class="px-6 py-4 text-gray-700">${session.device || 'Unknown'}</td>
+                    <td class="px-6 py-4">
+                        ${session.is_active && !session.is_idle ?
+                    '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>' :
+                    session.is_idle ?
+                        '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Idle</span>' :
+                        '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Ended</span>'}
+                    </td>
+                    <td class="px-6 py-4">
+                        <a href="/sessions/${session.id}/" class="text-blue-600 hover:text-blue-800 text-sm font-medium hover:underline">View</a>
+                    </td>
+                </tr>
+            `).join('');
 
             // Update pagination
-            document.getElementById('modalShowingFrom').textContent = ((state.currentPage - 1) * state.pageSize) + 1;
-            document.getElementById('modalShowingTo').textContent = Math.min(state.currentPage * state.pageSize, data.total);
+            const from = data.sessions.length > 0 ? ((state.currentPage - 1) * data.page_size + 1) : 0;
+            const to = Math.min(state.currentPage * data.page_size, data.total);
+
+            document.getElementById('modalShowingFrom').textContent = from;
+            document.getElementById('modalShowingTo').textContent = to;
             document.getElementById('modalTotal').textContent = data.total;
 
-            document.getElementById('prevPageBtn').disabled = state.currentPage === 1;
+            document.getElementById('prevPageBtn').disabled = state.currentPage <= 1;
             document.getElementById('nextPageBtn').disabled = state.currentPage >= data.total_pages;
 
         } catch (error) {
             console.error('Error loading modal data:', error);
+            const tbody = document.getElementById('modalTableBody');
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="px-6 py-8 text-center text-red-500">
+                        <div class="flex flex-col items-center justify-center">
+                            <svg class="h-8 w-8 text-red-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <p>Error loading data: ${error.message}</p>
+                            <button onclick="loadModalData('${endpoint}')" class="mt-2 text-sm text-blue-600 hover:underline">Try Again</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
         }
     }
 
+    async function drillDown(type) {
+        console.log('DrillDown called for:', type);
+        const endpoint = type === 'active' ? '{% url "sessions:api_drill_active" %}' : '{% url "sessions:api_drill_idle" %}';
+        const title = type === 'active' ? 'Active Sessions' : 'Idle Sessions';
+
+        const modalTitle = document.getElementById('modalTitle');
+        if (modalTitle) {
+            modalTitle.innerHTML = `
+                <span class="flex items-center gap-2">
+                    <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    ${title}
+                </span>
+            `;
+        }
+
+        state.currentModal = type;
+        state.currentPage = 1;
+
+        try {
+            await loadModalData(endpoint);
+        } catch (e) {
+            console.error('Error loading data, opening modal anyway', e);
+        }
+        openModal();
+    }
+
+    async function drillDownOffice(officeId) {
+        console.log('DrillDownOffice called for:', officeId);
+        if (!officeId) {
+            console.error('No office ID provided for drill-down');
+            return;
+        }
+
+        const endpoint = `/sessions/api/drill/office/${officeId}/`;
+        const officeName = state.officeData.find(o => o.id === officeId)?.name || 'Office';
+
+        const modalTitle = document.getElementById('modalTitle');
+        if (modalTitle) {
+            modalTitle.innerHTML = `
+                <span class="flex items-center gap-2">
+                    <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    ${officeName} Sessions
+                </span>
+            `;
+        }
+
+        state.currentModal = 'office';
+        state.currentOfficeId = officeId;
+        state.currentPage = 1;
+
+        try {
+            await loadModalData(endpoint);
+        } catch (e) {
+            console.error('Error loading data, opening modal anyway', e);
+        }
+        openModal();
+    }
+
+    function openModal() {
+        console.log('Opening modal...');
+        const modal = document.getElementById('drillDownModal');
+        const modalContent = document.getElementById('modalContent');
+
+        if (!modal || !modalContent) {
+            console.error('Modal elements not found!');
+            return;
+        }
+
+        // Show modal container first
+        modal.classList.remove('hidden');
+
+        // Use setTimeout to ensure browser registers the display change
+        // before applying the transition classes
+        setTimeout(() => {
+            console.log('Triggering modal animation');
+            modalContent.classList.remove('scale-95', 'opacity-0');
+            modalContent.classList.add('scale-100', 'opacity-100');
+        }, 50);
+    }
+
     function closeModal() {
-        document.getElementById('drillDownModal').classList.remove('active');
+        const modal = document.getElementById('drillDownModal');
+        const modalContent = document.getElementById('modalContent');
+
+        // Animate out
+        modalContent.classList.remove('scale-100', 'opacity-100');
+        modalContent.classList.add('scale-95', 'opacity-0');
+
+        // Hide modal after animation completes (300ms)
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
     }
 
     function previousPage() {
@@ -795,6 +1109,7 @@
     function getCurrentEndpoint() {
         if (state.currentModal === 'active') return '{% url "sessions:api_drill_active" %}';
         if (state.currentModal === 'idle') return '{% url "sessions:api_drill_idle" %}';
+        if (state.currentModal === 'office') return `/sessions/api/drill/office/${state.currentOfficeId}/`;
         return '';
     }
 
@@ -860,6 +1175,30 @@
         loadActivityFeed();
     }
 
+    // ========== QUICK ACTIONS FUNCTIONS ==========
+    function toggleQuickActions() {
+        const panel = document.getElementById('quickActionsPanel');
+        panel.classList.toggle('hidden');
+    }
+
+    function switchQuickTab(tabName) {
+        // Hide all tab contents
+        document.querySelectorAll('.quick-tab-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+
+        // Remove active class from all tabs  
+        document.querySelectorAll('.quick-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+
+        // Show selected tab content
+        document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+
+        // Add active class to selected tab
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    }
+
     // ========== INITIALIZATION ==========
     document.addEventListener('DOMContentLoaded', () => {
         initCharts();
@@ -870,13 +1209,6 @@
             loadDashboardStats();
             loadActivityFeed();
         }, 30000);
-    });
-
-    // Close modal on outside click
-    document.getElementById('drillDownModal').addEventListener('click', (e) => {
-        if (e.target.id === 'drillDownModal') {
-            closeModal();
-        }
     });
 </script>
 
