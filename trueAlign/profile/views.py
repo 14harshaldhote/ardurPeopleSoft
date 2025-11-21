@@ -118,7 +118,6 @@ def hr_dashboard(request):
         'status_stats': status_stats,
         'recent_logins': recent_logins,
         'new_users': new_users,
-        'saved_layout': json.dumps(saved_layout),  # Pass as JSON string for JavaScript
     }
 
     return render(request, 'profile/dashboard.html', context)

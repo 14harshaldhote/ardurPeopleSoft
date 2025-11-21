@@ -1772,7 +1772,6 @@ document.addEventListener("DOMContentLoaded", function () {
         forceSync: () => window.optimizedSessionTrackerEnhanced.forceSync(),
       };
 
-      console.log("Enhanced Optimized Session Tracker initialized successfully");
     } catch (error) {
       console.error("Failed to initialize Enhanced Optimized Session Tracker:", error);
     }
