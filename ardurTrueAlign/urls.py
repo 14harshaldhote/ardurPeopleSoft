@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import path, include, re_path
+from django.http import HttpResponse
 from django.conf import settings
 from django.conf.urls.static import static
 from trueAlign.attendance import api_views as attendance_api_views
@@ -32,4 +33,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('trueAlign.urls')),  # Include URLs for the 'aps' app
     path('', include('trueAlign.notifications.urls')),  # Include URLs for the notifications app
+    path('.well-known/appspecific/com.chrome.devtools.json', lambda request: HttpResponse(status=204)),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

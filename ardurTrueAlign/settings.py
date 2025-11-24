@@ -68,12 +68,15 @@ if not DEBUG:
 
 # Application definition
 # Session Configuration
-SESSION_COOKIE_AGE = 3600  # 1 hour
+# Session Configuration
+SESSION_COOKIE_AGE = 3600 * 24 * 14  # 2 weeks
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_DOMAIN = None  # Allow all domains (localhost, IP)
+SESSION_COOKIE_PATH = '/'
 
 # Enhanced Session Management Configuration
 ENHANCED_SESSION_CONFIG = {
@@ -247,7 +250,6 @@ AUTH_PASSWORD_VALIDATORS = [
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-
     'formatters': {
         'verbose': {
             'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
@@ -258,21 +260,14 @@ LOGGING = {
             'style': '{',
         },
         'json': {
-            'format': '{levelname}|{asctime}|{module}|{process}|{thread}|{message}',
+            'format': '{levelname} {asctime} {module} {message}',
             'style': '{',
         },
-        'action_based': {
-            'format': '[{asctime}] {levelname} - {name} - {message}',
+        'detailed': { # Added missing formatter 'detailed'
+            'format': '{levelname} {asctime} {module} {funcName} {lineno:d} {message}',
             'style': '{',
-            'datefmt': '%Y-%m-%d %H:%M:%S',
-        },
-        'detailed': {
-            'format': '[{asctime}] {levelname} - {name} - {funcName}:{lineno} - {message}',
-            'style': '{',
-            'datefmt': '%Y-%m-%d %H:%M:%S',
         },
     },
-
     'filters': {
         'require_debug_false': {
             '()': 'django.utils.log.RequireDebugFalse',
@@ -281,36 +276,35 @@ LOGGING = {
             '()': 'django.utils.log.RequireDebugTrue',
         },
     },
-
     'handlers': {
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
-            'formatter': 'action_based'
+            'formatter': 'verbose',
         },
-        'file': {
+        'file': { # Corrected the 'file' handler definition
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'shift_app.log'),
-            'maxBytes': 1024*1024*15,
+            'filename': os.path.join(BASE_DIR, 'logs', 'general.log'),
+            'maxBytes': 1024 * 1024 * 15,
             'backupCount': 10,
-            'formatter': 'detailed',
+            'formatter': 'verbose',
         },
-        'error_file': {
+        'error_file': { # Added missing 'error_file' handler
             'level': 'ERROR',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'shift_errors.log'),
-            'maxBytes': 1024*1024*15,
+            'filename': os.path.join(BASE_DIR, 'logs', 'error.log'),
+            'maxBytes': 1024 * 1024 * 15,
             'backupCount': 10,
-            'formatter': 'detailed',
+            'formatter': 'verbose',
         },
-        'action_file': {
+        'action_file': { # Added missing 'action_file' handler
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'shift_actions.log'),
-            'maxBytes': 1024*1024*15,
+            'filename': os.path.join(BASE_DIR, 'logs', 'actions.log'),
+            'maxBytes': 1024 * 1024 * 15,
             'backupCount': 10,
-            'formatter': 'json',
+            'formatter': 'detailed',
         },
         'security_file': {
             'level': 'WARNING',
@@ -812,6 +806,14 @@ os.makedirs(os.path.join(BASE_DIR, 'logs'), exist_ok=True)
 # LOGIN_URL = '/login/'  # Commented out to allow Django admin default login
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/login/'
+
+# Session Security Settings
+SESSION_COOKIE_SECURE = not DEBUG  # Use secure cookies in production
+SESSION_COOKIE_HTTPONLY = True     # Prevent JS access to session cookie
+SESSION_COOKIE_SAMESITE = 'Lax'    # Protect against CSRF
+CSRF_COOKIE_SECURE = not DEBUG     # Use secure CSRF cookies in production
+CSRF_COOKIE_HTTPONLY = False       # JS needs access to CSRF token
+CSRF_COOKIE_SAMESITE = 'Lax'
 
 
 # Additional authentication settings to prevent conflicts

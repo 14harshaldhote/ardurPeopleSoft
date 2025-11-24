@@ -278,8 +278,8 @@ class OptimizedSessionTracker {
       this.state.fingerprint = this.hashString(JSON.stringify(fingerprint));
       this.log(
         "Generated fingerprint: " +
-          this.state.fingerprint.substring(0, 8) +
-          "...",
+        this.state.fingerprint.substring(0, 8) +
+        "...",
         "debug",
       );
     } catch (error) {
@@ -641,7 +641,7 @@ class OptimizedSessionTracker {
         this.log('Missing required heartbeat data, regenerating...', 'warning');
         heartbeatData.tab_id = heartbeatData.tab_id || this.generateTabId();
         heartbeatData.session_fingerprint = heartbeatData.session_fingerprint || this.generateFingerprint();
-        
+
         // Update state with generated values
         this.state.tabId = heartbeatData.tab_id;
         this.state.fingerprint = heartbeatData.session_fingerprint;
@@ -1380,8 +1380,7 @@ class OptimizedSessionTracker {
       });
   }
 
-  getCSRFToken() 
-  {
+  getCSRFToken() {
     // First try to get from cookies
     const cookies = document.cookie.split(";");
     for (let cookie of cookies) {
@@ -1545,23 +1544,23 @@ class OptimizedSessionTracker {
   sanitizeUrl(url) {
     try {
       if (!url || typeof url !== 'string') return '';
-      
+
       // Truncate very long URLs
       if (url.length > 2000) {
         this.log('URL too long, truncating', 'warning');
         url = url.substring(0, 2000);
       }
-      
+
       // Remove sensitive query parameters
       const urlObj = new URL(url);
       const sensitiveParams = ['password', 'token', 'key', 'secret', 'auth'];
-      
+
       for (const param of sensitiveParams) {
         if (urlObj.searchParams.has(param)) {
           urlObj.searchParams.set(param, '[REDACTED]');
         }
       }
-      
+
       return urlObj.toString();
     } catch (error) {
       this.log('Error sanitizing URL: ' + error.message, 'warning');
@@ -1572,16 +1571,16 @@ class OptimizedSessionTracker {
   sanitizeTitle(title) {
     try {
       if (!title || typeof title !== 'string') return '';
-      
+
       // Truncate very long titles
       if (title.length > 500) {
         this.log('Title too long, truncating', 'warning');
         title = title.substring(0, 500);
       }
-      
+
       // Remove potentially sensitive information
       title = title.replace(/password|token|key|secret/gi, '[REDACTED]');
-      
+
       return title.trim();
     } catch (error) {
       this.log('Error sanitizing title: ' + error.message, 'warning');
@@ -1592,16 +1591,16 @@ class OptimizedSessionTracker {
   validateCoordinate(coord, type) {
     try {
       if (coord === null || coord === undefined) return null;
-      
+
       const numCoord = parseFloat(coord);
       if (isNaN(numCoord)) return null;
-      
+
       if (type === 'latitude') {
         return (numCoord >= -90 && numCoord <= 90) ? numCoord : null;
       } else if (type === 'longitude') {
         return (numCoord >= -180 && numCoord <= 180) ? numCoord : null;
       }
-      
+
       return numCoord;
     } catch (error) {
       this.log('Error validating coordinate: ' + error.message, 'warning');
@@ -1612,10 +1611,10 @@ class OptimizedSessionTracker {
   validateAccuracy(accuracy) {
     try {
       if (accuracy === null || accuracy === undefined) return null;
-      
+
       const numAccuracy = parseFloat(accuracy);
       if (isNaN(numAccuracy)) return null;
-      
+
       // Accuracy should be non-negative
       return (numAccuracy >= 0) ? numAccuracy : null;
     } catch (error) {
@@ -1787,7 +1786,7 @@ document.addEventListener("DOMContentLoaded", function () {
     console.log("OptimizedSessionTracker already initialized, skipping auto-init");
     return;
   }
-  
+
   // Only initialize if user is authenticated
   if (
     document.body.getAttribute("data-authenticated") === "true" ||
