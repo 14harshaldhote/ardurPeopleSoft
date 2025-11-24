@@ -28,6 +28,7 @@ urlpatterns = [
     path('attendance/', include('trueAlign.attendance.urls')),
     path('notes/', include('trueAlign.notes.urls')),
     path('support/', include('trueAlign.support.urls')),
+    path('notifications/', include('trueAlign.notifications.urls')),
     path('conference/', include('trueAlign.confrence.urls')),  # Conference Room Booking
     path('appraisal/', include('trueAlign.apprisal.urls')),  # Appraisal System
     path('finance/', include('trueAlign.finance.urls')),

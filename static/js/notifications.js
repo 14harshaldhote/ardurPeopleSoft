@@ -1,202 +1,226 @@
-class NotificationHandler {
+/**
+ * Notification System
+ * Handles polling, UI updates, sound, and browser notifications
+ */
+
+class NotificationSystem {
     constructor(options = {}) {
         this.options = {
-            pollingInterval: options.pollingInterval || 30000,
-            notificationContainer: options.notificationContainer || '#notification-list',
-            notificationBadge: options.notificationBadge || '#notification-badge',
-            maxNotifications: options.maxNotifications || 20
+            pollInterval: 30000, // 30 seconds
+            soundEnabled: true,
+            browserNotifications: true,
+            apiEndpoint: '/notifications/api/notifications/',
+            markReadEndpoint: '/notifications/api/notifications/mark-read/',
+            markAllReadEndpoint: '/notifications/api/notifications/mark-all-read/',
+            ...options
         };
 
-        this.lastNotificationId = 0;
-        this.setupNotifications();
+        this.state = {
+            unreadCount: 0,
+            notifications: [],
+            lastPoll: null
+        };
+
+        this.elements = {
+            badges: document.querySelectorAll('.notification-badge'),
+            lists: document.querySelectorAll('.notification-list'),
+            sound: document.getElementById('notification-sound'),
+            dropdowns: document.querySelectorAll('[data-dropdown="notifications"]')
+        };
+
+        this.init();
     }
 
-    setupNotifications() {
-        // Request notification permission
-        if ("Notification" in window) {
-            Notification.requestPermission();
+    init() {
+        // Request browser permission
+        if (this.options.browserNotifications && 'Notification' in window) {
+            if (Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
         }
 
         // Start polling
-        this.pollNotifications();
-        setInterval(() => this.pollNotifications(), this.options.pollingInterval);
+        this.poll();
+        setInterval(() => this.poll(), this.options.pollInterval);
 
-        // Setup mark as read handlers
-        document.addEventListener('click', (e) => {
-            if (e.target.matches('[data-notification-id]')) {
-                const notificationId = e.target.dataset.notificationId;
-                this.markAsRead(notificationId);
+        // Bind events
+        this.bindEvents();
+    }
+
+    bindEvents() {
+        // Mark all read buttons
+        const markAllBtns = document.querySelectorAll('.mark-all-read');
+        markAllBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.markAllRead();
+            });
+        });
+    }
+
+    async poll() {
+        try {
+            const response = await fetch(this.options.apiEndpoint);
+            if (!response.ok) throw new Error('Network response was not ok');
+
+            const data = await response.json();
+            this.handleUpdate(data);
+        } catch (error) {
+            console.error('Notification poll failed:', error);
+        }
+    }
+
+    handleUpdate(data) {
+        const { notifications, unread_count } = data;
+        const prevCount = this.state.unreadCount;
+
+        // Update state
+        this.state.notifications = notifications;
+        this.state.unreadCount = unread_count;
+
+        // Update UI
+        this.updateBadges();
+        this.updateLists();
+
+        // Trigger alerts if new unread notifications arrived
+        if (unread_count > prevCount) {
+            const newNotifications = notifications.filter(n => !n.read && new Date(n.timestamp) > (this.state.lastPoll || 0));
+            if (newNotifications.length > 0) {
+                this.playAlerts(newNotifications[0]);
+            }
+        }
+
+        this.state.lastPoll = new Date();
+    }
+
+    updateBadges() {
+        this.elements.badges.forEach(badge => {
+            if (this.state.unreadCount > 0) {
+                badge.textContent = this.state.unreadCount;
+                badge.classList.remove('hidden');
+                badge.classList.add('animate-bounce');
+                // Remove animation after 1s
+                setTimeout(() => badge.classList.remove('animate-bounce'), 1000);
+            } else {
+                badge.classList.add('hidden');
             }
         });
     }
 
-    async pollNotifications() {
-        try {
-            const response = await fetch('/api/notifications/');
-            const data = await response.json();
+    updateLists() {
+        this.elements.lists.forEach(list => {
+            if (this.state.notifications.length === 0) {
+                list.innerHTML = `
+                    <div class="p-8 text-center text-gray-500">
+                        <i class="ri-notification-off-line text-3xl mb-2"></i>
+                        <p>No notifications</p>
+                    </div>
+                `;
+                return;
+            }
 
-            // Update notification badge
-            this.updateBadge(data.unread_count);
-
-            // Show new browser notifications
-            data.notifications.forEach(notification => {
-                if (!notification.unread) return;
-
-                if (notification.id > this.lastNotificationId) {
-                    this.showBrowserNotification(notification);
-                    this.lastNotificationId = notification.id;
-                }
-            });
-
-            // Update notification list in UI
-            this.updateNotificationList(data.notifications);
-        } catch (error) {
-            console.error('Error polling notifications:', error);
-        }
-    }
-
-    updateBadge(count) {
-        const badge = document.querySelector(this.options.notificationBadge);
-        if (badge) {
-            badge.textContent = count;
-            badge.style.display = count > 0 ? 'block' : 'none';
-        }
-    }
-
-    updateNotificationList(notifications) {
-        const container = document.querySelector(this.options.notificationContainer);
-        if (!container) return;
-
-        const html = notifications.map(notification => `
-            <div class="notification-item ${notification.unread ? 'unread' : ''}" 
-                 data-notification-id="${notification.id}">
-                <div class="notification-header">
-                    <span class="notification-actor">${notification.actor}</span>
-                    <span class="notification-verb">${notification.verb}</span>
-                    <span class="notification-time">
-                        ${this.formatTimestamp(notification.timestamp)}
-                    </span>
+            list.innerHTML = this.state.notifications.map(n => `
+                <div class="p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150 ${n.read ? 'opacity-75' : 'bg-blue-50/30'}">
+                    <div class="flex gap-3">
+                        <div class="flex-shrink-0 mt-1">
+                            ${this.getIcon(n.module)}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-start">
+                                <h4 class="text-sm font-semibold text-gray-900 truncate pr-2">${n.title}</h4>
+                                <span class="text-xs text-gray-500 whitespace-nowrap">${this.formatTime(n.timestamp)}</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-0.5 line-clamp-2">${n.message}</p>
+                            <div class="mt-2 flex gap-3">
+                                ${n.url ? `<a href="${n.url}" class="text-xs font-medium text-primary-600 hover:text-primary-700">View Details</a>` : ''}
+                                ${!n.read ? `<button onclick="window.notifications.markRead(${n.id})" class="text-xs text-gray-500 hover:text-gray-700">Mark as read</button>` : ''}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="notification-description">${notification.description}</div>
-                ${notification.url ? `
-                    <a href="${notification.url}" class="notification-link">
-                        View Details
-                    </a>
-                ` : ''}
-            </div>
-        `).join('');
-
-        container.innerHTML = html || '<div class="no-notifications">No notifications</div>';
+            `).join('');
+        });
     }
 
-    showBrowserNotification(notification) {
-        if (Notification.permission === "granted") {
-            new Notification(notification.actor + ' ' + notification.verb, {
-                body: notification.description,
-                icon: '/static/img/notification-icon.png'
-            });
-        }
+    getIcon(module) {
+        const icons = {
+            support: '<div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center"><i class="ri-customer-service-2-line"></i></div>',
+            attendance: '<div class="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center"><i class="ri-time-line"></i></div>',
+            leave: '<div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center"><i class="ri-calendar-event-line"></i></div>',
+            default: '<div class="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center"><i class="ri-notification-line"></i></div>'
+        };
+        return icons[module] || icons.default;
     }
 
-    async markAsRead(notificationId) {
-        try {
-            const response = await fetch(`/api/notifications/mark-read/${notificationId}/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': this.getCsrfToken()
-                }
-            });
-
-            if (response.ok) {
-                const element = document.querySelector(`[data-notification-id="${notificationId}"]`);
-                if (element) {
-                    element.classList.remove('unread');
-                }
-
-                // Update badge count
-                const badge = document.querySelector(this.options.notificationBadge);
-                const currentCount = parseInt(badge.textContent);
-                this.updateBadge(Math.max(0, currentCount - 1));
-            }
-        } catch (error) {
-            console.error('Error marking notification as read:', error);
-        }
-    }
-
-    async markAllAsRead() {
-        try {
-            const response = await fetch('/api/notifications/mark-all-read/', {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': this.getCsrfToken()
-                }
-            });
-
-            if (response.ok) {
-                // Update UI
-                document.querySelectorAll('.notification-item.unread').forEach(el => {
-                    el.classList.remove('unread');
-                });
-
-                // Update badge
-                this.updateBadge(0);
-            }
-        } catch (error) {
-            console.error('Error marking all notifications as read:', error);
-        }
-    }
-
-    formatTimestamp(timestamp) {
-        const date = new Date(timestamp);
+    formatTime(isoString) {
+        const date = new Date(isoString);
         const now = new Date();
-        const diff = now - date;
+        const diff = (now - date) / 1000; // seconds
 
-        // Less than 1 minute
-        if (diff < 60000) {
-            return 'Just now';
-        }
-        // Less than 1 hour
-        if (diff < 3600000) {
-            const minutes = Math.floor(diff / 60000);
-            return `${minutes}m ago`;
-        }
-        // Less than 1 day
-        if (diff < 86400000) {
-            const hours = Math.floor(diff / 3600000);
-            return `${hours}h ago`;
-        }
-        // Less than 7 days
-        if (diff < 604800000) {
-            const days = Math.floor(diff / 86400000);
-            return `${days}d ago`;
-        }
-        // Otherwise show full date
+        if (diff < 60) return 'Just now';
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
         return date.toLocaleDateString();
     }
 
-    getCsrfToken() {
-        const name = 'csrftoken';
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
+    playAlerts(notification) {
+        // Sound
+        if (this.options.soundEnabled && this.elements.sound) {
+            this.elements.sound.play().catch(e => console.log('Audio play failed:', e));
         }
-        return cookieValue;
+
+        // Browser Notification
+        if (this.options.browserNotifications && 'Notification' in window && Notification.permission === 'granted') {
+            new Notification(notification.title, {
+                body: notification.message,
+                icon: '/static/images/favicon.ico' // Ensure this exists or remove
+            });
+        }
+    }
+
+    async markRead(id) {
+        try {
+            await fetch(this.options.markReadEndpoint.replace('0', id) + id + '/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrf-token]').content
+                }
+            });
+            // Optimistic update
+            const n = this.state.notifications.find(n => n.id === id);
+            if (n) {
+                n.read = true;
+                this.state.unreadCount = Math.max(0, this.state.unreadCount - 1);
+                this.updateBadge();
+                this.updateList();
+            }
+        } catch (error) {
+            console.error('Mark read failed:', error);
+        }
+    }
+
+    async markAllRead() {
+        try {
+            await fetch(this.options.markAllReadEndpoint, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrf-token]').content
+                }
+            });
+
+            this.state.notifications.forEach(n => n.read = true);
+            this.state.unreadCount = 0;
+            this.updateBadge();
+            this.updateList();
+        } catch (error) {
+            console.error('Mark all read failed:', error);
+        }
     }
 }
 
-// Initialize notifications when document is ready
+// Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
-    window.notificationHandler = new NotificationHandler({
-        pollingInterval: 30000,  // 30 seconds
-        notificationContainer: '#notification-list',
-        notificationBadge: '#notification-badge',
-        maxNotifications: 20
-    });
+    if (document.querySelector('.notification-list')) {
+        window.notifications = new NotificationSystem();
+    }
 });
