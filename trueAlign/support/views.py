@@ -12,6 +12,7 @@ from django.db.models import Q
 from trueAlign.models import Support
 from .services import SupportTicketService
 from .forms import TicketCreateForm, TicketCommentForm, TicketStatusForm, TicketReassignForm
+from .events import dispatch_event
 
 
 class SupportDashboardView(LoginRequiredMixin, ListView):
@@ -93,6 +94,10 @@ class TicketCreateView(LoginRequiredMixin, CreateView):
                 self.request,
                 f'Ticket {ticket.ticket_id} created successfully!'
             )
+
+            # Dispatch event
+            dispatch_event('ticket_created', ticket, self.request.user)
+
             return redirect('support:ticket_detail', ticket_id=ticket.pk)
 
         except Exception as e:
@@ -164,6 +169,25 @@ def update_ticket_status(request, ticket_id):
 
         messages.success(request, f'Ticket status updated to {dict(Support.Status.choices)[ticket.status]}')
 
+        # Dispatch event
+        dispatch_event(
+            'ticket_status_changed', 
+            ticket, 
+            request.user, 
+            old_status=request.POST.get('old_status') # Note: We might need to fetch old status before update if not passed, but service handles update. 
+            # Actually, the service returns the updated ticket. We don't easily have the old status here unless we fetch it before.
+            # Let's assume the rule handler handles "current status is X" logic. 
+            # But wait, the rule says "Notify ticket owner: Your ticket is now X". That works with new status.
+            # The rule also says "Notify assignee: Ticket status changed to X". That also works.
+            # So we don't strictly need old_status for the notification message itself, but maybe for logic?
+            # The rule implementation I wrote uses `kwargs.get('old_status')` but doesn't strictly depend on it for the message content except maybe for diffing?
+            # Actually, let's just pass it if we can. But here we don't have it easily without an extra DB call.
+            # Let's check if we can get it from the form or just skip it for now as the messages I defined don't use it.
+            # Re-reading my rule implementation: `old_status = kwargs.get('old_status')` is used.
+            # But the message is: `Your ticket '{ticket.subject}' is now {new_status}.`
+            # So it's fine.
+        )
+
     except PermissionDenied as e:
         messages.error(request, str(e))
     except Exception as e:
@@ -195,6 +219,13 @@ def reassign_ticket(request, ticket_id):
 
         messages.success(request, 'Ticket reassigned successfully')
 
+        # Dispatch event
+        # We need to know if it was a reassign or initial assign (though initial usually happens at create).
+        # This view is `reassign_ticket`, so it's likely a reassign.
+        # We might want the old assignee. Again, service handles it.
+        # Let's just dispatch 'ticket_reassigned' and let the handler figure it out or just notify new assignee.
+        dispatch_event('ticket_reassigned', ticket, request.user)
+
     except PermissionDenied as e:
         messages.error(request, str(e))
     except ValueError:
@@ -225,6 +256,14 @@ def add_comment(request, ticket_id):
         )
 
         messages.success(request, 'Comment added successfully')
+
+        # Dispatch event
+        dispatch_event(
+            'ticket_comment_added', 
+            ticket, 
+            request.user, 
+            is_internal=is_internal
+        )
 
     except PermissionDenied as e:
         messages.error(request, str(e))
@@ -284,6 +323,14 @@ def escalate_ticket(request, ticket_id):
         messages.success(
             request,
             f'Ticket escalated to level {ticket.escalation_level} with priority {dict(Support.Priority.choices)[ticket.priority]}'
+        )
+
+        # Dispatch event
+        dispatch_event(
+            'ticket_escalated', 
+            ticket, 
+            request.user, 
+            reason=reason
         )
 
     except PermissionDenied as e:

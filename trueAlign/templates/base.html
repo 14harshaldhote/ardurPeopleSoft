@@ -675,7 +675,7 @@
 
     {% if user.is_authenticated %}
     <script src="{% static 'js/optimized-session-tracker.js' %}"></script>
-    <script src="{% static 'js/notifications.js' %}?v=1.2" defer></script>
+    <script src="{% static 'js/notifications.js' %}?v=1.5" defer></script>
     {% endif %}
 
     <!-- Include Base Styles -->
@@ -715,7 +715,7 @@
                 </div>
 
 
-                
+
                 {% if user.is_authenticated %}
                 <div class="relative" data-dropdown>
                     <button @click="toggleUserDropdown()"

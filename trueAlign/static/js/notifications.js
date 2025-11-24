@@ -11,9 +11,9 @@ class NotificationSystem {
             soundEnabled: true,
             browserNotifications: true,
             // Corrected API endpoints based on urls.py
-            apiEndpoint: '/api/notifications/',
-            markReadEndpoint: '/api/notifications/mark-read/',
-            markAllReadEndpoint: '/api/notifications/mark-all-read/',
+            apiEndpoint: '/notifications/',
+            markReadEndpoint: '/notifications/mark-read/',
+            markAllReadEndpoint: '/notifications/mark-all-read/',
             ...options
         };
 
@@ -260,6 +260,49 @@ class NotificationSystem {
                 icon: '/static/images/favicon.ico'
             });
         }
+
+        // In-app Toast
+        this.showToast(notification);
+    }
+
+    showToast(notification) {
+        // Create toast container if it doesn't exist
+        let container = document.getElementById('notification-toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'notification-toast-container';
+            container.className = 'fixed bottom-4 right-4 z-50 flex flex-col gap-2';
+            document.body.appendChild(container);
+        }
+
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = 'bg-white border-l-4 border-blue-500 shadow-lg rounded-r-lg p-4 flex items-start gap-3 min-w-[300px] transform transition-all duration-300 translate-x-full opacity-0';
+        toast.innerHTML = `
+            <div class="flex-shrink-0 text-blue-500 mt-0.5">
+                <i class="ri-notification-3-line text-xl"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h4 class="text-sm font-semibold text-gray-900">${notification.title}</h4>
+                <p class="text-sm text-gray-600 mt-1">${notification.message}</p>
+            </div>
+            <button class="text-gray-400 hover:text-gray-600 transition-colors" onclick="this.parentElement.remove()">
+                <i class="ri-close-line"></i>
+            </button>
+        `;
+
+        container.appendChild(toast);
+
+        // Animate in
+        requestAnimationFrame(() => {
+            toast.classList.remove('translate-x-full', 'opacity-0');
+        });
+
+        // Auto dismiss
+        setTimeout(() => {
+            toast.classList.add('translate-x-full', 'opacity-0');
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
     }
 
     async markRead(id) {

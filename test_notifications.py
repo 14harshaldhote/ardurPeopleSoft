@@ -8,7 +8,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ardurTrueAlign.settings')
 django.setup()
 
 from trueAlign.models import Support, Notification
-from trueAlign.notifications.views import get_notifications
+from trueAlign.notifications.views import get_unread_notifications
 
 User = get_user_model()
 
@@ -21,10 +21,10 @@ def test_notifications():
     print("Creating ticket...")
     ticket = Support.objects.create(
         user=user1,
-        subject="Test Ticket for Notification",
-        description="This is a test ticket",
+        subject="MTS",
+        description="This is a test ticket reliving live ogs ",
         assigned_to_user=user2,
-        issue_type=Support.IssueType.SOFTWARE
+        issue_type=Support.IssueType.HARDWARE
     )
     
     # Check if notification was created for user2
@@ -42,10 +42,10 @@ def test_notifications():
     # Test API
     print("Testing API...")
     factory = RequestFactory()
-    request = factory.get('/notifications/api/notifications/')
+    request = factory.get('/notifications/')
     request.user = user2
     
-    response = get_notifications(request)
+    response = get_unread_notifications(request)
     data = json.loads(response.content)
     
     if data['unread_count'] > 0:
