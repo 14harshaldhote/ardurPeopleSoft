@@ -1,214 +1,233 @@
 {% extends "base.html" %}
 {% load humanize %}
 
-{% block title %}{{ expense.expense_id }} - Expense Detail - Finance - {{ block.super }}{% endblock %}
+{% block title %}{{ expense.expense_id }} - Expense Detail{% endblock %}
 
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{% url 'finance:expense_list' %}">Expenses</a></li>
 <li class="breadcrumb-item active">{{ expense.expense_id }}</li>
 {% endblock %}
 
-{% block ontent %}
-<div class="expense-detail-container">
-    <div class="page-header">
-        <div class="d-flex justify-content-between align-items-start">
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="max-w-7xl mx-auto space-y-6">
+        <!-- Page Header -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-                <h1><i class="fas fa-receipt"></i> Expense: {{ expense.expense_id }}</h1>
-                <p class="text-muted mb-0">
-                    Created on {{ expense.created_at|date:"d M, Y H:i" }}
-                </p>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z" />
+                    </svg>
+                    Expense: {{ expense.expense_id }}
+                </h1>
+                <p class="text-gray-600">Created on {{ expense.created_at|date:"d M, Y H:i" }}</p>
             </div>
             <div>
                 {% if expense.status == 'draft' %}
-                <span class="badge bg-secondary p-2 fs-6">DRAFT</span>
+                <span
+                    class="px-4 py-2 rounded-full text-sm font-semibold bg-gray-100 text-gray-700 border border-gray-300">DRAFT</span>
                 {% elif expense.status == 'submitted' %}
-                <span class="badge bg-info p-2 fs-6">SUBMITTED</span>
+                <span
+                    class="px-4 py-2 rounded-full text-sm font-semibold bg-blue-100 text-blue-700 border border-blue-300">SUBMITTED</span>
                 {% elif expense.status == 'approved' %}
-                <span class="badge bg-success p-2 fs-6">APPROVED</span>
+                <span
+                    class="px-4 py-2 rounded-full text-sm font-semibold bg-emerald-100 text-emerald-700 border border-emerald-300">APPROVED</span>
                 {% elif expense.status == 'rejected' %}
-                <span class="badge bg-danger p-2 fs-6">REJECTED</span>
+                <span
+                    class="px-4 py-2 rounded-full text-sm font-semibold bg-red-100 text-red-700 border border-red-300">REJECTED</span>
                 {% elif expense.status == 'paid' %}
-                <span class="badge bg-primary p-2 fs-6">PAID</span>
+                <span
+                    class="px-4 py-2 rounded-full text-sm font-semibold bg-purple-100 text-purple-700 border border-purple-300">PAID</span>
                 {% endif %}
             </div>
         </div>
-    </div>
 
-    <div class="row">
-        <div class="col-md-8">
-            <!-- Expense Details -->
-            <div class="detail-section">
-                <h4><i class="fas fa-info-circle"></i> Expense Information</h4>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main Content -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Expense Information -->
+                <div class="backdrop-blur-xl bg-white/20 p-6 rounded-2xl border border-gray-200/50 shadow-lg">
+                    <h4 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Expense Information
+                    </h4>
 
-                <div class="detail-row">
-                    <div class="detail-label">Expense ID:</div>
-                    <div class="detail-value"><strong>{{ expense.expense_id }}</strong></div>
-                </div>
-
-                <div class="detail-row">
-                    <div class="detail-label">Date:</div>
-                    <div class="detail-value">{{ expense.date|date:"d M, Y" }}</div>
-                </div>
-
-                <div class="detail-row">
-                    <div class="detail-label">Department:</div>
-                    <div class="detail-value">{{ expense.department }}</div>
-                </div>
-
-                <div class="detail-row">
-                    <div class="detail-label">Category:</div>
-                    <div class="detail-value">
-                        <span class="badge bg-secondary">{{ expense.get_category_display }}</span>
+                    <div class="space-y-3">
+                        <div class="flex justify-between py-2 border-b border-gray-200">
+                            <span class="text-sm font-medium text-gray-600">Expense ID:</span>
+                            <span class="text-sm font-semibold text-gray-900">{{ expense.expense_id }}</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-gray-200">
+                            <span class="text-sm font-medium text-gray-600">Date:</span>
+                            <span class="text-sm text-gray-900">{{ expense.date|date:"d M, Y" }}</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-gray-200">
+                            <span class="text-sm font-medium text-gray-600">Department:</span>
+                            <span class="text-sm text-gray-900">{{ expense.department }}</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-gray-200">
+                            <span class="text-sm font-medium text-gray-600">Category:</span>
+                            <span class="text-sm"><span
+                                    class="px-2 py-1 rounded-md text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-300">{{
+                                    expense.get_category_display }}</span></span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-gray-200">
+                            <span class="text-sm font-medium text-gray-600">Amount:</span>
+                            <span class="text-lg font-bold text-purple-700">₹ {{ expense.amount|floatformat:2|intcomma
+                                }}</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-gray-200">
+                            <span class="text-sm font-medium text-gray-600">Description:</span>
+                            <span class="text-sm text-gray-900">{{ expense.description }}</span>
+                        </div>
+                        <div class="flex justify-between py-2">
+                            <span class="text-sm font-medium text-gray-600">Submitted By:</span>
+                            <span class="text-sm text-gray-900">{{
+                                expense.paid_by.get_full_name|default:expense.paid_by.username }}</span>
+                        </div>
                     </div>
-                </div>
 
-                <div class="detail-row">
-                    <div class="detail-label">Amount:</div>
-                    <div class="detail-value">
-                        <strong class="text-primary fs-5">₹ {{ expense.amount|floatformat:2|intcomma }}</strong>
+                    {% if expense.attachments %}
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <a href="{{ expense.attachments.url }}" target="_blank"
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-white/30 text-gray-700 rounded-lg hover:bg-white/40 transition-all duration-200 font-medium border border-gray-200/50">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                            </svg>
+                            View Attachment
+                        </a>
                     </div>
+                    {% endif %}
                 </div>
 
-                <div class="detail-row">
-                    <div class="detail-label">Description:</div>
-                    <div class="detail-value">{{ expense.description }}</div>
+                <!-- Approval Information -->
+                {% if expense.status != 'draft' %}
+                <div class="backdrop-blur-xl bg-white/20 p-6 rounded-2xl border border-gray-200/50 shadow-lg">
+                    <h4 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Approval Information
+                    </h4>
+                    {% if expense.approved_by %}
+                    <p class="text-sm text-gray-700">Approved by: <strong>{{ expense.approved_by.get_full_name
+                            }}</strong></p>
+                    <p class="text-sm text-gray-600">Date: {{ expense.approved_at|date:"d M, Y H:i" }}</p>
+                    {% endif %}
+                    {% if expense.rejection_reason %}
+                    <p class="text-sm text-red-700 mt-2">Rejection Reason: {{ expense.rejection_reason }}</p>
+                    {% endif %}
                 </div>
+                {% endif %}
+            </div>
 
-                <div class="detail-row">
-                    <div class="detail-label">Submitted By:</div>
-                    <div class="detail-value">{{ expense.paid_by.get_full_name|default:expense.paid_by.username }}</div>
-                </div>
+            <!-- Actions Sidebar -->
+            <div class="space-y-6">
+                <div class="backdrop-blur-xl bg-white/20 p-6 rounded-2xl border border-gray-200/50 shadow-lg">
+                    <h5 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        </svg>
+                        Actions
+                    </h5>
+                    <div class="space-y-2">
+                        {% if expense.status == 'draft' %}
+                        <a href="{% url 'finance:expense_submit' expense.pk %}"
+                            class="block w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium text-center">
+                            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                            </svg>
+                            Submit for Approval
+                        </a>
+                        {% endif %}
 
-                {% if expense.attachments %}
-                <div class="detail-row">
-                    <div class="detail-label">Attachments:</div>
-                    <div class="detail-value">
-                        <a href="{{ expense.attachments.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-paperclip"></i> View Attachment
+                        {% if expense.status == 'submitted' %}
+                        <a href="{% url 'finance:expense_approve' expense.pk %}"
+                            class="block w-full px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all duration-200 font-medium text-center">
+                            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            Approve/Reject
+                        </a>
+                        {% endif %}
+
+                        {% if expense.status == 'approved' %}
+                        <a href="{% url 'finance:expense_mark_paid' expense.pk %}"
+                            class="block w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all duration-200 font-medium text-center">
+                            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            Mark as Paid
+                        </a>
+                        {% endif %}
+
+                        <a href="{% url 'finance:expense_print_pdf' expense.pk %}"
+                            class="block w-full px-4 py-2 bg-white/30 text-gray-700 rounded-lg hover:bg-white/40 transition-all duration-200 font-medium border border-gray-200/50 text-center">
+                            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                            </svg>
+                            Print PDF
+                        </a>
+
+                        <a href="{% url 'finance:expense_list' %}"
+                            class="block w-full px-4 py-2 bg-white/30 text-gray-700 rounded-lg hover:bg-white/40 transition-all duration-200 font-medium border border-gray-200/50 text-center">
+                            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            Back to List
                         </a>
                     </div>
                 </div>
-                {% endif %}
-            </div>
 
-            <!-- Approval Information -->
-            {% if expense.approved_by or expense.rejection_reason %}
-            <div class="detail-section">
-                <h4><i class="fas fa-check-circle"></i> Approval Information</h4>
-
-                {% if expense.approved_by %}
-                <div class="detail-row">
-                    <div class="detail-label">Reviewed By:</div>
-                    <div class="detail-value">{{ expense.approved_by.get_full_name|default:expense.approved_by.username
-                        }}</div>
-                </div>
-
-                <div class="detail-row">
-                    <div class="detail-label">Reviewed At:</div>
-                    <div class="detail-value">{{ expense.approved_at|date:"d M, Y H:i" }}</div>
-                </div>
-                {% endif %}
-
-                {% if expense.rejection_reason %}
-                <div class="detail-row">
-                    <div class="detail-label">Rejection Reason:</div>
-                    <div class="detail-value">
-                        <div class="alert alert-danger mb-0">
-                            {{ expense.rejection_reason }}
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-            {% endif %}
-        </div>
-
-        <div class="col-md-4">
-            <!-- Actions -->
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="fas fa-tasks"></i> Actions</h5>
-                </div>
-                <div class="card-body">
-                    {% if expense.paid_by == request.user and expense.status == 'draft' %}
-                    <form method="post" action="{% url 'finance:expense_submit' expense.pk %}" class="mb-2">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-paper-plane"></i> Submit for Approval
-                        </button>
-                    </form>
-                    {% endif %}
-
-                    {% if expense.status == 'submitted' and perms.finance.can_approve_expense %}
-                    <a href="{% url 'finance:expense_approve' expense.pk %}" class="btn btn-success w-100 mb-2">
-                        <i class="fas fa-check"></i> Approve/Reject
-                    </a>
-                    {% endif %}
-
-                    {% if expense.status == 'approved' and perms.finance.can_mark_paid %}
-                    <form method="post" action="{% url 'finance:expense_mark_paid' expense.pk %}" class="mb-2">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-success w-100">
-                            <i class="fas fa-money-bill-wave"></i> Mark as Paid
-                        </button>
-                    </form>
-                    {% endif %}
-
-                    <a href="{% url 'finance:expense_print_pdf' expense.pk %}"
-                        class="btn btn-outline-secondary w-100 mb-2">
-                        <i class="fas fa-print"></i> Print PDF
-                    </a>
-
-                    <a href="{% url 'finance:expense_list' %}" class="btn btn-outline-primary w-100">
-                        <i class="fas fa-arrow-left"></i> Back to List
-                    </a>
-                </div>
-            </div>
-
-            <!-- Timeline -->
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h5><i class="fas fa-history"></i> Timeline</h5>
-                </div>
-                <div class="card-body">
-                    <div class="timeline">
-                        <div class="timeline-item">
-                            <div class="timeline-marker bg-primary"></div>
-                            <div class="timeline-content">
-                                <small class="text-muted">{{ expense.created_at|date:"d M, Y H:i" }}</small>
-                                <p class="mb-0">Expense created</p>
+                <!-- Timeline -->
+                <div class="backdrop-blur-xl bg-white/20 p-6 rounded-2xl border border-gray-200/50 shadow-lg">
+                    <h5 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Timeline
+                    </h5>
+                    <div class="space-y-3">
+                        <div class="flex items-start gap-3">
+                            <div class="w-2 h-2 rounded-full bg-blue-600 mt-2"></div>
+                            <div>
+                                <p class="text-sm font-semibold text-gray-900">Created</p>
+                                <p class="text-xs text-gray-600">{{ expense.created_at|date:"d M, Y H:i" }}</p>
                             </div>
                         </div>
-
-                        {% if expense.status != 'draft' %}
-                        <div class="timeline-item">
-                            <div class="timeline-marker bg-info"></div>
-                            <div class="timeline-content">
-                                <small class="text-muted">{{ expense.updated_at|date:"d M, Y H:i" }}</small>
-                                <p class="mb-0">Submitted for approval</p>
+                        {% if expense.submitted_at %}
+                        <div class="flex items-start gap-3">
+                            <div class="w-2 h-2 rounded-full bg-blue-600 mt-2"></div>
+                            <div>
+                                <p class="text-sm font-semibold text-gray-900">Submitted</p>
+                                <p class="text-xs text-gray-600">{{ expense.submitted_at|date:"d M, Y H:i" }}</p>
                             </div>
                         </div>
                         {% endif %}
-
-                        {% if expense.approved_by %}
-                        <div class="timeline-item">
-                            <div
-                                class="timeline-marker {% if expense.status == 'approved' %}bg-success{% elif expense.status == 'rejected' %}bg-danger{% endif %}">
-                            </div>
-                            <div class="timeline-content">
-                                <small class="text-muted">{{ expense.approved_at|date:"d M, Y H:i" }}</small>
-                                <p class="mb-0">{{ expense.get_status_display }} by {{
-                                    expense.approved_by.get_full_name|default:expense.approved_by.username }}</p>
-                            </div>
-                        </div>
-                        {% endif %}
-
-                        {% if expense.status == 'paid' %}
-                        <div class="timeline-item">
-                            <div class="timeline-marker bg-primary"></div>
-                            <div class="timeline-content">
-                                <small class="text-muted">{{ expense.updated_at|date:"d M, Y H:i" }}</small>
-                                <p class="mb-0">Payment processed</p>
+                        {% if expense.approved_at %}
+                        <div class="flex items-start gap-3">
+                            <div class="w-2 h-2 rounded-full bg-emerald-600 mt-2"></div>
+                            <div>
+                                <p class="text-sm font-semibold text-gray-900">Approved</p>
+                                <p class="text-xs text-gray-600">{{ expense.approved_at|date:"d M, Y H:i" }}</p>
                             </div>
                         </div>
                         {% endif %}
@@ -218,47 +237,4 @@
         </div>
     </div>
 </div>
-
-<style>
-    .timeline {
-        position: relative;
-        padding-left: 30px;
-    }
-
-    .timeline-item {
-        position: relative;
-        padding-bottom: 20px;
-    }
-
-    .timeline-item:last-child {
-        padding-bottom: 0;
-    }
-
-    .timeline-marker {
-        position: absolute;
-        left: -30px;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        border: 2px solid white;
-    }
-
-    .timeline-item::before {
-        content: '';
-        position: absolute;
-        left: -25px;
-        top: 12px;
-        bottom: -8px;
-        width: 2px;
-        background: #e9ecef;
-    }
-
-    .timeline-item:last-child::before {
-        display: none;
-    }
-
-    .timeline-content {
-        padding-left: 8px;
-    }
-</style>
 {% endblock %}

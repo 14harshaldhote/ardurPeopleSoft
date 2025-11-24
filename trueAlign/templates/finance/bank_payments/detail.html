@@ -14,62 +14,62 @@
     </div>
 
     <!-- Payment Info -->
-    <div class="backdrop-blur-xl bg-white/20 p-6 rounded-[16px] border border-black/10 shadow-inner">
+    <div class="backdrop-blur-xl bg-white/20 p-6 rounded-2xl border border-gray-200/50 shadow-lg">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-                <label class="text-sm font-medium text-zinc-600">Payment ID</label>
-                <p class="text-lg font-semibold text-zinc-900">{{ payment.payment_id }}</p>
+                <label class="text-sm font-semibold text-gray-600">Payment ID</label>
+                <p class="text-lg font-semibold text-gray-900">{{ payment.payment_id }}</p>
             </div>
             <div>
-                <label class="text-sm font-medium text-zinc-600">Bank Account</label>
-                <p class="text-lg font-semibold text-zinc-900">{{ payment.bank_account.name }}</p>
+                <label class="text-sm font-semibold text-gray-600">Bank Account</label>
+                <p class="text-lg font-semibold text-gray-900">{{ payment.bank_account.name }}</p>
             </div>
             <div>
-                <label class="text-sm font-medium text-zinc-600">Amount</label>
-                <p class="text-lg font-semibold text-zinc-900">₹ {{ payment.amount|floatformat:2|intcomma }}</p>
+                <label class="text-sm font-semibold text-gray-600">Amount</label>
+                <p class="text-lg font-semibold text-gray-900">₹ {{ payment.amount|floatformat:2|intcomma }}</p>
             </div>
             <div>
-                <label class="text-sm font-medium text-zinc-600">Party Name</label>
-                <p class="text-lg font-semibold text-zinc-900">{{ payment.party_name }}</p>
+                <label class="text-sm font-semibold text-gray-600">Party Name</label>
+                <p class="text-lg font-semibold text-gray-900">{{ payment.party_name }}</p>
             </div>
             <div>
-                <label class="text-sm font-medium text-zinc-600">Status</label>
+                <label class="text-sm font-semibold text-gray-600">Status</label>
                 <p>
                     {% if payment.status == 'executed' %}
                     <span
-                        class="px-3 py-1 rounded-full text-sm font-medium bg-emerald-500/20 text-emerald-700 border border-emerald-500/30">Executed</span>
+                        class="px-3 py-1 rounded-full text-sm font-semibold bg-emerald-100 text-emerald-700 border border-emerald-300">Executed</span>
                     {% elif payment.status == 'approved' %}
                     <span
-                        class="px-3 py-1 rounded-full text-sm font-medium bg-blue-500/20 text-blue-700 border border-blue-500/30">Approved</span>
+                        class="px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-700 border border-blue-300">Approved</span>
                     {% elif payment.status == 'verified' %}
                     <span
-                        class="px-3 py-1 rounded-full text-sm font-medium bg-cyan-500/20 text-cyan-700 border border-cyan-500/30">Verified</span>
+                        class="px-3 py-1 rounded-full text-sm font-semibold bg-cyan-100 text-cyan-700 border border-cyan-300">Verified</span>
                     {% elif payment.status == 'rejected' %}
                     <span
-                        class="px-3 py-1 rounded-full text-sm font-medium bg-red-500/20 text-red-700 border border-red-500/30">Rejected</span>
+                        class="px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-700 border border-red-300">Rejected</span>
                     {% else %}
                     <span
-                        class="px-3 py-1 rounded-full text-sm font-medium bg-amber-500/20 text-amber-700 border border-amber-500/30">Pending</span>
+                        class="px-3 py-1 rounded-full text-sm font-semibold bg-amber-100 text-amber-700 border border-amber-300">Pending</span>
                     {% endif %}
                 </p>
             </div>
         </div>
-        <div class="mt-4 pt-4 border-t border-white/20">
-            <label class="text-sm font-medium text-zinc-600">Reason</label>
-            <p class="text-zinc-900 mt-1">{{ payment.payment_reason }}</p>
+        <div class="mt-4 pt-4 border-t border-gray-300">
+            <label class="text-sm font-semibold text-gray-600">Reason</label>
+            <p class="text-gray-900 mt-1">{{ payment.payment_reason }}</p>
         </div>
     </div>
 
     <!-- Workflow Timeline -->
-    <div class="backdrop-blur-xl bg-white/20 p-6 rounded-[16px] border border-black/10 shadow-inner">
-        <h3 class="text-lg font-bold text-zinc-900 mb-4">Approval Workflow</h3>
+    <div class="backdrop-blur-xl bg-white/20 p-6 rounded-2xl border border-gray-200/50 shadow-lg">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Approval Workflow</h3>
         <div class="flex items-center justify-between">
             <div class="flex-1 text-center">
                 <div
                     class="w-12 h-12 mx-auto rounded-full {% if payment.status != 'pending' %}bg-emerald-500{% else %}bg-amber-500{% endif %} flex items-center justify-center text-white mb-2">
                     <i class="ri-file-add-line text-xl"></i>
                 </div>
-                <p class="text-xs font-medium text-zinc-700">Created</p>
+                <p class="text-xs font-semibold text-gray-700">Created</p>
             </div>
             <div
                 class="flex-1 h-1 {% if payment.status in 'verified,approved,executed' %}bg-emerald-500{% else %}bg-gray-300{% endif %}">
@@ -77,9 +77,11 @@
             <div class="flex-1 text-center">
                 <div
                     class="w-12 h-12 mx-auto rounded-full {% if payment.status in 'verified,approved,executed' %}bg-emerald-500{% elif payment.status == 'pending' %}bg-gray-300{% else %}bg-amber-500{% endif %} flex items-center justify-center text-white mb-2">
-                    <i class="ri-check-line text-xl"></i>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
                 </div>
-                <p class="text-xs font-medium text-zinc-700">Verified</p>
+                <p class="text-xs font-semibold text-gray-700">Verified</p>
             </div>
             <div
                 class="flex-1 h-1 {% if payment.status in 'approved,executed' %}bg-emerald-500{% else %}bg-gray-300{% endif %}">
@@ -89,7 +91,7 @@
                     class="w-12 h-12 mx-auto rounded-full {% if payment.status in 'approved,executed' %}bg-emerald-500{% else %}bg-gray-300{% endif %} flex items-center justify-center text-white mb-2">
                     <i class="ri-check-double-line text-xl"></i>
                 </div>
-                <p class="text-xs font-medium text-zinc-700">Approved</p>
+                <p class="text-xs font-semibold text-gray-700">Approved</p>
             </div>
             <div class="flex-1 h-1 {% if payment.status == 'executed' %}bg-emerald-500{% else %}bg-gray-300{% endif %}">
             </div>
@@ -98,7 +100,7 @@
                     class="w-12 h-12 mx-auto rounded-full {% if payment.status == 'executed' %}bg-emerald-500{% else %}bg-gray-300{% endif %} flex items-center justify-center text-white mb-2">
                     <i class="ri-send-plane-line text-xl"></i>
                 </div>
-                <p class="text-xs font-medium text-zinc-700">Executed</p>
+                <p class="text-xs font-semibold text-gray-700">Executed</p>
             </div>
         </div>
     </div>
@@ -108,17 +110,19 @@
     <div class="flex gap-3">
         {% if payment.status == 'pending' %}
         <a href="{% url 'finance:bank_payment_verify' payment.pk %}"
-            class="px-6 py-2 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white rounded-lg hover:from-cyan-600 hover:to-cyan-700 transition-all duration-200 font-medium shadow-md">
-            <i class="ri-check-line mr-1"></i> Verify
+            class="px-6 py-2 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white rounded-lg hover:from-cyan-600 hover:to-cyan-700 transition-all duration-200 font-semibold shadow-md">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg> Verify
         </a>
         {% elif payment.status == 'verified' %}
         <a href="{% url 'finance:bank_payment_approve' payment.pk %}"
-            class="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-md">
+            class="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-semibold shadow-md">
             <i class="ri-check-double-line mr-1"></i> Approve
         </a>
         {% elif payment.status == 'approved' %}
         <a href="{% url 'finance:bank_payment_execute' payment.pk %}"
-            class="px-6 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 font-medium shadow-md">
+            class="px-6 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 font-semibold shadow-md">
             <i class="ri-send-plane-line mr-1"></i> Execute Payment
         </a>
         {% endif %}

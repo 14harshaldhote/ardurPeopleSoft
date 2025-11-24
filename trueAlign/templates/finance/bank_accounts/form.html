@@ -4,88 +4,202 @@
 {% block title %}{{ form.instance.pk|yesno:"Edit,New" }} Bank Account{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto space-y-6">
-    <div>
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ form.instance.pk|yesno:"Edit,New" }} Bank Account</h1>
-        <p class="text-gray-600">Configure bank account details</p>
-    </div>
+<div class="container mx-auto px-4 py-6">
+    <div class="max-w-4xl mx-auto space-y-6">
+        <!-- Header -->
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+                {{ form.instance.pk|yesno:"Edit,New" }} Bank Account
+            </h1>
+            <p class="text-gray-600">Configure bank account details and settings</p>
+        </div>
 
-    <div class="backdrop-blur-xl bg-white/20 p-6 rounded-[16px] border border-black/10 shadow-inner">
-        <form method="post" class="space-y-6">
-            {% csrf_token %}
+        <!-- Form Card -->
+        <div class="backdrop-blur-xl bg-white/20 p-8 rounded-2xl border border-gray-200/50 shadow-lg">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Account Information Section -->
                 <div>
-                    <label class="block text-sm font-medium text-zinc-700 mb-2">Account Name *</label>
-                    {{ form.name }}
-                    {% if form.name.errors %}
-                    <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
-                    {% endif %}
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Account Information
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Account Name <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                            <p class="mt-1 text-sm text-red-600 flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                {{ form.name.errors.0 }}
+                            </p>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Account Number <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.account_number }}
+                            {% if form.account_number.errors %}
+                            <p class="mt-1 text-sm text-red-600 flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                {{ form.account_number.errors.0 }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
 
+                <!-- Bank Details Section -->
                 <div>
-                    <label class="block text-sm font-medium text-zinc-700 mb-2">Account Number *</label>
-                    {{ form.account_number }}
-                    {% if form.account_number.errors %}
-                    <p class="mt-1 text-sm text-red-600">{{ form.account_number.errors.0 }}</p>
-                    {% endif %}
-                </div>
-            </div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                        Bank Details
+                    </h3>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Bank Name <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.bank_name }}
+                            {% if form.bank_name.errors %}
+                            <p class="mt-1 text-sm text-red-600 flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                {{ form.bank_name.errors.0 }}
+                            </p>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Branch <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.branch }}
+                            {% if form.branch.errors %}
+                            <p class="mt-1 text-sm text-red-600 flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                {{ form.branch.errors.0 }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Financial Details Section -->
                 <div>
-                    <label class="block text-sm font-medium text-zinc-700 mb-2">Bank Name *</label>
-                    {{ form.bank_name }}
-                    {% if form.bank_name.errors %}
-                    <p class="mt-1 text-sm text-red-600">{{ form.bank_name.errors.0 }}</p>
-                    {% endif %}
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Financial Details
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                IFSC Code <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.ifsc_code }}
+                            <p class="mt-1 text-xs text-gray-500">Indian Financial System Code for the branch</p>
+                            {% if form.ifsc_code.errors %}
+                            <p class="mt-1 text-sm text-red-600 flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                {{ form.ifsc_code.errors.0 }}
+                            </p>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Current Balance <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.current_balance }}
+                            <p class="mt-1 text-xs text-gray-500">Opening balance in INR (₹)</p>
+                            {% if form.current_balance.errors %}
+                            <p class="mt-1 text-sm text-red-600 flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                {{ form.current_balance.errors.0 }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-zinc-700 mb-2">Branch *</label>
-                    {{ form.branch }}
-                    {% if form.branch.errors %}
-                    <p class="mt-1 text-sm text-red-600">{{ form.branch.errors.0 }}</p>
-                    {% endif %}
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-sm font-medium text-zinc-700 mb-2">IFSC Code *</label>
-                    {{ form.ifsc_code }}
-                    {% if form.ifsc_code.errors %}
-                    <p class="mt-1 text-sm text-red-600">{{ form.ifsc_code.errors.0 }}</p>
-                    {% endif %}
+                <!-- Status -->
+                <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+                    <input type="checkbox" id="id_is_active" name="is_active" {% if form.instance.is_active or not form.instance.pk %}checked{% endif %}
+                        class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500">
+                    <label for="id_is_active" class="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Active Account
+                    </label>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-zinc-700 mb-2">Current Balance *</label>
-                    {{ form.current_balance }}
-                    {% if form.current_balance.errors %}
-                    <p class="mt-1 text-sm text-red-600">{{ form.current_balance.errors.0 }}</p>
-                    {% endif %}
+                <!-- Action Buttons -->
+                <div class="flex gap-3 pt-6 border-t border-gray-200">
+                    <button type="submit"
+                        class="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-md">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                        </svg>
+                        Save Account
+                    </button>
+                    <a href="{% url 'finance:bank_account_list' %}"
+                        class="inline-flex items-center gap-2 px-6 py-2.5 bg-white/30 text-gray-700 rounded-lg hover:bg-white/40 transition-all duration-200 font-medium border border-gray-200/50">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Cancel
+                    </a>
                 </div>
-            </div>
-
-            <div class="flex items-center gap-2">
-                <input type="checkbox" id="id_is_active" name="is_active" {% if form.instance.is_active or not
-                    form.instance.pk %}checked{% endif %}
-                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                <label for="id_is_active" class="text-sm font-medium text-zinc-700">Active Account</label>
-            </div>
-
-            <div class="flex gap-3 pt-4 border-t border-white/20">
-                <button type="submit"
-                    class="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-md">
-                    <i class="ri-save-line mr-1"></i> Save Account
-                </button>
-                <a href="{% url 'finance:bank_account_list' %}"
-                    class="px-6 py-2 backdrop-blur-sm bg-white/30 text-zinc-700 rounded-lg hover:bg-white/40 transition-all duration-200 font-medium border border-white/20">
-                    Cancel
-                </a>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}

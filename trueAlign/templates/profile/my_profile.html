@@ -20,8 +20,7 @@
                     <div class="ml-6 mb-1 flex-1">
                         <div class="flex items-center justify-between">
                             <div>
-                                <h1 class="text-2xl font-bold text-gray-900">{{ user.get_full_name|default:user.username
-                                    }}</h1>
+                                <h1 class="text-2xl font-bold text-gray-900">{{ user.get_full_name|default:user.username }}</h1>
                                 <div class="flex items-center space-x-4 mt-1 text-sm text-gray-600">
                                     <span class="flex items-center">
                                         <svg class="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor"
@@ -41,7 +40,7 @@
                                     </span>
                                 </div>
                             </div>
-                            <div class="flex space-x-3">
+                            <!-- <div class="flex space-x-3">
                                 <a href="{% url 'profile:edit-my-profile' %}"
                                     class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -50,7 +49,7 @@
                                     </svg>
                                     Edit Profile
                                 </a>
-                            </div>
+                            </div> -->
                         </div>
                     </div>
                 </div>
@@ -115,8 +114,7 @@
                         </div>
                         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                             <div class="text-sm font-medium text-gray-500">Office</div>
-                            <div class="mt-2 text-2xl font-bold text-gray-900">{{
-                                user_profile.office_location.name|default:"Remote" }}</div>
+                            <div class="mt-2 text-2xl font-bold text-gray-900">{{ user_profile.office_location.name|default:"Remote" }}</div>
                         </div>
                     </div>
 
@@ -203,18 +201,15 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-500">Reporting Manager</label>
-                            <div class="mt-1 text-sm text-gray-900">{{
-                                user_profile.reporting_manager.get_full_name|default:"-" }}</div>
+                            <div class="mt-1 text-sm text-gray-900">{{ user_profile.reporting_manager.get_full_name|default:"-" }}</div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-500">Date of Joining</label>
-                            <div class="mt-1 text-sm text-gray-900">{{ user_profile.hire_date|date:"F d, Y"|default:"-"
-                                }}</div>
+                            <div class="mt-1 text-sm text-gray-900">{{ user_profile.hire_date|date:"F d, Y"|default:"-" }}</div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-500">Work Location</label>
-                            <div class="mt-1 text-sm text-gray-900">{{
-                                user_profile.office_location.name|default:"Remote" }}</div>
+                            <div class="mt-1 text-sm text-gray-900">{{ user_profile.office_location.name|default:"Remote" }}</div>
                         </div>
                     </div>
                 </div>
@@ -229,8 +224,7 @@
                         <div class="p-6">
                             <p class="text-gray-900">
                                 {{ user_profile.current_address_line1|default:"" }}<br>
-                                {% if user_profile.current_address_line2 %}{{ user_profile.current_address_line2
-                                }}<br>{% endif %}
+                                {% if user_profile.current_address_line2 %}{{ user_profile.current_address_line2 }}<br>{% endif %}
                                 {{ user_profile.current_city|default:"" }}, {{ user_profile.current_state|default:"" }}
                                 {{ user_profile.current_postal_code|default:"" }}<br>
                                 {{ user_profile.current_country|default:"" }}
@@ -246,10 +240,8 @@
                         <div class="p-6">
                             <p class="text-gray-900">
                                 {{ user_profile.permanent_address_line1|default:"" }}<br>
-                                {% if user_profile.permanent_address_line2 %}{{ user_profile.permanent_address_line2
-                                }}<br>{% endif %}
-                                {{ user_profile.permanent_city|default:"" }}, {{ user_profile.permanent_state|default:""
-                                }} {{ user_profile.permanent_postal_code|default:"" }}<br>
+                                {% if user_profile.permanent_address_line2 %}{{ user_profile.permanent_address_line2 }}<br>{% endif %}
+                                {{ user_profile.permanent_city|default:"" }}, {{ user_profile.permanent_state|default:"" }} {{ user_profile.permanent_postal_code|default:"" }}<br>
                                 {{ user_profile.permanent_country|default:"" }}
                             </p>
                         </div>
@@ -273,8 +265,7 @@
                         </div>
                         <div>
                             <div class="text-sm font-medium text-gray-500">Relationship</div>
-                            <div class="text-sm text-gray-900">{{
-                                user_profile.emergency_contact_relationship|default:"-" }}</div>
+                            <div class="text-sm text-gray-900">{{ user_profile.emergency_contact_relationship|default:"-" }}</div>
                         </div>
                         <div>
                             <div class="text-sm font-medium text-gray-500">Phone</div>

@@ -5,25 +5,28 @@
 {% block title %}Bank Payments{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
+<div class="container mx-auto px-4 py-6">
+    <div class="space-y-6">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
             <h1 class="text-3xl font-bold text-gray-900 mb-2">Bank Payments</h1>
             <p class="text-gray-600">Manage bank payment requests and approvals</p>
         </div>
         <a href="{% url 'finance:bank_payment_create' %}"
-            class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-md text-sm">
-            <i class="ri-add-line mr-1"></i> New Payment
+            class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-semibold shadow-md text-sm">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg> New Payment
         </a>
     </div>
 
     <!-- Filters -->
-    <div class="backdrop-blur-xl bg-white/20 p-4 rounded-[16px] border border-black/10 shadow-inner">
+    <div class="backdrop-blur-xl bg-white/20 p-4 rounded-2xl border border-gray-200/50 shadow-lg">
         <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-                <label class="block text-sm font-medium text-zinc-700 mb-1">Bank Account</label>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Bank Account</label>
                 <select name="bank_account"
-                    class="w-full px-3 py-2 rounded-lg border border-white/20 backdrop-blur-sm bg-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    class="w-full px-3 py-2 rounded-lg border border-gray-300 backdrop-blur-sm bg-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">All Accounts</option>
                     {% for account in bank_accounts %}
                     <option value="{{ account.id }}">{{ account.name }}</option>
@@ -31,9 +34,9 @@
                 </select>
             </div>
             <div>
-                <label class="block text-sm font-medium text-zinc-700 mb-1">Status</label>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Status</label>
                 <select name="status"
-                    class="w-full px-3 py-2 rounded-lg border border-white/20 backdrop-blur-sm bg-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    class="w-full px-3 py-2 rounded-lg border border-gray-300 backdrop-blur-sm bg-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">All Statuses</option>
                     <option value="pending">Pending</option>
                     <option value="verified">Verified</option>
@@ -44,75 +47,81 @@
             </div>
             <div class="flex items-end">
                 <button type="submit"
-                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium">
-                    <i class="ri-search-line mr-1"></i> Filter
+                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-semibold">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg> Filter
                 </button>
             </div>
         </form>
     </div>
 
     <!-- Payments Table -->
-    <div class="backdrop-blur-xl bg-white/20 rounded-[16px] border border-black/10 shadow-inner overflow-hidden">
+    <div class="backdrop-blur-xl bg-white/20 rounded-2xl border border-gray-200/50 shadow-lg overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full">
-                <thead class="bg-white/30 border-b border-white/20">
+                <thead class="bg-white/30 border-b border-gray-300">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-zinc-700 uppercase">Payment ID</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-zinc-700 uppercase">Date</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-zinc-700 uppercase">Bank Account</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-zinc-700 uppercase">Party</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-zinc-700 uppercase">Amount</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-zinc-700 uppercase">Status</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-zinc-700 uppercase">Actions</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">Payment ID</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">Date</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">Bank Account</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">Party</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">Amount</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">Status</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-white/10">
+                <tbody class="divide-y divide-gray-100">
                     {% for payment in payments %}
-                    <tr class="hover:bg-white/10 transition-colors duration-150">
-                        <td class="px-4 py-3 text-sm">
+                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                        <td class="px-6 py-4 text-sm">
                             <a href="{% url 'finance:bank_payment_detail' payment.pk %}"
-                                class="font-medium text-blue-700 hover:text-blue-900">
+                                class="font-semibold text-blue-700 hover:text-blue-900">
                                 {{ payment.payment_id }}
                             </a>
                         </td>
-                        <td class="px-4 py-3 text-sm text-zinc-900">{{ payment.payment_date|date:"M d, Y" }}</td>
-                        <td class="px-4 py-3 text-sm text-zinc-900">{{ payment.bank_account.name }}</td>
-                        <td class="px-4 py-3 text-sm text-zinc-900">{{ payment.party_name }}</td>
-                        <td class="px-4 py-3 text-sm font-semibold text-zinc-900">₹ {{
+                        <td class="px-6 py-4 text-sm text-gray-900">{{ payment.payment_date|date:"M d, Y" }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-900">{{ payment.bank_account.name }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-900">{{ payment.party_name }}</td>
+                        <td class="px-6 py-4 text-sm font-semibold text-gray-900">₹ {{
                             payment.amount|floatformat:2|intcomma }}</td>
-                        <td class="px-4 py-3 text-sm">
+                        <td class="px-6 py-4 text-sm">
                             {% if payment.status == 'executed' %}
                             <span
-                                class="px-2 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-700 border border-emerald-500/30">Executed</span>
+                                class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 border border-emerald-300">Executed</span>
                             {% elif payment.status == 'approved' %}
                             <span
-                                class="px-2 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-700 border border-blue-500/30">Approved</span>
+                                class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-300">Approved</span>
                             {% elif payment.status == 'verified' %}
                             <span
-                                class="px-2 py-1 rounded-full text-xs font-medium bg-cyan-500/20 text-cyan-700 border border-cyan-500/30">Verified</span>
+                                class="px-3 py-1 rounded-full text-xs font-semibold bg-cyan-100 text-cyan-700 border border-cyan-300">Verified</span>
                             {% elif payment.status == 'rejected' %}
                             <span
-                                class="px-2 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-700 border border-red-500/30">Rejected</span>
+                                class="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-300">Rejected</span>
                             {% else %}
                             <span
-                                class="px-2 py-1 rounded-full text-xs font-medium bg-amber-500/20 text-amber-700 border border-amber-500/30">Pending</span>
+                                class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-300">Pending</span>
                             {% endif %}
                         </td>
-                        <td class="px-4 py-3 text-sm">
+                        <td class="px-6 py-4 text-sm">
                             <a href="{% url 'finance:bank_payment_detail' payment.pk %}"
                                 class="text-blue-600 hover:text-blue-800" title="View">
-                                <i class="ri-eye-line"></i>
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
                             </a>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" class="px-4 py-8 text-center text-zinc-600">No payments found</td>
+                        <td colspan="7" class="px-4 py-8 text-center text-gray-600">No payments found</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+    </div>
     </div>
 </div>
 {% endblock %}

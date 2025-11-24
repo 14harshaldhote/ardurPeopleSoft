@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Approve Expense - Finance - {{ block.super }}{% endblock %}
+{% block title %}Approve Expense{% endblock %}
 
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{% url 'finance:expense_list' %}">Expenses</a></li>
@@ -9,120 +9,184 @@
 {% endblock %}
 
 {% block content %}
-<div class="expense-approve-container">
-    <div class="page-header">
-        <h1><i class="fas fa-check-circle"></i> Approve/Reject Expense</h1>
-        <p class="text-muted">Review and approve or reject expense claim</p>
-    </div>
+<div class="container mx-auto px-4 py-6">
+    <div class="max-w-7xl mx-auto space-y-6">
+        <!-- Page Header -->
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+                <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Approve/Reject Expense
+            </h1>
+            <p class="text-gray-600">Review and approve or reject expense claim</p>
+        </div>
 
-    <div class="row">
-        <div class="col-md-8">
-            <!-- Expense Summary -->
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h5>Expense Summary</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p><strong>Expense ID:</strong> {{ expense.expense_id }}</p>
-                            <p><strong>Date:</strong> {{ expense.date|date:"d M, Y" }}</p>
-                            <p><strong>Category:</strong> {{ expense.get_category_display }}</p>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main Content -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Expense Summary -->
+                <div class="backdrop-blur-xl bg-white/20 p-6 rounded-2xl border border-gray-200/50 shadow-lg">
+                    <h5 class="text-lg font-bold text-gray-900 mb-4">Expense Summary</h5>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                        <div class="space-y-2">
+                            <p class="text-sm"><span class="font-semibold text-gray-700">Expense ID:</span> <span
+                                    class="text-gray-900">{{ expense.expense_id }}</span></p>
+                            <p class="text-sm"><span class="font-semibold text-gray-700">Date:</span> <span
+                                    class="text-gray-900">{{ expense.date|date:"d M, Y" }}</span></p>
+                            <p class="text-sm"><span class="font-semibold text-gray-700">Category:</span> <span
+                                    class="text-gray-900">{{ expense.get_category_display }}</span></p>
                         </div>
-                        <div class="col-md-6">
-                            <p><strong>Amount:</strong> ₹ {{ expense.amount|floatformat:2|intcomma }}</p>
-                            <p><strong>Submitted By:</strong> {{
-                                expense.paid_by.get_full_name|default:expense.paid_by.username }}</p>
-                            <p><strong>Department:</strong> {{ expense.department }}</p>
+                        <div class="space-y-2">
+                            <p class="text-sm"><span class="font-semibold text-gray-700">Amount:</span> <span
+                                    class="text-lg font-bold text-purple-700">₹ {{ expense.amount|floatformat:2|intcomma
+                                    }}</span></p>
+                            <p class="text-sm"><span class="font-semibold text-gray-700">Submitted By:</span> <span
+                                    class="text-gray-900">{{
+                                    expense.paid_by.get_full_name|default:expense.paid_by.username }}</span></p>
+                            <p class="text-sm"><span class="font-semibold text-gray-700">Department:</span> <span
+                                    class="text-gray-900">{{ expense.department }}</span></p>
                         </div>
                     </div>
-                    <hr>
-                    <p><strong>Description:</strong></p>
-                    <p>{{ expense.description }}</p>
 
-                    {% if expense.attachments %}
-                    <p><strong>Attachments:</strong></p>
-                    <a href="{{ expense.attachments.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-paperclip"></i> View Attachment
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
+                    <div class="pt-4 border-t border-gray-200">
+                        <p class="text-sm font-semibold text-gray-700 mb-2">Description:</p>
+                        <p class="text-sm text-gray-900">{{ expense.description }}</p>
 
-            <!-- Approval Form -->
-            <div class="card">
-                <div class="card-header">
-                    <h5>Approval Decision</h5>
+                        {% if expense.attachments %}
+                        <div class="mt-4">
+                            <p class="text-sm font-semibold text-gray-700 mb-2">Attachments:</p>
+                            <a href="{{ expense.attachments.url }}" target="_blank"
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-white/30 text-gray-700 rounded-lg hover:bg-white/40 transition-all duration-200 font-medium border border-gray-200/50">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                </svg>
+                                View Attachment
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
-                <div class="card-body">
-                    <form method="post">
+
+                <!-- Approval Form -->
+                <div class="backdrop-blur-xl bg-white/20 p-6 rounded-2xl border border-gray-200/50 shadow-lg">
+                    <h5 class="text-lg font-bold text-gray-900 mb-4">Approval Decision</h5>
+
+                    <form method="post" class="space-y-4">
                         {% csrf_token %}
 
-                        <div class="mb-3">
-                            <label for="{{ form.status.id_for_label }}" class="form-label">
-                                Decision <span class="text-danger">*</span>
+                        <div>
+                            <label for="{{ form.status.id_for_label }}"
+                                class="block text-sm font-medium text-gray-700 mb-2">
+                                Decision <span class="text-red-600">*</span>
                             </label>
                             {{ form.status }}
                             {% if form.status.errors %}
-                            <div class="invalid-feedback d-block">
-                                {{ form.status.errors.0 }}
-                            </div>
+                            <p class="mt-1 text-sm text-red-600">{{ form.status.errors.0 }}</p>
                             {% endif %}
                         </div>
 
-                        <div class="mb-3" id="rejection-reason-field">
-                            <label for="{{ form.rejection_reason.id_for_label }}" class="form-label">
+                        <div id="rejection-reason-field">
+                            <label for="{{ form.rejection_reason.id_for_label }}"
+                                class="block text-sm font-medium text-gray-700 mb-2">
                                 Rejection Reason
                             </label>
                             {{ form.rejection_reason }}
-                            <small class="form-text text-muted">
-                                Required if rejecting the expense
-                            </small>
+                            <p class="mt-1 text-sm text-gray-500">Required if rejecting the expense</p>
                             {% if form.rejection_reason.errors %}
-                            <div class="invalid-feedback d-block">
-                                {{ form.rejection_reason.errors.0 }}
-                            </div>
+                            <p class="mt-1 text-sm text-red-600">{{ form.rejection_reason.errors.0 }}</p>
                             {% endif %}
                         </div>
 
-                        <div class="action-buttons">
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-check"></i> Submit Decision
+                        <div class="flex gap-3 pt-4">
+                            <button type="submit"
+                                class="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all duration-200 font-medium shadow-md">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                                Submit Decision
                             </button>
-                            <a href="{% url 'finance:expense_detail' expense.pk %}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i> Cancel
+                            <a href="{% url 'finance:expense_detail' expense.pk %}"
+                                class="inline-flex items-center gap-2 px-6 py-2.5 bg-white/30 text-gray-700 rounded-lg hover:bg-white/40 transition-all duration-200 font-medium border border-gray-200/50">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                Cancel
                             </a>
                         </div>
                     </form>
                 </div>
             </div>
-        </div>
 
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="fas fa-info-circle"></i> Approval Guidelines</h5>
-                </div>
-                <div class="card-body">
-                    <h6>Before Approving:</h6>
-                    <ul class="small">
-                        <li>Verify expense is business-related</li>
-                        <li>Check if receipts are attached</li>
-                        <li>Ensure amount matches documentation</li>
-                        <li>Confirm expense is within budget</li>
-                        <li>Verify submission date validity</li>
-                    </ul>
+            <!-- Sidebar - Guidelines -->
+            <div>
+                <div class="backdrop-blur-xl bg-white/20 p-6 rounded-2xl border border-gray-200/50 shadow-lg">
+                    <h5 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Approval Guidelines
+                    </h5>
 
-                    <hr>
+                    <div class="space-y-4">
+                        <div>
+                            <h6 class="font-semibold text-gray-900 mb-2">Before Approving:</h6>
+                            <ul class="space-y-1 text-sm text-gray-700">
+                                <li class="flex items-start gap-2">
+                                    <span class="text-emerald-600 mt-0.5">•</span>
+                                    <span>Verify expense is business-related</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-emerald-600 mt-0.5">•</span>
+                                    <span>Check if receipts are attached</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-emerald-600 mt-0.5">•</span>
+                                    <span>Ensure amount matches documentation</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-emerald-600 mt-0.5">•</span>
+                                    <span>Confirm expense is within budget</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-emerald-600 mt-0.5">•</span>
+                                    <span>Verify submission date validity</span>
+                                </li>
+                            </ul>
+                        </div>
 
-                    <h6>Rejection Reasons:</h6>
-                    <ul class="small">
-                        <li>Missing or invalid documentation</li>
-                        <li>Personal expense claimed</li>
-                        <li>Amount exceeds policy limits</li>
-                        <li>Submitted after deadline</li>
-                        <li>Duplicate submission</li>
-                    </ul>
+                        <div class="pt-4 border-t border-gray-200">
+                            <h6 class="font-semibold text-gray-900 mb-2">Rejection Reasons:</h6>
+                            <ul class="space-y-1 text-sm text-gray-700">
+                                <li class="flex items-start gap-2">
+                                    <span class="text-red-600 mt-0.5">•</span>
+                                    <span>Missing or invalid documentation</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-red-600 mt-0.5">•</span>
+                                    <span>Personal expense claimed</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-red-600 mt-0.5">•</span>
+                                    <span>Amount exceeds policy limits</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-red-600 mt-0.5">•</span>
+                                    <span>Submitted after deadline</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-red-600 mt-0.5">•</span>
+                                    <span>Duplicate submission</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

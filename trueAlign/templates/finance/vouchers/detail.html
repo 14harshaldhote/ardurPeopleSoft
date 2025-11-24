@@ -13,99 +13,101 @@
         </div>
         <div class="flex gap-2">
             <a href="{% url 'finance:voucher_print_pdf' voucher.pk %}"
-                class="px-4 py-2 backdrop-blur-sm bg-white/30 text-zinc-700 rounded-lg hover:bg-white/40 transition-all duration-200 font-medium border border-white/20 text-sm">
-                <i class="ri-printer-line mr-1"></i> Print
+                class="px-4 py-2 backdrop-blur-sm bg-white/30 text-gray-700 rounded-lg hover:bg-white/40 transition-all duration-200 font-semibold border border-gray-300 text-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg> Print
             </a>
         </div>
     </div>
 
     <!-- Voucher Info -->
-    <div class="backdrop-blur-xl bg-white/20 p-6 rounded-[16px] border border-black/10 shadow-inner">
+    <div class="backdrop-blur-xl bg-white/20 p-6 rounded-2xl border border-gray-200/50 shadow-lg">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-                <label class="text-sm font-medium text-zinc-600">Voucher Number</label>
-                <p class="text-lg font-semibold text-zinc-900">{{ voucher.voucher_number }}</p>
+                <label class="text-sm font-semibold text-gray-600">Voucher Number</label>
+                <p class="text-lg font-semibold text-gray-900">{{ voucher.voucher_number }}</p>
             </div>
             <div>
-                <label class="text-sm font-medium text-zinc-600">Type</label>
-                <p class="text-lg font-semibold text-zinc-900">{{ voucher.get_type_display }}</p>
+                <label class="text-sm font-semibold text-gray-600">Type</label>
+                <p class="text-lg font-semibold text-gray-900">{{ voucher.get_type_display }}</p>
             </div>
             <div>
-                <label class="text-sm font-medium text-zinc-600">Date</label>
-                <p class="text-lg font-semibold text-zinc-900">{{ voucher.date|date:"M d, Y" }}</p>
+                <label class="text-sm font-semibold text-gray-600">Date</label>
+                <p class="text-lg font-semibold text-gray-900">{{ voucher.date|date:"M d, Y" }}</p>
             </div>
             <div>
-                <label class="text-sm font-medium text-zinc-600">Party Name</label>
-                <p class="text-lg font-semibold text-zinc-900">{{ voucher.party_name|default:"N/A" }}</p>
+                <label class="text-sm font-semibold text-gray-600">Party Name</label>
+                <p class="text-lg font-semibold text-gray-900">{{ voucher.party_name|default:"N/A" }}</p>
             </div>
             <div>
-                <label class="text-sm font-medium text-zinc-600">Amount</label>
-                <p class="text-lg font-semibold text-zinc-900">₹ {{ voucher.amount|floatformat:2|intcomma }}</p>
+                <label class="text-sm font-semibold text-gray-600">Amount</label>
+                <p class="text-lg font-semibold text-gray-900">₹ {{ voucher.amount|floatformat:2|intcomma }}</p>
             </div>
             <div>
-                <label class="text-sm font-medium text-zinc-600">Status</label>
+                <label class="text-sm font-semibold text-gray-600">Status</label>
                 <p>
                     {% if voucher.status == 'posted' %}
                     <span
-                        class="px-3 py-1 rounded-full text-sm font-medium bg-emerald-500/20 text-emerald-700 border border-emerald-500/30">Posted</span>
+                        class="px-3 py-1 rounded-full text-sm font-semibold bg-emerald-100 text-emerald-700 border border-emerald-300">Posted</span>
                     {% elif voucher.status == 'approved' %}
                     <span
-                        class="px-3 py-1 rounded-full text-sm font-medium bg-blue-500/20 text-blue-700 border border-blue-500/30">Approved</span>
+                        class="px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-700 border border-blue-300">Approved</span>
                     {% elif voucher.status == 'pending_approval' or voucher.status == 'pending_finance' %}
                     <span
-                        class="px-3 py-1 rounded-full text-sm font-medium bg-amber-500/20 text-amber-700 border border-amber-500/30">Pending</span>
+                        class="px-3 py-1 rounded-full text-sm font-semibold bg-amber-100 text-amber-700 border border-amber-300">Pending</span>
                     {% else %}
                     <span
-                        class="px-3 py-1 rounded-full text-sm font-medium bg-gray-500/20 text-gray-700 border border-gray-500/30">Draft</span>
+                        class="px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 text-gray-700 border border-gray-300">Draft</span>
                     {% endif %}
                 </p>
             </div>
         </div>
         {% if voucher.narration %}
-        <div class="mt-4 pt-4 border-t border-white/20">
-            <label class="text-sm font-medium text-zinc-600">Narration</label>
-            <p class="text-zinc-900 mt-1">{{ voucher.narration }}</p>
+        <div class="mt-4 pt-4 border-t border-gray-300">
+            <label class="text-sm font-semibold text-gray-600">Narration</label>
+            <p class="text-gray-900 mt-1">{{ voucher.narration }}</p>
         </div>
         {% endif %}
     </div>
 
     <!-- Journal Entries -->
-    <div class="backdrop-blur-xl bg-white/20 rounded-[16px] border border-black/10 shadow-inner overflow-hidden">
-        <div class="p-5 border-b border-white/20">
-            <h3 class="text-lg font-bold text-zinc-900">Journal Entries</h3>
+    <div class="backdrop-blur-xl bg-white/20 rounded-2xl border border-gray-200/50 shadow-lg overflow-hidden">
+        <div class="p-5 border-b border-gray-300">
+            <h3 class="text-lg font-bold text-gray-900">Journal Entries</h3>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full">
-                <thead class="bg-white/30 border-b border-white/20">
+                <thead class="bg-white/30 border-b border-gray-300">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-zinc-700 uppercase">Account</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-zinc-700 uppercase">Description</th>
-                        <th class="px-4 py-3 text-right text-xs font-semibold text-zinc-700 uppercase">Debit</th>
-                        <th class="px-4 py-3 text-right text-xs font-semibold text-zinc-700 uppercase">Credit</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">Account</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">Description</th>
+                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase">Debit</th>
+                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase">Credit</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-white/10">
+                <tbody class="divide-y divide-gray-100">
                     {% for detail in voucher.details.all %}
                     <tr>
-                        <td class="px-4 py-3 text-sm text-zinc-900">{{ detail.account.name }}</td>
-                        <td class="px-4 py-3 text-sm text-zinc-600">{{ detail.description|default:"-" }}</td>
-                        <td class="px-4 py-3 text-sm text-right font-semibold text-zinc-900">
+                        <td class="px-6 py-4 text-sm text-gray-900">{{ detail.account.name }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600">{{ detail.description|default:"-" }}</td>
+                        <td class="px-6 py-4 text-sm text-right font-semibold text-gray-900">
                             {% if detail.debit_amount %}₹ {{ detail.debit_amount|floatformat:2|intcomma }}{% else %}-{%
                             endif %}
                         </td>
-                        <td class="px-4 py-3 text-sm text-right font-semibold text-zinc-900">
+                        <td class="px-6 py-4 text-sm text-right font-semibold text-gray-900">
                             {% if detail.credit_amount %}₹ {{ detail.credit_amount|floatformat:2|intcomma }}{% else
                             %}-{% endif %}
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
-                <tfoot class="bg-white/40 border-t-2 border-white/30">
+                <tfoot class="bg-white/40 border-t-2 border-gray-300">
                     <tr>
-                        <td colspan="2" class="px-4 py-3 text-sm font-bold text-zinc-900">Total</td>
-                        <td class="px-4 py-3 text-sm text-right font-bold text-zinc-900">₹ {{
+                        <td colspan="2" class="px-6 py-4 text-sm font-bold text-gray-900">Total</td>
+                        <td class="px-6 py-4 text-sm text-right font-bold text-gray-900">₹ {{
                             voucher.amount|floatformat:2|intcomma }}</td>
-                        <td class="px-4 py-3 text-sm text-right font-bold text-zinc-900">₹ {{
+                        <td class="px-6 py-4 text-sm text-right font-bold text-gray-900">₹ {{
                             voucher.amount|floatformat:2|intcomma }}</td>
                     </tr>
                 </tfoot>
@@ -118,17 +120,21 @@
     <div class="flex gap-3">
         {% if voucher.status == 'pending_approval' %}
         <a href="{% url 'finance:voucher_department_approve' voucher.pk %}"
-            class="px-6 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 font-medium shadow-md">
-            <i class="ri-check-line mr-1"></i> Approve
+            class="px-6 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 font-semibold shadow-md">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg> Approve
         </a>
         {% elif voucher.status == 'pending_finance' %}
         <a href="{% url 'finance:voucher_finance_approve' voucher.pk %}"
-            class="px-6 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 font-medium shadow-md">
-            <i class="ri-check-line mr-1"></i> Finance Approve
+            class="px-6 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 font-semibold shadow-md">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg> Finance Approve
         </a>
         {% elif voucher.status == 'approved' %}
         <a href="{% url 'finance:voucher_post' voucher.pk %}"
-            class="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-md">
+            class="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-semibold shadow-md">
             <i class="ri-send-plane-line mr-1"></i> Post Voucher
         </a>
         {% endif %}
