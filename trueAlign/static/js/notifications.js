@@ -11,9 +11,9 @@ class NotificationSystem {
             soundEnabled: true,
             browserNotifications: true,
             // Corrected API endpoints based on urls.py
-            apiEndpoint: '/api/notifications/',
-            markReadEndpoint: '/api/notifications/mark-read/',
-            markAllReadEndpoint: '/api/notifications/mark-all-read/',
+            apiEndpoint: '/notifications/',
+            markReadEndpoint: '/notifications/mark-read/',
+            markAllReadEndpoint: '/notifications/mark-all-read/',
             ...options
         };
 
@@ -107,30 +107,41 @@ class NotificationSystem {
         const { notifications, unread_count } = data;
         const prevCount = this.state.unreadCount;
 
-        console.log(`NotificationSystem: Handling update. Unread: ${unread_count} (was ${prevCount})`);
+        // Get the ID of the latest notification we've seen so far
+        const lastKnownId = this.state.lastKnownId || 0;
+
+        // Find new notifications (unread AND id > lastKnownId)
+        // We sort by ID desc just to be sure, though server sends order_by -timestamp
+        const newNotifications = notifications.filter(n => !n.read && n.id > lastKnownId);
+
+        console.log(`NotificationSystem: Handling update. Unread: ${unread_count} (was ${prevCount}). New items: ${newNotifications.length}`);
 
         // Update state
         this.state.notifications = notifications;
         this.state.unreadCount = unread_count;
+
+        // Update lastKnownId to the max ID in the new list (or keep current if list empty)
+        if (notifications.length > 0) {
+            const maxId = Math.max(...notifications.map(n => n.id));
+            this.state.lastKnownId = Math.max(lastKnownId, maxId);
+        }
 
         // Update UI
         this.updateBadge();
         this.updateList();
 
         // Trigger alerts if new unread notifications arrived
-        // Logic: if unread count increased OR if we have unread items newer than last poll
-        if (unread_count > prevCount && this.state.lastPoll) {
-            const newNotifications = notifications.filter(n => !n.read && new Date(n.timestamp) > this.state.lastPoll);
-            console.log('NotificationSystem: New notifications detected:', newNotifications);
-
-            if (newNotifications.length > 0) {
-                this.playAlerts(newNotifications[0]);
-            }
+        if (newNotifications.length > 0) {
+            // Play alert for the newest one
+            this.playAlerts(newNotifications[0]);
         } else if (!this.state.lastPoll && unread_count > 0) {
-            // Initial load with unread items - maybe don't play sound to avoid annoyance on refresh?
-            // Or play if user specifically wants to know about unread on load.
-            // For now, let's log it.
+            // Initial load with unread items - log it
             console.log('NotificationSystem: Initial load has unread items.');
+            // Optionally set lastKnownId to maxId here to avoid alerting on refresh
+            if (notifications.length > 0) {
+                const maxId = Math.max(...notifications.map(n => n.id));
+                this.state.lastKnownId = maxId;
+            }
         }
 
         this.state.lastPoll = new Date();
@@ -245,9 +256,33 @@ class NotificationSystem {
         // Sound
         if (this.options.soundEnabled && this.elements.sound) {
             console.log('NotificationSystem: Attempting to play sound...');
-            this.elements.sound.play()
-                .then(() => console.log('NotificationSystem: Sound played successfully'))
-                .catch(e => console.error('NotificationSystem: Audio play failed:', e));
+
+            // Ensure the audio is loaded
+            if (this.elements.sound.readyState === 0) {
+                this.elements.sound.load();
+            }
+
+            // Reset to start
+            this.elements.sound.currentTime = 0;
+
+            const playPromise = this.elements.sound.play();
+
+            if (playPromise !== undefined) {
+                playPromise
+                    .then(() => console.log('NotificationSystem: Sound played successfully'))
+                    .catch(e => {
+                        console.error('NotificationSystem: Audio play failed:', e);
+                        // Fallback: try to create a new Audio object if the element fails
+                        if (e.name === 'NotSupportedError' || e.name === 'NotAllowedError') {
+                            console.log('NotificationSystem: Trying fallback Audio object...');
+                            const src = this.elements.sound.currentSrc || this.elements.sound.src;
+                            if (src) {
+                                const audio = new Audio(src);
+                                audio.play().catch(err => console.error('NotificationSystem: Fallback audio failed:', err));
+                            }
+                        }
+                    });
+            }
         } else {
             console.log('NotificationSystem: Sound disabled or element not found');
         }
@@ -260,6 +295,49 @@ class NotificationSystem {
                 icon: '/static/images/favicon.ico'
             });
         }
+
+        // In-app Toast
+        this.showToast(notification);
+    }
+
+    showToast(notification) {
+        // Create toast container if it doesn't exist
+        let container = document.getElementById('notification-toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'notification-toast-container';
+            container.className = 'fixed bottom-4 right-4 z-50 flex flex-col gap-2';
+            document.body.appendChild(container);
+        }
+
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = 'bg-white border-l-4 border-blue-500 shadow-lg rounded-r-lg p-4 flex items-start gap-3 min-w-[300px] transform transition-all duration-300 translate-x-full opacity-0';
+        toast.innerHTML = `
+            <div class="flex-shrink-0 text-blue-500 mt-0.5">
+                <i class="ri-notification-3-line text-xl"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h4 class="text-sm font-semibold text-gray-900">${notification.title}</h4>
+                <p class="text-sm text-gray-600 mt-1">${notification.message}</p>
+            </div>
+            <button class="text-gray-400 hover:text-gray-600 transition-colors" onclick="this.parentElement.remove()">
+                <i class="ri-close-line"></i>
+            </button>
+        `;
+
+        container.appendChild(toast);
+
+        // Animate in
+        requestAnimationFrame(() => {
+            toast.classList.remove('translate-x-full', 'opacity-0');
+        });
+
+        // Auto dismiss
+        setTimeout(() => {
+            toast.classList.add('translate-x-full', 'opacity-0');
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
     }
 
     async markRead(id) {
