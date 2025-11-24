@@ -1097,7 +1097,7 @@ def chart_of_account_list(request):
     
     context = {
         'accounts': accounts,
-        'account_types': ChartOfAccount.ACCOUNT_TYPES,
+        'account_types': ChartOfAccount.ACCOUNT_TYPE_CHOICES,
     }
     
     return render(request, 'finance/chart_of_accounts/list.html', context)
