@@ -2000,3 +2000,18 @@ def optimized_end_session(request):
     except Exception as e:
         logger.error(f"Optimized end session error: {e}")
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+@role_required(['HR', 'Admin', 'Manager'])
+def active_alerts(request):
+    """API endpoint for active alerts"""
+    try:
+        from .monitoring import AttendanceMonitoringService
+        monitoring_service = AttendanceMonitoringService()
+        alerts = monitoring_service.get_active_alerts()
+        
+        return JsonResponse({
+            'status': 'success',
+            'data': alerts
+        })
+    except Exception as e:
+        logger.error(f"Active alerts API error: {e}")
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)

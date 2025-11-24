@@ -63,8 +63,18 @@ def login_view(request):
                 # Clear any existing session caches
                 invalidate_user_caches(user.id)
 
+                # Force session save to ensure cookie is sent
+                request.session.modified = True
+                request.session.save()
+
                 # Log successful login
                 logger.info(f"User {user.username} logged in successfully")
+                
+                # Cleanup stale sessions
+                try:
+                    _cleanup_stale_sessions(user)
+                except Exception as e:
+                    logger.warning(f"Failed to cleanup stale sessions: {e}")
 
                 # Redirect to dashboard
                 next_url = request.GET.get('next', 'core:dashboard')
@@ -127,8 +137,24 @@ class CustomPasswordResetView(PasswordResetView):
     success_url = reverse_lazy('core:password_reset_done')
 
     def form_valid(self, form):
-        messages.success(self.request, 'Password reset email sent successfully.')
-        return super().form_valid(form)
+        try:
+            opts = {
+                'use_https': self.request.is_secure(),
+                'token_generator': self.token_generator,
+                'from_email': self.from_email,
+                'email_template_name': self.email_template_name,
+                'subject_template_name': self.subject_template_name,
+                'request': self.request,
+                'html_email_template_name': self.html_email_template_name,
+                'extra_email_context': self.extra_email_context,
+            }
+            form.save(**opts)
+            messages.success(self.request, 'Password reset email sent successfully.')
+            return super().form_valid(form)
+        except Exception as e:
+            logger.error(f"Error sending password reset email: {str(e)}")
+            messages.error(self.request, 'An error occurred while sending the password reset email. Please try again later.')
+            return self.form_invalid(form)
 
 class CustomPasswordResetDoneView(PasswordResetDoneView):
     template_name = 'auth/password_reset_done.html'
@@ -616,14 +642,30 @@ def optimized_end_session(request):
         if not session:
             return JsonResponse({'error': 'No active session found'}, status=404)
 
+        # Idempotency check
+        if not session.is_active:
+             return JsonResponse({
+                'status': 'success',
+                'session_id': session.id,
+                'end_time': session.session_end_time.isoformat() if session.session_end_time else timezone.now().isoformat(),
+                'reason': session.end_reason or end_reason,
+                'message': 'Session was already ended'
+            })
+
         # Force flush any remaining buffer data
         OptimizedSessionTrackingMiddleware.force_flush_user_buffer(request.user.id, session.id)
 
         # End session
         session.is_active = False
-        session.session_end_time = timezone.now()
+        now = timezone.now()
+        session.session_end_time = now
+        session.ended_at = now  # Ensure compatibility
+        session.logout_time = now # Explicitly set logout time for signals
         session.end_reason = end_reason
-        session.save(update_fields=['is_active', 'session_end_time', 'end_reason'])
+        session.save(update_fields=['is_active', 'session_end_time', 'ended_at', 'logout_time', 'end_reason'])
+
+        # Log clearly
+        logger.info(f"Work session ended for user {request.user.username} (session {session.id}). Reason: {end_reason}")
 
         # Clear caches
         _clear_session_caches(request.user.id, tab_id)
@@ -1040,52 +1082,44 @@ def _calculate_session_status(session):
     """
     try:
         now = timezone.now()
-
-        # Calculate session duration
-        if session.login_time:
-            duration = now - session.login_time
-            duration_minutes = duration.total_seconds() / 60
-        else:
-            duration_minutes = 0
-
+        
+        # Calculate duration
+        duration = session.get_session_duration()
+        
         # Calculate idle time
-        idle_time = 0
-        if session.is_idle and session.idle_start_time:
-            idle_time = (now - session.idle_start_time).total_seconds() / 60
-
-        # Calculate productivity score
-        productivity_score = calculate_productivity_score({
-            'session_duration': duration_minutes,
-            'idle_time': idle_time,
-            'page_views': session.page_views or [],
-            'clicks': session.clicks or [],
-            'keyboard_events': session.keyboard_events or [],
-        })
-
-        # Check for session warning
-        warning = False
-        remaining_minutes = 0
-        if session.last_activity:
-            inactive_time = now - session.last_activity
-            if inactive_time > timedelta(minutes=CONFIG.SESSION_WARNING_MINUTES):
-                warning = True
-                remaining_minutes = max(0, CONFIG.SESSION_TIMEOUT_MINUTES - (inactive_time.total_seconds() / 60))
-
+        idle_time = session.get_idle_time()
+        
+        # Calculate working time
+        working_time = max(0, duration - idle_time)
+        
+        # Calculate average response time from performance metrics
+        avg_response_time = 0
+        if session.performance_metrics:
+            # Try to get from accumulated metrics
+            if 'avg_response_time' in session.performance_metrics:
+                avg_response_time = session.performance_metrics['avg_response_time']
+            # Or calculate from raw metrics if available
+            elif 'ttfb' in session.performance_metrics and isinstance(session.performance_metrics['ttfb'], list):
+                ttfb_values = [v for v in session.performance_metrics['ttfb'] if isinstance(v, (int, float))]
+                if ttfb_values:
+                    avg_response_time = sum(ttfb_values) / len(ttfb_values)
+            elif 'response_times' in session.performance_metrics:
+                 times = [v for v in session.performance_metrics['response_times'] if isinstance(v, (int, float))]
+                 if times:
+                     avg_response_time = sum(times) / len(times)
+                     
         return {
-            'session_id': session.id,
             'is_active': session.is_active,
             'is_idle': session.is_idle,
-            'duration_minutes': duration_minutes,
-            'idle_time_minutes': idle_time,
-            'productivity_score': productivity_score,
-            'warning': warning,
-            'remaining_minutes': remaining_minutes,
-            'last_activity': session.last_activity.isoformat() if session.last_activity else None,
-            'page_views_count': len(session.page_views or []),
-            'clicks_count': len(session.clicks or []),
-            'keyboard_events_count': len(session.keyboard_events or [])
+            'duration_seconds': duration,
+            'working_time_minutes': round(working_time / 60, 1),
+            'idle_time_minutes': round(idle_time / 60, 1),
+            'productivity_score': session.productivity_score,
+            'avg_response_time_ms': round(avg_response_time, 2),
+            'status_text': 'Active' if session.is_active else 'Ended',
+            'status_color': 'success' if session.is_active else 'secondary',
+            'last_activity_ago': format_duration((now - session.last_activity).total_seconds()) if session.last_activity else "N/A"
         }
-
     except Exception as e:
         logger.error(f"Error calculating session status: {str(e)}")
         return {'error': 'Unable to calculate session status'}
@@ -1668,3 +1702,32 @@ def dashboard_stats_api(request):
     except Exception as e:
         logger.error(f"Error fetching dashboard stats: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
+
+def _cleanup_stale_sessions(user):
+    """
+    Cleanup stale sessions for the user that might have been left open due to browser crashes
+    """
+    try:
+        # Define stale threshold (e.g., 24 hours of inactivity)
+        stale_threshold = timezone.now() - timedelta(hours=24)
+        
+        # Find active sessions with no recent activity
+        stale_sessions = UserSession.objects.filter(
+            user=user,
+            is_active=True,
+            last_activity__lt=stale_threshold
+        )
+        
+        count = stale_sessions.count()
+        if count > 0:
+            # Mark them as ended
+            stale_sessions.update(
+                is_active=False,
+                session_end_time=timezone.now(),
+                ended_at=timezone.now(),
+                end_reason='stale_cleanup'
+            )
+            logger.info(f"Cleaned up {count} stale sessions for user {user.username}")
+            
+    except Exception as e:
+        logger.error(f"Error cleaning up stale sessions: {e}")

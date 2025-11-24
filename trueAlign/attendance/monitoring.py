@@ -285,8 +285,38 @@ class AttendanceMonitoringService:
 
             # Update cache
             cache.set('attendance_active_alerts', active_alerts, 3600)
+            
+            # Include session alerts from EnhancedSessionLogger
+            try:
+                from trueAlign.core.enhanced_logger import get_session_logger
+                session_logger = get_session_logger()
+                session_alerts = session_logger.get_active_alerts()
+                
+                # Convert session alerts to compatible format if needed
+                formatted_session_alerts = []
+                for alert in session_alerts:
+                    formatted_alert = {
+                        'alert_id': alert.get('id'),
+                        'severity': HealthStatus.WARNING.value,  # Default to warning
+                        'title': f"Session Alert: {alert.get('type')}",
+                        'message': alert.get('alert_message'),
+                        'source': 'session_tracker',
+                        'timestamp': alert.get('timestamp'),
+                        'resolved': alert.get('resolved', False),
+                        'details': alert.get('data', {})
+                    }
+                    formatted_session_alerts.append(formatted_alert)
+                    
+                # Combine alerts (avoiding duplicates if any)
+                existing_ids = {a.get('alert_id') for a in active_alerts}
+                for alert in formatted_session_alerts:
+                    if alert['alert_id'] not in existing_ids:
+                        active_alerts.append(alert)
+                        
+            except Exception as e:
+                logger.warning(f"Failed to get session alerts: {e}")
 
-            return [self._serialize_alert(alert) for alert in active_alerts]
+            return [self._serialize_alert(alert) if isinstance(alert, SystemAlert) else alert for alert in active_alerts]
 
         except Exception as e:
             logger.error(f"Failed to get active alerts: {e}")

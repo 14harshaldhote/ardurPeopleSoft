@@ -138,7 +138,7 @@ class EnhancedSessionLogger:
 
         # Log message
         level = logging.WARNING if race_condition else logging.INFO
-        message = f"Session {'created' if created else 'reused'} for {user.username}"
+        message = f"Application Session {'created' if created else 'reused'} for {user.username}"
         if race_condition:
             message += " (race condition detected)"
 
@@ -170,7 +170,7 @@ class EnhancedSessionLogger:
             self._performance_stats['total_race_conditions'] += 1
 
         self.logger.warning(
-            f"Duplicate session creation attempt for {user.username}, tab_id: {tab_id}",
+            f"Duplicate Application Session creation attempt for {user.username}, tab_id: {tab_id}",
             extra=event_data
         )
 
@@ -200,7 +200,7 @@ class EnhancedSessionLogger:
             self._performance_stats['total_short_sessions'] += 1
 
         self.logger.warning(
-            f"Short session detected for {user.username}: {duration_seconds}s",
+            f"Short Application Session detected for {user.username}: {duration_seconds}s",
             extra=event_data
         )
 
@@ -346,11 +346,22 @@ class EnhancedSessionLogger:
                 (time.time() - datetime.fromisoformat(log['timestamp']).timestamp()) < 60)
         ]
 
-        if len(recent_sessions) > 5:  # More than 5 sessions in 1 minute
+        if len(recent_sessions) > 30:  # Increased threshold to 30 sessions/min to reduce false positives
+            # Check if these are from different IPs (potential attack) or same IP (potential bug)
+            unique_ips = set(log.get('ip_address') for log in recent_sessions if log.get('ip_address'))
+            
+            alert_type = 'rapid_session_creation'
+            severity = 'medium'
+            
+            if len(unique_ips) > 10:
+                alert_type = 'distributed_session_attack'
+                severity = 'high'
+            
             self._generate_alert(
-                'rapid_session_creation',
-                f"User {user.username} created {len(recent_sessions)} sessions in 1 minute",
-                {'user_id': user.id, 'session_count': len(recent_sessions)}
+                alert_type,
+                f"User {user.username} created {len(recent_sessions)} sessions in 1 minute from {len(unique_ips)} IPs",
+                {'user_id': user.id, 'session_count': len(recent_sessions), 'unique_ips': list(unique_ips)},
+                severity=severity
             )
 
     def _check_duplicate_session_alert(self, user):
@@ -502,10 +513,22 @@ class EnhancedSessionLogger:
 
     def _generate_performance_report(self):
         """
-        Generate periodic performance report
+        Generate periodic performance report (hourly)
         """
         try:
             current_time = time.time()
+            
+            # Check if we should generate report (only once per hour)
+            # Check if we should generate report (only once per hour)
+            # Use cache lock to prevent duplicate reports from multiple workers
+            lock_key = f"performance_report_lock_{int(current_time // 3600)}"
+            if not cache.add(lock_key, "locked", 3600):
+                return
+
+            last_report_time = getattr(self, '_last_performance_report', 0)
+            if current_time - last_report_time < 3600:
+                return
+
             hour_ago = current_time - 3600
 
             # Calculate metrics for last hour
@@ -541,6 +564,7 @@ class EnhancedSessionLogger:
             }
 
             self.logger.info("Hourly performance report", extra=report)
+            self._last_performance_report = current_time
 
         except Exception as e:
             self.logger.error(f"Error generating performance report: {str(e)}")

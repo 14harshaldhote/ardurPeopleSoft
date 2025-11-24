@@ -427,10 +427,10 @@
     window.showNotification = function (message, type = "info") {
         const notification = document.createElement("div");
         notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${type === "success"
-                ? "bg-green-100 text-green-800 border-green-400"
-                : type === "error"
-                    ? "bg-red-100 text-red-800 border-red-400"
-                    : "bg-blue-100 text-blue-800 border-blue-400"
+            ? "bg-green-100 text-green-800 border-green-400"
+            : type === "error"
+                ? "bg-red-100 text-red-800 border-red-400"
+                : "bg-blue-100 text-blue-800 border-blue-400"
             } border-l-4`;
         notification.textContent = message;
 
@@ -561,6 +561,10 @@
         fetch('/api/notifications/')
             .then(response => response.json())
             .then(data => {
+                if (!Array.isArray(data)) {
+                    console.warn('Notifications API returned non-array data:', data);
+                    return;
+                }
                 const newNotifications = data.filter(
                     newNotif => !notifications.some(
                         existing => existing.id === newNotif.id

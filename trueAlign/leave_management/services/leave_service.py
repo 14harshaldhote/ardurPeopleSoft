@@ -612,7 +612,12 @@ class LeaveService:
                 ).first()
 
                 if not policy:
-                    raise LeaveServiceError("No active leave policy found for user's groups")
+                    logger.warning(f"No active leave policy found for user {user.username}")
+                    return {
+                        'success': False,
+                        'message': "No active leave policy found for user's groups",
+                        'allocations': []
+                    }
 
                 # Get policy allocations
                 policy_allocations = LeaveAllocation.objects.filter(policy=policy)

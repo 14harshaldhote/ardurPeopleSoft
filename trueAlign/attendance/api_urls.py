@@ -50,6 +50,7 @@ urlpatterns = [
     path('run-auto-marking/', api_views.run_auto_marking, name='api_run_auto_marking'),
     path('summary/', api_views.attendance_summary_api, name='api_summary'),
     path('health-check/', api_views.attendance_health_check, name='health_check'),
+    path('active-alerts/', api_views.active_alerts, name='active_alerts'),
 
     # Session verification endpoints
     path('verify-session-status/', api_views.verify_session_status, name='verify_session_status'),

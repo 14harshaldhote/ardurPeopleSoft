@@ -256,27 +256,34 @@ class OptimizedSessionTrackingMiddleware:
                 session_key=UserSession.generate_session_key()
             )
 
-            # Initialize buffer for the session (whether new or existing)
-            buffer_key = f"activity_{user.id}_{session.id}"
-            if buffer_key not in self._activity_buffer:
-                self._activity_buffer[buffer_key] = {
-                    'clicks': [],
-                    'scrolls': [],
-                    'keyboard_events': [],
-                    'mouse_movements': 0,
-                    'tab_visibility_log': [],
-                    'idle_state_changes': [],
-                    'performance_metrics': {},
-                    'page_views': [],
-                    'pending_updates': {},
-                    'last_activity': timezone.now(),
-                    'last_flush': time.time(),
-                    'user_id': user.id
-                }
+            if session:
+                # Initialize buffer for the session (whether new or existing)
+                buffer_key = f"activity_{user.id}_{session.id}"
+                if buffer_key not in self._activity_buffer:
+                    self._activity_buffer[buffer_key] = {
+                        'clicks': [],
+                        'scrolls': [],
+                        'keyboard_events': [],
+                        'mouse_movements': 0,
+                        'tab_visibility_log': [],
+                        'idle_state_changes': [],
+                        'performance_metrics': {},
+                        'page_views': [],
+                        'pending_updates': {},
+                        'last_activity': timezone.now(),
+                        'last_flush': time.time(),
+                        'user_id': user.id
+                    }
 
-            action = "Created" if created else "Reused existing"
-            if CONFIG.should_log_category('session_creation'):
-                logger.info(f"{action} session {session.id} for user {user.username} (tab: {tab_id}, parent: {parent_session_id})")
+                # Only log if it was actually created or if it's a significant reuse event
+                if created:
+                    if CONFIG.should_log_category('session_creation'):
+                        logger.info(f"Created session {session.id} for user {user.username} (tab: {tab_id}, parent: {parent_session_id})", 
+                                   extra={'event_type': 'session_creation', 'was_created': True})
+                else:
+                    # Log reuse at debug level to reduce noise, unless specific conditions met
+                    logger.debug(f"Reused existing session {session.id} for user {user.username}", 
+                                extra={'event_type': 'session_creation', 'was_created': False})
 
             return session
         except Exception as e:
