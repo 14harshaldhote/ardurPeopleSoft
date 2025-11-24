@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ form.instance.pk|yesno:"Edit,New" }} Subscription{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ form.instance.pk|yesno:"Edit,New" }} Subscription</h1>
+        <p class="text-gray-600">Configure subscription details and renewal settings</p>
+    </div>
+
+    <div class="backdrop-blur-xl bg-white/20 p-6 rounded-[16px] border border-black/10 shadow-inner">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-2">Subscription Name *</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-2">Vendor *</label>
+                    {{ form.vendor }}
+                    {% if form.vendor.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.vendor.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-2">Amount *</label>
+                    {{ form.amount }}
+                    {% if form.amount.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.amount.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-2">Frequency *</label>
+                    {{ form.frequency }}
+                    {% if form.frequency.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.frequency.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-2">Alert Days *</label>
+                    {{ form.alert_days }}
+                    {% if form.alert_days.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.alert_days.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-zinc-600">Days before renewal to alert</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-2">Start Date *</label>
+                    {{ form.start_date }}
+                    {% if form.start_date.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.start_date.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-2">Next Payment Date *</label>
+                    {{ form.next_payment_date }}
+                    {% if form.next_payment_date.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.next_payment_date.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-zinc-700 mb-2">Description</label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div class="flex items-center gap-2">
+                <input type="checkbox" id="id_auto_renew" name="auto_renew" 
+                 {% if form.instance.auto_renew or not form.instance.pk %}checked{% endif %}
+                 class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                <label for="id_auto_renew" class="text-sm font-medium text-zinc-700">Auto-renew subscription</label>
+            </div>
+
+            <div class="flex gap-3 pt-4 border-t border-white/20">
+                <button type="submit"
+                    class="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-md">
+                    <i class="ri-save-line mr-1"></i> Save Subscription
+                </button>
+                <a href="{% url 'finance:subscription_list' %}"
+                    class="px-6 py-2 backdrop-blur-sm bg-white/30 text-zinc-700 rounded-lg hover:bg-white/40 transition-all duration-200 font-medium border border-white/20">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

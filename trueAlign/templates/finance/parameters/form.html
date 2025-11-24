@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ form.instance.pk|yesno:"Edit,New" }} Financial Parameter{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <!-- Header -->
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ form.instance.pk|yesno:"Edit,New" }} Financial Parameter
+        </h1>
+        <p class="text-gray-600">Configure financial settings and parameters</p>
+    </div>
+
+    <!-- Form -->
+    <div class="backdrop-blur-xl bg-white/20 p-6 rounded-[16px] border border-black/10 shadow-inner">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-2">Key *</label>
+                    {{ form.key }}
+                    {% if form.key.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.key.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-2">Name *</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-2">Category *</label>
+                    {{ form.category }}
+                    {% if form.category.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.category.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-2">Value Type *</label>
+                    {{ form.value_type }}
+                    {% if form.value_type.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.value_type.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-zinc-700 mb-2">Description</label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-zinc-700 mb-2">Value *</label>
+                {{ form.value }}
+                {% if form.value.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.value.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-2">Valid From</label>
+                    {{ form.valid_from }}
+                    {% if form.valid_from.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.valid_from.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-2">Valid To</label>
+                    {{ form.valid_to }}
+                    {% if form.valid_to.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.valid_to.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <input type="checkbox" id="id_is_global" name="is_global" {% if form.instance.is_global %}checked{%
+                    endif %} class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                <label for="id_is_global" class="text-sm font-medium text-zinc-700">Global Parameter</label>
+            </div>
+
+            <div class="flex gap-3 pt-4 border-t border-white/20">
+                <button type="submit"
+                    class="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-md">
+                    <i class="ri-save-line mr-1"></i> Save Parameter
+                </button>
+                <a href="{% url 'finance:parameter_list' %}"
+                    class="px-6 py-2 backdrop-blur-sm bg-white/30 text-zinc-700 rounded-lg hover:bg-white/40 transition-all duration-200 font-medium border border-white/20">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

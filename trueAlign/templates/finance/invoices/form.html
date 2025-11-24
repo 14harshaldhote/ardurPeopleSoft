@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ form.instance.pk|yesno:"Edit,New" }} Invoice{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6">
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ form.instance.pk|yesno:"Edit,New" }} Invoice</h1>
+        <p class="text-gray-600">Create client invoice with billing details</p>
+    </div>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Invoice Header -->
+        <div class="backdrop-blur-xl bg-white/20 p-6 rounded-[16px] border border-black/10 shadow-inner">
+            <h3 class="text-lg font-bold text-zinc-900 mb-4">Invoice Details</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-2">Client *</label>
+                    {{ form.client }}
+                    {% if form.client.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.client.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-2">Billing Model *</label>
+                    {{ form.billing_model }}
+                    {% if form.billing_model.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.billing_model.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-2">Due Date *</label>
+                    {{ form.due_date }}
+                    {% if form.due_date.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.due_date.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-2">Billing Cycle Start *</label>
+                    {{ form.billing_cycle_start }}
+                    {% if form.billing_cycle_start.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.billing_cycle_start.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-2">Billing Cycle End *</label>
+                    {{ form.billing_cycle_end }}
+                    {% if form.billing_cycle_end.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.billing_cycle_end.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Billing Amounts -->
+        <div class="backdrop-blur-xl bg-white/20 p-6 rounded-[16px] border border-black/10 shadow-inner">
+            <h3 class="text-lg font-bold text-zinc-900 mb-4">Billing Amounts</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-2">Subtotal *</label>
+                    {{ form.subtotal }}
+                    {% if form.subtotal.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.subtotal.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-2">Tax Amount</label>
+                    {{ form.tax_amount }}
+                    {% if form.tax_amount.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.tax_amount.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-2">Discount</label>
+                    {{ form.discount }}
+                    {% if form.discount.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.discount.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-2">Total Amount *</label>
+                    {{ form.total_amount }}
+                    {% if form.total_amount.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.total_amount.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-zinc-700 mb-2">Notes</label>
+                {{ form.notes }}
+                {% if form.notes.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.notes.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="flex gap-3">
+            <button type="submit"
+                class="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-md">
+                <i class="ri-save-line mr-1"></i> Save Invoice
+            </button>
+            <a href="{% url 'finance:invoice_list' %}"
+                class="px-6 py-2 backdrop-blur-sm bg-white/30 text-zinc-700 rounded-lg hover:bg-white/40 transition-all duration-200 font-medium border border-white/20">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Real-time total calculation
+    function calculateTotal() {
+        const subtotal = parseFloat(document.getElementById('id_subtotal').value) || 0;
+        const tax = parseFloat(document.getElementById('id_tax_amount').value) || 0;
+        const discount = parseFloat(document.getElementById('id_discount').value) || 0;
+        const total = subtotal + tax - discount;
+        document.getElementById('id_total_amount').value = total.toFixed(2);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        ['id_subtotal', 'id_tax_amount', 'id_discount'].forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.addEventListener('input', calculateTotal);
+            }
+        });
+        calculateTotal();
+    });
+</script>
+{% endblock %}

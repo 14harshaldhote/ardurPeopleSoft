@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ form.instance.pk|yesno:"Edit,New" }} Expense - Finance{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6">
+    <!-- Header -->
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">
+            {{ form.instance.pk|yesno:"Edit,New" }} Expense
+        </h1>
+        <p class="text-gray-600">
+            Capture and submit expense details with proper documentation.
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left: Form -->
+        <div class="lg:col-span-2 space-y-6">
+            <form method="post" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+
+                <!-- Expense Details Card -->
+                <div class="backdrop-blur-xl bg-white/20 p-6 rounded-[16px] border border-black/10 shadow-inner">
+                    <h3 class="text-lg font-bold text-zinc-900 mb-4">Expense Details</h3>
+
+                    <!-- Row 1: Department + Date -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="{{ form.department.id_for_label }}"
+                                   class="block text-sm font-medium text-zinc-700 mb-2">
+                                Department <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.department }}
+                            {% if form.department.errors %}
+                            <p class="mt-1 text-sm text-red-600">
+                                {{ form.department.errors.0 }}
+                            </p>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label for="{{ form.date.id_for_label }}"
+                                   class="block text-sm font-medium text-zinc-700 mb-2">
+                                Expense Date <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.date }}
+                            {% if form.date.errors %}
+                            <p class="mt-1 text-sm text-red-600">
+                                {{ form.date.errors.0 }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Category + Amount -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                        <div>
+                            <label for="{{ form.category.id_for_label }}"
+                                   class="block text-sm font-medium text-zinc-700 mb-2">
+                                Category <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.category }}
+                            {% if form.category.errors %}
+                            <p class="mt-1 text-sm text-red-600">
+                                {{ form.category.errors.0 }}
+                            </p>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label for="{{ form.amount.id_for_label }}"
+                                   class="block text-sm font-medium text-zinc-700 mb-2">
+                                Amount (₹) <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.amount }}
+                            {% if form.amount.errors %}
+                            <p class="mt-1 text-sm text-red-600">
+                                {{ form.amount.errors.0 }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mt-4">
+                        <label for="{{ form.description.id_for_label }}"
+                               class="block text-sm font-medium text-zinc-700 mb-2">
+                            Description <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.description }}
+                        <p class="mt-1 text-xs text-zinc-500">
+                            Provide a clear, detailed description of the expense.
+                        </p>
+                        {% if form.description.errors %}
+                        <p class="mt-1 text-sm text-red-600">
+                            {{ form.description.errors.0 }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Attachments -->
+                    <div class="mt-4">
+                        <label for="{{ form.attachments.id_for_label }}"
+                               class="block text-sm font-medium text-zinc-700 mb-2">
+                            Attachments (Receipt / Invoice)
+                        </label>
+                        {{ form.attachments }}
+                        <p class="mt-1 text-xs text-zinc-500">
+                            Upload supporting documents like receipts, invoices, or bills.
+                        </p>
+                        {% if form.attachments.errors %}
+                        <p class="mt-1 text-sm text-red-600">
+                            {{ form.attachments.errors.0 }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex flex-wrap gap-3">
+                    <button type="submit"
+                        class="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-md inline-flex items-center">
+                        <i class="ri-save-line mr-1"></i>
+                        Save as Draft
+                    </button>
+
+                    <a href="{% url 'finance:expense_list' %}"
+                       class="px-6 py-2 backdrop-blur-sm bg-white/30 text-zinc-700 rounded-lg hover:bg-white/40 transition-all duration-200 font-medium border border-white/20 inline-flex items-center">
+                        <i class="ri-close-line mr-1"></i>
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Right: Guidelines Card -->
+        <div class="space-y-4">
+            <div class="backdrop-blur-xl bg-white/20 p-6 rounded-[16px] border border-black/10 shadow-inner">
+                <h3 class="text-lg font-bold text-zinc-900 flex items-center gap-2 mb-3">
+                    <i class="ri-information-line text-blue-600"></i>
+                    Guidelines
+                </h3>
+
+                <div class="space-y-4 text-sm text-zinc-700">
+                    <div>
+                        <h4 class="font-semibold mb-1">Expense Submission Process</h4>
+                        <ol class="list-decimal list-inside space-y-1 text-xs text-zinc-600">
+                            <li>Fill in all required details.</li>
+                            <li>Attach supporting documents.</li>
+                            <li>Save as draft to review later.</li>
+                            <li>Submit for approval when ready.</li>
+                            <li>Department head will review.</li>
+                            <li>Finance will process payment.</li>
+                        </ol>
+                    </div>
+
+                    <hr class="border-white/30">
+
+                    <div>
+                        <h4 class="font-semibold mb-1">Important Notes</h4>
+                        <ul class="list-disc list-inside space-y-1 text-xs text-zinc-600">
+                            <li>All expenses must have valid receipts.</li>
+                            <li>Claims should be submitted within 30 days.</li>
+                            <li>Personal expenses are not reimbursable.</li>
+                            <li>Ensure all details are accurate before saving.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

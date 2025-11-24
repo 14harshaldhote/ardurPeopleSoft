@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Invoice {{ invoice.invoice_number }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+    <div class="flex justify-between items-start">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Invoice {{ invoice.invoice_number }}</h1>
+            <p class="text-gray-600">{{ invoice.client.get_full_name|default:invoice.client.username }}</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="{% url 'finance:invoice_print_pdf' invoice.pk %}"
+                class="px-4 py-2 backdrop-blur-sm bg-white/30 text-zinc-700 rounded-lg hover:bg-white/40 transition-all duration-200 font-medium border border-white/20 text-sm">
+                <i class="ri-printer-line mr-1"></i> Print
+            </a>
+        </div>
+    </div>
+
+    <!-- Invoice Info -->
+    <div class="backdrop-blur-xl bg-white/20 p-6 rounded-[16px] border border-black/10 shadow-inner">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+                <label class="text-sm font-medium text-zinc-600">Invoice Number</label>
+                <p class="text-lg font-semibold text-zinc-900">{{ invoice.invoice_number }}</p>
+            </div>
+            <div>
+                <label class="text-sm font-medium text-zinc-600">Billing Model</label>
+                <p class="text-lg font-semibold text-zinc-900">{{ invoice.get_billing_model_display }}</p>
+            </div>
+            <div>
+                <label class="text-sm font-medium text-zinc-600">Due Date</label>
+                <p
+                    class="text-lg font-semibold {% if invoice.status == 'overdue' %}text-red-700{% else %}text-zinc-900{% endif %}">
+                    {{ invoice.due_date|date:"M d, Y" }}
+                </p>
+            </div>
+            <div>
+                <label class="text-sm font-medium text-zinc-600">Billing Cycle</label>
+                <p class="text-lg font-semibold text-zinc-900">
+                    {{ invoice.billing_cycle_start|date:"M d" }} - {{ invoice.billing_cycle_end|date:"M d, Y" }}
+                </p>
+            </div>
+            <div>
+                <label class="text-sm font-medium text-zinc-600">Status</label>
+                <p>
+                    {% if invoice.status == 'paid' %}
+                    <span
+                        class="px-3 py-1 rounded-full text-sm font-medium bg-emerald-500/20 text-emerald-700 border border-emerald-500/30">Paid</span>
+                    {% elif invoice.status == 'sent' %}
+                    <span
+                        class="px-3 py-1 rounded-full text-sm font-medium bg-blue-500/20 text-blue-700 border border-blue-500/30">Sent</span>
+                    {% elif invoice.status == 'overdue' %}
+                    <span
+                        class="px-3 py-1 rounded-full text-sm font-medium bg-red-500/20 text-red-700 border border-red-500/30">Overdue</span>
+                    {% else %}
+                    <span
+                        class="px-3 py-1 rounded-full text-sm font-medium bg-gray-500/20 text-gray-700 border border-gray-500/30">Draft</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Billing Details -->
+    <div class="backdrop-blur-xl bg-white/20 p-6 rounded-[16px] border border-black/10 shadow-inner">
+        <h3 class="text-lg font-bold text-zinc-900 mb-4">Billing Details</h3>
+        <div class="space-y-3">
+            <div class="flex justify-between items-center">
+                <span class="text-zinc-700">Subtotal</span>
+                <span class="font-semibold text-zinc-900">₹ {{ invoice.subtotal|floatformat:2|intcomma }}</span>
+            </div>
+            {% if invoice.tax_amount %}
+            <div class="flex justify-between items-center">
+                <span class="text-zinc-700">Tax</span>
+                <span class="font-semibold text-zinc-900">₹ {{ invoice.tax_amount|floatformat:2|intcomma }}</span>
+            </div>
+            {% endif %}
+            {% if invoice.discount %}
+            <div class="flex justify-between items-center">
+                <span class="text-zinc-700">Discount</span>
+                <span class="font-semibold text-red-700">- ₹ {{ invoice.discount|floatformat:2|intcomma }}</span>
+            </div>
+            {% endif %}
+            <div class="flex justify-between items-center pt-3 border-t-2 border-white/30">
+                <span class="text-lg font-bold text-zinc-900">Total Amount</span>
+                <span class="text-2xl font-bold text-zinc-900">₹ {{ invoice.total_amount|floatformat:2|intcomma
+                    }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    {% if invoice.status != 'paid' %}
+    <div class="flex gap-3">
+        {% if invoice.status == 'draft' %}
+        <a href="{% url 'finance:invoice_approve' invoice.pk %}"
+            class="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-md">
+            <i class="ri-check-line mr-1"></i> Approve & Send
+        </a>
+        {% elif invoice.status == 'sent' or invoice.status == 'overdue' %}
+        <a href="{% url 'finance:invoice_mark_paid' invoice.pk %}"
+            class="px-6 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 font-medium shadow-md">
+            <i class="ri-check-double-line mr-1"></i> Mark as Paid
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
