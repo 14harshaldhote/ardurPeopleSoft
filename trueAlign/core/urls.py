@@ -39,6 +39,7 @@ urlpatterns = [
     path('api/session/update/', views.update_session, name='update_session'),
 
     path('dashboard/', views.dashboard_view, name='dashboard'),
+    path('api/dashboard-stats/', views.dashboard_stats_api, name='dashboard_stats_api'),
     path('configurations/', views.configurations_view, name='configurations'),
 
     # Office Location Management URLs

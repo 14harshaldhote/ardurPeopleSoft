@@ -1637,3 +1637,34 @@ def delete_location(request, location_id):
         messages.error(request, f'Error deleting office location: {str(e)}')
 
     return redirect('core:manage_locations')
+@login_required
+def dashboard_stats_api(request):
+    """
+    API endpoint for fetching real-time dashboard statistics
+    """
+    try:
+        from trueAlign.models import DailyExpense, Voucher, UserSession
+        from trueAlign.models import Attendance
+        from django.utils import timezone
+        
+        today = timezone.now().date()
+        user = request.user
+        
+        stats = {
+            'active_sessions': UserSession.objects.filter(is_active=True).count(),
+            'present_today': Attendance.objects.filter(date=today, status='present').count(),
+            'pending_expenses': 0,
+            'pending_vouchers': 0,
+        }
+
+        # Add finance stats if user has permission
+        if user.has_perm('trueAlign.view_dailyexpense'):
+            stats['pending_expenses'] = DailyExpense.objects.filter(status__in=['draft', 'submitted']).count()
+            
+        if user.has_perm('trueAlign.view_voucher'):
+            stats['pending_vouchers'] = Voucher.objects.filter(status__in=['draft', 'pending_approval']).count()
+
+        return JsonResponse(stats)
+    except Exception as e:
+        logger.error(f"Error fetching dashboard stats: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)

@@ -120,6 +120,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_cron',
     'django_celery_beat',
+    'django.contrib.humanize',
     'crispy_forms',
     'crispy_tailwind',
 ]
