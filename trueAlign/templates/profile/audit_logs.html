@@ -1,325 +1,271 @@
-{% extends 'base.html' %} {% load static %} {% block title %}Audit Logs -
-TrueAlign Portal{% endblock %} {% block content %}
-<div
-    class="min-h-screen py-6 px-4 lg:px-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100"
->
-    <div class="max-w-7xl mx-auto">
-        <!-- Header Section -->
-        <div
-            class="relative overflow-hidden mb-8 rounded-2xl bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl"
-        >
-            <div
-                class="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-pink-500/10"
-            ></div>
-            <div class="relative p-8">
-                <div
-                    class="flex flex-col lg:flex-row justify-between items-start lg:items-center"
-                >
-                    <div class="flex items-center space-x-6">
-                        <div
-                            class="w-20 h-20 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-lg"
-                        >
-                            <i class="fas fa-clipboard-list"></i>
-                        </div>
-                        <div>
-                            <h1
-                                class="text-4xl font-bold text-slate-800 mb-2 tracking-wide"
-                            >
-                                Audit Logs
-                            </h1>
-                            <p class="text-slate-600 text-lg">
-                                Track user activities and system changes
-                            </p>
-                        </div>
+{% extends 'base.html' %}
+{% block title %}Audit Logs - TrueAlign Portal{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Breadcrumb Navigation -->
+        <nav class="flex mb-6" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                <li class="inline-flex items-center">
+                    <a href="{% url 'profile:dashboard' %}"
+                        class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                                d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z">
+                            </path>
+                        </svg>
+                        Dashboard
+                    </a>
+                </li>
+                <li aria-current="page">
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Audit Logs</span>
                     </div>
-                    <div class="flex flex-wrap gap-3 mt-6 lg:mt-0">
-                        <a
-                            href="{% url 'profile:user-list' %}"
-                            class="bg-white/80 backdrop-blur-sm hover:bg-white text-slate-700 hover:text-slate-900 px-6 py-3 rounded-xl border border-slate-200 transition-all duration-300 font-semibold tracking-wide shadow-md hover:shadow-lg"
-                        >
-                            <i class="fas fa-arrow-left mr-2"></i>Back to Users
-                        </a>
-                        <button
-                            onclick="exportLogs()"
-                            class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-6 py-3 rounded-xl transition-all duration-300 font-semibold tracking-wide shadow-lg hover:shadow-xl transform hover:scale-105"
-                        >
-                            <i class="fas fa-download mr-2"></i>Export CSV
-                        </button>
-                        <button
-                            onclick="refreshLogs()"
-                            class="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-6 py-3 rounded-xl transition-all duration-300 font-semibold tracking-wide shadow-lg hover:shadow-xl transform hover:scale-105"
-                        >
-                            <i class="fas fa-sync-alt mr-2"></i>Refresh
-                        </button>
-                    </div>
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                        <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                            </path>
+                        </svg>
+                        Audit Logs
+                    </h1>
+                    <p class="text-gray-600 mt-1">Track all user actions and system activities</p>
                 </div>
+                <a href="{% url 'profile:dashboard' %}"
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Back to Dashboard
+                </a>
             </div>
         </div>
 
-        <!-- Filter Section -->
-        <div
-            class="mb-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden"
-        >
-            <div
-                class="bg-gradient-to-r from-slate-500/10 via-gray-500/5 to-zinc-500/10 px-8 py-6 border-b border-white/20"
-            >
-                <h3 class="text-xl font-bold text-slate-800 flex items-center">
-                    <i class="fas fa-filter mr-3 text-slate-600"></i>Filter Logs
-                </h3>
+        <!-- Filters -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z">
+                        </path>
+                    </svg>
+                    Filter Logs
+                </h2>
             </div>
-            <div class="p-8">
-                <form
-                    method="get"
-                    class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6"
-                >
+            <div class="p-6">
+                <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-sm font-semibold text-slate-600 uppercase tracking-wide mb-2">
-                            <i class="fas fa-user mr-1"></i>User
-                        </label>
-                        <select name="user" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500">
-                            <option value="">All Users</option>
-                            {% for user in users %}
-                            <option value="{{ user.id }}" {% if request.GET.user == user.id|stringformat:"s" %}selected{% endif %}>
-                                {{ user.get_full_name|default:user.username }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-600 uppercase tracking-wide mb-2">
-                            <i class="fas fa-bolt mr-1"></i>Action
-                        </label>
-                        <select name="action" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Action Type</label>
+                        <select name="action_type"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <option value="">All Actions</option>
-                            <option value="create" {% if request.GET.action == "create" %}selected{% endif %}>Created</option>
-                            <option value="update" {% if request.GET.action == "update" %}selected{% endif %}>Updated</option>
-                            <option value="delete" {% if request.GET.action == "delete" %}selected{% endif %}>Deleted</option>
-                            <option value="login" {% if request.GET.action == "login" %}selected{% endif %}>Login</option>
-                            <option value="logout" {% if request.GET.action == "logout" %}selected{% endif %}>Logout</option>
+                            <option value="create">User Created</option>
+                            <option value="update">User Updated</option>
+                            <option value="delete">User Deleted</option>
+                            <option value="status_change">Status Changed</option>
+                            <option value="password_reset">Password Reset</option>
                         </select>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-semibold text-slate-600 uppercase tracking-wide mb-2">
-                            <i class="fas fa-calendar mr-1"></i>Date From
-                        </label>
-                        <input type="date" name="date_from" value="{{ request.GET.date_from }}"
-                               class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">User</label>
+                        <input type="text" name="user" placeholder="Search user..."
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
 
-                    <div class="flex items-end">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
+                        <input type="date" name="date_from"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <div class="md:col-span-3 flex justify-end">
                         <button type="submit"
-                                class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-6 py-3 rounded-xl transition-all duration-300 font-semibold tracking-wide shadow-lg hover:shadow-xl transform hover:scale-105">
-                            <i class="fas fa-search mr-2"></i>Apply Filters
+                            class="inline-flex items-center px-6 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-all">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                            Apply Filters
                         </button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <!-- Audit Logs Table -->
-        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden">
-            <div class="bg-gradient-to-r from-orange-500/10 via-red-500/5 to-pink-500/10 px-8 py-6 border-b border-white/20">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-xl font-bold text-slate-800 flex items-center">
-                        <i class="fas fa-history mr-3 text-orange-600"></i>Activity Log
-                        {% if audit_logs %}
-                        <span class="ml-3 bg-orange-100 text-orange-800 px-3 py-1 rounded-lg text-sm font-medium">
-                            {{ audit_logs|length }} records
-                        </span>
-                        {% endif %}
-                    </h3>
-                </div>
+        <!-- Audit Logs Timeline -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Activity Timeline
+                </h2>
             </div>
 
-            {% if audit_logs %}
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
-                        <tr class="text-left">
-                            <th class="px-8 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                <i class="fas fa-user mr-2"></i>User
-                            </th>
-                            <th class="px-8 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                <i class="fas fa-bolt mr-2"></i>Action
-                            </th>
-                            <th class="px-8 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                <i class="fas fa-info-circle mr-2"></i>Details
-                            </th>
-                            <th class="px-8 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                <i class="fas fa-globe mr-2"></i>IP Address
-                            </th>
-                            <th class="px-8 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                <i class="fas fa-clock mr-2"></i>Timestamp
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-200">
-                        {% for log in audit_logs %}
-                        <tr class="hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-purple-50/50 transition-all duration-200">
-                            <td class="px-8 py-6">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
-                                        {{ log.user.first_name|first|default:log.user.username|first|upper }}
-                                    </div>
+            <div class="p-6">
+                {% if logs %}
+                <div class="flow-root">
+                    <ul class="-mb-8">
+                        {% for log in logs %}
+                        <li>
+                            <div class="relative pb-8">
+                                {% if not forloop.last %}
+                                <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"
+                                    aria-hidden="true"></span>
+                                {% endif %}
+                                <div class="relative flex space-x-3">
                                     <div>
-                                        <p class="font-semibold text-slate-800">{{ log.user.get_full_name|default:log.user.username }}</p>
-                                        <p class="text-sm text-slate-500">{{ log.user.email }}</p>
+                                        <span class="h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white
+                                            {% if log.action_type == 'create' %}bg-green-500
+                                            {% elif log.action_type == 'update' %}bg-blue-500
+                                            {% elif log.action_type == 'delete' %}bg-red-500
+                                            {% elif log.action_type == 'status_change' %}bg-yellow-500
+                                            {% else %}bg-gray-500{% endif %}">
+                                            {% if log.action_type == 'create' %}
+                                            <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                            </svg>
+                                            {% elif log.action_type == 'update' %}
+                                            <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                                                </path>
+                                            </svg>
+                                            {% elif log.action_type == 'delete' %}
+                                            <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                                </path>
+                                            </svg>
+                                            {% else %}
+                                            <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                                                </path>
+                                            </svg>
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    <div class="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">{{ log.action_type|title }}</p>
+                                            <p class="text-sm text-gray-500">{{ log.details }}</p>
+                                            <div class="mt-2 flex items-center gap-4 text-xs text-gray-500">
+                                                {% if log.user %}
+                                                <span class="flex items-center">
+                                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z">
+                                                        </path>
+                                                    </svg>
+                                                    User: {{ log.user.get_full_name|default:log.user.username }}
+                                                </span>
+                                                {% endif %}
+                                                {% if log.action_by %}
+                                                <span class="flex items-center">
+                                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z">
+                                                        </path>
+                                                    </svg>
+                                                    By: {{ log.action_by.get_full_name|default:log.action_by.username }}
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="whitespace-nowrap text-right text-sm text-gray-500">
+                                            <time datetime="{{ log.timestamp|date:'c' }}">{{ log.timestamp|timesince }}
+                                                ago</time>
+                                        </div>
                                     </div>
                                 </div>
-                            </td>
-                            <td class="px-8 py-6">
-                                <div class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wide
-                                    {% if log.action == 'create' %}bg-emerald-100 text-emerald-800 border border-emerald-200
-                                    {% elif log.action == 'update' %}bg-blue-100 text-blue-800 border border-blue-200
-                                    {% elif log.action == 'delete' %}bg-red-100 text-red-800 border border-red-200
-                                    {% elif log.action == 'login' %}bg-green-100 text-green-800 border border-green-200
-                                    {% elif log.action == 'logout' %}bg-yellow-100 text-yellow-800 border border-yellow-200
-                                    {% else %}bg-slate-100 text-slate-800 border border-slate-200{% endif %}">
-                                    <div class="w-2 h-2 rounded-full mr-2
-                                        {% if log.action == 'create' %}bg-emerald-500
-                                        {% elif log.action == 'update' %}bg-blue-500
-                                        {% elif log.action == 'delete' %}bg-red-500
-                                        {% elif log.action == 'login' %}bg-green-500
-                                        {% elif log.action == 'logout' %}bg-yellow-500
-                                        {% else %}bg-slate-500{% endif %}">
-                                    </div>
-                                    {{ log.action|capfirst }}
-                                </div>
-                            </td>
-                            <td class="px-8 py-6">
-                                <p class="text-sm text-slate-700 max-w-xs truncate" title="{{ log.description }}">
-                                    {{ log.description|default:"No details available" }}
-                                </p>
-                            </td>
-                            <td class="px-8 py-6">
-                                <div class="flex items-center space-x-2">
-                                    <i class="fas fa-map-marker-alt text-slate-400 text-xs"></i>
-                                    <span class="text-sm font-mono text-slate-600 bg-slate-100 px-2 py-1 rounded">
-                                        {{ log.ip_address|default:"Unknown" }}
-                                    </span>
-                                </div>
-                            </td>
-                            <td class="px-8 py-6">
-                                <div class="text-sm text-slate-700">
-                                    <p class="font-medium">{{ log.timestamp|date:"M d, Y" }}</p>
-                                    <p class="text-slate-500">{{ log.timestamp|time:"H:i:s" }}</p>
-                                </div>
-                            </td>
-                        </tr>
+                            </div>
+                        </li>
                         {% endfor %}
-                    </tbody>
-                </table>
+                    </ul>
+                </div>
+                {% else %}
+                <div class="text-center py-12">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No audit logs</h3>
+                    <p class="mt-1 text-sm text-gray-500">No activities have been recorded yet.</p>
+                </div>
+                {% endif %}
             </div>
 
             <!-- Pagination -->
             {% if is_paginated %}
-            <div class="bg-gradient-to-r from-slate-50 to-slate-100 px-8 py-6 border-t border-slate-200">
-                <div class="flex justify-between items-center">
-                    <div class="text-sm text-slate-600">
-                        Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ paginator.count }} entries
+            <div class="px-6 py-4 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-gray-700">
+                        Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+                        results
                     </div>
-                    <div class="flex space-x-2">
+                    <div class="flex items-center space-x-2">
                         {% if page_obj.has_previous %}
-                        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.user %}&user={{ request.GET.user }}{% endif %}{% if request.GET.action %}&action={{ request.GET.action }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}"
-                           class="bg-white hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg border border-slate-200 transition-all duration-300 shadow-sm hover:shadow-md">
-                            <i class="fas fa-chevron-left mr-1"></i>Previous
+                        <a href="?page={{ page_obj.previous_page_number }}"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                            Previous
                         </a>
                         {% endif %}
 
-                        <span class="bg-indigo-500 text-white px-4 py-2 rounded-lg font-semibold shadow-md">
-                            Page {{ page_obj.number }} of {{ paginator.num_pages }}
+                        <span
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-gray-50">
+                            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
                         </span>
 
                         {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.user %}&user={{ request.GET.user }}{% endif %}{% if request.GET.action %}&action={{ request.GET.action }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}"
-                           class="bg-white hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg border border-slate-200 transition-all duration-300 shadow-sm hover:shadow-md">
-                            Next<i class="fas fa-chevron-right ml-1"></i>
+                        <a href="?page={{ page_obj.next_page_number }}"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                            Next
+                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
+                                </path>
+                            </svg>
                         </a>
                         {% endif %}
                     </div>
                 </div>
-            </div>
-            {% endif %}
-
-            {% else %}
-            <!-- Empty State -->
-            <div class="text-center py-16 px-8">
-                <div class="w-24 h-24 bg-gradient-to-br from-slate-400 to-slate-600 rounded-3xl flex items-center justify-center text-white text-3xl font-bold mx-auto mb-6">
-                    <i class="fas fa-clipboard-list"></i>
-                </div>
-                <h3 class="text-2xl font-bold text-slate-800 mb-4">No Audit Logs Found</h3>
-                <p class="text-slate-600 mb-8 max-w-md mx-auto">
-                    {% if request.GET.user or request.GET.action or request.GET.date_from %}
-                    No logs match your current filter criteria. Try adjusting your filters or clearing them to see more results.
-                    {% else %}
-                    There are no audit logs to display at this time. User activities will appear here once they start using the system.
-                    {% endif %}
-                </p>
-                {% if request.GET.user or request.GET.action or request.GET.date_from %}
-                <a href="{% url 'profile:audit-logs' %}"
-                   class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-8 py-3 rounded-xl transition-all duration-300 font-semibold tracking-wide shadow-lg hover:shadow-xl transform hover:scale-105">
-                    <i class="fas fa-times mr-2"></i>Clear Filters
-                </a>
-                {% endif %}
             </div>
             {% endif %}
         </div>
     </div>
 </div>
-
-<script>
-function exportLogs() {
-    // Get current filter parameters
-    const params = new URLSearchParams(window.location.search);
-    params.set('export', 'csv');
-
-    // Create download link
-    const downloadUrl = window.location.pathname + '?' + params.toString();
-    window.location.href = downloadUrl;
-}
-
-function refreshLogs() {
-    window.location.reload();
-}
-
-// Auto-refresh every 30 seconds (optional)
-// setInterval(refreshLogs, 30000);
-</script>
-
-<style>
-.hover\:scale-105:hover {
-    transform: scale(1.05);
-}
-
-.transform {
-    transition-property: transform;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 300ms;
-}
-
-.backdrop-blur-sm {
-    backdrop-filter: blur(4px);
-}
-
-/* Custom scrollbar for table */
-.overflow-x-auto::-webkit-scrollbar {
-    height: 8px;
-}
-
-.overflow-x-auto::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 4px;
-}
-
-.overflow-x-auto::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 4px;
-}
-
-.overflow-x-auto::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-}
-</style>
 {% endblock %}

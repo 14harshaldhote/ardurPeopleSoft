@@ -1,262 +1,249 @@
 {% extends 'base.html' %}
 {% load static %}
-
 {% block title %}Bulk Upload Users - TrueAlign Portal{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-gray-50 py-6">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Breadcrumb Navigation -->
+        <nav class="flex mb-6" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                <li class="inline-flex items-center">
+                    <a href="{% url 'profile:dashboard' %}"
+                        class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                                d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z">
+                            </path>
+                        </svg>
+                        Dashboard
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                clip-rule="evenodd"></path>
+                        </svg>
+                        <a href="{% url 'profile:user-list' %}"
+                            class="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2">Users</a>
+                    </div>
+                </li>
+                <li aria-current="page">
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Bulk Upload</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
 
         <!-- Header -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-2xl font-semibold text-gray-900">Bulk Upload Users</h1>
-                        <p class="text-sm text-gray-600 mt-1">Import multiple user profiles from a CSV file</p>
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                            </path>
+                        </svg>
+                        Bulk Upload Users
+                    </h1>
+                    <p class="text-gray-600 mt-1">Upload multiple users from CSV or Excel file</p>
+                </div>
+                <a href="{% url 'profile:user-list' %}"
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Back to Users
+                </a>
+            </div>
+        </div>
+
+        <!-- Instructions Card -->
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div class="ml-3 flex-1">
+                    <h3 class="text-sm font-medium text-blue-900">How to upload users</h3>
+                    <div class="mt-2 text-sm text-blue-800">
+                        <ul class="list-disc list-inside space-y-1">
+                            <li>Download the sample template below to see the required format</li>
+                            <li>Fill in user information (first_name, last_name, email are required)</li>
+                            <li>Save as CSV or Excel (.xlsx) file</li>
+                            <li>Upload the file and select default settings</li>
+                            <li>Maximum 1000 rows per upload</li>
+                        </ul>
                     </div>
-                    <div class="flex space-x-3">
-                        <a href="{% url 'profile:user-list' %}"
-                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="mt-4">
+                        <a href="{% static 'profile/sample_user_upload.csv' %}" download
+                            class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-lg text-blue-700 bg-blue-100 hover:bg-blue-200 transition-colors">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                </path>
                             </svg>
-                            Back to List
+                            Download Sample Template
                         </a>
-                        <button onclick="downloadSample()"
-                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
-                            Download Sample CSV
-                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-            <!-- Upload Area (Left Column) -->
-            <div class="lg:col-span-2">
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 h-full">
-                    <div class="p-6">
-                        <form method="post" enctype="multipart/form-data" id="uploadForm" class="h-full flex flex-col">
-                            {% csrf_token %}
-
-                            <div class="flex-1 flex flex-col justify-center items-center border-2 border-dashed border-gray-300 rounded-lg p-12 hover:border-blue-500 transition-colors duration-200"
-                                id="dropZone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
-                                ondrop="handleDrop(event)">
-
-                                <div class="text-center" id="uploadPrompt">
-                                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none"
-                                        viewBox="0 0 48 48">
-                                        <path
-                                            d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                    </svg>
-                                    <p class="mt-1 text-sm text-gray-600">
-                                        <span class="font-medium text-blue-600 hover:text-blue-500 cursor-pointer"
-                                            onclick="document.getElementById('fileInput').click()">
-                                            Upload a file
-                                        </span>
-                                        or drag and drop
-                                    </p>
-                                    <p class="mt-1 text-xs text-gray-500">CSV up to 10MB</p>
-                                </div>
-
-                                <div id="filePreview" class="hidden w-full">
-                                    <div
-                                        class="flex items-center justify-between bg-blue-50 p-4 rounded-lg border border-blue-100">
-                                        <div class="flex items-center">
-                                            <svg class="w-8 h-8 text-blue-500 mr-3" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                            </svg>
-                                            <div>
-                                                <p class="text-sm font-medium text-blue-900" id="fileName">filename.csv
-                                                </p>
-                                                <p class="text-xs text-blue-700" id="fileSize">0 KB</p>
-                                            </div>
-                                        </div>
-                                        <button type="button" onclick="clearFile()"
-                                            class="text-blue-500 hover:text-blue-700">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <input type="file" name="csv_file" id="fileInput" accept=".csv" class="hidden"
-                                    onchange="handleFileSelect(event)" required>
-                            </div>
-
-                            {% if form.csv_file.errors %}
-                            <div class="mt-4 p-4 bg-red-50 rounded-md border border-red-200">
-                                <div class="flex">
-                                    <div class="flex-shrink-0">
-                                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd"
-                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <div class="ml-3">
-                                        <h3 class="text-sm font-medium text-red-800">Upload Error</h3>
-                                        <div class="mt-2 text-sm text-red-700">
-                                            {{ form.csv_file.errors.0 }}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            {% endif %}
-
-                            <div class="mt-6">
-                                <button type="submit" id="submitBtn" disabled
-                                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
-                                    Upload and Process
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+        <!-- Upload Form -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                    Upload Configuration
+                </h2>
             </div>
+            <div class="p-6">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
 
-            <!-- Instructions (Right Column) -->
-            <div class="lg:col-span-1">
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 h-full">
-                    <div class="p-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Instructions</h3>
-
-                        <div class="space-y-4">
-                            <div>
-                                <h4 class="text-sm font-medium text-gray-900">Required Columns</h4>
-                                <div
-                                    class="mt-2 bg-gray-50 rounded-md p-3 text-xs font-mono text-gray-600 border border-gray-200">
-                                    first_name<br>
-                                    last_name<br>
-                                    email<br>
-                                    username<br>
-                                    employee_id<br>
-                                    department<br>
-                                    position
+                    <!-- File Upload Area -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Upload File</label>
+                        <div
+                            class="mt-1 flex justify-center px-6 pt-8 pb-8 border-2 border-gray-300 border-dashed rounded-xl hover:border-blue-400 transition-colors">
+                            <div class="space-y-2 text-center">
+                                <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                                    </path>
+                                </svg>
+                                <div class="flex text-sm text-gray-600">
+                                    <label for="file-upload"
+                                        class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                                        <span>Upload a file</span>
+                                        {{ form.csv_file }}
+                                    </label>
+                                    <p class="pl-1">or drag and drop</p>
                                 </div>
+                                <p class="text-xs text-gray-500">CSV or XLSX up to 10MB</p>
                             </div>
+                        </div>
+                        {% if form.csv_file.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.csv_file.errors }}</p>
+                        {% endif %}
+                    </div>
 
-                            <div>
-                                <h4 class="text-sm font-medium text-gray-900">Important Notes</h4>
-                                <ul class="mt-2 text-sm text-gray-600 list-disc pl-5 space-y-1">
-                                    <li>File must be in CSV format.</li>
-                                    <li>First row must contain column headers.</li>
-                                    <li>Duplicate emails will be skipped.</li>
-                                    <li>Users are created with a default password.</li>
-                                    <li>Maximum file size is 10MB.</li>
-                                </ul>
+                    <!-- Default Settings -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Default Department/Group</label>
+                            {{ form.group }}
+                            {% if form.group.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.group.errors }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Default Office Location</label>
+                            {{ form.office_location }}
+                            {% if form.office_location.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.office_location.errors }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Info Box -->
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-yellow-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                                    </path>
+                                </svg>
                             </div>
-
-                            <div class="pt-4 border-t border-gray-200">
-                                <h4 class="text-sm font-medium text-gray-900 mb-2">Need Help?</h4>
-                                <p class="text-sm text-gray-600">
-                                    Ensure your CSV file uses UTF-8 encoding to prevent character display issues.
-                                </p>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-yellow-900">Important Notes</h3>
+                                <div class="mt-1 text-sm text-yellow-800">
+                                    <ul class="list-disc list-inside space-y-1">
+                                        <li>All new users will receive auto-generated secure passwords via email</li>
+                                        <li>PAN, Aadhar, and IFSC codes will be validated automatically</li>
+                                        <li>Duplicate emails will be skipped with error messages</li>
+                                        <li>Upload process may take a few minutes for large files</li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+
+                    <!-- Buttons -->
+                    <div class="flex items-center justify-end gap-3">
+                        <a href="{% url 'profile:user-list' %}"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            Cancel
+                        </a>
+                        <button type="submit"
+                            class="inline-flex items-center px-6 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                                </path>
+                            </svg>
+                            Upload Users
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
+
+        <!-- Error Display (if any) -->
+        {% if messages %}
+        <div class="mt-6 space-y-4">
+            {% for message in messages %}
+            <div
+                class="{% if message.tags == 'error' %}bg-red-50 border-red-200 text-red-800{% elif message.tags == 'success' %}bg-green-50 border-green-200 text-green-800{% else %}bg-blue-50 border-blue-200 text-blue-800{% endif %} border rounded-xl p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        {% if message.tags == 'error' %}
+                        <svg class="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        {% elif message.tags == 'success' %}
+                        <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        {% endif %}
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium">{{ message }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
     </div>
 </div>
-
-<script>
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('fileInput');
-    const uploadPrompt = document.getElementById('uploadPrompt');
-    const filePreview = document.getElementById('filePreview');
-    const fileName = document.getElementById('fileName');
-    const fileSize = document.getElementById('fileSize');
-    const submitBtn = document.getElementById('submitBtn');
-
-    function handleDragOver(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        dropZone.classList.add('border-blue-500', 'bg-blue-50');
-    }
-
-    function handleDragLeave(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        dropZone.classList.remove('border-blue-500', 'bg-blue-50');
-    }
-
-    function handleDrop(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        dropZone.classList.remove('border-blue-500', 'bg-blue-50');
-
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            fileInput.files = files;
-            showPreview(files[0]);
-        }
-    }
-
-    function handleFileSelect(e) {
-        const files = e.target.files;
-        if (files.length > 0) {
-            showPreview(files[0]);
-        }
-    }
-
-    function showPreview(file) {
-        if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
-            alert('Please upload a CSV file.');
-            clearFile();
-            return;
-        }
-
-        fileName.textContent = file.name;
-        fileSize.textContent = formatFileSize(file.size);
-
-        uploadPrompt.classList.add('hidden');
-        filePreview.classList.remove('hidden');
-        submitBtn.disabled = false;
-    }
-
-    function clearFile() {
-        fileInput.value = '';
-        uploadPrompt.classList.remove('hidden');
-        filePreview.classList.add('hidden');
-        submitBtn.disabled = true;
-    }
-
-    function formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-
-    function downloadSample() {
-        const csvContent = `first_name,last_name,email,username,employee_id,department,position
-John,Doe,john.doe@company.com,johndoe,EMP001,Engineering,Developer
-Jane,Smith,jane.smith@company.com,janesmith,EMP002,Marketing,Manager`;
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", "sample_users.csv");
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-</script>
 {% endblock %}

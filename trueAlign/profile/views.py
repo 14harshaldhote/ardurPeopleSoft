@@ -10,17 +10,31 @@ from django.db.models import Count, Q, Avg, Sum, F, Case, When, IntegerField
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.cache import cache_page
 from django.core.paginator import Paginator
-from django.db import transaction
+from django.core.cache import cache
+from django.db import transaction, IntegrityError
+from django.core.exceptions import ValidationError
 from datetime import datetime, timedelta
 import csv
 import pandas as pd
 import json
+import logging
 from io import BytesIO
 
 from trueAlign.models import UserDetails, UserActionLog, OfficeLocation, UserSession, SessionActivity
-from .utilities import generate_employee_id, send_welcome_email
+from .utilities import generate_employee_id, send_welcome_email, hr_admin_required, generate_secure_password
 from .forms import UserDetailsCreateForm, UserDetailsUpdateForm, CSVImportForm, UserProfileForm
+from .constants import (
+    DEFAULT_PAGINATION_SIZE,
+    MAX_CSV_FILE_SIZE_BYTES,
+    CACHE_TIMEOUT_ANALYTICS,
+    CACHE_TIMEOUT_DASHBOARD,
+    ERROR_MESSAGES
+)
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 # Helpers
 def is_hr_or_admin(user):
@@ -76,18 +90,21 @@ def hr_dashboard(request):
     thirty_days_ago = timezone.now().date() - timedelta(days=30)
     new_hires = users.filter(hire_date__gte=thirty_days_ago).count()
 
-    # Department/Group distribution
-    department_stats = []
-    for group in Group.objects.all():
-        count = User.objects.filter(groups=group, profile__isnull=False).count()
-        if count > 0:
-            department_stats.append({
-                'name': group.name,
-                'count': count
-            })
+    # Department/Group distribution (optimized - no N+1 query)
+    department_stats = list(
+        Group.objects.annotate(
+            user_count=Count('user', filter=Q(user__profile__isnull=False))
+        ).filter(user_count__gt=0).values('name', 'user_count').order_by('-user_count')
+    )
+    
+    # Prepare chart data as JSON
+    department_labels = json.dumps([stat['name'] for stat in department_stats])
+    department_data = json.dumps([stat['user_count'] for stat in department_stats])
 
-    # Recent activities (last 5)
-    recent_activities = UserActionLog.objects.select_related('user', 'action_by').order_by('-timestamp')[:5]
+    # Recent activities (last 10, with select_related for performance)
+    recent_activities = UserActionLog.objects.select_related(
+        'user', 'action_by'
+    ).order_by('-timestamp')[:10]
 
     pending_onboarding = users.filter(employment_status='probation').count()
 
@@ -97,6 +114,8 @@ def hr_dashboard(request):
         'inactive_users': inactive_users,
         'new_hires': new_hires,
         'department_stats': department_stats,
+        'department_labels_json': department_labels,
+        'department_data_json': department_data,
         'recent_activities': recent_activities,
         'pending_onboarding': pending_onboarding,
         'search_query': search_query,
@@ -196,11 +215,16 @@ class UserCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         try:
             with transaction.atomic():
+                # Generate secure password if not provided
+                password = form.cleaned_data.get('password')
+                if not password:
+                    password = generate_secure_password()
+                
                 # Create User instance
                 user = User.objects.create_user(
                     username=form.cleaned_data['email'],  # Use email as username
                     email=form.cleaned_data['email'],
-                    password=form.cleaned_data['password'],
+                    password=password,
                     first_name=form.cleaned_data['first_name'],
                     last_name=form.cleaned_data['last_name']
                 )
@@ -229,13 +253,31 @@ class UserCreateView(LoginRequiredMixin, CreateView):
                 )
 
                 # Send welcome email
-                send_welcome_email(user, form.cleaned_data['password'])
+                try:
+                    send_welcome_email(user, password)
+                    logger.info(f"Welcome email sent to {user.email}")
+                except Exception as email_error:
+                    logger.warning(f"User created but email failed for {user.email}: {str(email_error)}")
+                    messages.warning(
+                        self.request, 
+                        f"User {user.get_full_name()} created successfully, but email notification failed."
+                    )
 
                 messages.success(self.request, f"User {user.get_full_name()} created successfully.")
+                logger.info(f"User {user.email} created successfully by {self.request.user.username}")
                 return redirect('profile:user-list')
                 
+        except ValidationError as e:
+            logger.warning(f"Validation error creating user: {str(e)}")
+            messages.error(self.request, f"Validation error: {str(e)}")
+            return self.form_invalid(form)
+        except IntegrityError as e:
+            logger.error(f"Database integrity error creating user: {str(e)}")
+            messages.error(self.request, "A user with this information already exists.")
+            return self.form_invalid(form)
         except Exception as e:
-            messages.error(self.request, f"Error creating user: {str(e)}")
+            logger.exception(f"Unexpected error creating user: {str(e)}")
+            messages.error(self.request, "An unexpected error occurred. Please contact support.")
             return self.form_invalid(form)
 
 # User Update View
@@ -296,10 +338,20 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
                 )
 
                 messages.success(self.request, 'User profile has been updated successfully.')
+                logger.info(f"User profile updated for {user.email} by {self.request.user.username}")
                 return super().form_valid(form)
                 
+        except ValidationError as e:
+            logger.warning(f"Validation error updating profile: {str(e)}")
+            messages.error(self.request, f"Validation error: {str(e)}")
+            return self.form_invalid(form)
+        except IntegrityError as e:
+            logger.error(f"Database integrity error updating profile: {str(e)}")
+            messages.error(self.request, "A user with this information already exists.")
+            return self.form_invalid(form)
         except Exception as e:
-            messages.error(self.request, f"Error updating profile: {str(e)}")
+            logger.exception(f"Unexpected error updating profile: {str(e)}")
+            messages.error(self.request, "An unexpected error occurred. Please contact support.")
             return self.form_invalid(form)
 
 # User Status Change View
@@ -390,11 +442,9 @@ def reset_user_password(request, pk):
 
 # CSV Export View
 @login_required
+@hr_admin_required
 def export_users_csv(request):
-    if not is_hr_or_admin(request.user):
-        messages.error(request, "You don't have permission to export user data.")
-        return redirect('profile:user-list')
-
+    """Export user data to CSV file"""
     # Apply the same filters as in the UserListView
     queryset = UserDetails.objects.select_related('user', 'office_location', 'reporting_manager')
 
@@ -518,12 +568,9 @@ class AuditLogListView(LoginRequiredMixin, HRAdminRequiredMixin, ListView):
 
 
 @login_required
+@hr_admin_required
 def bulk_upload_users(request):
     """Bulk upload users from CSV/XLSX file"""
-    if not is_hr_or_admin(request.user):
-        messages.error(request, "You don't have permission to access this feature.")
-        return redirect('profile:dashboard')
-
     if request.method == 'POST':
         form = CSVImportForm(request.POST, request.FILES)
         if form.is_valid():
@@ -539,6 +586,7 @@ def bulk_upload_users(request):
                     df = pd.read_excel(csv_file)
                 else:
                     messages.error(request, 'Invalid file format. Please upload CSV or XLSX file.')
+                    logger.warning(f"Invalid file format uploaded: {csv_file.name}")
                     return render(request, 'profile/bulk_upload.html', {'form': form})
 
                 # Expected columns: first_name, last_name, email, employee_type (optional)
@@ -573,8 +621,8 @@ def bulk_upload_users(request):
                             group_id=str(group.id)
                         )
 
-                        # Default password
-                        password = "Welcome@123"
+                        # Generate secure password
+                        password = generate_secure_password()
 
                         # Create user
                         user = User.objects.create_user(
@@ -620,15 +668,18 @@ def bulk_upload_users(request):
                 # Show results
                 if success_count > 0:
                     messages.success(request, f'Successfully created {success_count} users.')
+                    logger.info(f"Bulk upload: {success_count} users created by {request.user.username}")
 
                 if error_count > 0:
                     messages.warning(request, f'{error_count} users failed to create.')
+                    logger.warning(f"Bulk upload: {error_count} failures")
                     # Store errors in session for detailed view
-                    request.session['bulk_upload_errors'] = errors
+                    request.session['bulk_upload_errors'] = errors[:100]  # Limit to 100 errors
 
                 return redirect('profile:user-list')
 
             except Exception as e:
+                logger.exception(f"Error processing bulk upload file: {str(e)}")
                 messages.error(request, f'Error processing file: {str(e)}')
 
     else:
@@ -725,101 +776,107 @@ def edit_my_profile(request):
 
 # Analytics API Views for Charts
 @login_required
+@cache_page(CACHE_TIMEOUT_ANALYTICS)  # Cache for 5 minutes
 def dashboard_analytics_api(request):
     """API endpoint for dashboard analytics data"""
     if not is_hr_or_admin(request.user):
-        return JsonResponse({'error': 'Permission denied'}, status=403)
+        return JsonResponse({'error': ERROR_MESSAGES['permission_denied']}, status=403)
 
-    # Time periods
-    now = timezone.now()
-    thirty_days_ago = now - timedelta(days=30)
-    six_months_ago = now - timedelta(days=180)
-
-    # Employee status distribution
-    status_data = list(UserDetails.objects.values('employment_status').annotate(
-        count=Count('id')
-    ).order_by('-count'))
-
-    # Location distribution
-    location_data = list(UserDetails.objects.filter(
-        office_location__isnull=False
-    ).values('office_location__name').annotate(
-        count=Count('id')
-    ).order_by('-count'))
-
-    # Employee type distribution
-    type_data = list(UserDetails.objects.values('employee_type').annotate(
-        count=Count('id')
-    ).order_by('-count'))
-
-    # Monthly hiring trends (last 6 months)
-    monthly_hires = []
-    for i in range(6):
-        month_start = (now - timedelta(days=30*i)).replace(day=1)
-        month_end = (month_start.replace(month=month_start.month+1) - timedelta(days=1)) if month_start.month < 12 else month_start.replace(year=month_start.year+1, month=1) - timedelta(days=1)
-
-        count = UserDetails.objects.filter(
-            hire_date__gte=month_start,
-            hire_date__lte=month_end
-        ).count()
-
-        monthly_hires.append({
-            'month': month_start.strftime('%B %Y'),
-            'count': count
-        })
-
-    monthly_hires.reverse()
-
-    # User session analytics (if available)
-    session_analytics = {}
     try:
-        # Active sessions today
-        today = now.date()
-        session_analytics['active_sessions_today'] = UserSession.objects.filter(
-            created_at__date=today,
-            is_active=True
-        ).count()
+        # Time periods
+        now = timezone.now()
+        thirty_days_ago = now - timedelta(days=30)
+        six_months_ago = now - timedelta(days=180)
 
-        # Average session duration
-        avg_session_duration = UserSession.objects.filter(
-            created_at__gte=thirty_days_ago,
-            session_duration__isnull=False
-        ).aggregate(avg_duration=Avg('session_duration'))['avg_duration']
+        # Employee status distribution
+        status_data = list(UserDetails.objects.values('employment_status').annotate(
+            count=Count('id')
+        ).order_by('-count'))
 
-        session_analytics['avg_session_duration'] = round(avg_session_duration or 0, 2)
+        # Location distribution
+        location_data = list(UserDetails.objects.filter(
+            office_location__isnull=False
+        ).values('office_location__name').annotate(
+            count=Count('id')
+        ).order_by('-count'))
 
-        # Top active users (by session count)
-        top_users = list(UserSession.objects.filter(
-            created_at__gte=thirty_days_ago
-        ).values('user__username', 'user__first_name', 'user__last_name').annotate(
-            session_count=Count('id')
-        ).order_by('-session_count')[:5])
+        # Employee type distribution
+        type_data = list(UserDetails.objects.values('employee_type').annotate(
+            count=Count('id')
+        ).order_by('-count'))
 
-        session_analytics['top_users'] = top_users
+        # Monthly hiring trends (last 6 months)
+        monthly_hires = []
+        for i in range(6):
+            month_start = (now - timedelta(days=30*i)).replace(day=1)
+            month_end = (month_start.replace(month=month_start.month+1) - timedelta(days=1)) if month_start.month < 12 else month_start.replace(year=month_start.year+1, month=1) - timedelta(days=1)
 
+            count = UserDetails.objects.filter(
+                hire_date__gte=month_start,
+                hire_date__lte=month_end
+            ).count()
+
+            monthly_hires.append({
+                'month': month_start.strftime('%B %Y'),
+                'count': count
+            })
+
+        monthly_hires.reverse()
+
+        # User session analytics (if available)
+        session_analytics = {}
+        try:
+            # Active sessions today
+            today = now.date()
+            session_analytics['active_sessions_today'] = UserSession.objects.filter(
+                created_at__date=today,
+                is_active=True
+            ).count()
+
+            # Average session duration
+            avg_session_duration = UserSession.objects.filter(
+                created_at__gte=thirty_days_ago,
+                session_duration__isnull=False
+            ).aggregate(avg_duration=Avg('session_duration'))['avg_duration']
+
+            session_analytics['avg_session_duration'] = round(avg_session_duration or 0, 2)
+
+            # Top active users (by session count)
+            top_users = list(UserSession.objects.filter(
+                created_at__gte=thirty_days_ago
+            ).values('user__username', 'user__first_name', 'user__last_name').annotate(
+                session_count=Count('id')
+            ).order_by('-session_count')[:5])
+
+            session_analytics['top_users'] = top_users
+
+        except Exception as e:
+            # If UserSession model is not available or has issues
+            session_analytics = {
+                'active_sessions_today': 0,
+                'avg_session_duration': 0,
+                'top_users': []
+            }
+
+        # Recent activities summary
+        recent_activities = list(UserActionLog.objects.filter(
+            timestamp__gte=thirty_days_ago
+        ).values('action_type').annotate(
+            count=Count('id')
+        ).order_by('-count'))
+
+        return JsonResponse({
+            'status_distribution': status_data,
+            'location_distribution': location_data,
+            'type_distribution': type_data,
+            'monthly_hiring_trend': monthly_hires,
+            'session_analytics': session_analytics,
+            'recent_activities': recent_activities
+        })
+    
     except Exception as e:
-        # If UserSession model is not available or has issues
-        session_analytics = {
-            'active_sessions_today': 0,
-            'avg_session_duration': 0,
-            'top_users': []
-        }
-
-    # Recent activities summary
-    recent_activities = list(UserActionLog.objects.filter(
-        timestamp__gte=thirty_days_ago
-    ).values('action_type').annotate(
-        count=Count('id')
-    ).order_by('-count'))
-
-    return JsonResponse({
-        'status_distribution': status_data,
-        'location_distribution': location_data,
-        'type_distribution': type_data,
-        'monthly_hiring_trend': monthly_hires,
-        'session_analytics': session_analytics,
-        'recent_activities': recent_activities
-    })
+        logger.exception(f"Error in dashboard analytics API: {str(e)}")
+        return JsonResponse({'error': 'An error occurred while fetching analytics data'}, status=500)
 
 
 @login_required

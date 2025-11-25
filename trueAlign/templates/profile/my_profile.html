@@ -2,297 +2,158 @@
 {% block title %}My Profile - TrueAlign Portal{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-8" x-data="{ activeTab: 'overview' }">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Header -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 overflow-hidden">
-            <div class="relative h-32 bg-gradient-to-r from-blue-600 to-indigo-700">
-                <div class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black/20 to-transparent"></div>
-            </div>
-            <div class="px-8 pb-8">
-                <div class="relative flex items-end -mt-12 mb-6">
-                    <div class="w-24 h-24 bg-white rounded-xl p-1 shadow-lg">
-                        <div
-                            class="w-full h-full bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 text-3xl font-bold">
-                            {{ user.first_name|first|default:user.username|first|upper }}
-                        </div>
-                    </div>
-                    <div class="ml-6 mb-1 flex-1">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <h1 class="text-2xl font-bold text-gray-900">{{ user.get_full_name|default:user.username }}</h1>
-                                <div class="flex items-center space-x-4 mt-1 text-sm text-gray-600">
-                                    <span class="flex items-center">
-                                        <svg class="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                        </svg>
-                                        {{ user_profile.get_role_display|default:"Employee" }}
-                                    </span>
-                                    <span class="flex items-center">
-                                        <svg class="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                        </svg>
-                                        {{ user.email }}
-                                    </span>
-                                </div>
-                            </div>
-                            <!-- <div class="flex space-x-3">
-                                <a href="{% url 'profile:edit-my-profile' %}"
-                                    class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                    </svg>
-                                    Edit Profile
-                                </a>
-                            </div> -->
-                        </div>
-                    </div>
-                </div>
+<div class="min-h-screen bg-gray-50 py-6">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
 
-                <!-- Tabs -->
-                <div class="border-b border-gray-200">
-                    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-                        <button @click="activeTab = 'overview'"
-                            :class="{'border-blue-500 text-blue-600': activeTab === 'overview', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'overview'}"
-                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
-                            Overview
-                        </button>
-                        <button @click="activeTab = 'personal'"
-                            :class="{'border-blue-500 text-blue-600': activeTab === 'personal', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'personal'}"
-                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
-                            Personal Info
-                        </button>
-                        <button @click="activeTab = 'employment'"
-                            :class="{'border-blue-500 text-blue-600': activeTab === 'employment', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'employment'}"
-                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
-                            Employment
-                        </button>
-                        <button @click="activeTab = 'address'"
-                            :class="{'border-blue-500 text-blue-600': activeTab === 'address', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'address'}"
-                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
-                            Address
-                        </button>
-                    </nav>
+        <!-- Breadcrumb Navigation -->
+        <nav class="flex mb-6" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                <li class="inline-flex items-center">
+                    <a href="{% url 'profile:dashboard' %}"
+                        class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                                d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z">
+                            </path>
+                        </svg>
+                        Dashboard
+                    </a>
+                </li>
+                <li aria-current="page">
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">My Profile</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                        My Profile
+                    </h1>
+                    <p class="text-gray-600 mt-1">Manage your personal information and settings</p>
+                </div>
+                <a href="{% url 'profile:dashboard' %}"
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Back to Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- Profile Card -->
+        <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-lg p-8 mb-6">
+            <div class="flex items-center gap-6 text-white">
+                <div
+                    class="w-24 h-24 rounded-full bg-white flex items-center justify-center text-4xl font-bold text-blue-600 shadow-lg">
+                    {{ user.first_name.0|upper }}{{ user.last_name.0|upper }}
+                </div>
+                <div class="flex-1">
+                    <h2 class="text-3xl font-bold">{{ user.get_full_name }}</h2>
+                    <p class="text-blue-100 mt-1">{{ user_profile.get_role_display|default:"Employee" }} · {{ user.email
+                        }}</p>
+                    <div class="mt-3 flex gap-2">
+                        <span class="inline-flex items-center px-3 py-1 bg-white/20 rounded-full text-sm">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            {{ user_profile.get_employment_status_display|title }}
+                        </span>
+                        <span class="inline-flex items-center px-3 py-1 bg-white/20 rounded-full text-sm">
+                            ID: {{ user_profile.employee_id }}
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Tab Contents -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Main Content -->
-            <div class="lg:col-span-2 space-y-6">
+        <!-- Profile Form -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                        </path>
+                    </svg>
+                    Update Your Information
+                </h3>
+            </div>
+            <div class="p-6">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
 
-                <!-- Overview Tab -->
-                <div x-show="activeTab === 'overview'" class="space-y-6">
-                    <!-- Quick Stats -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                            <div class="text-sm font-medium text-gray-500">Tenure</div>
-                            <div class="mt-2 text-2xl font-bold text-gray-900">
-                                {% if user_profile.hire_date %}
-                                {{ user_profile.hire_date|timesince }}
-                                {% else %}
-                                New Joiner
-                                {% endif %}
+                    {% if form.errors %}
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-red-800">Please correct the following errors:</h3>
+                                {{ form.errors }}
                             </div>
                         </div>
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                            <div class="text-sm font-medium text-gray-500">Status</div>
-                            <div class="mt-2">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                    {% if user_profile.employment_status == 'active' %}bg-green-100 text-green-800
-                                    {% elif user_profile.employment_status == 'probation' %}bg-yellow-100 text-yellow-800
-                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                    {{ user_profile.get_employment_status_display }}
-                                </span>
-                            </div>
-                        </div>
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                            <div class="text-sm font-medium text-gray-500">Office</div>
-                            <div class="mt-2 text-2xl font-bold text-gray-900">{{ user_profile.office_location.name|default:"Remote" }}</div>
-                        </div>
-                    </div>
-
-                    <!-- About -->
-                    {% if user_profile.job_description %}
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">About Role</h3>
-                        <p class="text-gray-600 whitespace-pre-wrap">{{ user_profile.job_description }}</p>
                     </div>
                     {% endif %}
-                </div>
 
-                <!-- Personal Info Tab -->
-                <div x-show="activeTab === 'personal'"
-                    class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                        <h3 class="text-lg font-medium text-gray-900">Personal Details</h3>
-                    </div>
-                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Full Name</label>
-                            <div class="mt-1 text-sm text-gray-900">{{ user.get_full_name }}</div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {% for field in form %}
+                        <div
+                            class="{% if field.name == 'permanent_address' or field.name == 'current_address' %}md:col-span-2{% endif %}">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                {{ field.label }}
+                                {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+                            </label>
+                            {{ field }}
+                            {% if field.help_text %}
+                            <p class="mt-1 text-sm text-gray-500">{{ field.help_text }}</p>
+                            {% endif %}
+                            {% if field.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ field.errors.0 }}</p>
+                            {% endif %}
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Date of Birth</label>
-                            <div class="mt-1 text-sm text-gray-900">{{ user_profile.dob|date:"F d, Y"|default:"-" }}
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Notice Period</label>
-                            <div class="mt-1 text-sm text-gray-900">{{ user_profile.notice_period_days|default:"0" }}
-                                days</div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Gender</label>
-                            <div class="mt-1 text-sm text-gray-900">{{ user_profile.get_gender_display|default:"-" }}
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Marital Status</label>
-                            <div class="mt-1 text-sm text-gray-900">{{
-                                user_profile.get_marital_status_display|default:"-" }}</div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Blood Group</label>
-                            <div class="mt-1 text-sm text-gray-900">{{ user_profile.blood_group|default:"-" }}</div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Personal Email</label>
-                            <div class="mt-1 text-sm text-gray-900">{{ user_profile.personal_email|default:"-" }}</div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Phone Number</label>
-                            <div class="mt-1 text-sm text-gray-900">{{ user_profile.contact_number_primary|default:"-"
-                                }}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Employment Tab -->
-                <div x-show="activeTab === 'employment'"
-                    class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                        <h3 class="text-lg font-medium text-gray-900">Employment Details</h3>
-                    </div>
-                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Employee ID</label>
-                            <div class="mt-1 text-sm text-gray-900">{{ user_profile.employee_id|default:"-" }}</div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Department</label>
-                            <div class="mt-1 text-sm text-gray-900">
-                                {% for group in user.groups.all %}
-                                {{ group.name }}{% if not forloop.last %}, {% endif %}
-                                {% empty %}
-                                -
-                                {% endfor %}
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Role</label>
-                            <div class="mt-1 text-sm text-gray-900">{{ user_profile.get_role_display }}</div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Reporting Manager</label>
-                            <div class="mt-1 text-sm text-gray-900">{{ user_profile.reporting_manager.get_full_name|default:"-" }}</div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Date of Joining</label>
-                            <div class="mt-1 text-sm text-gray-900">{{ user_profile.hire_date|date:"F d, Y"|default:"-" }}</div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Work Location</label>
-                            <div class="mt-1 text-sm text-gray-900">{{ user_profile.office_location.name|default:"Remote" }}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Address Tab -->
-                <div x-show="activeTab === 'address'" class="space-y-6">
-                    <!-- Current Address -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                            <h3 class="text-lg font-medium text-gray-900">Current Address</h3>
-                        </div>
-                        <div class="p-6">
-                            <p class="text-gray-900">
-                                {{ user_profile.current_address_line1|default:"" }}<br>
-                                {% if user_profile.current_address_line2 %}{{ user_profile.current_address_line2 }}<br>{% endif %}
-                                {{ user_profile.current_city|default:"" }}, {{ user_profile.current_state|default:"" }}
-                                {{ user_profile.current_postal_code|default:"" }}<br>
-                                {{ user_profile.current_country|default:"" }}
-                            </p>
-                        </div>
+                        {% endfor %}
                     </div>
 
-                    <!-- Permanent Address -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                            <h3 class="text-lg font-medium text-gray-900">Permanent Address</h3>
-                        </div>
-                        <div class="p-6">
-                            <p class="text-gray-900">
-                                {{ user_profile.permanent_address_line1|default:"" }}<br>
-                                {% if user_profile.permanent_address_line2 %}{{ user_profile.permanent_address_line2 }}<br>{% endif %}
-                                {{ user_profile.permanent_city|default:"" }}, {{ user_profile.permanent_state|default:"" }} {{ user_profile.permanent_postal_code|default:"" }}<br>
-                                {{ user_profile.permanent_country|default:"" }}
-                            </p>
-                        </div>
+                    <div class="mt-8 flex items-center justify-end gap-3">
+                        <a href="{% url 'profile:dashboard' %}"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            Cancel
+                        </a>
+                        <button type="submit"
+                            class="inline-flex items-center px-6 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Save Changes
+                        </button>
                     </div>
-                </div>
-
-            </div>
-
-            <!-- Sidebar -->
-            <div class="space-y-6">
-                <!-- Emergency Contact -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                        <h3 class="text-lg font-medium text-gray-900">Emergency Contact</h3>
-                    </div>
-                    <div class="p-6 space-y-4">
-                        <div>
-                            <div class="text-sm font-medium text-gray-500">Name</div>
-                            <div class="text-sm text-gray-900">{{ user_profile.emergency_contact_name|default:"-" }}
-                            </div>
-                        </div>
-                        <div>
-                            <div class="text-sm font-medium text-gray-500">Relationship</div>
-                            <div class="text-sm text-gray-900">{{ user_profile.emergency_contact_relationship|default:"-" }}</div>
-                        </div>
-                        <div>
-                            <div class="text-sm font-medium text-gray-500">Phone</div>
-                            <div class="text-sm text-gray-900">{{ user_profile.emergency_contact_number|default:"-" }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Skills -->
-                {% if user_profile.skills %}
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                        <h3 class="text-lg font-medium text-gray-900">Skills</h3>
-                    </div>
-                    <div class="p-6">
-                        <div class="flex flex-wrap gap-2">
-                            {% for skill in user_profile.skills.splitlines %}
-                            <span
-                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                {{ skill }}
-                            </span>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
+                </form>
             </div>
         </div>
     </div>
