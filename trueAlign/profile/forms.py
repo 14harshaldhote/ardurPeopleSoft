@@ -4,6 +4,19 @@ from trueAlign.models import UserDetails, OfficeLocation
 from django.core.exceptions import ValidationError
 import pandas as pd
 
+# Import validators and utilities
+from .validators import (
+    validate_pan_number,
+    validate_aadhar_number,
+    validate_ifsc_code,
+    validate_indian_phone,
+    validate_bank_account_number,
+    validate_passport_number,
+    indian_phone_validator
+)
+from .utilities import generate_secure_password
+from .constants import ERROR_MESSAGES
+
 
 class UserDetailsCreateForm(forms.ModelForm):
     """Form for creating new user accounts with UserDetails."""
@@ -22,7 +35,8 @@ class UserDetailsCreateForm(forms.ModelForm):
     )
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
-        initial='Welcome@123'
+        required=False,
+        help_text='Leave blank to auto-generate a secure password'
     )
     group = forms.ModelChoiceField(
         queryset=Group.objects.all().order_by('name'),
@@ -42,6 +56,8 @@ class UserDetailsCreateForm(forms.ModelForm):
             'permanent_state', 'permanent_postal_code', 'permanent_country',
             'is_current_same_as_permanent',
             'emergency_contact_name', 'emergency_contact_number', 'emergency_contact_relationship',
+            'secondary_emergency_contact_name', 'secondary_emergency_contact_number',
+            'secondary_emergency_contact_relationship',
             'employee_type', 'role', 'reporting_manager', 'hire_date', 'start_date',
             'probation_end_date', 'notice_period_days', 'job_description',
             'office_location', 'employment_status',
@@ -74,6 +90,9 @@ class UserDetailsCreateForm(forms.ModelForm):
             'emergency_contact_name': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
             'emergency_contact_number': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
             'emergency_contact_relationship': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'secondary_emergency_contact_name': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'secondary_emergency_contact_number': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'secondary_emergency_contact_relationship': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
             'employee_type': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
             'role': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
             'reporting_manager': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
@@ -84,9 +103,6 @@ class UserDetailsCreateForm(forms.ModelForm):
             'job_description': forms.Textarea(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500', 'rows': 3}),
             'office_location': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
             'employment_status': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
-            'salary_currency': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
-            'base_salary': forms.NumberInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
-            'salary_frequency': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
             'pan_number': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
             'aadhar_number': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
             'passport_number': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
@@ -119,10 +135,17 @@ class UserDetailsCreateForm(forms.ModelForm):
         if 'employee_type' in self.fields:
             self.fields['employee_type'].initial = 'full_time'
 
+    def clean_password(self):
+        """Generate secure password if not provided"""
+        password = self.cleaned_data.get('password')
+        if not password:
+            password = generate_secure_password()
+        return password
+
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if User.objects.filter(email=email).exists():
-            raise ValidationError("A user with this email already exists.")
+            raise ValidationError(ERROR_MESSAGES['email_duplicate'])
         return email
 
     def clean_personal_email(self):
@@ -136,6 +159,48 @@ class UserDetailsCreateForm(forms.ModelForm):
         if company_email and UserDetails.objects.filter(company_email=company_email).exists():
             raise ValidationError("A user with this company email already exists.")
         return company_email
+    
+    def clean_pan_number(self):
+        """Validate PAN number format"""
+        pan = self.cleaned_data.get('pan_number')
+        if pan:
+            return validate_pan_number(pan)
+        return pan
+    
+    def clean_aadhar_number(self):
+        """Validate Aadhar number format"""
+        aadhar = self.cleaned_data.get('aadhar_number')
+        if aadhar:
+            return validate_aadhar_number(aadhar)
+        return aadhar
+    
+    def clean_bank_ifsc(self):
+        """Validate IFSC code format"""
+        ifsc = self.cleaned_data.get('bank_ifsc')
+        if ifsc:
+            return validate_ifsc_code(ifsc)
+        return ifsc
+    
+    def clean_contact_number_primary(self):
+        """Validate primary phone number"""
+        phone = self.cleaned_data.get('contact_number_primary')
+        if phone:
+            return validate_indian_phone(phone)
+        return phone
+    
+    def clean_passport_number(self):
+        """Validate passport number format"""
+        passport = self.cleaned_data.get('passport_number')
+        if passport:
+            return validate_passport_number(passport)
+        return passport
+    
+    def clean_bank_account_number(self):
+        """Validate bank account number"""
+        account = self.cleaned_data.get('bank_account_number')
+        if account:
+            return validate_bank_account_number(account)
+        return account
 
 
 class UserDetailsUpdateForm(forms.ModelForm):
@@ -290,6 +355,48 @@ class UserDetailsUpdateForm(forms.ModelForm):
         ).exclude(id=self.instance.id).exists():
             raise ValidationError("A user with this company email already exists.")
         return company_email
+    
+    def clean_pan_number(self):
+        """Validate PAN number format"""
+        pan = self.cleaned_data.get('pan_number')
+        if pan:
+            return validate_pan_number(pan)
+        return pan
+    
+    def clean_aadhar_number(self):
+        """Validate Aadhar number format"""
+        aadhar = self.cleaned_data.get('aadhar_number')
+        if aadhar:
+            return validate_aadhar_number(aadhar)
+        return aadhar
+    
+    def clean_bank_ifsc(self):
+        """Validate IFSC code format"""
+        ifsc = self.cleaned_data.get('bank_ifsc')
+        if ifsc:
+            return validate_ifsc_code(ifsc)
+        return ifsc
+    
+    def clean_contact_number_primary(self):
+        """Validate primary phone number"""
+        phone = self.cleaned_data.get('contact_number_primary')
+        if phone:
+            return validate_indian_phone(phone)
+        return phone
+    
+    def clean_passport_number(self):
+        """Validate passport number format"""
+        passport = self.cleaned_data.get('passport_number')
+        if passport:
+            return validate_passport_number(passport)
+        return passport
+    
+    def clean_bank_account_number(self):
+        """Validate bank account number"""
+        account = self.cleaned_data.get('bank_account_number')
+        if account:
+            return validate_bank_account_number(account)
+        return account
 
 
 class CSVImportForm(forms.Form):
@@ -420,3 +527,24 @@ class UserProfileForm(forms.ModelForm):
         ).exclude(id=self.instance.id).exists():
             raise ValidationError("A user with this personal email already exists.")
         return personal_email
+    
+    def clean_contact_number_primary(self):
+        """Validate primary phone number"""
+        phone = self.cleaned_data.get('contact_number_primary')
+        if phone:
+            return validate_indian_phone(phone)
+        return phone
+    
+    def clean_passport_number(self):
+        """Validate passport number format"""
+        passport = self.cleaned_data.get('passport_number')
+        if passport:
+            return validate_passport_number(passport)
+        return passport
+    
+    def clean_bank_account_number(self):
+        """Validate bank account number"""
+        account = self.cleaned_data.get('bank_account_number')
+        if account:
+            return validate_bank_account_number(account)
+        return account

@@ -2,11 +2,88 @@
 Utility functions for the profile app
 """
 import logging
-from django.contrib.auth.models import User
-from datetime import datetime
 import re
+import secrets
+import string
+from functools import wraps
+from django.contrib.auth.models import User
+from trueAlign.models import UserDetails
+from django.shortcuts import redirect
+from django.contrib import messages
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
+
+
+# Security: Secure Password Generation
+def generate_secure_password(length=12):
+    """
+    Generate a cryptographically secure random password.
+    
+    Args:
+        length (int): Length of the password (default: 12)
+    
+    Returns:
+        str: Secure random password
+    
+    Example:
+        >>> pwd = generate_secure_password()
+        >>> len(pwd)
+        12
+    """
+    # Define character sets
+    alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
+    
+    # Generate password ensuring it has at least one of each type
+    while True:
+        password = ''.join(secrets.choice(alphabet) for _ in range(length))
+        
+        # Ensure password has at least:
+        # - 1 uppercase letter
+        # - 1 lowercase letter
+        # - 1 digit
+        # - 1 special character
+        if (any(c.isupper() for c in password) and
+            any(c.islower() for c in password) and
+            any(c.isdigit() for c in password) and
+            any(c in "!@#$%^&*" for c in password)):
+            return password
+
+
+# Decorator for HR/Admin permission checking
+def hr_admin_required(view_func):
+    """
+    Decorator to restrict views to HR and Admin users only.
+    
+    Usage:
+        @login_required
+        @hr_admin_required
+        def my_view(request):
+            # View code
+    """
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not is_hr_or_admin(request.user):
+            messages.error(request, "You do not have permission to access this page.")
+            return redirect('profile:dashboard')
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+# Helpers
+def is_hr_or_admin(user):
+    """Check if user has HR or admin role"""
+    try:
+        # Check if user is in HR group
+        if user.groups.filter(name='HR').exists():
+            return True
+
+        profile = user.profile
+        job_description = profile.job_description or ''
+        return user.is_superuser or profile.employee_type == 'hr' or 'HR' in job_description
+    except (AttributeError, UserDetails.DoesNotExist):
+        return False
+
 
 # Helper function to generate employee ID
 def generate_employee_id(work_location=None, group_id=None):
@@ -170,7 +247,7 @@ def send_welcome_email(user, password):
             to=[user.email]
         )
 
-    # Add logging before sending
+    # Add logging before sending (removed password for security)
     logger.info(f"Attempting to send welcome email to {user.email}")
 
     # Send the email

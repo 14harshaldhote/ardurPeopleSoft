@@ -131,29 +131,29 @@ def logout_view(request):
 # =============================================================================
 
 class CustomPasswordResetView(PasswordResetView):
+    """Direct password reset view without email verification"""
     template_name = 'auth/password_reset.html'
-    email_template_name = 'auth/password_reset_email.html'
-    subject_template_name = 'auth/password_reset_subject.txt'
-    success_url = reverse_lazy('core:password_reset_done')
-
+    success_url = reverse_lazy('login')  # Changed to login after successful reset
+    
+    def get_form_class(self):
+        """Use custom direct password reset form"""
+        from .forms import DirectPasswordResetForm
+        return DirectPasswordResetForm
+    
     def form_valid(self, form):
+        """Save the new password directly"""
         try:
-            opts = {
-                'use_https': self.request.is_secure(),
-                'token_generator': self.token_generator,
-                'from_email': self.from_email,
-                'email_template_name': self.email_template_name,
-                'subject_template_name': self.subject_template_name,
-                'request': self.request,
-                'html_email_template_name': self.html_email_template_name,
-                'extra_email_context': self.extra_email_context,
-            }
-            form.save(**opts)
-            messages.success(self.request, 'Password reset email sent successfully.')
-            return super().form_valid(form)
+            # Reset the password
+            user = form.save()
+            messages.success(
+                self.request, 
+                f'Password reset successfully for user {user.username}. You can now login with the new password.'
+            )
+            logger.info(f"Direct password reset successful for user {user.username}")
+            return redirect(self.success_url)
         except Exception as e:
-            logger.error(f"Error sending password reset email: {str(e)}")
-            messages.error(self.request, 'An error occurred while sending the password reset email. Please try again later.')
+            logger.error(f"Error in direct password reset: {str(e)}")
+            messages.error(self.request, 'An error occurred while resetting the password. Please try again.')
             return self.form_invalid(form)
 
 class CustomPasswordResetDoneView(PasswordResetDoneView):
