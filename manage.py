@@ -9,6 +9,10 @@ def main():
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ardurTrueAlign.settings')
     try:
         from django.core.management import execute_from_command_line
+        # Patch for django-cron compatibility with Django 5.1
+        from django.db.models import options
+        if 'index_together' not in options.DEFAULT_NAMES:
+            options.DEFAULT_NAMES = options.DEFAULT_NAMES + ('index_together',)
     except ImportError as exc:
         raise ImportError(
             "Couldn't import Django. Are you sure it's installed and "

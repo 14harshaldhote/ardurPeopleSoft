@@ -3,256 +3,201 @@
 {% block title %}Manager Dashboard - Leave Management{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <div class="bg-white shadow-sm border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center py-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <svg class="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <h1 class="text-2xl font-bold text-gray-900">Manager Dashboard</h1>
-                        <p class="text-sm text-gray-500">Team leave management and approvals</p>
-                    </div>
+<div class="container mx-auto px-4 py-8">
+    <!-- Header Section -->
+    <div class="relative overflow-hidden mb-8 rounded-3xl bg-gradient-to-r from-blue-800 to-indigo-900 shadow-xl p-8">
+        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+        <div class="absolute bottom-0 left-0 -mb-4 -ml-4 w-32 h-32 bg-blue-500/20 rounded-full blur-2xl"></div>
+
+        <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-white/10 rounded-xl backdrop-blur-md border border-white/20">
+                    <i class="ri-user-star-line text-3xl text-blue-200"></i>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <a href="{% url 'leave_management:team_leaves' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors duration-200">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                        </svg>
-                        View Team Leaves
-                    </a>
-                    <a href="{% url 'leave_management:apply_leave' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
-                        </svg>
-                        Apply Leave
-                    </a>
+                <div>
+                    <h1 class="text-3xl font-bold text-white">Manager Dashboard</h1>
+                    <p class="text-blue-100 mt-1">Team leave management & overview</p>
                 </div>
+            </div>
+            <div class="flex gap-3">
+                <a href="{% url 'leave_management:team_leaves' %}"
+                    class="btn bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-md flex items-center gap-2 px-4 py-2 rounded-xl transition-all">
+                    <i class="ri-team-line"></i> Team Requests
+                </a>
+                <a href="{% url 'leave_management:apply_leave' %}"
+                    class="btn bg-white text-blue-900 hover:bg-blue-50 flex items-center gap-2 px-4 py-2 rounded-xl transition-all shadow-lg">
+                    <i class="ri-add-line"></i> Apply Leave
+                </a>
             </div>
         </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <!-- Team Members -->
-            <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
-                <div class="p-6">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-                            </svg>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-500">Team Members</p>
-                            <p class="text-2xl font-semibold text-gray-900">{{ stats.total_team_members|default:0 }}</p>
-                        </div>
-                    </div>
-                </div>
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- Team Members -->
+        <div
+            class="card p-6 relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300 bg-white rounded-2xl shadow-sm border border-gray-100">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <i class="ri-group-line text-6xl text-blue-600"></i>
             </div>
-
-            <!-- Pending Approvals -->
-            <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
-                <div class="p-6">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-500">Pending Approvals</p>
-                            <p class="text-2xl font-semibold text-gray-900">{{ stats.pending_approvals|default:0 }}</p>
-                        </div>
-                    </div>
+            <div class="relative z-10">
+                <div
+                    class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-4 text-2xl">
+                    <i class="ri-group-line"></i>
                 </div>
-            </div>
-
-            <!-- On Leave Today -->
-            <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
-                <div class="p-6">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                            </svg>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-500">On Leave Today</p>
-                            <p class="text-2xl font-semibold text-gray-900">{{ stats.on_leave_today|default:0 }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-            <!-- Team Leaves -->
-            <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
-                <div class="p-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h3 class="text-lg font-medium text-gray-900">Team Leaves</h3>
-                            <p class="text-sm text-gray-500 mt-1">View all team leave requests</p>
-                        </div>
-                        <svg class="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                        </svg>
-                    </div>
-                    <div class="mt-4">
-                        <a href="{% url 'leave_management:team_leaves' %}" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors duration-200">
-                            View Team Leaves
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Apply Leave -->
-            <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
-                <div class="p-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h3 class="text-lg font-medium text-gray-900">Apply Leave</h3>
-                            <p class="text-sm text-gray-500 mt-1">Submit your own leave request</p>
-                        </div>
-                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
-                        </svg>
-                    </div>
-                    <div class="mt-4">
-                        <a href="{% url 'leave_management:apply_leave' %}" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
-                            Apply Leave
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- My Leaves -->
-            <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
-                <div class="p-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h3 class="text-lg font-medium text-gray-900">My Leaves</h3>
-                            <p class="text-sm text-gray-500 mt-1">View your leave requests</p>
-                        </div>
-                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                    </div>
-                    <div class="mt-4">
-                        <a href="{% url 'leave_management:my_leaves' %}" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
-                            View My Leaves
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Leave Balance -->
-            <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
-                <div class="p-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h3 class="text-lg font-medium text-gray-900">Leave Balance</h3>
-                            <p class="text-sm text-gray-500 mt-1">Check your available days</p>
-                        </div>
-                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
-                        </svg>
-                    </div>
-                    <div class="mt-4">
-                        <a href="{% url 'leave_management:leave_balance' %}" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors duration-200">
-                            View Balance
-                        </a>
-                    </div>
-                </div>
+                <p class="text-gray-500 text-sm font-medium">Team Members</p>
+                <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ stats.total_team_members|default:0 }}</h3>
             </div>
         </div>
 
         <!-- Pending Approvals -->
-        <div class="bg-white shadow-sm rounded-lg border border-gray-200">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-medium text-gray-900">Pending Approvals</h3>
-                    <a href="{% url 'leave_management:team_leaves' %}?status=Pending" class="text-amber-600 hover:text-amber-800 text-sm font-medium">
-                        View all pending →
-                    </a>
+        <div
+            class="card p-6 relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300 bg-white rounded-2xl shadow-sm border border-gray-100">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <i class="ri-time-line text-6xl text-amber-600"></i>
+            </div>
+            <div class="relative z-10">
+                <div
+                    class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center mb-4 text-2xl">
+                    <i class="ri-time-line"></i>
+                </div>
+                <p class="text-gray-500 text-sm font-medium">Pending Approvals</p>
+                <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ stats.pending_approvals|default:0 }}</h3>
+            </div>
+        </div>
+
+        <!-- On Leave Today -->
+        <div
+            class="card p-6 relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300 bg-white rounded-2xl shadow-sm border border-gray-100">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <i class="ri-flight-takeoff-line text-6xl text-emerald-600"></i>
+            </div>
+            <div class="relative z-10">
+                <div
+                    class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center mb-4 text-2xl">
+                    <i class="ri-flight-takeoff-line"></i>
+                </div>
+                <p class="text-gray-500 text-sm font-medium">On Leave Today</p>
+                <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ stats.on_leave_today|default:0 }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Pending Approvals List -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                    <h2 class="text-lg font-bold text-gray-800">Pending Approvals</h2>
+                    {% if pending_approvals %}
+                    <span class="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">
+                        {{ pending_approvals|length }} Pending
+                    </span>
+                    {% endif %}
+                </div>
+
+                <div class="overflow-x-auto">
+                    {% if pending_approvals %}
+                    <table class="w-full">
+                        <thead class="bg-gray-50/50">
+                            <tr>
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    Employee</th>
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    Leave Type</th>
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    Duration</th>
+                                <th
+                                    class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            {% for request in pending_approvals %}
+                            <tr class="hover:bg-gray-50/50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-bold">
+                                            {{ request.user.get_full_name|default:request.user.username|slice:":1"|upper
+                                            }}
+                                        </div>
+                                        <div>
+                                            <div class="font-medium text-gray-900">{{
+                                                request.user.get_full_name|default:request.user.username }}</div>
+                                            <div class="text-xs text-gray-500">{{ request.user.email }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-700">
+                                        {{ request.leave_type.name }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">{{ request.start_date|date:"M d" }} - {{
+                                        request.end_date|date:"M d" }}</div>
+                                    <div class="text-xs text-gray-500">{{ request.leave_days }} days</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right">
+                                    <a href="{% url 'leave_management:leave_detail' request.id %}"
+                                        class="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline">
+                                        Review
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="p-8 text-center">
+                        <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="ri-check-double-line text-3xl text-gray-400"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900">All Caught Up!</h3>
+                        <p class="text-gray-500 mt-1">No pending leave requests to approve.</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
-            <div class="p-6">
-                {% if pending_approvals %}
+        </div>
+
+        <!-- Team Members List -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-full">
+                <div class="p-6 border-b border-gray-100">
+                    <h2 class="text-lg font-bold text-gray-800">My Team</h2>
+                </div>
+                <div class="p-4 overflow-y-auto max-h-[500px]">
+                    {% if team_members %}
                     <div class="space-y-4">
-                        {% for request in pending_approvals %}
-                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
-                                <div class="flex-1">
-                                    <div class="flex items-center space-x-3 mb-2">
-                                        <div class="flex-shrink-0">
-                                            <div class="w-10 h-10 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center">
-                                                <span class="text-amber-600 font-medium text-sm">
-                                                    {{ request.user.first_name.0|default:request.user.username.0|upper }}{{ request.user.last_name.0|default:''|upper }}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <h4 class="text-sm font-medium text-gray-900">{{ request.user.get_full_name|default:request.user.username }}</h4>
-                                            <p class="text-sm text-gray-500">{{ request.leave_type.name }}</p>
-                                        </div>
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                            Pending Approval
-                                        </span>
-                                    </div>
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
-                                        <div>
-                                            <span class="font-medium">Duration:</span>
-                                            <div class="mt-1">
-                                                {{ request.start_date|date:"M d" }} - {{ request.end_date|date:"M d, Y" }}
-                                                <div class="text-xs text-gray-500">{{ request.leave_days }} day{{ request.leave_days|pluralize }}</div>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <span class="font-medium">Applied:</span>
-                                            <div class="mt-1">{{ request.created_at|date:"M d, Y" }}</div>
-                                        </div>
-                                        <div>
-                                            <span class="font-medium">Request ID:</span>
-                                            <div class="mt-1">#{{ request.id }}</div>
-                                        </div>
-                                    </div>
-                                    {% if request.reason %}
-                                        <div class="mt-3">
-                                            <span class="text-sm font-medium text-gray-700">Reason:</span>
-                                            <p class="text-sm text-gray-600 mt-1">{{ request.reason|truncatewords:15 }}</p>
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                <div class="flex flex-col space-y-2 ml-6">
-                                    <a href="{% url 'leave_management:leave_detail' request.id %}" class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors duration-200">
-                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                        </svg>
-                                        Review & Approve
-                                    </a>
-                                </div>
+                        {% for member in team_members %}
+                        <div
+                            class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100">
+                            <div
+                                class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-600 flex items-center justify-center font-bold shadow-sm">
+                                {{ member.get_full_name|default:member.username|slice:":1"|upper }}
                             </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="text-sm font-semibold text-gray-900 truncate">{{
+                                    member.get_full_name|default:member.username }}</h4>
+                                <p class="text-xs text-gray-500 truncate">{{ member.email }}</p>
+                            </div>
+                            <div class="text-xs text-gray-400">
+                                <i class="ri-arrow-right-s-line"></i>
+                            </div>
+                        </div>
                         {% endfor %}
                     </div>
-                {% else %}
-                    <div class="text-center py-8">
-                        <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <h3 class="text-lg font-medium text-gray-900 mb-2">No Pending Approvals</h3>
-                        <p class="text-gray-500">All team leave requests have been processed.</p>
+                    {% else %}
+                    <div class="text-center py-8 text-gray-500">
+                        <p>No team members found.</p>
                     </div>
-                {% endif %}
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>

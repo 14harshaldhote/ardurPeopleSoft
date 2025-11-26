@@ -9,6 +9,7 @@ import logging
 from django.db.models import JSONField
 from django.db.models import Q
 from django.db import transaction
+from simple_history.models import HistoricalRecords
 
 import uuid
 import json
@@ -20,7 +21,7 @@ from django.core.exceptions import ValidationError
 from django.core.cache import cache
 from django.core.validators import MinValueValidator, MaxValueValidator
 from decimal import Decimal
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save 
 from django.dispatch import receiver
 
 # Try importing geoip2, but make it optional
@@ -3649,6 +3650,7 @@ from datetime import timedelta
 from django.contrib.auth.models import User
 
 class LeavePolicy(models.Model):
+    history = HistoricalRecords()
     """
     Defines leave policies for different groups/departments
     """
@@ -3717,6 +3719,7 @@ class LeaveType(models.Model):
         return str(self.name)  # type: ignore
 
 class LeaveAllocation(models.Model):
+    history = HistoricalRecords()
     """
     Defines how many leaves are allocated per leave type in a policy
     """
@@ -3751,6 +3754,7 @@ class LeaveAllocation(models.Model):
         return f"{self.leave_type.name} allocation for {self.policy.name}"
 
 class UserLeaveBalance(models.Model):
+    history = HistoricalRecords()
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='leave_balances')
     leave_type = models.ForeignKey(LeaveType, on_delete=models.CASCADE)
     year = models.IntegerField()
@@ -3780,6 +3784,7 @@ class UserLeaveBalance(models.Model):
         return f"{self.user.username}'s {self.leave_type.name} balance for {self.year}"  # type: ignore
 
 class LeaveRequest(models.Model):
+    history = HistoricalRecords()
     """
     Enhanced leave request model with dynamic leave types
     """
@@ -4331,6 +4336,7 @@ class LeaveRequest(models.Model):
         return get_potential_approvers(self.user)
 
 class CompOffRequest(models.Model):
+    history = HistoricalRecords()
     """
     Model to track comp-off requests and approvals
     """

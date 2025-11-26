@@ -3,347 +3,137 @@
 {% block title %}Apply for Comp-off - Leave Management{% endblock %}
 
 {% block content %}
-<div class="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-6 w-full max-w-full overflow-x-hidden">
+<div class="container mx-auto px-4 py-8">
     <!-- Header Section -->
-    <div class="relative overflow-hidden mb-3 sm:mb-6 rounded-[16px] sm:rounded-[20px] lg:rounded-[28px] bg-gradient-to-br from-teal-600 via-cyan-500 to-blue-600 shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:scale-[1.005] sm:hover:scale-[1.015] transition-all duration-500">
-        <!-- Soft Orbs -->
-        <div class="absolute inset-0 overflow-hidden">
-            <div class="absolute -top-8 sm:-top-16 -left-8 sm:-left-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-br from-teal-400/30 to-cyan-400/10 rounded-full"></div>
-            <div class="absolute -bottom-8 sm:-bottom-16 -right-8 sm:-right-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-tr from-blue-400/30 to-teal-500/10 rounded-full"></div>
-        </div>
+    <div class="relative overflow-hidden mb-8 rounded-3xl bg-gradient-to-r from-amber-600 to-orange-700 shadow-xl p-8">
+        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+        <div class="absolute bottom-0 left-0 -mb-4 -ml-4 w-32 h-32 bg-amber-500/20 rounded-full blur-2xl"></div>
 
-        <!-- Header Content -->
-        <div class="relative p-3 sm:p-6 md:p-8 lg:p-12 z-10 w-full">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-white/20 text-white mr-4 backdrop-blur-sm border border-white/30">
-                        <svg class="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2">Apply for Comp-off</h1>
-                        <p class="text-teal-100 text-sm sm:text-base md:text-lg">Request compensatory off for overtime work</p>
-                    </div>
+        <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-white/10 rounded-xl backdrop-blur-md border border-white/20">
+                    <i class="ri-time-line text-3xl text-amber-200"></i>
                 </div>
-                <div class="hidden md:block">
-                    <div class="backdrop-blur-sm bg-white/20 rounded-xl border border-white/10 p-4">
-                        <p class="text-lg font-semibold text-white">{{ available_comp_offs|default:0 }}</p>
-                        <p class="text-teal-200 text-sm">Available</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
                 <div>
-                    <h1
-                        class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2"
-                    >
-                        Apply for Comp-off
-                    </h1>
-                    <p class="text-lime-100 text-sm sm:text-base md:text-lg">
-                        Request compensatory time off for extra hours worked
-                    </p>
+                    <h1 class="text-3xl font-bold text-white">Apply Comp-off</h1>
+                    <p class="text-amber-100 mt-1">Request compensatory off for extra hours worked</p>
                 </div>
-                <div class="hidden md:block">
-                    <div
-                        class="backdrop-blur-sm bg-white/20 rounded-xl border border-white/10 p-4"
-                    >
-                        <i class="fas fa-clock text-4xl text-lime-200"></i>
-                    </div>
-                </div>
+            </div>
+            <div class="flex gap-3">
+                <a href="{% url 'leave_management:my_comp_off' %}"
+                    class="btn bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-md flex items-center gap-2 px-4 py-2 rounded-xl transition-all">
+                    <i class="ri-history-line"></i> My Requests
+                </a>
             </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
-        <!-- Main Form -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Application Form -->
         <div class="lg:col-span-2">
-            <div
-                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
-            >
-                <form
-                    method="post"
-                    id="compOffForm"
-                    enctype="multipart/form-data"
-                >
+            <div class="card p-6">
+                <form method="post" enctype="multipart/form-data" id="compOffForm" class="space-y-6">
                     {% csrf_token %}
 
-                    <!-- Form Fields -->
-                    <div class="space-y-6">
-                        <!-- Worked Date -->
-                        <div>
-                            <label
-                                for="{{ form.worked_date.id_for_label }}"
-                                class="block text-sm font-medium text-gray-800 mb-2"
-                            >
-                                {{ form.worked_date.label }} *
-                            </label>
-                            {{ form.worked_date }} {% if form.worked_date.errors
-                            %}
-                            <div class="mt-1 text-sm text-rose-600">
-                                {% for error in form.worked_date.errors %}
-                                <p>{{ error }}</p>
-                                {% endfor %}
+                    <!-- Worked Date -->
+                    <div>
+                        <label for="worked_date" class="block text-sm font-medium text-gray-700 mb-1">Worked
+                            Date</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="ri-calendar-line text-gray-400"></i>
                             </div>
-                            {% endif %}
-                            <p class="mt-1 text-sm text-gray-600">
-                                Date when you worked extra hours
-                            </p>
+                            <input type="date" name="worked_date" id="worked_date" required
+                                class="pl-10 w-full rounded-xl border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 transition-colors"
+                                max="{% now 'Y-m-d' %}">
                         </div>
-
-                        <!-- Hours Worked -->
-                        <div>
-                            <label
-                                for="{{ form.hours_worked.id_for_label }}"
-                                class="block text-sm font-medium text-gray-800 mb-2"
-                            >
-                                {{ form.hours_worked.label }} *
-                            </label>
-                            {{ form.hours_worked }} {% if
-                            form.hours_worked.errors %}
-                            <div class="mt-1 text-sm text-rose-600">
-                                {% for error in form.hours_worked.errors %}
-                                <p>{{ error }}</p>
-                                {% endfor %}
-                            </div>
-                            {% endif %}
-                            <p class="mt-1 text-sm text-gray-500">
-                                Number of extra hours worked (minimum 4 hours)
-                            </p>
-                        </div>
-
-                        <!-- Reason -->
-                        <div>
-                            <label
-                                for="{{ form.reason.id_for_label }}"
-                                class="block text-sm font-medium text-gray-800 mb-2"
-                            >
-                                {{ form.reason.label }} *
-                            </label>
-                            {{ form.reason }} {% if form.reason.errors %}
-                            <div class="mt-1 text-sm text-rose-600">
-                                {% for error in form.reason.errors %}
-                                <p>{{ error }}</p>
-                                {% endfor %}
-                            </div>
-                            {% endif %}
-                            <p class="mt-1 text-sm text-gray-500">
-                                Explain why you worked extra hours and the
-                                nature of work
-                            </p>
-                        </div>
-
-                        <!-- Project/Task Details -->
-                        <div>
-                            <label
-                                for="{{ form.project_task.id_for_label }}"
-                                class="block text-sm font-medium text-gray-800 mb-2"
-                            >
-                                {{ form.project_task.label }}
-                            </label>
-                            {{ form.project_task }} {% if
-                            form.project_task.errors %}
-                            <div class="mt-1 text-sm text-rose-600">
-                                {% for error in form.project_task.errors %}
-                                <p>{{ error }}</p>
-                                {% endfor %}
-                            </div>
-                            {% endif %}
-                            <p class="mt-1 text-sm text-gray-500">
-                                Specific project or task you worked on
-                                (optional)
-                            </p>
-                        </div>
-
-                        <!-- Documentation -->
-                        {% if form.documentation %}
-                        <div>
-                            <label
-                                for="{{ form.documentation.id_for_label }}"
-                                class="block text-sm font-medium text-gray-800 mb-2"
-                            >
-                                {{ form.documentation.label }}
-                            </label>
-                            {{ form.documentation }} {% if
-                            form.documentation.errors %}
-                            <div class="mt-1 text-sm text-rose-600">
-                                {% for error in form.documentation.errors %}
-                                <p>{{ error }}</p>
-                                {% endfor %}
-                            </div>
-                            {% endif %}
-                            <p class="mt-1 text-sm text-gray-500">
-                                Upload supporting documents (email screenshots,
-                                task assignments, etc.)
-                                <br />Accepted formats: PDF, JPG, PNG, DOC, DOCX
-                                (Max size: 5MB)
-                            </p>
-                        </div>
-                        {% endif %}
-
-                        <!-- Manager Approval -->
-                        {% if form.approver %}
-                        <div>
-                            <label
-                                for="{{ form.approver.id_for_label }}"
-                                class="block text-sm font-medium text-gray-800 mb-2"
-                            >
-                                {{ form.approver.label }}
-                            </label>
-                            {{ form.approver }} {% if form.approver.errors %}
-                            <div class="mt-1 text-sm text-rose-600">
-                                {% for error in form.approver.errors %}
-                                <p>{{ error }}</p>
-                                {% endfor %}
-                            </div>
-                            {% endif %}
-                            <p class="mt-1 text-sm text-gray-500">
-                                Select manager who can verify your extra work
-                                (optional - auto-assigned if not selected)
-                            </p>
-                        </div>
-                        {% endif %}
+                        <p class="mt-1 text-xs text-gray-500">Date when you worked extra hours (must be a past date)</p>
                     </div>
 
-                    <!-- Form Actions -->
-                    <div class="mt-8 flex items-center justify-end space-x-3">
-                        <a
-                            href="{% url 'leave_management:my_comp_off' %}"
-                            class="btn-secondary"
-                        >
-                            Cancel
-                        </a>
-                        <button
-                            type="button"
-                            onclick="showPreview()"
-                            class="btn-secondary"
-                        >
-                            <i class="fas fa-eye mr-2"></i>
-                            Preview
-                        </button>
-                        <button type="submit" class="btn-primary">
-                            <i class="fas fa-paper-plane mr-2"></i>
-                            Submit Request
+                    <!-- Hours Worked -->
+                    <div>
+                        <label for="hours_worked" class="block text-sm font-medium text-gray-700 mb-1">Hours
+                            Worked</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="ri-timer-line text-gray-400"></i>
+                            </div>
+                            <input type="number" name="hours_worked" id="hours_worked" required min="4" max="24"
+                                step="0.5"
+                                class="pl-10 w-full rounded-xl border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 transition-colors"
+                                placeholder="e.g. 8.0">
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">Minimum 4 hours required for half-day credit</p>
+                    </div>
+
+                    <!-- Reason -->
+                    <div>
+                        <label for="reason" class="block text-sm font-medium text-gray-700 mb-1">Reason /
+                            Project</label>
+                        <textarea name="reason" id="reason" rows="3" required
+                            class="w-full rounded-xl border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 transition-colors"
+                            placeholder="Describe the work done..."></textarea>
+                    </div>
+
+                    <!-- Documentation -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Supporting Document
+                            (Optional)</label>
+                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-amber-500 transition-colors cursor-pointer bg-gray-50 hover:bg-amber-50/50"
+                            id="drop-zone">
+                            <div class="space-y-1 text-center">
+                                <i class="ri-upload-cloud-2-line text-4xl text-gray-400"></i>
+                                <div class="flex text-sm text-gray-600 justify-center">
+                                    <label for="documentation"
+                                        class="relative cursor-pointer rounded-md font-medium text-amber-600 hover:text-amber-500 focus-within:outline-none">
+                                        <span>Upload a file</span>
+                                        <input id="documentation" name="documentation" type="file" class="sr-only">
+                                    </label>
+                                    <p class="pl-1">or drag and drop</p>
+                                </div>
+                                <p class="text-xs text-gray-500">PDF, PNG, JPG up to 5MB</p>
+                                <p id="file-name" class="text-sm text-emerald-600 font-medium mt-2 hidden"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="pt-4">
+                        <button type="button" onclick="showPreview()"
+                            class="w-full btn-primary flex items-center justify-center gap-2 py-3 text-lg shadow-lg shadow-amber-200">
+                            <i class="ri-send-plane-fill"></i> Submit Request
                         </button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <!-- Sidebar -->
-        <div class="space-y-3 sm:space-y-4 lg:space-y-6">
-            <!-- Comp-off Guidelines -->
-            <div
-                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
-            >
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">
-                    Comp-off Guidelines
-                </h3>
-                <div class="space-y-3 text-sm text-gray-800">
-                    <div class="flex items-start space-x-2">
-                        <i class="fas fa-check-circle text-lime-500 mt-0.5"></i>
-                        <p>Minimum 4 hours of extra work required</p>
-                    </div>
-                    <div class="flex items-start space-x-2">
-                        <i class="fas fa-check-circle text-lime-500 mt-0.5"></i>
-                        <p>Must be applied within 30 days of extra work</p>
-                    </div>
-                    <div class="flex items-start space-x-2">
-                        <i class="fas fa-check-circle text-lime-500 mt-0.5"></i>
-                        <p>Manager approval required</p>
-                    </div>
-                    <div class="flex items-start space-x-2">
-                        <i class="fas fa-check-circle text-lime-500 mt-0.5"></i>
-                        <p>Documentation recommended for verification</p>
-                    </div>
-                    <div class="flex items-start space-x-2">
-                        <i class="fas fa-check-circle text-lime-500 mt-0.5"></i>
-                        <p>Comp-off must be used within 90 days</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Actions -->
-            <div
-                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
-            >
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">
-                    Quick Actions
-                </h3>
-                <div class="space-y-3">
-                    <a
-                        href="{% url 'leave_management:my_comp_off' %}"
-                        class="btn-secondary w-full text-center"
-                    >
-                        <i class="fas fa-list mr-2"></i>
-                        My Comp-off Requests
-                    </a>
-                    <a
-                        href="{% url 'leave_management:dashboard' %}"
-                        class="btn-secondary w-full text-center"
-                    >
-                        <i class="fas fa-tachometer-alt mr-2"></i>
-                        Dashboard
-                    </a>
-                    <a
-                        href="{% url 'leave_management:apply_leave' %}"
-                        class="btn-secondary w-full text-center"
-                    >
-                        <i class="fas fa-calendar-plus mr-2"></i>
-                        Apply for Leave
-                    </a>
-                </div>
-            </div>
-
-            <!-- Tips -->
-            <div
-                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
-            >
-                <div class="flex items-start space-x-3">
-                    <div class="flex-shrink-0">
-                        <i class="fas fa-lightbulb text-2xl text-lime-500"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-medium text-gray-800 mb-2">
-                            Pro Tips
-                        </h3>
-                        <div class="text-sm text-gray-800 space-y-2">
-                            <p>
-                                • Be specific about the work done and hours
-                                spent
-                            </p>
-                            <p>
-                                • Include email timestamps or task completion
-                                screenshots
-                            </p>
-                            <p>• Submit requests promptly after extra work</p>
-                            <p>• Keep records of your comp-off balance</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="text-sm text-gray-800 space-y-2">
+            <p>
+                • Be specific about the work done and hours
+                spent
+            </p>
+            <p>
+                • Include email timestamps or task completion
+                screenshots
+            </p>
+            <p>• Submit requests promptly after extra work</p>
+            <p>• Keep records of your comp-off balance</p>
         </div>
     </div>
 </div>
 
+
 <!-- Preview Modal -->
-<div
-    id="previewModal"
-    class="fixed inset-0 bg-gray-600/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 hidden"
->
+<div id="previewModal" class="fixed inset-0 bg-gray-600/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 hidden">
     <div
-        class="relative top-10 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-[20px] backdrop-blur-xl bg-white/90 border-white/40"
-    >
+        class="relative top-10 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-[20px] backdrop-blur-xl bg-white/90 border-white/40">
         <div class="mt-3">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-medium text-gray-800">
                     Comp-off Request Preview
                 </h3>
-                <button
-                    onclick="closePreview()"
-                    class="text-gray-400 hover:text-gray-600 transition-colors"
-                >
+                <button onclick="closePreview()" class="text-gray-400 hover:text-gray-600 transition-colors">
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
@@ -364,43 +154,7 @@
     </div>
 </div>
 
-<style>
-    .btn-primary {
-        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-lime-600 text-white rounded-lg shadow-md hover:bg-lime-700 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg text-xs sm:text-sm lg:text-base backdrop-blur-sm font-medium;
-    }
 
-    .btn-secondary {
-        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-white/50 text-gray-800 border border-gray-400/60 rounded-lg shadow-sm hover:bg-white/70 hover:border-gray-500/70 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:ring-offset-2 transition-all duration-300 hover:shadow-md text-xs sm:text-sm lg:text-base backdrop-blur-sm font-medium;
-    }
-
-    /* Form inputs styling */
-    input[type="date"],
-    input[type="number"],
-    textarea,
-    select,
-    input[type="file"] {
-        @apply block w-full rounded-md border-gray-300/50 shadow-sm focus:border-lime-500 focus:ring-lime-500 sm:text-sm backdrop-blur-sm bg-white/50;
-    }
-
-    /* Custom scrollbar */
-    .scrollbar-thin::-webkit-scrollbar {
-        width: 3px;
-    }
-
-    .scrollbar-thin::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-    }
-
-    .scrollbar-thin::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.3);
-        border-radius: 10px;
-    }
-
-    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-        background: rgba(255, 255, 255, 0.5);
-    }
-</style>
 
 <script>
     function showPreview() {

@@ -126,6 +126,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'crispy_forms',
     'crispy_tailwind',
+    'simple_history',
 ]
 
 # Crispy Forms Settings
@@ -144,6 +145,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'trueAlign.core.middleware.OptimizedSessionTrackingMiddleware',
     'trueAlign.core.middleware.OptimizedGlobalAuthenticationMiddleware',
+    'simple_history.middleware.HistoryRequestMiddleware',
 ]
 
 

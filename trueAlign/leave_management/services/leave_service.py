@@ -31,6 +31,9 @@ from ..utils import (
     validate_approval_hierarchy, is_hr, is_admin
 )
 from ..audit import LeaveAuditLogger
+from ..events import EventDispatcher, LeaveCreatedEvent, LeaveApprovedEvent, LeaveRejectedEvent
+from ..rules import RuleEngine
+from ..delivery import NotificationDelivery
 
 logger = logging.getLogger(__name__)
 
@@ -164,18 +167,13 @@ class LeaveService:
                 }
                 LeaveAuditLogger.log_leave_application(user, leave_request, success_result)
 
-                # Send notification to potential approvers
-                if NOTIFICATIONS_AVAILABLE and leave_request.approver:
-                    try:
-                        notify.send(
-                            sender=user,
-                            recipient=leave_request.approver,
-                            verb='submitted a leave request',
-                            action_object=leave_request,
-                            description=f'{user.get_full_name()} has submitted a leave request for {leave_request.leave_type.name} from {leave_request.start_date} to {leave_request.end_date}'
-                        )
-                    except Exception as e:
-                        logger.warning(f"Failed to send notification: {str(e)}")
+                # Send notification via Event System
+                try:
+                    event = LeaveCreatedEvent(leave_request, user)
+                    notifications = RuleEngine().process(event)
+                    NotificationDelivery().send(notifications)
+                except Exception as e:
+                    logger.warning(f"Failed to dispatch leave created event: {str(e)}")
 
                 logger.info(f"Leave request created successfully: ID {leave_request.id}")
 
@@ -404,18 +402,13 @@ class LeaveService:
 
                 leave_request.save()
 
-                # Send notification to requester
-                if NOTIFICATIONS_AVAILABLE:
-                    try:
-                        notify.send(
-                            sender=approver,
-                            recipient=leave_request.user,
-                            verb='approved your leave request',
-                            action_object=leave_request,
-                            description=f'Your leave request for {leave_request.leave_type.name} from {leave_request.start_date} to {leave_request.end_date} has been approved by {approver.get_full_name()}'
-                        )
-                    except Exception as e:
-                        logger.warning(f"Failed to send leave approval notification: {str(e)}")
+                # Send notification via Event System
+                try:
+                    event = LeaveApprovedEvent(leave_request, approver)
+                    notifications = RuleEngine().process(event)
+                    NotificationDelivery().send(notifications)
+                except Exception as e:
+                    logger.warning(f"Failed to dispatch leave approved event: {str(e)}")
 
                 logger.info(f"Leave approved: ID={leave_request.id}, Approver={approver.username}")
 
@@ -454,18 +447,13 @@ class LeaveService:
 
                 leave_request.save()
 
-                # Send notification to requester
-                if NOTIFICATIONS_AVAILABLE:
-                    try:
-                        notify.send(
-                            sender=approver,
-                            recipient=leave_request.user,
-                            verb='rejected your leave request',
-                            action_object=leave_request,
-                            description=f'Your leave request for {leave_request.leave_type.name} from {leave_request.start_date} to {leave_request.end_date} has been rejected by {approver.get_full_name()}. Reason: {reason}'
-                        )
-                    except Exception as e:
-                        logger.warning(f"Failed to send leave rejection notification: {str(e)}")
+                # Send notification via Event System
+                try:
+                    event = LeaveRejectedEvent(leave_request, approver, reason)
+                    notifications = RuleEngine().process(event)
+                    NotificationDelivery().send(notifications)
+                except Exception as e:
+                    logger.warning(f"Failed to dispatch leave rejected event: {str(e)}")
 
                 logger.info(f"Leave rejected: ID={leave_request.id}, Approver={approver.username}")
 
@@ -664,32 +652,113 @@ class LeaveService:
     @staticmethod
     def bulk_allocate_leaves(user_list: List[User], year: int = None) -> Dict:
         """
-        Bulk allocate leaves to multiple users
+        Bulk allocate leaves to multiple users using optimized DB operations
         """
         if not year:
             year = timezone.now().year
 
         try:
             with transaction.atomic():
+                # Pre-fetch policies for all users to avoid N+1
+                users_with_groups = User.objects.filter(id__in=[u.id for u in user_list]).prefetch_related('groups')
+                
+                # Group users by policy to minimize policy lookups
+                policy_map = {} # policy_id -> policy
+                user_policy_map = {} # user_id -> policy
+                
+                for user in users_with_groups:
+                    user_groups = user.groups.all()
+                    if not user_groups:
+                        continue
+                        
+                    # Find policy for user's group
+                    # Optimization: Cache policies
+                    policy = LeavePolicy.objects.filter(
+                        group__in=user_groups,
+                        is_active=True
+                    ).first()
+                    
+                    if policy:
+                        policy_map[policy.id] = policy
+                        user_policy_map[user.id] = policy
+
+                # Pre-fetch allocations for all involved policies
+                allocations_map = {} # policy_id -> list of allocations
+                if policy_map:
+                    all_allocations = LeaveAllocation.objects.filter(
+                        policy__in=policy_map.values(),
+                        is_deleted=False
+                    ).select_related('leave_type')
+                    
+                    for alloc in all_allocations:
+                        if alloc.policy_id not in allocations_map:
+                            allocations_map[alloc.policy_id] = []
+                        allocations_map[alloc.policy_id].append(alloc)
+
+                # Prepare bulk operations
+                balances_to_create = []
+                balances_to_update = []
                 results = []
+                
+                # Fetch existing balances to decide create vs update
+                existing_balances = UserLeaveBalance.objects.filter(
+                    user__in=user_list,
+                    year=year
+                ).select_related('leave_type')
+                
+                existing_balance_map = {} # (user_id, leave_type_id) -> balance
+                for b in existing_balances:
+                    existing_balance_map[(b.user_id, b.leave_type_id)] = b
+
                 for user in user_list:
-                    try:
-                        result = LeaveService.allocate_leaves_to_user(user, {}, year)
-                        results.append({
-                            'user': user.username,
-                            'success': True,
-                            'message': result['message']
-                        })
-                    except Exception as e:
+                    policy = user_policy_map.get(user.id)
+                    if not policy:
                         results.append({
                             'user': user.username,
                             'success': False,
-                            'message': str(e)
+                            'message': "No active leave policy found"
                         })
+                        continue
+
+                    allocations = allocations_map.get(policy.id, [])
+                    user_success = True
+                    
+                    for allocation in allocations:
+                        key = (user.id, allocation.leave_type.id)
+                        if key in existing_balance_map:
+                            # Update existing
+                            balance = existing_balance_map[key]
+                            if balance.allocated != allocation.annual_days:
+                                balance.allocated = allocation.annual_days
+                                balances_to_update.append(balance)
+                        else:
+                            # Create new
+                            balances_to_create.append(UserLeaveBalance(
+                                user=user,
+                                leave_type=allocation.leave_type,
+                                year=year,
+                                allocated=allocation.annual_days,
+                                used=Decimal('0'),
+                                carried_forward=Decimal('0'),
+                                additional=Decimal('0'),
+                                is_deleted=False
+                            ))
+                    
+                    results.append({
+                        'user': user.username,
+                        'success': True,
+                        'message': f'Allocated {len(allocations)} leave types'
+                    })
+
+                # Execute bulk operations
+                if balances_to_create:
+                    UserLeaveBalance.objects.bulk_create(balances_to_create)
+                
+                if balances_to_update:
+                    UserLeaveBalance.objects.bulk_update(balances_to_update, ['allocated'])
 
                 successful_allocations = sum(1 for r in results if r['success'])
-
-                logger.info(f"Bulk allocation completed: {successful_allocations}/{len(user_list)} successful")
+                logger.info(f"Bulk allocation optimized: {successful_allocations}/{len(user_list)} successful. Created: {len(balances_to_create)}, Updated: {len(balances_to_update)}")
 
                 return {
                     'success': True,

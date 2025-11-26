@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Allocations - {{ policy.name }} | Admin{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
+    <div class="container mx-auto px-4">
+        <!-- Breadcrumb & Header -->
+        <div class="mb-8">
+            <a href="{% url 'leave_management:admin_policy_list' %}"
+                class="inline-flex items-center gap-2 text-gray-600 hover:text-amber-600 transition-colors mb-4 group">
+                <i class="ri-arrow-left-line group-hover:-translate-x-1 transition-transform"></i>
+                <span class="font-medium">Back to Policies</span>
+            </a>
+
+            <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                        <i class="ri-file-list-3-line text-amber-600 mr-2"></i>
+                        Policy Allocations
+                    </h1>
+                    <p class="text-lg text-gray-600">{{ policy.name }}</p>
+                    <p class="text-sm text-gray-500 mt-1">Define leave allocation rules for each leave type</p>
+                </div>
+                <div
+                    class="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 px-4 py-3 rounded-xl border border-blue-200 shadow-sm">
+                    <i class="ri-group-line text-xl"></i>
+                    <div>
+                        <div class="text-xs text-blue-600 font-medium">Target Group</div>
+                        <div class="font-bold">{{ policy.group.name }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Allocations List -->
+            <div class="lg:col-span-2 space-y-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-lg font-semibold text-gray-700">
+                        <i class="ri-list-check text-amber-600 mr-2"></i>
+                        Active Allocations
+                    </h2>
+                    <span class="text-sm text-gray-500">{{ allocations|length }} allocation{{
+                        allocations|length|pluralize }}</span>
+                </div>
+
+                {% for allocation in allocations %}
+                <div
+                    class="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-6 border border-gray-100 group">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div
+                                    class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-100 to-amber-50 flex items-center justify-center">
+                                    <i class="ri-calendar-event-line text-2xl text-amber-600"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-gray-900">{{ allocation.leave_type.name }}</h3>
+                                    <p class="text-xs text-gray-500">Leave Type</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-gray-100">
+                                <div class="bg-amber-50 rounded-lg p-3">
+                                    <div class="flex items-center gap-2 text-amber-700">
+                                        <i class="ri-calendar-check-line text-lg"></i>
+                                        <span class="text-xs font-medium">Annual Days</span>
+                                    </div>
+                                    <div class="text-2xl font-bold text-amber-900 mt-1">{{ allocation.annual_days }}
+                                    </div>
+                                </div>
+                                {% if allocation.carryforward_limit > 0 %}
+                                <div class="bg-blue-50 rounded-lg p-3">
+                                    <div class="flex items-center gap-2 text-blue-700">
+                                        <i class="ri-history-line text-lg"></i>
+                                        <span class="text-xs font-medium">Carry Forward</span>
+                                    </div>
+                                    <div class="text-2xl font-bold text-blue-900 mt-1">{{ allocation.carryforward_limit
+                                        }}</div>
+                                </div>
+                                {% endif %}
+                                {% if allocation.max_consecutive_days %}
+                                <div class="bg-green-50 rounded-lg p-3">
+                                    <div class="flex items-center gap-2 text-green-700">
+                                        <i class="ri-time-line text-lg"></i>
+                                        <span class="text-xs font-medium">Max Consecutive</span>
+                                    </div>
+                                    <div class="text-2xl font-bold text-green-900 mt-1">{{
+                                        allocation.max_consecutive_days }}</div>
+                                </div>
+                                {% endif %}
+                                {% if allocation.advance_notice_days %}
+                                <div class="bg-purple-50 rounded-lg p-3">
+                                    <div class="flex items-center gap-2 text-purple-700">
+                                        <i class="ri-notification-line text-lg"></i>
+                                        <span class="text-xs font-medium">Advance Notice</span>
+                                    </div>
+                                    <div class="text-2xl font-bold text-purple-900 mt-1">{{
+                                        allocation.advance_notice_days }}d</div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <form method="post"
+                            onsubmit="return confirm('⚠️ Are you sure you want to remove this allocation?\n\nThis will affect all users in the {{ policy.group.name }} group.');">
+                            {% csrf_token %}
+                            <input type="hidden" name="delete_allocation" value="true">
+                            <input type="hidden" name="allocation_id" value="{{ allocation.id }}">
+                            <button type="submit"
+                                class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-all duration-200"
+                                title="Delete allocation">
+                                <i class="ri-delete-bin-line text-xl"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="bg-white rounded-xl border-2 border-dashed border-gray-300 p-12 text-center">
+                    <div class="w-20 h-20 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                        <i class="ri-list-check-2 text-4xl text-gray-400"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">No Allocations Yet</h3>
+                    <p class="text-gray-500 mb-4">Start by adding your first leave allocation using the form on the
+                        right.</p>
+                    <div class="inline-flex items-center gap-2 text-amber-600 font-medium">
+                        <i class="ri-arrow-right-line"></i>
+                        <span>Add allocation to get started</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Add Allocation Form -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 sticky top-6">
+                    <div class="flex items-center gap-3 mb-6 pb-6 border-b border-gray-200">
+                        <div
+                            class="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center">
+                            <i class="ri-add-line text-2xl text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900">Add Allocation</h3>
+                            <p class="text-xs text-gray-500">Define leave rules</p>
+                        </div>
+                    </div>
+
+                    <form method="post" class="space-y-5">
+                        {% csrf_token %}
+
+                        {{ form|crispy }}
+
+                        <button type="submit"
+                            class="btn-primary w-full justify-center gap-2 py-3 text-base font-semibold">
+                            <i class="ri-add-circle-line text-xl"></i>
+                            Create Allocation
+                        </button>
+                    </form>
+
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <div class="bg-blue-50 rounded-lg p-4">
+                            <div class="flex items-start gap-3">
+                                <i class="ri-information-line text-blue-600 text-xl mt-0.5"></i>
+                                <div class="text-sm text-blue-900">
+                                    <p class="font-medium mb-1">Quick Tip</p>
+                                    <p class="text-blue-700">Allocations define the leave entitlement for each employee
+                                        in this policy's target group.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

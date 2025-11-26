@@ -31,6 +31,7 @@ from .utils import (
 from .services.leave_service import LeaveService, LeaveServiceError
 from .forms.leave_forms import LeaveApplicationForm, CompOffRequestForm
 from .forms.filter_forms import LeaveFilterForm
+from .forms.admin_forms import LeavePolicyForm, LeaveTypeForm, LeaveAllocationForm
 from .rate_limiting import api_rate_limit, strict_rate_limit
 from .audit import LeaveAuditLogger
 
@@ -94,7 +95,6 @@ def manager_dashboard(request):
     """Manager dashboard showing team leave information"""
     try:
         # Get team members (employees who report to this manager)
-        # For now, get all employees, but in real implementation this should be based on reporting structure
         team_members = User.objects.filter(
             groups__name=Roles.EMPLOYEE,
             is_active=True
@@ -523,71 +523,152 @@ def my_comp_off(request):
 # API ENDPOINTS
 # ================================
 
-@login_required
-@api_rate_limit
-def api_leave_balance(request, user_id=None):
-    """API endpoint to get leave balance data"""
-    if user_id and not (is_hr(request.user) or is_admin(request.user)):
-        return JsonResponse({'error': 'Permission denied'}, status=403)
 
-    target_user = request.user
-    if user_id:
-        try:
-            user_id_int = int(user_id)
-            target_user = User.objects.get(id=user_id_int, is_active=True)
-        except (ValueError, TypeError):
-            return JsonResponse({'error': 'Invalid user ID parameter'}, status=400)
-        except User.DoesNotExist:
-            return JsonResponse({'error': 'User not found'}, status=404)
 
-    try:
-        year = int(request.GET.get('year', timezone.now().year))
-    except (ValueError, TypeError):
-        year = timezone.now().year
-
-    try:
-        balance_data = LeaveService.get_user_leave_balance(target_user, year)
-        return JsonResponse({
-            'success': True,
-            'data': balance_data,
-            'error': None
-        })
-    except LeaveServiceError as e:
-        logger.error(f"Leave service error in API: {str(e)}", exc_info=True)
-        return JsonResponse({
-            'success': False,
-            'data': None,
-            'error': str(e)
-        }, status=400)
-    except Exception as e:
-        logger.error(f"Unexpected error in leave balance API: {str(e)}", exc_info=True)
-        return JsonResponse({
-            'success': False,
-            'data': None,
-            'error': 'An unexpected error occurred while fetching leave balance'
-        }, status=500)
+# ================================
+# ADMIN VIEWS
+# ================================
 
 @login_required
-@api_rate_limit
-def api_leave_types(request):
-    """API endpoint to get leave types"""
-    try:
-        leave_types = LeaveType.objects.filter(is_active=True).values(
-            'id', 'name', 'is_paid', 'requires_approval', 'requires_documentation',
-            'count_weekends', 'can_be_half_day'
-        )
+@require_role(Roles.ADMIN)
+def admin_policy_list(request):
+    """List all leave policies"""
+    policies = LeavePolicy.objects.all().select_related('group').order_by('-is_active', 'name')
+    
+    context = {
+        'policies': policies,
+    }
+    return render(request, 'leave_management/admin/policy_list.html', context)
 
-        return JsonResponse({
-            'success': True,
-            'data': {
-                'leave_types': list(leave_types)
-            },
-            'error': None
-        })
-    except Exception as e:
-        logger.error(f"Error fetching leave types: {str(e)}", exc_info=True)
-        return JsonResponse({
-            'success': False,
-            'data': None,
-            'error': 'Failed to fetch leave types'
-        }, status=500)
+@login_required
+@require_role(Roles.ADMIN)
+def admin_policy_create(request):
+    """Create a new leave policy"""
+    if request.method == 'POST':
+        form = LeavePolicyForm(request.POST)
+        if form.is_valid():
+            policy = form.save(commit=False)
+            policy.created_by = request.user
+            policy.save()
+            messages.success(request, f"Policy '{policy.name}' created successfully")
+            return redirect('leave_management:admin_policy_list')
+    else:
+        form = LeavePolicyForm()
+    
+    context = {
+        'form': form,
+        'title': 'Create Leave Policy'
+    }
+    return render(request, 'leave_management/admin/policy_form.html', context)
+
+@login_required
+@require_role(Roles.ADMIN)
+def admin_policy_edit(request, policy_id):
+    """Edit an existing leave policy"""
+    policy = get_object_or_404(LeavePolicy, id=policy_id)
+    
+    if request.method == 'POST':
+        form = LeavePolicyForm(request.POST, instance=policy)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Policy '{policy.name}' updated successfully")
+            return redirect('leave_management:admin_policy_list')
+    else:
+        form = LeavePolicyForm(instance=policy)
+    
+    context = {
+        'form': form,
+        'title': 'Edit Leave Policy',
+        'policy': policy
+    }
+    return render(request, 'leave_management/admin/policy_form.html', context)
+
+@login_required
+@require_role(Roles.ADMIN)
+def admin_leave_type_list(request):
+    """List all leave types"""
+    leave_types = LeaveType.objects.all().order_by('-is_active', 'name')
+    
+    context = {
+        'leave_types': leave_types,
+    }
+    return render(request, 'leave_management/admin/leavetype_list.html', context)
+
+@login_required
+@require_role(Roles.ADMIN)
+def admin_leave_type_create(request):
+    """Create a new leave type"""
+    if request.method == 'POST':
+        form = LeaveTypeForm(request.POST)
+        if form.is_valid():
+            leave_type = form.save()
+            messages.success(request, f"Leave Type '{leave_type.name}' created successfully")
+            return redirect('leave_management:admin_leave_type_list')
+    else:
+        form = LeaveTypeForm()
+    
+    context = {
+        'form': form,
+        'title': 'Create Leave Type'
+    }
+    return render(request, 'leave_management/admin/leavetype_form.html', context)
+
+@login_required
+@require_role(Roles.ADMIN)
+def admin_leave_type_edit(request, type_id):
+    """Edit an existing leave type"""
+    leave_type = get_object_or_404(LeaveType, id=type_id)
+    
+    if request.method == 'POST':
+        form = LeaveTypeForm(request.POST, instance=leave_type)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Leave Type '{leave_type.name}' updated successfully")
+            return redirect('leave_management:admin_leave_type_list')
+    else:
+        form = LeaveTypeForm(instance=leave_type)
+    
+    context = {
+        'form': form,
+        'title': 'Edit Leave Type',
+        'leave_type': leave_type
+    }
+    return render(request, 'leave_management/admin/leavetype_form.html', context)
+
+@login_required
+@require_role(Roles.ADMIN)
+def admin_policy_allocations(request, policy_id):
+    """Manage allocations for a specific policy"""
+    policy = get_object_or_404(LeavePolicy, id=policy_id)
+    allocations = LeaveAllocation.objects.filter(policy=policy, is_deleted=False).select_related('leave_type')
+    
+    if request.method == 'POST':
+        # Handle allocation creation/update
+        if 'delete_allocation' in request.POST:
+            allocation_id = request.POST.get('allocation_id')
+            allocation = get_object_or_404(LeaveAllocation, id=allocation_id, policy=policy)
+            allocation.is_deleted = True
+            allocation.save()
+            messages.success(request, "Allocation removed successfully")
+            return redirect('leave_management:admin_policy_allocations', policy_id=policy.id)
+            
+        form = LeaveAllocationForm(request.POST)
+        if form.is_valid():
+            allocation = form.save(commit=False)
+            # Ensure policy matches URL
+            allocation.policy = policy
+            allocation.save()
+            messages.success(request, "Allocation saved successfully")
+            return redirect('leave_management:admin_policy_allocations', policy_id=policy.id)
+    else:
+        # Pre-select policy in form
+        form = LeaveAllocationForm(initial={'policy': policy})
+        # Hide policy field as it's implied
+        form.fields['policy'].widget = forms.HiddenInput()
+    
+    context = {
+        'policy': policy,
+        'allocations': allocations,
+        'form': form
+    }
+    return render(request, 'leave_management/admin/allocation_form.html', context)

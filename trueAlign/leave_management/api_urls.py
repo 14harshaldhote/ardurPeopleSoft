@@ -12,13 +12,13 @@ urlpatterns = [
     # ================================
     # LEAVE BALANCE API ENDPOINTS
     # ================================
-    path('leave_balance/', views.api_leave_balance, name='leave_balance'),
-    path('leave_balance/<int:user_id>/', views.api_leave_balance, name='user_leave_balance'),
+    path('leave_balance/', api_views.api_leave_balance, name='leave_balance'),
+    path('leave_balance/<int:user_id>/', api_views.api_leave_balance, name='user_leave_balance'),
 
     # ================================
     # LEAVE TYPES API ENDPOINTS
     # ================================
-    path('leave_types/', views.api_leave_types, name='leave_types'),
+    path('leave_types/', api_views.api_leave_types, name='leave_types'),
     
     # ================================
     # POLICY ALLOCATION & TRACKING API ENDPOINTS

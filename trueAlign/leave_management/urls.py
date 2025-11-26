@@ -4,6 +4,7 @@ Simplified and working URL patterns
 """
 from django.urls import path
 from . import views
+from . import api_views
 
 app_name = 'leave_management'
 
@@ -17,6 +18,18 @@ urlpatterns = [
     path('manager/', views.manager_dashboard, name='manager_dashboard'),
     path('hr/', views.hr_dashboard, name='hr_dashboard'),
     path('admin/', views.admin_dashboard, name='admin_dashboard'),
+    
+    # ================================
+    # ADMIN MANAGEMENT URLS
+    # ================================
+    path('admin/policies/', views.admin_policy_list, name='admin_policy_list'),
+    path('admin/policies/create/', views.admin_policy_create, name='admin_policy_create'),
+    path('admin/policies/<int:policy_id>/edit/', views.admin_policy_edit, name='admin_policy_edit'),
+    path('admin/policies/<int:policy_id>/allocations/', views.admin_policy_allocations, name='admin_policy_allocations'),
+    
+    path('admin/leave-types/', views.admin_leave_type_list, name='admin_leave_type_list'),
+    path('admin/leave-types/create/', views.admin_leave_type_create, name='admin_leave_type_create'),
+    path('admin/leave-types/<int:type_id>/edit/', views.admin_leave_type_edit, name='admin_leave_type_edit'),
 
     # ================================
     # LEAVE REQUEST URLS
@@ -53,9 +66,9 @@ urlpatterns = [
     # ================================
     # API ENDPOINTS (for backward compatibility and testing)
     # ================================
-    path('api/balance/', views.api_leave_balance, name='api_balance'),
-    path('api/types/', views.api_leave_types, name='api_types'),
-    path('api/balance/<int:user_id>/', views.api_leave_balance, name='api_user_balance'),
+    path('api/balance/', api_views.api_leave_balance, name='api_balance'),
+    path('api/types/', api_views.api_leave_types, name='api_types'),
+    path('api/balance/<int:user_id>/', api_views.api_leave_balance, name='api_user_balance'),
 
     # API endpoints are also handled in api_urls.py
 ]

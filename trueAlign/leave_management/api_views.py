@@ -17,6 +17,7 @@ from trueAlign.models import (
 )
 from .utils import is_hr, is_admin, require_hr_or_admin
 from .services.leave_service import LeaveService, LeaveServiceError
+from .rate_limiting import api_rate_limit
 
 logger = logging.getLogger(__name__)
 
@@ -298,4 +299,142 @@ def api_leave_usage_analytics(request):
             'success': False,
             'data': None,
             'error': 'Failed to fetch leave usage analytics'
+        }, status=500)
+
+@login_required
+@api_rate_limit
+def api_leave_balance(request, user_id=None):
+    """API endpoint to get leave balance data"""
+    if user_id and not (is_hr(request.user) or is_admin(request.user)):
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+
+    target_user = request.user
+    if user_id:
+        try:
+            user_id_int = int(user_id)
+            target_user = User.objects.get(id=user_id_int, is_active=True)
+        except (ValueError, TypeError):
+            return JsonResponse({'error': 'Invalid user ID parameter'}, status=400)
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'User not found'}, status=404)
+
+    try:
+        year = int(request.GET.get('year', timezone.now().year))
+    except (ValueError, TypeError):
+        year = timezone.now().year
+
+    try:
+        balance_data = LeaveService.get_user_leave_balance(target_user, year)
+        return JsonResponse({
+            'success': True,
+            'data': balance_data,
+            'error': None
+        })
+    except LeaveServiceError as e:
+        logger.error(f"Leave service error in API: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'data': None,
+            'error': str(e)
+        }, status=400)
+    except Exception as e:
+        logger.error(f"Unexpected error in leave balance API: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'data': None,
+            'error': 'An unexpected error occurred while fetching leave balance'
+        }, status=500)
+
+@login_required
+@api_rate_limit
+def api_leave_types(request):
+    """API endpoint to get leave types"""
+    try:
+        leave_types = LeaveType.objects.filter(is_active=True).values(
+            'id', 'name', 'is_paid', 'requires_approval', 'requires_documentation',
+            'count_weekends', 'can_be_half_day'
+        )
+
+        return JsonResponse({
+            'success': True,
+            'data': {
+                'leave_types': list(leave_types)
+            },
+            'error': None
+        })
+    except Exception as e:
+        logger.error(f"Error fetching leave types: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'data': None,
+            'error': 'Failed to fetch leave types'
+        }, status=500)
+
+@login_required
+@api_rate_limit
+def api_leave_balance(request, user_id=None):
+    """API endpoint to get leave balance data"""
+    if user_id and not (is_hr(request.user) or is_admin(request.user)):
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+
+    target_user = request.user
+    if user_id:
+        try:
+            user_id_int = int(user_id)
+            target_user = User.objects.get(id=user_id_int, is_active=True)
+        except (ValueError, TypeError):
+            return JsonResponse({'error': 'Invalid user ID parameter'}, status=400)
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'User not found'}, status=404)
+
+    try:
+        year = int(request.GET.get('year', timezone.now().year))
+    except (ValueError, TypeError):
+        year = timezone.now().year
+
+    try:
+        balance_data = LeaveService.get_user_leave_balance(target_user, year)
+        return JsonResponse({
+            'success': True,
+            'data': balance_data,
+            'error': None
+        })
+    except LeaveServiceError as e:
+        logger.error(f"Leave service error in API: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'data': None,
+            'error': str(e)
+        }, status=400)
+    except Exception as e:
+        logger.error(f"Unexpected error in leave balance API: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'data': None,
+            'error': 'An unexpected error occurred while fetching leave balance'
+        }, status=500)
+
+@login_required
+@api_rate_limit
+def api_leave_types(request):
+    """API endpoint to get leave types"""
+    try:
+        leave_types = LeaveType.objects.filter(is_active=True).values(
+            'id', 'name', 'is_paid', 'requires_approval', 'requires_documentation',
+            'count_weekends', 'can_be_half_day'
+        )
+
+        return JsonResponse({
+            'success': True,
+            'data': {
+                'leave_types': list(leave_types)
+            },
+            'error': None
+        })
+    except Exception as e:
+        logger.error(f"Error fetching leave types: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'data': None,
+            'error': 'Failed to fetch leave types'
         }, status=500)
