@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if object %}Edit{% else %}Create{% endif %} Leave Type - TrueAlign{% endblock %}
+
+{% block content %}
+<div class="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-6 w-full max-w-full overflow-x-hidden">
+    <!-- Header Section -->
+    <div
+        class="relative overflow-hidden mb-3 sm:mb-6 rounded-[16px] sm:rounded-[20px] lg:rounded-[28px] bg-white/10 border border-white/40 shadow-[0_10px_30px_rgba(0,0,0,0.15)]">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-white/10 rounded-[28px]"></div>
+
+        <div class="absolute inset-0 overflow-hidden">
+            <div
+                class="absolute -top-8 sm:-top-16 -left-8 sm:-left-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-br from-red-300/30 to-red-400/10 rounded-full">
+            </div>
+            <div
+                class="absolute -bottom-8 sm:-bottom-16 -right-8 sm:-right-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-tr from-orange-400/30 to-orange-500/10 rounded-full">
+            </div>
+        </div>
+
+        <div class="relative p-3 sm:p-6 md:p-8 lg:p-12 z-10 w-full">
+            <nav
+                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-md p-2 sm:p-3 flex flex-col sm:flex-row gap-3 sm:gap-0 justify-between items-center">
+                <div
+                    class="px-3 sm:px-4 lg:px-5 py-2 sm:py-3 backdrop-blur-sm bg-white/20 rounded-lg sm:rounded-xl border border-white/10">
+                    <span class="text-zinc-900 font-bold text-sm sm:text-base lg:text-lg">{% if object %}Edit{% else
+                        %}Create{% endif %} Leave Type</span>
+                </div>
+
+                <a href="{% url 'leave_management:leavetype_list' %}"
+                    class="inline-flex items-center px-4 py-2 backdrop-blur-sm bg-white/20 rounded-xl border border-white/10 text-sm font-medium text-gray-700 hover:bg-white/30 hover:scale-105 transition-all duration-200">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Back to List
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="max-w-4xl mx-auto">
+        <div
+            class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner overflow-hidden">
+            <div class="px-4 sm:px-6 py-4 sm:py-6 border-b border-white/10 bg-white/10">
+                <h3 class="text-lg sm:text-xl font-bold text-zinc-900">Leave Type Details</h3>
+                <p class="mt-1 text-xs sm:text-sm text-zinc-600">Configure the leave type parameters</p>
+            </div>
+
+            <form method="post" class="px-4 sm:px-6 py-6">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                <div class="mb-4 p-4 rounded-lg bg-red-100/80 border border-red-200/50">
+                    {% for error in form.non_field_errors %}
+                    <p class="text-sm text-red-800">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="space-y-6">
+                    <!-- Basic Information -->
+                    <div class="p-6 bg-white/10 rounded-xl border border-white/10">
+                        <h4 class="text-base font-bold text-zinc-900 mb-4">Basic Information</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="id_name" class="block text-sm font-medium text-zinc-900 mb-2">
+                                    Name <span class="text-red-500">*</span>
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <div>
+                                <label for="id_code" class="block text-sm font-medium text-zinc-900 mb-2">
+                                    Code <span class="text-red-500">*</span>
+                                </label>
+                                {{ form.code }}
+                                {% if form.code.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.code.errors.0 }}</p>
+                                {% endif %}
+                                <p class="mt-1 text-xs text-zinc-600">Unique identifier (e.g., CL, SL)</p>
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label for="id_description" class="block text-sm font-medium text-zinc-900 mb-2">
+                                    Description
+                                </label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Configuration -->
+                    <div class="p-6 bg-white/10 rounded-xl border border-white/10">
+                        <h4 class="text-base font-bold text-zinc-900 mb-4">Configuration</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="id_max_days_allowed" class="block text-sm font-medium text-zinc-900 mb-2">
+                                    Max Days Allowed <span class="text-red-500">*</span>
+                                </label>
+                                {{ form.max_days_allowed }}
+                                {% if form.max_days_allowed.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.max_days_allowed.errors.0 }}</p>
+                                {% endif %}
+                                <p class="mt-1 text-xs text-zinc-600">Maximum days per year</p>
+                            </div>
+
+                            <div>
+                                <label for="id_min_days_notice" class="block text-sm font-medium text-zinc-900 mb-2">
+                                    Min Days Notice
+                                </label>
+                                {{ form.min_days_notice }}
+                                {% if form.min_days_notice.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.min_days_notice.errors.0 }}</p>
+                                {% endif %}
+                                <p class="mt-1 text-xs text-zinc-600">Days in advance required</p>
+                            </div>
+
+                            <div>
+                                <label for="id_max_consecutive_days"
+                                    class="block text-sm font-medium text-zinc-900 mb-2">
+                                    Max Consecutive Days
+                                </label>
+                                {{ form.max_consecutive_days }}
+                                {% if form.max_consecutive_days.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.max_consecutive_days.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Options -->
+                    <div class="p-6 bg-white/10 rounded-xl border border-white/10">
+                        <h4 class="text-base font-bold text-zinc-900 mb-4">Options</h4>
+                        <div class="space-y-4">
+                            <div class="flex items-center">
+                                {{ form.is_paid }}
+                                <label for="id_is_paid" class="ml-3 text-sm font-medium text-zinc-900">
+                                    Paid Leave
+                                </label>
+                            </div>
+
+                            <div class="flex items-center">
+                                {{ form.is_active }}
+                                <label for="id_is_active" class="ml-3 text-sm font-medium text-zinc-900">
+                                    Active
+                                </label>
+                            </div>
+
+                            <div class="flex items-center">
+                                {{ form.requires_approval }}
+                                <label for="id_requires_approval" class="ml-3 text-sm font-medium text-zinc-900">
+                                    Requires Approval
+                                </label>
+                            </div>
+
+                            <div class="flex items-center">
+                                {{ form.requires_documentation }}
+                                <label for="id_requires_documentation" class="ml-3 text-sm font-medium text-zinc-900">
+                                    Requires Documentation
+                                </label>
+                            </div>
+
+                            <div class="flex items-center">
+                                {{ form.can_be_half_day }}
+                                <label for="id_can_be_half_day" class="ml-3 text-sm font-medium text-zinc-900">
+                                    Can be Half Day
+                                </label>
+                            </div>
+
+                            <div class="flex items-center">
+                                {{ form.allows_negative_balance }}
+                                <label for="id_allows_negative_balance" class="ml-3 text-sm font-medium text-zinc-900">
+                                    Allows Negative Balance
+                                </label>
+                            </div>
+
+                            <div class="flex items-center">
+                                {{ form.carry_forward }}
+                                <label for="id_carry_forward" class="ml-3 text-sm font-medium text-zinc-900">
+                                    Allow Carry Forward
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
+                    <button type="submit"
+                        class="flex-1 inline-flex justify-center items-center px-6 py-3 border border-transparent shadow-lg text-sm font-medium rounded-xl text-white bg-red-500/80 hover:bg-red-600/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
+                        </svg>
+                        {% if object %}Update{% else %}Create{% endif %} Leave Type
+                    </button>
+                    <a href="{% url 'leave_management:leavetype_list' %}"
+                        class="flex-1 inline-flex justify-center items-center px-6 py-3 border-2 border-gray-300 shadow-sm text-sm font-medium rounded-xl text-gray-700 bg-white/20 hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    input[type="text"],
+    input[type="number"],
+    textarea,
+    select {
+        @apply w-full px-4 py-3 bg-white/20 border border-white/20 rounded-lg backdrop-blur-sm text-zinc-900 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-transparent text-sm transition-all;
+    }
+
+    textarea {
+        @apply min-h-[100px];
+    }
+
+    input[type="checkbox"] {
+        @apply rounded border-white/20 text-red-600 bg-white/20 focus:ring-red-500/50 h-5 w-5;
+    }
+</style>
+{% endblock %}

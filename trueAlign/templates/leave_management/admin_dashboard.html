@@ -1,221 +1,218 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}Admin Dashboard - Leave Management{% endblock %}
+
+{% block title %}Admin Dashboard - TrueAlign{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
+<div class="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-6 w-full max-w-full overflow-x-hidden">
     <!-- Header Section -->
-    <div class="relative overflow-hidden mb-8 rounded-3xl bg-gradient-to-r from-slate-800 to-slate-900 shadow-xl p-8">
-        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-        <div class="absolute bottom-0 left-0 -mb-4 -ml-4 w-32 h-32 bg-amber-500/20 rounded-full blur-2xl"></div>
+    <div
+        class="relative overflow-hidden mb-3 sm:mb-6 rounded-[16px] sm:rounded-[20px] lg:rounded-[28px] bg-white/10 border border-white/40 shadow-[0_10px_30px_rgba(0,0,0,0.15)]">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-white/10 rounded-[28px]"></div>
 
-        <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div class="flex items-center gap-4">
-                <div class="p-3 bg-white/10 rounded-xl backdrop-blur-md border border-white/20">
-                    <i class="ri-admin-line text-3xl text-amber-400"></i>
+        <div class="absolute inset-0 overflow-hidden">
+            <div
+                class="absolute -top-8 sm:-top-16 -left-8 sm:-left-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-br from-red-300/30 to-red-400/10 rounded-full">
+            </div>
+            <div
+                class="absolute -bottom-8 sm:-bottom-16 -right-8 sm:-right-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-tr from-orange-400/30 to-orange-500/10 rounded-full">
+            </div>
+        </div>
+
+        <div class="relative p-3 sm:p-6 md:p-8 lg:p-12 z-10 w-full">
+            <nav
+                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-md p-2 sm:p-3 mb-3 sm:mb-6 flex justify-between items-center">
+                <div
+                    class="px-3 sm:px-4 lg:px-5 py-2 sm:py-3 backdrop-blur-sm bg-white/20 rounded-lg sm:rounded-xl border border-white/10">
+                    <span class="text-zinc-900 font-bold text-sm sm:text-base lg:text-lg">Admin Dashboard</span>
+                    <span class="text-zinc-600 font-medium text-xs sm:text-sm lg:text-md ml-2">System
+                        Configuration</span>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <a href="{% url 'leave_management:leavetype_list' %}"
+                        class="px-3 py-2 backdrop-blur-sm bg-white/20 rounded-lg border border-white/10 hover:bg-white/30 transition text-sm text-zinc-900 font-medium">
+                        Leave Types
+                    </a>
+                    <a href="{% url 'leave_management:policy_list' %}"
+                        class="px-3 py-2 backdrop-blur-sm bg-red-500/80 rounded-lg border border-white/10 hover:bg-red-600/80 transition text-sm text-white font-medium">
+                        Policies
+                    </a>
+                </div>
+            </nav>
+
+            <!-- System Statistics -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
+                <div
+                    class="backdrop-blur-xl bg-white/20 p-3 sm:p-4 lg:p-6 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 hover:bg-white/25 transition shadow-inner">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 mr-3 sm:mr-4">
+                            <div
+                                class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+                                    </path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-zinc-600 text-xs sm:text-sm mb-1">Total Users</p>
+                            <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">{{ total_users }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    class="backdrop-blur-xl bg-white/20 p-3 sm:p-4 lg:p-6 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 hover:bg-white/25 transition shadow-inner">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 mr-3 sm:mr-4">
+                            <div
+                                class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                    </path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-zinc-600 text-xs sm:text-sm mb-1">Active Policies</p>
+                            <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">{{ active_policies }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    class="backdrop-blur-xl bg-white/20 p-3 sm:p-4 lg:p-6 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 hover:bg-white/25 transition shadow-inner">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 mr-3 sm:mr-4">
+                            <div
+                                class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                    </path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-zinc-600 text-xs sm:text-sm mb-1">Leave Types</p>
+                            <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">{{ leave_types }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    class="backdrop-blur-xl bg-white/20 p-3 sm:p-4 lg:p-6 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 hover:bg-white/25 transition shadow-inner">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 mr-3 sm:mr-4">
+                            <div
+                                class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center shadow-lg">
+                                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-zinc-600 text-xs sm:text-sm mb-1">Pending Requests</p>
+                            <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">{{ pending_stats.total_pending|default:0 }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <a href="{% url 'leave_management:leavetype_create' %}"
+            class="backdrop-blur-xl bg-white/20 p-6 rounded-[16px] border border-white/10 hover:bg-white/30 hover:scale-105 transition-all duration-200 shadow-inner">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 mr-4">
+                    <div
+                        class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                    </div>
                 </div>
                 <div>
-                    <h1 class="text-3xl font-bold text-white">Admin Dashboard</h1>
-                    <p class="text-slate-300 mt-1">System-wide leave management administration</p>
+                    <h4 class="text-base font-bold text-zinc-900">Create Leave Type</h4>
+                    <p class="text-xs text-zinc-600 mt-1">Add new leave category</p>
                 </div>
             </div>
-            <div class="flex gap-3">
-                <a href="{% url 'leave_management:team_leaves' %}"
-                    class="btn bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-md flex items-center gap-2 px-4 py-2 rounded-xl transition-all">
-                    <i class="ri-list-check-2"></i> Manage All Leaves
-                </a>
+        </a>
+
+        <a href="{% url 'leave_management:policy_create' %}"
+            class="backdrop-blur-xl bg-white/20 p-6 rounded-[16px] border border-white/10 hover:bg-white/30 hover:scale-105 transition-all duration-200 shadow-inner">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 mr-4">
+                    <div
+                        class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-base font-bold text-zinc-900">Create Policy</h4>
+                    <p class="text-xs text-zinc-600 mt-1">Define leave policy for group</p>
+                </div>
+            </div>
+        </a>
+
+        <a href="{% url 'leave_management:leavetype_list' %}"
+            class="backdrop-blur-xl bg-white/20 p-6 rounded-[16px] border border-white/10 hover:bg-white/30 hover:scale-105 transition-all duration-200 shadow-inner">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 mr-4">
+                    <div
+                        class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-base font-bold text-zinc-900">Manage Leave Types</h4>
+                    <p class="text-xs text-zinc-600 mt-1">View and edit leave types</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Leave Distribution Analytics -->
+    {% if leave_distribution %}
+    <div class="backdrop-blur-xl bg-white/20 rounded-[16px] border border-white/10 shadow-inner overflow-hidden">
+        <div class="px-6 py-6 border-b border-white/10">
+            <h3 class="text-lg font-bold text-zinc-900">System-Wide Leave Analytics</h3>
+            <p class="mt-1 text-sm text-zinc-600">Leave requests by type across the organization</p>
+        </div>
+
+        <div class="p-6">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                {% for dist in leave_distribution %}
+                <div class="text-center p-4 bg-white/20 rounded-xl border border-white/10 hover:bg-white/30 transition">
+                    <div
+                        class="w-16 h-16 mx-auto mb-3 bg-gradient-to-br {% if 'Casual' in dist.leave_type__name %}from-blue-500 to-blue-600{% elif 'Sick' in dist.leave_type__name %}from-red-500 to-red-600{% elif 'Comp' in dist.leave_type__name %}from-purple-500 to-purple-600{% else %}from-gray-500 to-gray-600{% endif %} rounded-full flex items-center justify-center">
+                        <p class="text-2xl font-bold text-white">{{ dist.count }}</p>
+                    </div>
+                    <p class="text-sm font-medium text-zinc-900">{{ dist.leave_type__name }}</p>
+                    <p class="text-xs text-zinc-600 mt-1">requests</p>
+                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
-
-    <!-- Stats Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <!-- Total Users -->
-        <div class="card p-6 relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
-            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <i class="ri-user-star-line text-6xl text-blue-600"></i>
-            </div>
-            <div class="relative z-10">
-                <div
-                    class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-4 text-2xl">
-                    <i class="ri-user-star-line"></i>
-                </div>
-                <p class="text-gray-500 text-sm font-medium">Total Users</p>
-                <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ stats.total_users|default:0 }}</h3>
-                <a href="/admin/auth/user/"
-                    class="text-blue-600 text-sm font-medium mt-3 inline-flex items-center gap-1 hover:gap-2 transition-all">
-                    Manage Users <i class="ri-arrow-right-line"></i>
-                </a>
-            </div>
-        </div>
-
-        <!-- Leave Types -->
-        <div class="card p-6 relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
-            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <i class="ri-calendar-event-line text-6xl text-emerald-600"></i>
-            </div>
-            <div class="relative z-10">
-                <div
-                    class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center mb-4 text-2xl">
-                    <i class="ri-calendar-event-line"></i>
-                </div>
-                <p class="text-gray-500 text-sm font-medium">Leave Types</p>
-                <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ stats.total_leave_types|default:0 }}</h3>
-                <a href="{% url 'leave_management:admin_leave_type_list' %}"
-                    class="text-emerald-600 text-sm font-medium mt-3 inline-flex items-center gap-1 hover:gap-2 transition-all">
-                    Configure Types <i class="ri-arrow-right-line"></i>
-                </a>
-            </div>
-        </div>
-
-        <!-- Leave Policies -->
-        <div class="card p-6 relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
-            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <i class="ri-file-list-3-line text-6xl text-purple-600"></i>
-            </div>
-            <div class="relative z-10">
-                <div
-                    class="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center mb-4 text-2xl">
-                    <i class="ri-file-list-3-line"></i>
-                </div>
-                <p class="text-gray-500 text-sm font-medium">Leave Policies</p>
-                <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ stats.total_policies|default:0 }}</h3>
-                <a href="{% url 'leave_management:admin_policy_list' %}"
-                    class="text-purple-600 text-sm font-medium mt-3 inline-flex items-center gap-1 hover:gap-2 transition-all">
-                    Manage Policies <i class="ri-arrow-right-line"></i>
-                </a>
-            </div>
-        </div>
-
-        <!-- Pending Requests -->
-        <div class="card p-6 relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
-            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <i class="ri-time-line text-6xl text-amber-600"></i>
-            </div>
-            <div class="relative z-10">
-                <div
-                    class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center mb-4 text-2xl">
-                    <i class="ri-time-line"></i>
-                </div>
-                <p class="text-gray-500 text-sm font-medium">Pending Requests</p>
-                <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ stats.pending_requests|default:0 }}</h3>
-                <a href="{% url 'leave_management:team_leaves' %}?status=Pending"
-                    class="text-amber-600 text-sm font-medium mt-3 inline-flex items-center gap-1 hover:gap-2 transition-all">
-                    Review Requests <i class="ri-arrow-right-line"></i>
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Management Sections -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- System Configuration -->
-        <div class="card p-6 lg:col-span-2">
-            <div class="flex items-center justify-between mb-6">
-                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <i class="ri-settings-3-line text-slate-500"></i> System Configuration
-                </h2>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <a href="{% url 'leave_management:admin_leave_type_list' %}"
-                    class="group p-4 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:shadow-md transition-all duration-300 flex items-center gap-4">
-                    <div
-                        class="w-12 h-12 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
-                        <i class="ri-calendar-check-line"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-900">Leave Types</h3>
-                        <p class="text-sm text-gray-500">Configure available leave types</p>
-                    </div>
-                    <div class="ml-auto text-gray-300 group-hover:text-blue-500 transition-colors">
-                        <i class="ri-arrow-right-s-line text-xl"></i>
-                    </div>
-                </a>
-
-                <a href="{% url 'leave_management:admin_policy_list' %}"
-                    class="group p-4 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:shadow-md transition-all duration-300 flex items-center gap-4">
-                    <div
-                        class="w-12 h-12 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
-                        <i class="ri-shield-user-line"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-900">Leave Policies</h3>
-                        <p class="text-sm text-gray-500">Manage policies & allocations</p>
-                    </div>
-                    <div class="ml-auto text-gray-300 group-hover:text-purple-500 transition-colors">
-                        <i class="ri-arrow-right-s-line text-xl"></i>
-                    </div>
-                </a>
-
-                <a href="{% url 'leave_management:team_leaves' %}"
-                    class="group p-4 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:shadow-md transition-all duration-300 flex items-center gap-4">
-                    <div
-                        class="w-12 h-12 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
-                        <i class="ri-task-line"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-900">Leave Requests</h3>
-                        <p class="text-sm text-gray-500">Manage all employee requests</p>
-                    </div>
-                    <div class="ml-auto text-gray-300 group-hover:text-amber-500 transition-colors">
-                        <i class="ri-arrow-right-s-line text-xl"></i>
-                    </div>
-                </a>
-
-                <a href="/admin/auth/user/"
-                    class="group p-4 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:shadow-md transition-all duration-300 flex items-center gap-4">
-                    <div
-                        class="w-12 h-12 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
-                        <i class="ri-group-line"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-900">Users</h3>
-                        <p class="text-sm text-gray-500">Manage system users</p>
-                    </div>
-                    <div class="ml-auto text-gray-300 group-hover:text-emerald-500 transition-colors">
-                        <i class="ri-arrow-right-s-line text-xl"></i>
-                    </div>
-                </a>
-            </div>
-        </div>
-
-        <!-- Personal Actions -->
-        <div class="card p-6">
-            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                <i class="ri-user-line text-slate-500"></i> Personal Actions
-            </h2>
-
-            <div class="space-y-4">
-                <a href="{% url 'leave_management:apply_leave' %}"
-                    class="w-full btn-primary flex items-center justify-center gap-2 py-3">
-                    <i class="ri-add-circle-line"></i> Apply Leave
-                </a>
-
-                <a href="{% url 'leave_management:my_leaves' %}"
-                    class="w-full btn bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 flex items-center justify-center gap-2 py-3 rounded-lg transition-all">
-                    <i class="ri-history-line"></i> My History
-                </a>
-
-                <div class="mt-6 pt-6 border-t border-gray-100">
-                    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Quick Links</h3>
-                    <ul class="space-y-3">
-                        <li>
-                            <a href="{% url 'leave_management:leave_balance' %}"
-                                class="flex items-center text-gray-600 hover:text-amber-600 transition-colors">
-                                <i class="ri-pie-chart-line mr-2"></i> Check Balances
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'leave_management:apply_comp_off' %}"
-                                class="flex items-center text-gray-600 hover:text-amber-600 transition-colors">
-                                <i class="ri-time-line mr-2"></i> Apply Comp-off
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
+    {% endif %}
 </div>
 {% endblock %}

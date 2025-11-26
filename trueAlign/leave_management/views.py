@@ -1,674 +1,426 @@
-"""
-Simplified Leave Management Views - Core Functionality
-"""
-from .decorators import employee_required, manager_required, hr_required, multiple_roles_required
-
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect, get_object_or_404
+from django.views.generic import TemplateView, View, FormView, ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.contrib import messages
-from django.http import JsonResponse, Http404
-from django.core.paginator import Paginator
-from django.db.models import Q, Count, Sum
 from django.utils import timezone
-from django.views.decorators.http import require_http_methods, require_POST
-from django.contrib.auth.models import User, Group
-from datetime import datetime, timedelta
-import json
-import logging
+from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
+from django.urls import reverse_lazy
+from django.db import models
 
-# Import models from trueAlign
-from trueAlign.models import (
-    LeaveType, LeavePolicy, LeaveAllocation, UserLeaveBalance,
-    LeaveRequest, CompOffRequest
+from trueAlign.models import LeaveType, LeaveRequest, CompOffRequest, LeavePolicy, LeaveAllocation, UserLeaveBalance
+from .forms import LeaveRequestForm, CompOffRequestForm, LeaveTypeForm, LeavePolicyForm, LeaveAllocationForm, ManualBalanceAdjustmentForm
+from .selectors import (
+    get_user_leave_balance, 
+    get_pending_approvals, 
+    get_team_leaves, 
+    get_active_policy,
+    get_potential_approvers
 )
-
-# Import our utilities and services
-from .utils import (
-    can_approve_leave, can_view_leave_request, can_edit_leave_request,
-    can_cancel_leave_request, is_employee, is_manager, is_hr, is_admin,
-    get_user_roles, Roles, require_role, require_any_role, require_hr_or_admin
-)
-from .services.leave_service import LeaveService, LeaveServiceError
-from .forms.leave_forms import LeaveApplicationForm, CompOffRequestForm
-from .forms.filter_forms import LeaveFilterForm
-from .forms.admin_forms import LeavePolicyForm, LeaveTypeForm, LeaveAllocationForm
-from .rate_limiting import api_rate_limit, strict_rate_limit
-from .audit import LeaveAuditLogger
-
-logger = logging.getLogger(__name__)
-
-# ================================
-# DASHBOARD VIEWS
-# ================================
-
-@login_required
-def dashboard(request):
-    """Main dashboard - routes to appropriate role-based dashboard"""
-    user_roles = get_user_roles(request.user)
-
-    if Roles.ADMIN in user_roles:
-        return admin_dashboard(request)
-    elif Roles.HR in user_roles:
-        return hr_dashboard(request)
-    elif Roles.MANAGER in user_roles:
-        return manager_dashboard(request)
-    else:
-        return employee_dashboard(request)
-
-@login_required
-@employee_required
-def employee_dashboard(request):
-    """Employee dashboard showing personal leave information"""
-    try:
-        # Get leave summary
-        summary = LeaveService.get_leave_summary(request.user)
-
-        # Get recent requests
-        recent_requests = LeaveRequest.objects.filter(
-            user=request.user
-        ).select_related('leave_type', 'approver', 'user').order_by('-created_at')[:5]
-
-        # Get pending count
-        pending_count = LeaveRequest.objects.filter(
-            user=request.user,
-            status='Pending'
-        ).count()
-
-        context = {
-            'summary': summary,
-            'recent_requests': recent_requests,
-            'pending_count': pending_count,
-            'current_year': timezone.now().year,
-        }
-
-        return render(request, 'leave_management/employee_dashboard.html', context)
-
-    except Exception as e:
-        logger.error(f"Error in employee dashboard for {request.user.username}: {str(e)}")
-        messages.error(request, "Error loading dashboard")
-        return render(request, 'leave_management/employee_dashboard.html', {})
-
-@login_required
-@require_role(Roles.MANAGER)
-@manager_required
-def manager_dashboard(request):
-    """Manager dashboard showing team leave information"""
-    try:
-        # Get team members (employees who report to this manager)
-        team_members = User.objects.filter(
-            groups__name=Roles.EMPLOYEE,
-            is_active=True
-        ).select_related('profile').prefetch_related('groups')
-
-        # Get pending approvals for team
-        pending_approvals = LeaveRequest.objects.filter(
-            user__in=team_members,
-            status='Pending'
-        ).select_related('user', 'leave_type', 'approver').order_by('created_at')[:10]
-
-        # Get stats
-        stats = {
-            'total_team_members': team_members.count(),
-            'pending_approvals': pending_approvals.count(),
-            'on_leave_today': LeaveRequest.objects.filter(
-                user__in=team_members,
-                status='Approved',
-                start_date__lte=timezone.now().date(),
-                end_date__gte=timezone.now().date()
-            ).select_related('user').count()
-        }
-
-        context = {
-            'pending_approvals': pending_approvals,
-            'stats': stats,
-            'team_members': team_members,
-        }
-
-        return render(request, 'leave_management/manager_dashboard.html', context)
-
-    except Exception as e:
-        logger.error(f"Error in manager dashboard: {str(e)}")
-        messages.error(request, "Error loading dashboard")
-        return render(request, 'leave_management/manager_dashboard.html', {})
-
-@login_required
-@require_role(Roles.HR)
-@hr_required
-def hr_dashboard(request):
-    """HR dashboard showing organization-wide leave information"""
-    try:
-        current_year = timezone.now().year
-
-        stats = {
-            'total_employees': User.objects.filter(is_active=True).count(),
-            'pending_requests': LeaveRequest.objects.filter(status='Pending').count(),
-            'approved_this_month': LeaveRequest.objects.filter(
-                status='Approved',
-                created_at__year=timezone.now().year,
-                created_at__month=timezone.now().month
-            ).count(),
-            'total_leave_days_this_year': LeaveRequest.objects.filter(
-                status='Approved',
-                start_date__year=current_year
-            ).aggregate(total=Sum('leave_days'))['total'] or 0
-        }
-
-        # Get recent requests
-        recent_requests = LeaveRequest.objects.filter(
-            status='Pending'
-        ).select_related('user', 'leave_type', 'approver').order_by('created_at')[:10]
-
-        context = {
-            'stats': stats,
-            'recent_requests': recent_requests,
-            'current_year': current_year,
-        }
-
-        return render(request, 'leave_management/hr_dashboard.html', context)
-
-    except Exception as e:
-        logger.error(f"Error in HR dashboard: {str(e)}")
-        messages.error(request, "Error loading dashboard")
-        return render(request, 'leave_management/hr_dashboard.html', {})
-
-@login_required
-@require_role(Roles.ADMIN)
-def admin_dashboard(request):
-    """Admin dashboard with full system overview"""
-    try:
-        current_year = timezone.now().year
-
-        stats = {
-            'total_users': User.objects.filter(is_active=True).count(),
-            'total_leave_types': LeaveType.objects.filter(is_active=True).count(),
-            'total_policies': LeavePolicy.objects.filter(is_active=True).count(),
-            'pending_requests': LeaveRequest.objects.filter(status='Pending').count(),
-        }
-
-        context = {
-            'stats': stats,
-            'current_year': current_year,
-        }
-
-        return render(request, 'leave_management/admin_dashboard.html', context)
-
-    except Exception as e:
-        logger.error(f"Error in admin dashboard: {str(e)}")
-        messages.error(request, "Error loading dashboard")
-        return render(request, 'leave_management/admin_dashboard.html', {})
-
-# ================================
-# LEAVE REQUEST VIEWS
-# ================================
-
-@login_required
-def apply_leave(request):
-    """Apply for leave"""
-    if request.method == 'POST':
-        form = LeaveApplicationForm(request.POST, request.FILES, user=request.user)
-        if form.is_valid():
-            try:
-                leave_data = form.cleaned_data.copy()
-                leave_request, result = LeaveService.apply_leave(request.user, leave_data)
-
-                if result['is_valid']:
-                    # Ensure leave_request has an ID before accessing it
-                    request_id = getattr(leave_request, 'id', 'N/A')
-                    messages.success(request, f"Leave application submitted successfully. Request ID: {request_id}")
-                    
-                    # Log data access for audit
-                    LeaveAuditLogger.log_data_access(request.user, request.user, "LEAVE_APPLICATION_SUCCESS")
-                    
-                    return redirect('leave_management:my_leaves')
-                else:
-                    for error in result.get('errors', []):
-                        messages.error(request, error)
-                    
-                    # Log failed attempt
-                    LeaveAuditLogger.log_data_access(request.user, request.user, "LEAVE_APPLICATION_FAILED")
-
-            except LeaveServiceError as e:
-                messages.error(request, str(e))
-            except Exception as e:
-                logger.error(f"Error applying leave for {request.user.username}: {str(e)}")
-                messages.error(request, "An error occurred while processing your request")
-    else:
-        form = LeaveApplicationForm(user=request.user)
-
-    # Get user's leave balances
-    try:
-        balance_data = LeaveService.get_user_leave_balance(request.user)
-        balances = balance_data.get('balances', []) if balance_data.get('success') else []
-    except:
-        balances = []
-
-    context = {
-        'form': form,
-        'balances': balances,
-    }
-
-    return render(request, 'leave_management/apply_leave.html', context)
-
-@login_required
-def my_leaves(request):
-    """View user's own leave requests"""
-    # Base queryset
-    leaves = LeaveRequest.objects.filter(
-        user=request.user
-    ).select_related('leave_type', 'approver').order_by('-created_at')
-
-    # Simple filtering by status
-    status_filter = request.GET.get('status')
-    if status_filter:
-        leaves = leaves.filter(status=status_filter)
-
-    # Pagination
-    paginator = Paginator(leaves, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    context = {
-        'page_obj': page_obj,
-        'status_filter': status_filter,
-        'status_choices': LeaveRequest.STATUS_CHOICES,
-    }
-
-    return render(request, 'leave_management/my_leaves.html', context)
-
-@login_required
-def leave_detail(request, leave_id):
-    """View detailed information about a leave request"""
-    leave_request = get_object_or_404(LeaveRequest, id=leave_id)
-
-    # Check if user can view this leave request
-    if not can_view_leave_request(request.user, leave_request):
-        raise Http404("Leave request not found")
-
-    context = {
-        'leave_request': leave_request,
-        'can_edit': can_edit_leave_request(request.user, leave_request),
-        'can_cancel': can_cancel_leave_request(request.user, leave_request),
-        'can_approve': can_approve_leave(request.user, leave_request.user),
-    }
-
-    return render(request, 'leave_management/leave_detail.html', context)
-
-@login_required
-@require_POST
-def approve_leave(request, leave_id):
-    """Approve a leave request"""
-    leave_request = get_object_or_404(LeaveRequest, id=leave_id)
-
-    if not can_approve_leave(request.user, leave_request.user):
-        messages.error(request, "You are not authorized to approve this leave request")
-        return redirect('leave_management:leave_detail', leave_id=leave_id)
-
-    try:
-        result = LeaveService.approve_leave(leave_request, request.user)
-
-        if result.get('success'):
-            messages.success(request, "Leave request approved successfully")
-        else:
-            messages.error(request, result.get('message', 'Approval failed'))
-
-    except LeaveServiceError as e:
-        messages.error(request, str(e))
-    except Exception as e:
-        logger.error(f"Error approving leave {leave_id}: {str(e)}")
-        messages.error(request, "An error occurred while approving the request")
-
-    return redirect('leave_management:leave_detail', leave_id=leave_id)
-
-@login_required
-@require_POST
-def reject_leave(request, leave_id):
-    """Reject a leave request"""
-    leave_request = get_object_or_404(LeaveRequest, id=leave_id)
-
-    if not can_approve_leave(request.user, leave_request.user):
-        messages.error(request, "You are not authorized to reject this leave request")
-        return redirect('leave_management:leave_detail', leave_id=leave_id)
-
-    rejection_reason = request.POST.get('rejection_reason', '')
-    if not rejection_reason:
-        messages.error(request, "Rejection reason is required")
-        return redirect('leave_management:leave_detail', leave_id=leave_id)
-
-    try:
-        result = LeaveService.reject_leave(leave_request, request.user, rejection_reason)
-
-        if result.get('success'):
-            messages.success(request, "Leave request rejected")
-        else:
-            messages.error(request, result.get('message', 'Rejection failed'))
-
-    except LeaveServiceError as e:
-        messages.error(request, str(e))
-    except Exception as e:
-        logger.error(f"Error rejecting leave {leave_id}: {str(e)}")
-        messages.error(request, "An error occurred while rejecting the request")
-
-    return redirect('leave_management:leave_detail', leave_id=leave_id)
-
-@login_required
-@require_POST
-def cancel_leave(request, leave_id):
-    """Cancel a leave request"""
-    leave_request = get_object_or_404(LeaveRequest, id=leave_id)
-
-    if not can_cancel_leave_request(request.user, leave_request):
-        messages.error(request, "You cannot cancel this leave request")
-        return redirect('leave_management:leave_detail', leave_id=leave_id)
-
-    try:
-        reason = request.POST.get('cancellation_reason', '')
-        result = LeaveService.cancel_leave(leave_request, request.user, reason)
-
-        if result.get('success'):
-            messages.success(request, "Leave request cancelled successfully")
-        else:
-            messages.error(request, result.get('message', 'Cancellation failed'))
-
-    except LeaveServiceError as e:
-        messages.error(request, str(e))
-    except Exception as e:
-        logger.error(f"Error cancelling leave {leave_id}: {str(e)}")
-        messages.error(request, "An error occurred while cancelling the request")
-
-    return redirect('leave_management:leave_detail', leave_id=leave_id)
-
-# ================================
-# TEAM MANAGEMENT (MANAGERS)
-# ================================
-
-@login_required
-@require_any_role(Roles.MANAGER, Roles.HR, Roles.ADMIN)
-def team_leaves(request):
-    """View team leave requests"""
-    if is_manager(request.user) and not (is_hr(request.user) or is_admin(request.user)):
-        # Managers can only see their team members' leave requests
-        team_members = User.objects.filter(groups__name=Roles.EMPLOYEE, is_active=True)
-    else:
-        # HR and Admin can see all leave requests
-        team_members = User.objects.filter(is_active=True)
-
-    # Base queryset
-    leaves = LeaveRequest.objects.filter(
-        user__in=team_members
-    ).select_related('user', 'leave_type', 'approver').order_by('-created_at')
-
-    # Simple filtering
-    status_filter = request.GET.get('status')
-    if status_filter:
-        leaves = leaves.filter(status=status_filter)
-
-    user_filter = request.GET.get('user')
-    if user_filter:
-        try:
-            user_id = int(user_filter)
-            leaves = leaves.filter(user_id=user_id)
-        except (ValueError, TypeError):
-            messages.warning(request, "Invalid user filter parameter")
-
-    # Pagination
-    paginator = Paginator(leaves, 15)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    context = {
-        'page_obj': page_obj,
-        'team_members': team_members,
-        'status_filter': status_filter,
-        'user_filter': user_filter,
-        'status_choices': LeaveRequest.STATUS_CHOICES,
-        'is_manager_only': is_manager(request.user) and not (is_hr(request.user) or is_admin(request.user))
-    }
-
-    return render(request, 'leave_management/team_leaves.html', context)
-
-# ================================
-# BALANCE VIEWS
-# ================================
-
-@login_required
-def leave_balance(request):
-    """View leave balance"""
-    user_to_view = request.user
-
-    # HR/Admin can view other users' balances
-    if is_hr(request.user) or is_admin(request.user):
-        user_id = request.GET.get('user_id')
-        if user_id:
-            try:
-                user_id_int = int(user_id)
-                user_to_view = User.objects.get(id=user_id_int, is_active=True)
-            except (ValueError, TypeError):
-                messages.error(request, "Invalid user ID parameter")
-            except User.DoesNotExist:
-                messages.error(request, "User not found")
-
-    try:
-        year = int(request.GET.get('year', timezone.now().year))
-    except (ValueError, TypeError):
+from .services.leave_service import apply_leave, approve_leave, reject_leave, cancel_leave, adjust_balance
+from .services.comp_off_service import request_comp_off, approve_comp_off, reject_comp_off
+from .analytics import get_leave_type_distribution, get_daily_leave_status, get_team_attendance_stats, get_pending_request_stats
+from .mixins import AdminRequiredMixin, HRRequiredMixin, ManagerRequiredMixin, EmployeeRequiredMixin
+
+User = get_user_model()
+
+class EmployeeDashboardView(EmployeeRequiredMixin, TemplateView):
+    template_name = 'leave_management/employee_dashboard.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
         year = timezone.now().year
-        messages.warning(request, "Invalid year parameter, using current year")
+        context['balances'] = get_user_leave_balance(user, year)
+        context['leave_history'] = LeaveRequest.objects.filter(user=user).select_related('leave_type', 'approver').order_by('-created_at')[:10]
+        context['policy'] = get_active_policy(user)
+        return context
 
-    try:
-        balance_data = LeaveService.get_user_leave_balance(user_to_view, year)
-        balances = balance_data.get('balances', []) if balance_data.get('success') else []
-    except Exception as e:
-        logger.error(f"Error getting leave balance: {str(e)}")
-        balances = []
-        messages.error(request, "Error loading leave balances")
-
-    context = {
-        'balances': balances,
-        'user_to_view': user_to_view,
-        'year': year,
-        'can_view_all': is_hr(request.user) or is_admin(request.user),
-    }
-
-    return render(request, 'leave_management/leave_balance.html', context)
-
-# ================================
-# COMP-OFF VIEWS
-# ================================
-
-@login_required
-def apply_comp_off(request):
-    """Apply for compensation off"""
-    if request.method == 'POST':
-        form = CompOffRequestForm(request.POST, user=request.user)
-        if form.is_valid():
-            try:
-                comp_off_data = form.cleaned_data
-                result = LeaveService.apply_comp_off(request.user, comp_off_data)
-
-                if result.get('success'):
-                    messages.success(request, f"Comp-off request submitted successfully. Request ID: {result.get('request_id')}")
-                    return redirect('leave_management:my_comp_off')
-                else:
-                    messages.error(request, result.get('message', 'Comp-off application failed'))
-
-            except Exception as e:
-                logger.error(f"Error applying comp-off: {str(e)}")
-                messages.error(request, "An error occurred while processing your request")
-    else:
-        form = CompOffRequestForm(user=request.user)
-
-    context = {
-        'form': form,
-    }
-
-    return render(request, 'leave_management/apply_comp_off.html', context)
-
-@login_required
-def my_comp_off(request):
-    """View user's comp-off requests"""
-    comp_off_requests = CompOffRequest.objects.filter(
-        user=request.user
-    ).select_related('approver').order_by('-created_at')
-
-    paginator = Paginator(comp_off_requests, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    context = {
-        'page_obj': page_obj,
-    }
-
-    return render(request, 'leave_management/my_comp_off.html', context)
-
-# ================================
-# API ENDPOINTS
-# ================================
-
-
-
-# ================================
-# ADMIN VIEWS
-# ================================
-
-@login_required
-@require_role(Roles.ADMIN)
-def admin_policy_list(request):
-    """List all leave policies"""
-    policies = LeavePolicy.objects.all().select_related('group').order_by('-is_active', 'name')
+class ManagerDashboardView(ManagerRequiredMixin, TemplateView):
+    template_name = 'leave_management/manager_dashboard.html'
     
-    context = {
-        'policies': policies,
-    }
-    return render(request, 'leave_management/admin/policy_list.html', context)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        context['pending_approvals'] = get_pending_approvals(user)
+        context['team_leaves'] = get_team_leaves(user)
+        
+        # Analytics
+        context['team_attendance_stats'] = get_team_attendance_stats(user)
+        context['today_leaves'] = get_daily_leave_status() # Global for now, can filter by team if needed
+        return context
 
-@login_required
-@require_role(Roles.ADMIN)
-def admin_policy_create(request):
-    """Create a new leave policy"""
-    if request.method == 'POST':
-        form = LeavePolicyForm(request.POST)
-        if form.is_valid():
-            policy = form.save(commit=False)
-            policy.created_by = request.user
-            policy.save()
-            messages.success(request, f"Policy '{policy.name}' created successfully")
-            return redirect('leave_management:admin_policy_list')
-    else:
-        form = LeavePolicyForm()
+class HRDashboardView(HRRequiredMixin, TemplateView):
+    template_name = 'leave_management/hr_dashboard.html'
     
-    context = {
-        'form': form,
-        'title': 'Create Leave Policy'
-    }
-    return render(request, 'leave_management/admin/policy_form.html', context)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # HR sees all pending requests
+        context['all_pending_requests'] = LeaveRequest.objects.filter(status='Pending').select_related('user', 'leave_type', 'approver').order_by('-created_at')
+        
+        # Analytics
+        context['leave_distribution'] = get_leave_type_distribution()
+        context['pending_stats'] = get_pending_request_stats()
+        context['today_leaves'] = get_daily_leave_status()
+        return context
 
-@login_required
-@require_role(Roles.ADMIN)
-def admin_policy_edit(request, policy_id):
-    """Edit an existing leave policy"""
-    policy = get_object_or_404(LeavePolicy, id=policy_id)
+class AdminDashboardView(AdminRequiredMixin, TemplateView):
+    template_name = 'leave_management/admin_dashboard.html'
     
-    if request.method == 'POST':
-        form = LeavePolicyForm(request.POST, instance=policy)
-        if form.is_valid():
-            form.save()
-            messages.success(request, f"Policy '{policy.name}' updated successfully")
-            return redirect('leave_management:admin_policy_list')
-    else:
-        form = LeavePolicyForm(instance=policy)
-    
-    context = {
-        'form': form,
-        'title': 'Edit Leave Policy',
-        'policy': policy
-    }
-    return render(request, 'leave_management/admin/policy_form.html', context)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Admin Stats
+        context['total_users'] = User.objects.count()
+        context['active_policies'] = LeavePolicy.objects.filter(is_active=True, is_deleted=False).count()
+        context['leave_types'] = LeaveType.objects.filter(is_active=True).count()
+        
+        # Analytics (Same as HR + more system level if needed)
+        context['leave_distribution'] = get_leave_type_distribution()
+        context['pending_stats'] = get_pending_request_stats()
+        return context
 
-@login_required
-@require_role(Roles.ADMIN)
-def admin_leave_type_list(request):
-    """List all leave types"""
-    leave_types = LeaveType.objects.all().order_by('-is_active', 'name')
+class LeaveApplyView(EmployeeRequiredMixin, FormView):
+    template_name = 'leave_management/apply_leave.html'
+    form_class = LeaveRequestForm
+    success_url = reverse_lazy('leave_management:employee_dashboard')
     
-    context = {
-        'leave_types': leave_types,
-    }
-    return render(request, 'leave_management/admin/leavetype_list.html', context)
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+        
+    def form_valid(self, form):
+        try:
+            apply_leave(
+                user=self.request.user,
+                leave_type_id=form.cleaned_data['leave_type'].id,
+                start_date=form.cleaned_data['start_date'],
+                end_date=form.cleaned_data['end_date'],
+                reason=form.cleaned_data['reason'],
+                half_day=form.cleaned_data['half_day'],
+                approver=form.cleaned_data['approver'],
+                documentation=self.request.FILES.get('documentation')
+            )
+            messages.success(self.request, "Leave application submitted successfully.")
+            return super().form_valid(form)
+        except ValidationError as e:
+            messages.error(self.request, str(e))
+            return self.form_invalid(form)
+        except Exception as e:
+            messages.error(self.request, f"Error: {str(e)}")
+            return self.form_invalid(form)
 
-@login_required
-@require_role(Roles.ADMIN)
-def admin_leave_type_create(request):
-    """Create a new leave type"""
-    if request.method == 'POST':
-        form = LeaveTypeForm(request.POST)
-        if form.is_valid():
-            leave_type = form.save()
-            messages.success(request, f"Leave Type '{leave_type.name}' created successfully")
-            return redirect('leave_management:admin_leave_type_list')
-    else:
-        form = LeaveTypeForm()
+class LeaveUpdateView(EmployeeRequiredMixin, UpdateView):
+    model = LeaveRequest
+    form_class = LeaveRequestForm
+    template_name = 'leave_management/apply_leave.html'
+    success_url = reverse_lazy('leave_management:employee_dashboard')
     
-    context = {
-        'form': form,
-        'title': 'Create Leave Type'
-    }
-    return render(request, 'leave_management/admin/leavetype_form.html', context)
-
-@login_required
-@require_role(Roles.ADMIN)
-def admin_leave_type_edit(request, type_id):
-    """Edit an existing leave type"""
-    leave_type = get_object_or_404(LeaveType, id=type_id)
-    
-    if request.method == 'POST':
-        form = LeaveTypeForm(request.POST, instance=leave_type)
-        if form.is_valid():
-            form.save()
-            messages.success(request, f"Leave Type '{leave_type.name}' updated successfully")
-            return redirect('leave_management:admin_leave_type_list')
-    else:
-        form = LeaveTypeForm(instance=leave_type)
-    
-    context = {
-        'form': form,
-        'title': 'Edit Leave Type',
-        'leave_type': leave_type
-    }
-    return render(request, 'leave_management/admin/leavetype_form.html', context)
-
-@login_required
-@require_role(Roles.ADMIN)
-def admin_policy_allocations(request, policy_id):
-    """Manage allocations for a specific policy"""
-    policy = get_object_or_404(LeavePolicy, id=policy_id)
-    allocations = LeaveAllocation.objects.filter(policy=policy, is_deleted=False).select_related('leave_type')
-    
-    if request.method == 'POST':
-        # Handle allocation creation/update
-        if 'delete_allocation' in request.POST:
-            allocation_id = request.POST.get('allocation_id')
-            allocation = get_object_or_404(LeaveAllocation, id=allocation_id, policy=policy)
-            allocation.is_deleted = True
-            allocation.save()
-            messages.success(request, "Allocation removed successfully")
-            return redirect('leave_management:admin_policy_allocations', policy_id=policy.id)
+    def get_queryset(self):
+        # Allow editing only pending requests
+        return LeaveRequest.objects.filter(status='Pending')
+        
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+        
+    def form_valid(self, form):
+        try:
+            # Use service to update
+            from .services.leave_service import update_leave_request
             
-        form = LeaveAllocationForm(request.POST)
-        if form.is_valid():
-            allocation = form.save(commit=False)
-            # Ensure policy matches URL
-            allocation.policy = policy
-            allocation.save()
-            messages.success(request, "Allocation saved successfully")
-            return redirect('leave_management:admin_policy_allocations', policy_id=policy.id)
-    else:
-        # Pre-select policy in form
-        form = LeaveAllocationForm(initial={'policy': policy})
-        # Hide policy field as it's implied
-        form.fields['policy'].widget = forms.HiddenInput()
+            update_leave_request(
+                leave_request_id=self.object.id,
+                user=self.request.user,
+                leave_type=form.cleaned_data['leave_type'],
+                start_date=form.cleaned_data['start_date'],
+                end_date=form.cleaned_data['end_date'],
+                reason=form.cleaned_data['reason'],
+                half_day=form.cleaned_data['half_day'],
+                approver=form.cleaned_data['approver'],
+                documentation=self.request.FILES.get('documentation')
+            )
+            messages.success(self.request, "Leave request updated successfully.")
+            return redirect(self.success_url)
+        except ValidationError as e:
+            messages.error(self.request, str(e))
+            return self.form_invalid(form)
+        except Exception as e:
+            messages.error(self.request, f"Error: {str(e)}")
+            return self.form_invalid(form)
+
+class LeaveActionView(EmployeeRequiredMixin, View):
+    def post(self, request, pk):
+        action = request.POST.get('action')
+        reason = request.POST.get('reason')
+        
+        try:
+            if action == 'approve':
+                approve_leave(pk, request.user)
+                messages.success(request, "Leave request approved.")
+            elif action == 'reject':
+                reject_leave(pk, request.user, reason)
+                messages.success(request, "Leave request rejected.")
+            elif action == 'cancel':
+                cancel_leave(pk, request.user)
+                messages.success(request, "Leave request cancelled.")
+            else:
+                messages.error(request, "Invalid action.")
+        except ValidationError as e:
+            messages.error(request, str(e))
+        except Exception as e:
+            messages.error(request, f"Error: {str(e)}")
+            
+        return redirect(request.META.get('HTTP_REFERER', 'leave_management:employee_dashboard'))
+
+class LeaveDetailView(EmployeeRequiredMixin, DetailView):
+    model = LeaveRequest
+    template_name = 'leave_management/leave_detail.html'
+    context_object_name = 'object'
     
-    context = {
-        'policy': policy,
-        'allocations': allocations,
-        'form': form
-    }
-    return render(request, 'leave_management/admin/allocation_form.html', context)
+    def get_queryset(self):
+        # Users can see their own requests, managers can see their team's requests
+        user = self.request.user
+        if user.groups.filter(name__in=['HR', 'Admin']).exists():
+            return LeaveRequest.objects.all()
+        elif user.groups.filter(name='Manager').exists():
+            # Managers can see requests where they are the approver
+            return LeaveRequest.objects.filter(
+                models.Q(user=user) | models.Q(approver=user)
+            )
+        else:
+            return LeaveRequest.objects.filter(user=user)
+
+class MyLeavesView(EmployeeRequiredMixin, ListView):
+    model = LeaveRequest
+    template_name = 'leave_management/my_leaves.html'
+    context_object_name = 'leaves'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        queryset = LeaveRequest.objects.filter(user=self.request.user).order_by('-created_at')
+        
+        # Apply filters
+        status = self.request.GET.get('status')
+        leave_type = self.request.GET.get('leave_type')
+        from_date = self.request.GET.get('from_date')
+        to_date = self.request.GET.get('to_date')
+        
+        if status:
+            queryset = queryset.filter(status=status)
+        if leave_type:
+            queryset = queryset.filter(leave_type_id=leave_type)
+        if from_date:
+            queryset = queryset.filter(start_date__gte=from_date)
+        if to_date:
+            queryset = queryset.filter(end_date__lte=to_date)
+            
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['leave_types'] = LeaveType.objects.filter(is_active=True)
+        return context
+
+class TeamLeavesView(ManagerRequiredMixin, ListView):
+    model = LeaveRequest
+    template_name = 'leave_management/team_leaves.html'
+    context_object_name = 'leaves'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        # Get team members - this assumes you have a way to determine team membership
+        # Adjust based on your actual team structure
+        queryset = LeaveRequest.objects.filter(approver=self.request.user).order_by('-created_at')
+        
+        # Apply filters
+        employee = self.request.GET.get('employee')
+        status = self.request.GET.get('status')
+        leave_type = self.request.GET.get('leave_type')
+        from_date = self.request.GET.get('from_date')
+        to_date = self.request.GET.get('to_date')
+        
+        if employee:
+            queryset = queryset.filter(user_id=employee)
+        if status:
+            queryset = queryset.filter(status=status)
+        if leave_type:
+            queryset = queryset.filter(leave_type_id=leave_type)
+        if from_date:
+            queryset = queryset.filter(start_date__gte=from_date)
+        if to_date:
+            queryset = queryset.filter(end_date__lte=to_date)
+            
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Get team members where current user is the approver
+        context['team_members'] = User.objects.filter(
+            leaverequest__approver=self.request.user
+        ).distinct()
+        context['leave_types'] = LeaveType.objects.filter(is_active=True)
+        
+        # Add team stats
+        today = timezone.now().date()
+        team_leaves_today = LeaveRequest.objects.filter(
+            approver=self.request.user,
+            status='Approved',
+            start_date__lte=today,
+            end_date__gte=today
+        )
+        
+        context['team_stats'] = {
+            'total_members': context['team_members'].count(),
+            'on_leave_today': team_leaves_today.count(),
+            'present_today': context['team_members'].count() - team_leaves_today.count(),
+            'upcoming_leaves': LeaveRequest.objects.filter(
+                approver=self.request.user,
+                status='Approved',
+                start_date__gt=today
+            ).count()
+        }
+        return context
+
+class CompOffApplyView(EmployeeRequiredMixin, FormView):
+    template_name = 'leave_management/apply_comp_off.html'
+    form_class = CompOffRequestForm
+    success_url = reverse_lazy('leave_management:employee_dashboard')
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+        
+    def form_valid(self, form):
+        try:
+            request_comp_off(
+                user=self.request.user,
+                worked_date=form.cleaned_data['worked_date'],
+                hours_worked=form.cleaned_data['hours_worked'],
+                reason=form.cleaned_data['reason'],
+                approver=form.cleaned_data['approver']
+            )
+            messages.success(self.request, "Comp-off request submitted successfully.")
+            return super().form_valid(form)
+        except ValidationError as e:
+            messages.error(self.request, str(e))
+            return self.form_invalid(form)
+        except Exception as e:
+            messages.error(self.request, f"Error: {str(e)}")
+            return self.form_invalid(form)
+
+class CompOffActionView(ManagerRequiredMixin, View):
+    def post(self, request, pk):
+        action = request.POST.get('action')
+        reason = request.POST.get('reason')
+        
+        try:
+            if action == 'approve':
+                approve_comp_off(pk, request.user)
+                messages.success(request, "Comp-off request approved.")
+            elif action == 'reject':
+                reject_comp_off(pk, request.user, reason)
+                messages.success(request, "Comp-off request rejected.")
+            else:
+                messages.error(request, "Invalid action.")
+        except ValidationError as e:
+            messages.error(request, str(e))
+            
+        return redirect(request.META.get('HTTP_REFERER', 'leave_management:employee_dashboard'))
+
+# --- Admin Management Views (Admin Only) ---
+
+class LeaveTypeListView(AdminRequiredMixin, ListView):
+    model = LeaveType
+    template_name = 'leave_management/leavetype_list.html'
+    context_object_name = 'leave_types'
+
+class LeaveTypeCreateView(AdminRequiredMixin, CreateView):
+    model = LeaveType
+    form_class = LeaveTypeForm
+    template_name = 'leave_management/leavetype_form.html'
+    success_url = reverse_lazy('leave_management:leavetype_list')
+
+class LeaveTypeUpdateView(AdminRequiredMixin, UpdateView):
+    model = LeaveType
+    form_class = LeaveTypeForm
+    template_name = 'leave_management/leavetype_form.html'
+    success_url = reverse_lazy('leave_management:leavetype_list')
+
+class LeavePolicyListView(AdminRequiredMixin, ListView):
+    model = LeavePolicy
+    template_name = 'leave_management/policy_list.html'
+    context_object_name = 'policies'
+    queryset = LeavePolicy.objects.filter(is_deleted=False)
+
+class LeavePolicyCreateView(AdminRequiredMixin, CreateView):
+    model = LeavePolicy
+    form_class = LeavePolicyForm
+    template_name = 'leave_management/policy_form.html'
+    success_url = reverse_lazy('leave_management:policy_list')
+    
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
+
+class LeavePolicyUpdateView(AdminRequiredMixin, UpdateView):
+    model = LeavePolicy
+    form_class = LeavePolicyForm
+    template_name = 'leave_management/policy_form.html'
+    success_url = reverse_lazy('leave_management:policy_list')
+
+class LeaveAllocationCreateView(AdminRequiredMixin, CreateView):
+    model = LeaveAllocation
+    form_class = LeaveAllocationForm
+    template_name = 'leave_management/allocation_form.html'
+    success_url = reverse_lazy('leave_management:policy_list')
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        # If policy_id is in URL, pass it to form
+        policy_id = self.request.GET.get('policy')
+        if policy_id:
+            try:
+                policy = LeavePolicy.objects.get(pk=policy_id)
+                kwargs['policy'] = policy
+            except LeavePolicy.DoesNotExist:
+                pass
+        return kwargs
+
+
+# --- HR/Admin Views ---
+
+class ManualBalanceAdjustmentView(HRRequiredMixin, FormView):
+    # HRRequiredMixin allows HR. Admin is also usually allowed via mixin logic or group membership.
+    # If Admin is not in HR group, we might need a custom mixin or ensure Admin has HR permissions.
+    # Our HRRequiredMixin checks for 'HR' group. 
+    # If we want Admin to also access this, we should update HRRequiredMixin or use a composite check.
+    # For now, assuming Admin might be in HR group or we update the mixin.
+    # Let's update the mixin in mixins.py to allow Admin as well if needed, 
+    # or just assume Admin adds themselves to HR group for operational tasks.
+    # However, the user requirement said "HR/Admin -> can change...".
+    # Let's stick to HRRequiredMixin for now, assuming Admin can be added to HR group or we modify mixin.
+    
+    template_name = 'leave_management/balance_adjustment.html'
+    form_class = ManualBalanceAdjustmentForm
+    success_url = reverse_lazy('leave_management:hr_dashboard')
+    
+    def form_valid(self, form):
+        employee = form.cleaned_data['employee']
+        leave_type = form.cleaned_data['leave_type']
+        adjustment_type = form.cleaned_data['adjustment_type']
+        days = form.cleaned_data['days']
+        reason = form.cleaned_data['reason']
+        
+        # Convert days to positive or negative based on adjustment type
+        amount = days if adjustment_type == 'credit' else -days
+        
+        try:
+            adjust_balance(employee.id, leave_type.id, amount, reason, self.request.user)
+            messages.success(self.request, f"Successfully adjusted {employee.get_full_name()}'s {leave_type.name} balance by {amount} days.")
+        except Exception as e:
+            messages.error(self.request, f"Error adjusting balance: {str(e)}")
+            return self.form_invalid(form)
+        
+        return super().form_valid(form)

@@ -1,245 +1,204 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}My Leave Requests - Leave Management{% endblock %}
+
+{% block title %}My Leaves - TrueAlign{% endblock %}
 
 {% block content %}
-<div class="min-h-screen">
-    <!-- Header -->
-    <div class="mb-8">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900 font-display">My Leave Requests</h1>
-                <p class="text-gray-500 mt-1">View and manage your leave applications</p>
+<div class="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-6 w-full max-w-full overflow-x-hidden">
+    <!-- Header Section -->
+    <div
+        class="relative overflow-hidden mb-3 sm:mb-6 rounded-[16px] sm:rounded-[20px] lg:rounded-[28px] bg-white/10 border border-white/40 shadow-[0_10px_30px_rgba(0,0,0,0.15)]">
+        <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-white/10 rounded-[28px]"></div>
+
+        <div class="absolute inset-0 overflow-hidden">
+            <div
+                class="absolute -top-8 sm:-top-16 -left-8 sm:-left-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-br from-emerald-300/30 to-emerald-400/10 rounded-full">
             </div>
-            <div class="flex gap-3">
-                <a href="{% url 'leave_management:dashboard' %}"
-                    class="btn-outline flex items-center gap-2 bg-white/50 backdrop-blur-sm">
-                    <i class="ri-arrow-left-line"></i>
-                    <span>Back</span>
-                </a>
-                <a href="{% url 'leave_management:apply_leave' %}"
-                    class="btn-primary flex items-center gap-2 shadow-lg shadow-primary-500/30">
-                    <i class="ri-add-line"></i>
-                    <span>Apply Leave</span>
-                </a>
+            <div
+                class="absolute -bottom-8 sm:-bottom-16 -right-8 sm:-right-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-tr from-teal-400/30 to-teal-500/10 rounded-full">
             </div>
         </div>
-    </div>
 
-    <!-- Filters -->
-    <div class="card mb-8">
-        <div class="card-body p-4">
-            <form method="get" class="flex flex-wrap items-center gap-4">
-                <div class="flex-1 min-w-[200px]">
-                    <div class="relative">
-                        <i class="ri-filter-3-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                        <select name="status" id="status" class="form-input pl-10 appearance-none cursor-pointer"
-                            onchange="this.form.submit()">
+        <div class="relative p-3 sm:p-6 md:p-8 lg:p-12 z-10 w-full">
+            <nav
+                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-md p-2 sm:p-3 mb-3 sm:mb-6 flex flex-col sm:flex-row gap-3 sm:gap-0 justify-between items-center">
+                <div
+                    class="px-3 sm:px-4 lg:px-5 py-2 sm:py-3 backdrop-blur-sm bg-white/20 rounded-lg sm:rounded-xl border border-white/10">
+                    <span class="text-zinc-900 font-bold text-sm sm:text-base lg:text-lg">My Leaves</span>
+                    <span class="text-zinc-600 font-medium text-xs sm:text-sm lg:text-md ml-2">Complete History</span>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <a href="{% url 'leave_management:apply_leave' %}"
+                        class="px-3 sm:px-4 py-2 backdrop-blur-sm bg-emerald-500/80 text-white rounded-lg border border-white/10 hover:bg-emerald-600/80 hover:scale-105 transition text-sm font-medium flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Apply Leave
+                    </a>
+                    <a href="{% url 'leave_management:employee_dashboard' %}"
+                        class="px-3 sm:px-4 py-2 backdrop-blur-sm bg-white/20 rounded-lg border border-white/10 text-sm font-medium text-gray-700 hover:bg-white/30 transition">
+                        Dashboard
+                    </a>
+                </div>
+            </nav>
+
+            <!-- Filter Options -->
+            <div class="backdrop-blur-xl bg-white/20 p-4 rounded-xl border border-white/10">
+                <form method="get" class="flex flex-wrap gap-3 items-end">
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-medium text-zinc-700 mb-1">Status</label>
+                        <select name="status"
+                            class="w-full px-3 py-2 bg-white/20 border border-white/20 rounded-lg text-sm">
                             <option value="">All Statuses</option>
-                            {% for value, label in status_choices %}
-                            <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}
+                            <option value="Pending" {% if request.GET.status=='Pending' %}selected{% endif %}>Pending
                             </option>
+                            <option value="Approved" {% if request.GET.status=='Approved' %}selected{% endif %}>Approved
+                            </option>
+                            <option value="Rejected" {% if request.GET.status=='Rejected' %}selected{% endif %}>Rejected
+                            </option>
+                            <option value="Cancelled" {% if request.GET.status=='Cancelled' %}selected{% endif %}>
+                                Cancelled</option>
+                        </select>
+                    </div>
+
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-medium text-zinc-700 mb-1">Leave Type</label>
+                        <select name="leave_type"
+                            class="w-full px-3 py-2 bg-white/20 border border-white/20 rounded-lg text-sm">
+                            <option value="">All Types</option>
+                            {% for type in leave_types %}
+                            <option value="{{ type.id }}" {% if request.GET.leave_type==type.id|stringformat:"s"
+                                %}selected{% endif %}>{{ type.name }}</option>
                             {% endfor %}
                         </select>
-                        <i
-                            class="ri-arrow-down-s-line absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
                     </div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button type="submit" class="btn-secondary flex items-center gap-2">
-                        <i class="ri-filter-line"></i>
-                        <span>Filter</span>
+
+                    <div class="flex-1 min-w-[150px]">
+                        <label class="block text-xs font-medium text-zinc-700 mb-1">From Date</label>
+                        <input type="date" name="from_date" value="{{ request.GET.from_date }}"
+                            class="w-full px-3 py-2 bg-white/20 border border-white/20 rounded-lg text-sm">
+                    </div>
+
+                    <div class="flex-1 min-w-[150px]">
+                        <label class="block text-xs font-medium text-zinc-700 mb-1">To Date</label>
+                        <input type="date" name="to_date" value="{{ request.GET.to_date }}"
+                            class="w-full px-3 py-2 bg-white/20 border border-white/20 rounded-lg text-sm">
+                    </div>
+
+                    <button type="submit"
+                        class="px-4 py-2 bg-emerald-500/80 text-white rounded-lg hover:bg-emerald-600/80 transition text-sm font-medium">
+                        Filter
                     </button>
-                    {% if status_filter %}
+                    {% if request.GET %}
                     <a href="{% url 'leave_management:my_leaves' %}"
-                        class="btn-outline bg-white hover:bg-gray-50 text-gray-600 border-gray-300">
+                        class="px-4 py-2 bg-gray-500/80 text-white rounded-lg hover:bg-gray-600/80 transition text-sm font-medium">
                         Clear
                     </a>
                     {% endif %}
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 
-    <!-- Leave Requests List -->
-    <div class="card overflow-hidden">
-        {% if page_obj %}
-        <div class="card-header border-b border-gray-100 bg-gray-50/30 flex justify-between items-center">
-            <h3 class="text-lg font-semibold text-gray-900">
-                Requests List
-                {% if status_filter %}
-                <span class="ml-2 text-sm font-normal text-gray-500">({{ status_filter }})</span>
+    <!-- Leaves List -->
+    <div
+        class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner overflow-hidden">
+        <div class="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-6 border-b border-white/10">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg sm:text-xl font-bold text-zinc-900">All Leave Requests</h3>
+                    <p class="mt-1 text-xs sm:text-sm text-zinc-600">Your complete leave history</p>
+                </div>
+                {% if leaves %}
+                <div class="text-xs sm:text-sm text-zinc-600">
+                    <span class="font-medium">{{ leaves|length }}</span> requests
+                </div>
                 {% endif %}
-            </h3>
-            <span class="text-sm text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
-                {{ page_obj.paginator.count }} Total
-            </span>
+            </div>
         </div>
 
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr
-                        class="border-b border-gray-100 bg-gray-50/50 text-xs uppercase tracking-wider text-gray-500 font-medium">
-                        <th class="px-6 py-4">Leave Type</th>
-                        <th class="px-6 py-4">Duration</th>
-                        <th class="px-6 py-4">Dates</th>
-                        <th class="px-6 py-4">Status</th>
-                        <th class="px-6 py-4 text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-50">
-                    {% for leave in page_obj %}
-                    <tr class="hover:bg-gray-50/50 transition-colors group">
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-lg flex items-center justify-center
-                                            {% if leave.leave_type.name == 'Sick Leave' %}bg-red-100 text-red-600
-                                            {% elif leave.leave_type.name == 'Casual Leave' %}bg-blue-100 text-blue-600
-                                            {% else %}bg-purple-100 text-purple-600{% endif %}">
-                                    {% if leave.leave_type.name == 'Sick Leave' %}<i class="ri-first-aid-kit-line"></i>
-                                    {% elif leave.leave_type.name == 'Casual Leave' %}<i class="ri-briefcase-line"></i>
-                                    {% else %}<i class="ri-calendar-event-line"></i>{% endif %}
-                                </div>
-                                <div>
-                                    <p class="font-medium text-gray-900">{{ leave.leave_type.name }}</p>
-                                    {% if leave.is_retroactive %}
+        {% if leaves %}
+        <div class="divide-y divide-white/10">
+            {% for leave in leaves %}
+            <div class="block hover:bg-white/10 transition-all duration-200">
+                <a href="{% url 'leave_management:leave_detail' leave.id %}" class="block">
+                    <div class="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-6">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center min-w-0 flex-1">
+                                <div class="flex-shrink-0">
                                     <span
-                                        class="text-[10px] uppercase tracking-wide text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100">Retroactive</span>
-                                    {% endif %}
+                                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border {% if leave.leave_type.name == 'Casual Leave' %}bg-blue-100/80 text-blue-800 border-blue-200/50{% elif leave.leave_type.name == 'Sick Leave' %}bg-red-100/80 text-red-800 border-red-200/50{% elif leave.leave_type.name == 'Comp Off' %}bg-purple-100/80 text-purple-800 border-purple-200/50{% else %}bg-gray-100/80 text-gray-800 border-gray-200/50{% endif %}">
+                                        {{ leave.leave_type.name }}
+                                    </span>
+                                </div>
+
+                                <div class="ml-4 flex-1 min-w-0">
+                                    <div class="flex items-center mb-1">
+                                        <p class="text-sm font-semibold text-indigo-700 truncate">
+                                            {{ leave.start_date|date:"M d, Y" }} - {{ leave.end_date|date:"M d, Y" }}
+                                        </p>
+                                        <span
+                                            class="ml-3 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border {% if leave.status == 'Pending' %}bg-yellow-100/80 text-yellow-800 border-yellow-200/50{% elif leave.status == 'Approved' %}bg-green-100/80 text-green-800 border-green-200/50{% elif leave.status == 'Rejected' %}bg-red-100/80 text-red-800 border-red-200/50{% else %}bg-gray-100/80 text-gray-800 border-gray-200/50{% endif %}">
+                                            {{ leave.status }}
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-zinc-600 mt-1 line-clamp-2">
+                                        {{ leave.reason|truncatechars:100 }}
+                                    </p>
+                                    <div class="mt-2 flex items-center text-xs text-zinc-500 space-x-4">
+                                        <div class="flex items-center">
+                                            <span>{{ leave.leave_days }} day{{ leave.leave_days|floatformat:0|pluralize
+                                                }}</span>
+                                        </div>
+                                        {% if leave.approver %}
+                                        <span>•</span>
+                                        <span>Approver: {{ leave.approver.get_full_name|default:leave.approver.username
+                                            }}</span>
+                                        {% endif %}
+                                        <span>•</span>
+                                        <span>Applied {{ leave.created_at|timesince }} ago</span>
+                                    </div>
                                 </div>
                             </div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <span class="text-sm text-gray-900 font-medium">{{ leave.leave_days }} day{{
-                                leave.leave_days|pluralize }}</span>
-                            {% if leave.half_day %}
-                            <span class="ml-2 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Half Day</span>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="text-sm text-gray-600">
-                                <div class="flex items-center gap-1.5">
-                                    <i class="ri-calendar-line text-gray-400"></i>
-                                    <span>{{ leave.start_date|date:"M d, Y" }}</span>
-                                </div>
-                                <div class="flex items-center gap-1.5 mt-1">
-                                    <i class="ri-arrow-right-line text-gray-400 text-xs"></i>
-                                    <span>{{ leave.end_date|date:"M d, Y" }}</span>
-                                </div>
+
+                            <div class="flex-shrink-0 ml-4">
+                                <svg class="h-5 w-5 text-zinc-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5l7 7-7 7"></path>
+                                </svg>
                             </div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border
-                                        {% if leave.status == 'Approved' %}bg-emerald-50 text-emerald-700 border-emerald-200
-                                        {% elif leave.status == 'Pending' %}bg-amber-50 text-amber-700 border-amber-200
-                                        {% elif leave.status == 'Rejected' %}bg-red-50 text-red-700 border-red-200
-                                        {% elif leave.status == 'Cancelled' %}bg-gray-50 text-gray-600 border-gray-200
-                                        {% else %}bg-blue-50 text-blue-700 border-blue-200{% endif %}">
-                                <span class="w-1.5 h-1.5 rounded-full mr-1.5
-                                            {% if leave.status == 'Approved' %}bg-emerald-500
-                                            {% elif leave.status == 'Pending' %}bg-amber-500
-                                            {% elif leave.status == 'Rejected' %}bg-red-500
-                                            {% elif leave.status == 'Cancelled' %}bg-gray-400
-                                            {% else %}bg-blue-500{% endif %}"></span>
-                                {{ leave.status }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 text-right">
-                            <div
-                                class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <a href="{% url 'leave_management:leave_detail' leave.id %}"
-                                    class="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-                                    title="View Details">
-                                    <i class="ri-eye-line text-lg"></i>
-                                </a>
-                                {% if leave.status == 'Pending' %}
-                                <form method="post" action="{% url 'leave_management:cancel_leave' leave.id %}"
-                                    class="inline">
-                                    {% csrf_token %}
-                                    <button type="submit"
-                                        onclick="return confirm('Are you sure you want to cancel this leave request?')"
-                                        class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                        title="Cancel Request">
-                                        <i class="ri-close-circle-line text-lg"></i>
-                                    </button>
-                                </form>
-                                {% endif %}
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Pagination -->
-        {% if page_obj.has_other_pages %}
-        <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/30 flex items-center justify-between">
-            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                    <p class="text-sm text-gray-700">
-                        Showing
-                        <span class="font-medium">{{ page_obj.start_index }}</span>
-                        to
-                        <span class="font-medium">{{ page_obj.end_index }}</span>
-                        of
-                        <span class="font-medium">{{ page_obj.paginator.count }}</span>
-                        results
-                    </p>
-                </div>
-                <div>
-                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                        {% if page_obj.has_previous %}
-                        <a href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}"
-                            class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                            <i class="ri-arrow-left-s-line text-lg"></i>
-                        </a>
-                        {% endif %}
-
-                        {% for num in page_obj.paginator.page_range %}
-                        {% if page_obj.number == num %}
-                        <span
-                            class="relative inline-flex items-center px-4 py-2 border border-primary-500 bg-primary-50 text-sm font-medium text-primary-600 z-10">
-                            {{ num }}
-                        </span>
-                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %} <a
-                            href="?page={{ num }}{% if status_filter %}&status={{ status_filter }}{% endif %}"
-                            class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                            {{ num }}
-                            </a>
-                            {% endif %}
-                            {% endfor %}
-
-                            {% if page_obj.has_next %}
-                            <a href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}"
-                                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                <i class="ri-arrow-right-s-line text-lg"></i>
-                            </a>
-                            {% endif %}
-                    </nav>
-                </div>
+                        </div>
+                    </div>
+                </a>
             </div>
+            {% endfor %}
         </div>
-        {% endif %}
         {% else %}
-        <div class="text-center py-16">
-            <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="ri-inbox-line text-4xl text-gray-300"></i>
+        <div class="text-center py-12">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-white/20 mb-4">
+                <svg class="h-8 w-8 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                    </path>
+                </svg>
             </div>
-            <h3 class="text-lg font-medium text-gray-900 mb-1">No leave requests found</h3>
-            <p class="text-gray-500 mb-6 max-w-sm mx-auto">
-                {% if status_filter %}
-                No leave requests with status "{{ status_filter }}" found. Try clearing the filter.
-                {% else %}
-                You haven't submitted any leave requests yet.
-                {% endif %}
+            <h3 class="text-lg font-medium text-zinc-900 mb-2">No leave requests found</h3>
+            <p class="text-zinc-600 mb-6 text-sm">
+                {% if request.GET %}Try adjusting your filters{% else %}You haven't applied for any leave yet{% endif %}
             </p>
+            {% if not request.GET %}
             <a href="{% url 'leave_management:apply_leave' %}"
-                class="btn-primary inline-flex items-center gap-2 shadow-lg shadow-primary-500/30">
-                <i class="ri-add-line"></i>
-                <span>Apply for Leave</span>
+                class="inline-flex items-center px-6 py-2 border-0 shadow-lg text-sm font-medium rounded-xl text-white bg-emerald-500/80 hover:bg-emerald-600/80 transition">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Apply for Leave
             </a>
+            {% endif %}
         </div>
         {% endif %}
     </div>

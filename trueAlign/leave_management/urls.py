@@ -1,74 +1,39 @@
-"""
-URL Configuration for Leave Management System
-Simplified and working URL patterns
-"""
 from django.urls import path
 from . import views
-from . import api_views
 
 app_name = 'leave_management'
 
 urlpatterns = [
-    # ================================
-    # DASHBOARD URLS
-    # ================================
-    path('', views.dashboard, name='dashboard'),
-    path('dashboard/', views.dashboard, name='dashboard_alias'),
-    path('employee/', views.employee_dashboard, name='employee_dashboard'),
-    path('manager/', views.manager_dashboard, name='manager_dashboard'),
-    path('hr/', views.hr_dashboard, name='hr_dashboard'),
-    path('admin/', views.admin_dashboard, name='admin_dashboard'),
+    path('employee/', views.EmployeeDashboardView.as_view(), name='employee_dashboard'),
+    path('manager/', views.ManagerDashboardView.as_view(), name='manager_dashboard'),
+    path('hr/', views.HRDashboardView.as_view(), name='hr_dashboard'),
+    path('admin/', views.AdminDashboardView.as_view(), name='admin_dashboard'),
     
-    # ================================
-    # ADMIN MANAGEMENT URLS
-    # ================================
-    path('admin/policies/', views.admin_policy_list, name='admin_policy_list'),
-    path('admin/policies/create/', views.admin_policy_create, name='admin_policy_create'),
-    path('admin/policies/<int:policy_id>/edit/', views.admin_policy_edit, name='admin_policy_edit'),
-    path('admin/policies/<int:policy_id>/allocations/', views.admin_policy_allocations, name='admin_policy_allocations'),
+    # Leave Requests
+    path('apply/', views.LeaveApplyView.as_view(), name='apply_leave'),
+    path('request/<int:pk>/', views.LeaveDetailView.as_view(), name='leave_detail'),
+    path('request/<int:pk>/edit/', views.LeaveUpdateView.as_view(), name='leave_update'),
+    path('request/<int:pk>/action/', views.LeaveActionView.as_view(), name='leave_action'),
+    path('my-leaves/', views.MyLeavesView.as_view(), name='my_leaves'),
+    path('team-leaves/', views.TeamLeavesView.as_view(), name='team_leaves'),
     
-    path('admin/leave-types/', views.admin_leave_type_list, name='admin_leave_type_list'),
-    path('admin/leave-types/create/', views.admin_leave_type_create, name='admin_leave_type_create'),
-    path('admin/leave-types/<int:type_id>/edit/', views.admin_leave_type_edit, name='admin_leave_type_edit'),
-
-    # ================================
-    # LEAVE REQUEST URLS
-    # ================================
-    path('apply/', views.apply_leave, name='apply_leave'),
-    path('my-leaves/', views.my_leaves, name='my_leaves'),
-    path('leave/<int:leave_id>/', views.leave_detail, name='leave_detail'),
-    path('leave/<int:leave_id>/approve/', views.approve_leave, name='approve_leave'),
-    path('leave/<int:leave_id>/reject/', views.reject_leave, name='reject_leave'),
-    path('leave/<int:leave_id>/cancel/', views.cancel_leave, name='cancel_leave'),
-
-    # ================================
-    # TEAM MANAGEMENT URLS
-    # ================================
-    path('team/leaves/', views.team_leaves, name='team_leaves'),
-
-    # ================================
-    # BALANCE URLS
-    # ================================
-    path('balance/', views.leave_balance, name='leave_balance'),
-
-    # ================================
-    # COMP-OFF URLS
-    # ================================
-    path('comp-off/apply/', views.apply_comp_off, name='apply_comp_off'),
-    path('comp-off/my-requests/', views.my_comp_off, name='my_comp_off'),
-
-    # ================================
-    # URL ALIASES FOR TEST COMPATIBILITY
-    # ================================
-    path('my_leaves/', views.my_leaves, name='my_leaves_alias'),
-    path('comp_off/', views.apply_comp_off, name='comp_off_alias'),
-
-    # ================================
-    # API ENDPOINTS (for backward compatibility and testing)
-    # ================================
-    path('api/balance/', api_views.api_leave_balance, name='api_balance'),
-    path('api/types/', api_views.api_leave_types, name='api_types'),
-    path('api/balance/<int:user_id>/', api_views.api_leave_balance, name='api_user_balance'),
-
-    # API endpoints are also handled in api_urls.py
+    # Comp-Off
+    path('comp-off/apply/', views.CompOffApplyView.as_view(), name='apply_comp_off'),
+    path('comp-off/<int:pk>/action/', views.CompOffActionView.as_view(), name='comp_off_action'),
+    
+    # Admin/HR Management - Leave Types
+    path('types/', views.LeaveTypeListView.as_view(), name='leavetype_list'),
+    path('types/create/', views.LeaveTypeCreateView.as_view(), name='leavetype_create'),
+    path('types/<int:pk>/edit/', views.LeaveTypeUpdateView.as_view(), name='leavetype_update'),
+    
+    # Admin/HR Management - Policies
+    path('policies/', views.LeavePolicyListView.as_view(), name='policy_list'),
+    path('policies/create/', views.LeavePolicyCreateView.as_view(), name='policy_create'),
+    path('policies/<int:pk>/edit/', views.LeavePolicyUpdateView.as_view(), name='policy_update'),
+    
+    # Admin/HR Management - Allocations
+    path('allocation/create/', views.LeaveAllocationCreateView.as_view(), name='allocation_create'),
+    
+    # HR - Balance Adjustment
+    path('balance/adjust/', views.ManualBalanceAdjustmentView.as_view(), name='balance_adjust'),
 ]

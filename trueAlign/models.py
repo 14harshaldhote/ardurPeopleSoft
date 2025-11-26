@@ -3650,7 +3650,7 @@ from datetime import timedelta
 from django.contrib.auth.models import User
 
 class LeavePolicy(models.Model):
-    history = HistoricalRecords()
+    # history = HistoricalRecords()
     """
     Defines leave policies for different groups/departments
     """
@@ -3719,7 +3719,7 @@ class LeaveType(models.Model):
         return str(self.name)  # type: ignore
 
 class LeaveAllocation(models.Model):
-    history = HistoricalRecords()
+    # history = HistoricalRecords()
     """
     Defines how many leaves are allocated per leave type in a policy
     """
@@ -3754,7 +3754,7 @@ class LeaveAllocation(models.Model):
         return f"{self.leave_type.name} allocation for {self.policy.name}"
 
 class UserLeaveBalance(models.Model):
-    history = HistoricalRecords()
+    # history = HistoricalRecords()
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='leave_balances')
     leave_type = models.ForeignKey(LeaveType, on_delete=models.CASCADE)
     year = models.IntegerField()
@@ -3784,7 +3784,7 @@ class UserLeaveBalance(models.Model):
         return f"{self.user.username}'s {self.leave_type.name} balance for {self.year}"  # type: ignore
 
 class LeaveRequest(models.Model):
-    history = HistoricalRecords()
+    # history = HistoricalRecords()
     """
     Enhanced leave request model with dynamic leave types
     """
@@ -4292,7 +4292,7 @@ class LeaveRequest(models.Model):
 
     def get_appropriate_approvers(self):
         """Get list of appropriate approvers based on workflow"""
-        from trueAlign.leave_management.utils import get_potential_approvers
+        from trueAlign.leave_management.selectors import get_potential_approvers
         return get_potential_approvers(self.user)
 
     def is_past_leave(self):
@@ -4332,11 +4332,11 @@ class LeaveRequest(models.Model):
     
     def get_approvers(self):
         """Get list of users who can approve this leave request"""
-        from .leave_management.utils import get_potential_approvers
+        from .leave_management.selectors import get_potential_approvers
         return get_potential_approvers(self.user)
 
 class CompOffRequest(models.Model):
-    history = HistoricalRecords()
+    # history = HistoricalRecords()
     """
     Model to track comp-off requests and approvals
     """
