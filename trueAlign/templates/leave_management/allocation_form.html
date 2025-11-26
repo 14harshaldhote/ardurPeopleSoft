@@ -92,69 +92,69 @@
                         <h4 class="text-base font-bold text-zinc-900 mb-4">Allocation</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label for="id_allocated_days" class="block text-sm font-medium text-zinc-900 mb-2">
-                                    Allocated Days <span class="text-red-500">*</span>
+                                <label for="id_annual_days" class="block text-sm font-medium text-zinc-900 mb-2">
+                                    Annual Days <span class="text-red-500">*</span>
                                 </label>
-                                {{ form.allocated_days }}
-                                {% if form.allocated_days.errors %}
-                                <p class="mt-1 text-sm text-red-600">{{ form.allocated_days.errors.0 }}</p>
+                                {{ form.annual_days }}
+                                {% if form.annual_days.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.annual_days.errors.0 }}</p>
                                 {% endif %}
                                 <p class="mt-1 text-xs text-zinc-600">Number of days allocated per year</p>
                             </div>
 
                             <div>
-                                <label for="id_carry_forward_limit"
-                                    class="block text-sm font-medium text-zinc-900 mb-2">
+                                <label for="id_carryforward_limit" class="block text-sm font-medium text-zinc-900 mb-2">
                                     Carry Forward Limit
                                 </label>
-                                {{ form.carry_forward_limit }}
-                                {% if form.carry_forward_limit.errors %}
-                                <p class="mt-1 text-sm text-red-600">{{ form.carry_forward_limit.errors.0 }}</p>
+                                {{ form.carryforward_limit }}
+                                {% if form.carryforward_limit.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.carryforward_limit.errors.0 }}</p>
                                 {% endif %}
                                 <p class="mt-1 text-xs text-zinc-600">Max days that can be carried forward</p>
                             </div>
 
                             <div>
-                                <label for="id_proration_method" class="block text-sm font-medium text-zinc-900 mb-2">
-                                    Proration Method
+                                <label for="id_advance_notice_days"
+                                    class="block text-sm font-medium text-zinc-900 mb-2">
+                                    Advance Notice (days)
                                 </label>
-                                {{ form.proration_method }}
-                                {% if form.proration_method.errors %}
-                                <p class="mt-1 text-sm text-red-600">{{ form.proration_method.errors.0 }}</p>
+                                {{ form.advance_notice_days }}
+                                {% if form.advance_notice_days.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.advance_notice_days.errors.0 }}</p>
                                 {% endif %}
-                                <p class="mt-1 text-xs text-zinc-600">How to calculate leave for mid-year joiners</p>
+                                <p class="mt-1 text-xs text-zinc-600">Days of notice required before taking leave</p>
                             </div>
 
                             <div>
-                                <label for="id_accrual_frequency" class="block text-sm font-medium text-zinc-900 mb-2">
-                                    Accrual Frequency
+                                <label for="id_max_consecutive_days"
+                                    class="block text-sm font-medium text-zinc-900 mb-2">
+                                    Max Consecutive Days
                                 </label>
-                                {{ form.accrual_frequency }}
-                                {% if form.accrual_frequency.errors %}
-                                <p class="mt-1 text-sm text-red-600">{{ form.accrual_frequency.errors.0 }}</p>
+                                {{ form.max_consecutive_days }}
+                                {% if form.max_consecutive_days.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.max_consecutive_days.errors.0 }}</p>
                                 {% endif %}
-                                <p class="mt-1 text-xs text-zinc-600">How often leave credits are added</p>
+                                <p class="mt-1 text-xs text-zinc-600">Maximum continuous days (0 means no limit)</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Options -->
-                    <div class="p-6 bg-white/10 rounded-xl border border-white/10">
-                        <h4 class="text-base font-bold text-zinc-900 mb-4">Options</h4>
-                        <div class="space-y-4">
-                            <div class="flex items-center">
-                                {{ form.is_active }}
-                                <label for="id_is_active" class="ml-3 text-sm font-medium text-zinc-900">
-                                    Active
-                                </label>
-                            </div>
-
-                            <div class="flex items-center">
-                                {{ form.encashment_allowed }}
-                                <label for="id_encashment_allowed" class="ml-3 text-sm font-medium text-zinc-900">
-                                    Allow Encashment
-                                </label>
-                                <p class="ml-3 text-xs text-zinc-600">Can unused leaves be encashed?</p>
+                    <!-- Info Box -->
+                    <div class="p-4 bg-blue-100/50 rounded-lg border border-blue-200/50">
+                        <div class="flex items-start">
+                            <svg class="w-5 h-5 text-blue-700 mt-0.5 mr-3 flex-shrink-0" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <div>
+                                <h4 class="text-sm font-semibold text-blue-900 mb-1">Allocation Rules</h4>
+                                <ul class="text-xs text-blue-800 list-disc list-inside space-y-1">
+                                    <li>Annual days: Total leave days per year for this type</li>
+                                    <li>Carry forward: Unused days that can roll over to next year</li>
+                                    <li>Advance notice: Minimum days required to request this leave type</li>
+                                    <li>Max consecutive: Longest continuous period allowed (0 = unlimited)</li>
+                                </ul>
                             </div>
                         </div>
                     </div>

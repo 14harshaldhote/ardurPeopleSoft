@@ -1,10 +1,51 @@
 from django.db.models import Q
+from django.utils import timezone
+from decimal import Decimal
 from trueAlign.models import LeavePolicy, LeaveAllocation, UserLeaveBalance, LeaveRequest, CompOffRequest, LeaveType
+
+def initialize_user_balances(user, year):
+    """
+    Initialize or ensure user has leave balances for the given year based on their policy.
+    Creates UserLeaveBalance entries if they don't exist.
+    """
+    policy = get_active_policy(user)
+    if not policy:
+        return
+    
+    # Get all allocations for this policy
+    allocations = LeaveAllocation.objects.filter(
+        policy=policy,
+        is_deleted=False
+    ).select_related('leave_type')
+    
+    for allocation in allocations:
+        # Check if balance already exists for this user, year, and leave type
+        balance, created = UserLeaveBalance.objects.get_or_create(
+            user=user,
+            leave_type=allocation.leave_type,
+            year=year,
+            defaults={
+                'allocated': allocation.annual_days,
+                'used': Decimal('0.00'),
+                'additional': Decimal('0.00'),
+                'carried_forward': Decimal('0.00'),
+                'is_deleted': False
+            }
+        )
+        
+        # If balance already existed but has different allocated amount, update it
+        if not created and balance.allocated != allocation.annual_days:
+            balance.allocated = allocation.annual_days
+            balance.save()
 
 def get_user_leave_balance(user, year):
     """Get leave balance for a user for a specific year"""
+    # First, ensure balances are initialized
+    initialize_user_balances(user, year)
+    
+    # Now fetch and return balances
     balances = UserLeaveBalance.objects.filter(user=user, year=year, is_deleted=False).select_related('leave_type')
-    return {b.leave_type.name: b for b in balances}
+    return balances
 
 def get_pending_approvals(user):
     """Get pending leave requests for a manager/approver"""

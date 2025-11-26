@@ -64,5 +64,9 @@ class EmployeeRequiredMixin(RoleRequiredMixin):
     
     def test_func(self):
         user = self.request.user
-        # Logic matching context_processors.py
-        return user.is_authenticated and user.groups.filter(name="Employee").exists()
+        # Allow all authenticated users - Admin, HR, Manager, and Employee can all apply for leave
+        # This allows everyone to use employee features (apply leave, view own leaves)
+        return user.is_authenticated and (
+            user.groups.filter(name__in=["Employee", "Manager", "HR", "Admin"]).exists() or
+            user.is_superuser
+        )

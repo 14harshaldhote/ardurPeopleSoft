@@ -75,10 +75,16 @@ class LeaveAllocationForm(forms.ModelForm):
         widgets = {
             'policy': forms.Select(attrs={'class': 'form-select'}),
             'leave_type': forms.Select(attrs={'class': 'form-select'}),
-            'annual_days': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.5'}),
-            'advance_notice_days': forms.NumberInput(attrs={'class': 'form-control'}),
-            'max_consecutive_days': forms.NumberInput(attrs={'class': 'form-control'}),
-            'carryforward_limit': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.5'}),
+            'annual_days': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.5', 'placeholder': 'e.g., 12'}),
+            'advance_notice_days': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'e.g., 3'}),
+            'max_consecutive_days': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'e.g., 5 (0 for no limit)'}),
+            'carryforward_limit': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.5', 'placeholder': 'e.g., 5'}),
+        }
+        labels = {
+            'annual_days': 'Annual Days',
+            'advance_notice_days': 'Advance Notice (days)',
+            'max_consecutive_days': 'Max Consecutive Days',
+            'carryforward_limit': 'Carry Forward Limit',
         }
     
     def __init__(self, *args, **kwargs):

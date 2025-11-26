@@ -202,8 +202,7 @@
                     </form>
                     {% endif %}
 
-                    {% if request.user != object.user and request.user.groups.filter|name__in:['Manager','HR','Admin']
-                    %}
+                    {% if request.user != object.user and can_approve %}
                     <form method="post" action="{% url 'leave_management:leave_action' object.id %}">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="approve">

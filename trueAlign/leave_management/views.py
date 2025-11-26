@@ -190,6 +190,14 @@ class LeaveDetailView(EmployeeRequiredMixin, DetailView):
             )
         else:
             return LeaveRequest.objects.filter(user=user)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Check if user can approve/reject (Manager, HR, or Admin)
+        context['can_approve'] = self.request.user.groups.filter(
+            name__in=['Manager', 'HR', 'Admin']
+        ).exists()
+        return context
 
 class MyLeavesView(EmployeeRequiredMixin, ListView):
     model = LeaveRequest
