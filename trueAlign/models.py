@@ -2084,8 +2084,8 @@ class SessionActivity(models.Model):
     Separate model for tracking user activities to improve performance
     """
     # Link to session
-    session = models.ForeignKey(UserSession, on_delete=models.CASCADE, related_name='activities', null=True, blank=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='session_activities' , null=True)
+    session = models.ForeignKey(UserSession, on_delete=models.CASCADE, related_name='activities')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='session_activities')
 
     # Activity timing
     created_at = models.DateTimeField(auto_now_add=True)
@@ -2919,7 +2919,7 @@ class UserActionLog(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_logs')
     action_type = models.CharField(max_length=20, choices=ACTION_TYPES)
-    action_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='performed_actions')
+    action_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='performed_actions')
     timestamp = models.DateTimeField(auto_now_add=True)
     details = models.TextField(blank=True, null=True)
 
@@ -4609,9 +4609,9 @@ class LeaveRequestHistory(models.Model):
         ('attendance_updated', 'Attendance Updated'),
     ]
 
-    leave_request = models.ForeignKey(LeaveRequest, on_delete=models.CASCADE, related_name='history', null=True, blank=True)
+    leave_request = models.ForeignKey(LeaveRequest, on_delete=models.CASCADE, related_name='history')
     action = models.CharField(max_length=20, choices=ACTION_CHOICES)
-    performed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    performed_by = models.ForeignKey(User, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
     old_values = models.JSONField(null=True, blank=True, help_text="Previous values before change")
     new_values = models.JSONField(null=True, blank=True, help_text="New values after change")
@@ -6078,7 +6078,7 @@ class StatusLog(models.Model):
     ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='status_logs')
     old_status = models.CharField(max_length=30, blank=True)
     new_status = models.CharField(max_length=30, choices=Support.Status.choices)
-    changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    changed_by = models.ForeignKey(User, on_delete=models.CASCADE)
     changed_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -6118,7 +6118,7 @@ class TicketActivity(models.Model):
 
     ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='ticket_activity')
     action = models.CharField(max_length=20, choices=Action.choices)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
     details = models.TextField(blank=True)
 
@@ -6758,7 +6758,7 @@ class ShiftValidationRule(models.Model):
     name = models.CharField(max_length=100)
     rule_type = models.CharField(max_length=30, choices=RULE_TYPES)
     value = models.DecimalField(max_digits=10, decimal_places=2)
-    group = models.ForeignKey(Group, on_delete=models.CASCADE, null=True, blank=True)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
