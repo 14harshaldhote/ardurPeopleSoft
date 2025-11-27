@@ -7101,3 +7101,62 @@ class VoucherDetail(models.Model):
 
     def __str__(self):
         return f"{self.voucher.voucher_number} - {self.account.name}"
+
+'''------------------------- LETTER GENERATION --------------------'''
+
+class LetterTemplate(models.Model):
+    """
+    Model to store letter templates.
+    """
+    LETTER_TYPES = [
+        ('OFFER', 'Offer Letter'),
+        ('APPOINTMENT', 'Appointment Letter'),
+        ('PROMOTION', 'Promotion Letter'),
+        ('INCREMENT', 'Increment Letter'),
+        ('RELIEVING', 'Relieving Letter'),
+        ('EXPERIENCE', 'Experience Letter'),
+        ('TRANSFER', 'Transfer Letter'),
+        ('WARNING', 'Warning Letter'),
+        ('SHOW_CAUSE', 'Show Cause Notice'),
+        ('TERMINATION', 'Termination Letter'),
+        ('NON_COMPLIANCE', 'Non-Compliance Notice'),
+        ('ATTENDANCE_VIOLATION', 'Attendance Violation Letter'),
+        ('INTERNSHIP', 'Internship Confirmation'),
+        ('TRAINING', 'Training Completion Letter'),
+        ('REMOTE_WORK', 'Remote Work Approval'),
+        ('POLICY_VIOLATION', 'Policy Violation Advisory'),
+        ('LEAVE_ACTION', 'Leave Approval / Rejection'),
+        ('CERT_APPRECIATION', 'Certificate of Appreciation'),
+        ('CERT_ACHIEVEMENT', 'Certificate of Achievement'),
+        ('CERT_EXCELLENCE', 'Certificate of Excellence'),
+        ('CERT_PARTICIPATION', 'Certificate of Participation'),
+        ('CERT_PROJECT', 'Certificate for Project Completion'),
+        ('OTHER', 'Other'),
+    ]
+
+    name = models.CharField(max_length=255, help_text="Template Name")
+    type = models.CharField(max_length=50, choices=LETTER_TYPES, help_text="Type of Letter")
+    content = models.TextField(help_text="HTML Content with placeholders (e.g., {{employee_name}})")
+    placeholders = models.JSONField(default=list, blank=True, help_text="List of placeholders used in the template")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
+
+    def __str__(self):
+        return f"{self.name} ({self.get_type_display()})"
+
+class GeneratedLetter(models.Model):
+    """
+    Model to store generated letters and their history.
+    """
+    template = models.ForeignKey(LetterTemplate, on_delete=models.SET_NULL, null=True, related_name='generated_letters')
+    employee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='letters_received', help_text="Employee for whom the letter is generated")
+    generated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='letters_generated', help_text="HR User who generated the letter")
+    content = models.TextField(help_text="Final HTML content of the letter")
+    pdf_file = models.FileField(upload_to='generated_letters/', blank=True, null=True)
+    generated_at = models.DateTimeField(auto_now_add=True)
+    history = HistoricalRecords()
+
+    def __str__(self):
+        return f"{self.template.name if self.template else 'Unknown'} - {self.employee.get_full_name()}"

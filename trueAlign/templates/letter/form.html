@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="h-screen flex flex-col bg-gray-50 overflow-hidden">
+    <!-- Top Bar -->
+    <header
+        class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shrink-0 z-10 shadow-sm">
+        <div class="flex items-center space-x-4">
+            <a href="{% url 'letter:dashboard' %}"
+                class="p-2 rounded-full hover:bg-gray-100 text-gray-500 transition-colors duration-200">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+            </a>
+            <div>
+                <h1 class="text-xl font-bold text-gray-900">{{ template.name }}</h1>
+                <p class="text-sm text-gray-500">Fill in the details to generate the document.</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-3">
+            <span class="text-xs font-medium px-2.5 py-0.5 rounded bg-blue-100 text-blue-800">
+                {{ template.get_type_display }}
+            </span>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex overflow-hidden">
+        <!-- Left Side: Form -->
+        <div class="w-1/3 bg-white border-r border-gray-200 overflow-y-auto custom-scrollbar z-0">
+            <div class="p-8">
+                <form id="letterForm" method="post" action="{% url 'letter:generate' template.pk %}" class="space-y-6">
+                    {% csrf_token %}
+
+                    {% for field in form %}
+                    <div class="group">
+                        <label for="{{ field.id_for_label }}"
+                            class="block text-sm font-semibold text-gray-700 mb-1 group-focus-within:text-blue-600 transition-colors duration-200">
+                            {{ field.label }}
+                        </label>
+                        <div class="relative">
+                            {{ field }}
+                            {% if field.errors %}
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                        clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% if field.help_text %}
+                        <p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
+                        {% endif %}
+                        {% if field.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ field.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+
+                    <div class="pt-6 sticky bottom-0 bg-white pb-4 border-t border-gray-100 mt-8">
+                        <button type="submit"
+                            class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:-translate-y-0.5">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                            Generate & Download PDF
+                        </button>
+                        <p class="text-center text-xs text-gray-400 mt-3">
+                            <i class="fas fa-info-circle mr-1"></i> You can edit the preview directly before generating.
+                        </p>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right Side: Live Preview -->
+        <div class="w-2/3 bg-gray-100 overflow-y-auto p-8 flex justify-center items-start relative">
+            <div
+                class="absolute top-4 right-8 z-10 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-gray-500 shadow-sm border border-gray-200">
+                Live Preview (Editable)
+            </div>
+
+            <div id="previewContainer"
+                class="bg-white shadow-2xl p-[25mm] min-h-[297mm] w-[210mm] transform origin-top transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-500/20 rounded-sm text-gray-800 leading-relaxed font-serif">
+
+                <!-- Loading Skeleton -->
+                <div class="animate-pulse space-y-8">
+                    <div class="flex justify-center mb-12">
+                        <div class="h-12 w-12 bg-gray-200 rounded-full"></div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="h-4 bg-gray-200 rounded w-1/4"></div>
+                        <div class="h-4 bg-gray-200 rounded w-1/3"></div>
+                    </div>
+                    <div class="space-y-3 py-8">
+                        <div class="h-4 bg-gray-200 rounded"></div>
+                        <div class="h-4 bg-gray-200 rounded"></div>
+                        <div class="h-4 bg-gray-200 rounded w-5/6"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add some custom styles for the form inputs to match Tailwind classes via JS or basic CSS -->
+<style>
+    /* Custom Scrollbar */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    /* Form Inputs */
+    #letterForm input[type="text"],
+    #letterForm input[type="date"],
+    #letterForm input[type="email"],
+    #letterForm select,
+    #letterForm textarea {
+        display: block;
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+        color: #1f2937;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        transition: all 0.2s ease-in-out;
+    }
+
+    #letterForm input:focus,
+    #letterForm select:focus,
+    #letterForm textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('letterForm');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewUrl = "{% url 'letter:preview' template.pk %}";
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        // Add hidden input for custom content
+        const customContentInput = document.createElement('input');
+        customContentInput.type = 'hidden';
+        customContentInput.name = 'custom_content';
+        form.appendChild(customContentInput);
+
+        let timeoutId;
+        let isManuallyEdited = false;
+
+        function updatePreview() {
+            if (isManuallyEdited) return; // Don't overwrite manual edits
+
+            const formData = new FormData(form);
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+
+            fetch(previewUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify(data)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.html) {
+                        previewContainer.innerHTML = data.html;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching preview:', error);
+                });
+        }
+
+        // Initial preview
+        updatePreview();
+
+        // Update on input change with debounce
+        form.addEventListener('input', function (e) {
+            // Only update if the input is NOT the hidden custom_content input
+            if (e.target !== customContentInput) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(updatePreview, 500);
+            }
+        });
+
+        // Update on select change immediately
+        form.addEventListener('change', function (e) {
+            if (e.target.tagName === 'SELECT') {
+                updatePreview();
+            }
+        });
+
+        // Track manual edits
+        previewContainer.addEventListener('input', function () {
+            isManuallyEdited = true;
+        });
+
+        // On submit, copy preview content to hidden input
+        form.addEventListener('submit', function () {
+            customContentInput.value = previewContainer.innerHTML;
+        });
+    });
+</script>
+{% endblock %}

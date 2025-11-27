@@ -1,0 +1,409 @@
+[
+    {
+        "model": "trueAlign.lettertemplate",
+        "pk": 1,
+        "fields": {
+            "name": "Offer Letter",
+            "type": "OFFER",
+            "content": "<p><strong>Date:</strong> {{ date }}</p><p><strong>To,</strong><br><strong>{{ employee_name }}</strong><br>{{ address }}</p><p><strong>Subject: Offer of Employment</strong></p><p>Dear {{ employee_name }},</p><p>We are pleased to offer you the position of <strong>{{ designation }}</strong> at <strong>Ardur Technology Private Limited</strong>. We were impressed with your skills and experience and believe you will be a valuable asset to our team.</p><p><strong>Key Terms of Employment:</strong></p><ul><li><strong>Start Date:</strong> {{ joining_date }}</li><li><strong>Annual CTC:</strong> {{ ctc }}</li><li><strong>Location:</strong> {{ location }}</li></ul><p>This offer is subject to the verification of your credentials and successful completion of background checks.</p><p>Please sign and return the duplicate copy of this letter as a token of your acceptance.</p><p>We look forward to welcoming you aboard.</p><p>Sincerely,<br><strong>For Ardur Technology Private Limited</strong><br><br>Authorized Signatory</p>",
+            "placeholders": [
+                "date",
+                "employee_name",
+                "address",
+                "designation",
+                "joining_date",
+                "ctc",
+                "location"
+            ],
+            "is_active": true,
+            "created_at": "2025-11-27T10:00:00Z",
+            "updated_at": "2025-11-27T10:00:00Z"
+        }
+    },
+    {
+        "model": "trueAlign.lettertemplate",
+        "pk": 2,
+        "fields": {
+            "name": "Appointment Letter",
+            "type": "APPOINTMENT",
+            "content": "<p><strong>Date:</strong> {{ date }}</p><p><strong>To,</strong><br><strong>{{ employee_name }}</strong><br>Employee ID: {{ employee_id }}</p><p><strong>Subject: Appointment Letter</strong></p><p>Dear {{ employee_name }},</p><p>Further to your acceptance of our offer, we are pleased to appoint you as <strong>{{ designation }}</strong> in the <strong>{{ department }}</strong> department, effective from <strong>{{ joining_date }}</strong>.</p><p><strong>Terms and Conditions:</strong></p><ul><li><strong>Probation:</strong> You will be on probation for a period of {{ probation_period }} months.</li><li><strong>Compensation:</strong> Your remuneration will be as per the agreed terms.</li><li><strong>Policies:</strong> Your employment is governed by the company's policies and service rules.</li></ul><p>We wish you a long and fruitful career with us.</p><p>Sincerely,<br><strong>For Ardur Technology Private Limited</strong><br><br>Authorized Signatory</p>",
+            "placeholders": [
+                "date",
+                "employee_name",
+                "employee_id",
+                "designation",
+                "department",
+                "joining_date",
+                "probation_period"
+            ],
+            "is_active": true,
+            "created_at": "2025-11-27T10:00:00Z",
+            "updated_at": "2025-11-27T10:00:00Z"
+        }
+    },
+    {
+        "model": "trueAlign.lettertemplate",
+        "pk": 3,
+        "fields": {
+            "name": "Promotion Letter",
+            "type": "PROMOTION",
+            "content": "<p><strong>Date:</strong> {{ date }}</p><p><strong>To,</strong><br><strong>{{ employee_name }}</strong><br>{{ current_designation }}</p><p><strong>Subject: Promotion to {{ new_designation }}</strong></p><p>Dear {{ employee_name }},</p><p>We are delighted to inform you that you have been promoted to the position of <strong>{{ new_designation }}</strong>, effective from <strong>{{ effective_date }}</strong>.</p><p>This promotion is a recognition of your hard work, dedication, and contribution to the organization. Your new compensation package will be <strong>{{ new_ctc }}</strong> per annum.</p><p>We are confident that you will continue to excel in your new role and contribute to the company's success.</p><p>Sincerely,<br><strong>For Ardur Technology Private Limited</strong><br><br>Authorized Signatory</p>",
+            "placeholders": [
+                "date",
+                "employee_name",
+                "current_designation",
+                "new_designation",
+                "effective_date",
+                "new_ctc"
+            ],
+            "is_active": true,
+            "created_at": "2025-11-27T10:00:00Z",
+            "updated_at": "2025-11-27T10:00:00Z"
+        }
+    },
+    {
+        "model": "trueAlign.lettertemplate",
+        "pk": 4,
+        "fields": {
+            "name": "Increment Letter",
+            "type": "INCREMENT",
+            "content": "<p><strong>Date:</strong> {{ date }}</p><p><strong>To,</strong><br><strong>{{ employee_name }}</strong></p><p><strong>Subject: Salary Increment</strong></p><p>Dear {{ employee_name }},</p><p>In recognition of your performance during the last appraisal cycle, management is pleased to revise your remuneration. Your annual CTC has been increased to <strong>{{ new_ctc }}</strong>, effective from <strong>{{ effective_date }}</strong>.</p><p>We appreciate your commitment and look forward to your continued contribution.</p><p>Sincerely,<br><strong>For Ardur Technology Private Limited</strong><br><br>Authorized Signatory</p>",
+            "placeholders": [
+                "date",
+                "employee_name",
+                "new_ctc",
+                "effective_date"
+            ],
+            "is_active": true,
+            "created_at": "2025-11-27T10:00:00Z",
+            "updated_at": "2025-11-27T10:00:00Z"
+        }
+    },
+    {
+        "model": "trueAlign.lettertemplate",
+        "pk": 5,
+        "fields": {
+            "name": "Relieving Letter",
+            "type": "RELIEVING",
+            "content": "<p><strong>Date:</strong> {{ date }}</p><p><strong>To,</strong><br><strong>{{ employee_name }}</strong></p><p><strong>Subject: Relieving Letter</strong></p><p>Dear {{ employee_name }},</p><p>This has reference to your resignation dated {{ resignation_date }}. We would like to inform you that your resignation has been accepted, and you are relieved from your duties as <strong>{{ designation }}</strong> at the close of working hours on <strong>{{ last_working_day }}</strong>.</p><p>We wish you all the best in your future endeavors.</p><p>Sincerely,<br><strong>For Ardur Technology Private Limited</strong><br><br>Authorized Signatory</p>",
+            "placeholders": [
+                "date",
+                "employee_name",
+                "resignation_date",
+                "designation",
+                "last_working_day"
+            ],
+            "is_active": true,
+            "created_at": "2025-11-27T10:00:00Z",
+            "updated_at": "2025-11-27T10:00:00Z"
+        }
+    },
+    {
+        "model": "trueAlign.lettertemplate",
+        "pk": 6,
+        "fields": {
+            "name": "Experience Letter",
+            "type": "EXPERIENCE",
+            "content": "<p><strong>Date:</strong> {{ date }}</p><p><strong>To Whom It May Concern</strong></p><p>This is to certify that <strong>{{ employee_name }}</strong> was employed with <strong>Ardur Technology Private Limited</strong> from <strong>{{ joining_date }}</strong> to <strong>{{ last_working_day }}</strong>. Their last held designation was <strong>{{ designation }}</strong>.</p><p>During their tenure, we found them to be sincere, hardworking, and professional. We wish them success in their future endeavors.</p><p>Sincerely,<br><strong>For Ardur Technology Private Limited</strong><br><br>Authorized Signatory</p>",
+            "placeholders": [
+                "date",
+                "employee_name",
+                "joining_date",
+                "last_working_day",
+                "designation"
+            ],
+            "is_active": true,
+            "created_at": "2025-11-27T10:00:00Z",
+            "updated_at": "2025-11-27T10:00:00Z"
+        }
+    },
+    {
+        "model": "trueAlign.lettertemplate",
+        "pk": 7,
+        "fields": {
+            "name": "Transfer Letter",
+            "type": "TRANSFER",
+            "content": "<p><strong>Date:</strong> {{ date }}</p><p><strong>To,</strong><br><strong>{{ employee_name }}</strong></p><p><strong>Subject: Transfer Order</strong></p><p>Dear {{ employee_name }},</p><p>This is to inform you that you are being transferred from the <strong>{{ current_location }}</strong> office to the <strong>{{ new_location }}</strong> office, effective from <strong>{{ effective_date }}</strong>.</p><p>You are requested to report to {{ reporting_manager }} at the new location. All other terms and conditions of your employment remain unchanged.</p><p>Sincerely,<br><strong>For Ardur Technology Private Limited</strong><br><br>Authorized Signatory</p>",
+            "placeholders": [
+                "date",
+                "employee_name",
+                "current_location",
+                "new_location",
+                "effective_date",
+                "reporting_manager"
+            ],
+            "is_active": true,
+            "created_at": "2025-11-27T10:00:00Z",
+            "updated_at": "2025-11-27T10:00:00Z"
+        }
+    },
+    {
+        "model": "trueAlign.lettertemplate",
+        "pk": 8,
+        "fields": {
+            "name": "Warning Letter",
+            "type": "WARNING",
+            "content": "<p><strong>Date:</strong> {{ date }}</p><p><strong>To,</strong><br><strong>{{ employee_name }}</strong></p><p><strong>Subject: Warning Letter for {{ reason }}</strong></p><p>Dear {{ employee_name }},</p><p>It has been brought to our attention that {{ description_of_incident }}. This is a violation of company policy.</p><p>This letter serves as a formal warning. We expect you to rectify this behavior immediately. Further violations may lead to stricter disciplinary action, up to and including termination.</p><p>Sincerely,<br><strong>For Ardur Technology Private Limited</strong><br><br>Authorized Signatory</p>",
+            "placeholders": [
+                "date",
+                "employee_name",
+                "reason",
+                "description_of_incident"
+            ],
+            "is_active": true,
+            "created_at": "2025-11-27T10:00:00Z",
+            "updated_at": "2025-11-27T10:00:00Z"
+        }
+    },
+    {
+        "model": "trueAlign.lettertemplate",
+        "pk": 9,
+        "fields": {
+            "name": "Show Cause Notice",
+            "type": "SHOW_CAUSE",
+            "content": "<p><strong>Date:</strong> {{ date }}</p><p><strong>To,</strong><br><strong>{{ employee_name }}</strong></p><p><strong>Subject: Show Cause Notice</strong></p><p>Dear {{ employee_name }},</p><p>It has been observed that {{ allegation_details }}. This is considered a serious misconduct.</p><p>You are hereby required to explain in writing within {{ hours_to_respond }} hours why disciplinary action should not be taken against you.</p><p>Sincerely,<br><strong>For Ardur Technology Private Limited</strong><br><br>Authorized Signatory</p>",
+            "placeholders": [
+                "date",
+                "employee_name",
+                "allegation_details",
+                "hours_to_respond"
+            ],
+            "is_active": true,
+            "created_at": "2025-11-27T10:00:00Z",
+            "updated_at": "2025-11-27T10:00:00Z"
+        }
+    },
+    {
+        "model": "trueAlign.lettertemplate",
+        "pk": 10,
+        "fields": {
+            "name": "Termination Letter",
+            "type": "TERMINATION",
+            "content": "<p><strong>Date:</strong> {{ date }}</p><p><strong>To,</strong><br><strong>{{ employee_name }}</strong></p><p><strong>Subject: Termination of Employment</strong></p><p>Dear {{ employee_name }},</p><p>We regret to inform you that your employment with Ardur Technology Private Limited is terminated effective <strong>{{ termination_date }}</strong>.</p><p>The reason for this action is: {{ reason_for_termination }}.</p><p>Please hand over all company assets to the HR department immediately.</p><p>Sincerely,<br><strong>For Ardur Technology Private Limited</strong><br><br>Authorized Signatory</p>",
+            "placeholders": [
+                "date",
+                "employee_name",
+                "termination_date",
+                "reason_for_termination"
+            ],
+            "is_active": true,
+            "created_at": "2025-11-27T10:00:00Z",
+            "updated_at": "2025-11-27T10:00:00Z"
+        }
+    },
+    {
+        "model": "trueAlign.lettertemplate",
+        "pk": 11,
+        "fields": {
+            "name": "Non-Compliance Notice",
+            "type": "NON_COMPLIANCE",
+            "content": "<p><strong>Date:</strong> {{ date }}</p><p><strong>To,</strong><br><strong>{{ employee_name }}</strong></p><p><strong>Subject: Notice of Non-Compliance</strong></p><p>Dear {{ employee_name }},</p><p>This is to notify you that you have failed to comply with the {{ policy_name }} policy regarding {{ details }}.</p><p>Please ensure immediate compliance to avoid further action.</p><p>Sincerely,<br><strong>For Ardur Technology Private Limited</strong><br><br>Authorized Signatory</p>",
+            "placeholders": [
+                "date",
+                "employee_name",
+                "policy_name",
+                "details"
+            ],
+            "is_active": true,
+            "created_at": "2025-11-27T10:00:00Z",
+            "updated_at": "2025-11-27T10:00:00Z"
+        }
+    },
+    {
+        "model": "trueAlign.lettertemplate",
+        "pk": 12,
+        "fields": {
+            "name": "Attendance Violation Letter",
+            "type": "ATTENDANCE_VIOLATION",
+            "content": "<p><strong>Date:</strong> {{ date }}</p><p><strong>To,</strong><br><strong>{{ employee_name }}</strong></p><p><strong>Subject: Warning for Irregular Attendance</strong></p><p>Dear {{ employee_name }},</p><p>A review of your attendance records shows that you have been {{ attendance_issue }} (e.g., late, absent without leave) on multiple occasions.</p><p>Consistent attendance is vital for our operations. Please treat this as a formal advisory to improve your attendance record immediately.</p><p>Sincerely,<br><strong>For Ardur Technology Private Limited</strong><br><br>Authorized Signatory</p>",
+            "placeholders": [
+                "date",
+                "employee_name",
+                "attendance_issue"
+            ],
+            "is_active": true,
+            "created_at": "2025-11-27T10:00:00Z",
+            "updated_at": "2025-11-27T10:00:00Z"
+        }
+    },
+    {
+        "model": "trueAlign.lettertemplate",
+        "pk": 13,
+        "fields": {
+            "name": "Internship Confirmation",
+            "type": "INTERNSHIP",
+            "content": "<p><strong>Date:</strong> {{ date }}</p><p><strong>To,</strong><br><strong>{{ intern_name }}</strong></p><p><strong>Subject: Internship Confirmation</strong></p><p>Dear {{ intern_name }},</p><p>We are pleased to confirm your internship with Ardur Technology Private Limited as a <strong>{{ role }}</strong> Intern.</p><p><strong>Duration:</strong> {{ start_date }} to {{ end_date }}<br><strong>Stipend:</strong> {{ stipend }} per month</p><p>We look forward to your contribution.</p><p>Sincerely,<br><strong>For Ardur Technology Private Limited</strong><br><br>Authorized Signatory</p>",
+            "placeholders": [
+                "date",
+                "intern_name",
+                "role",
+                "start_date",
+                "end_date",
+                "stipend"
+            ],
+            "is_active": true,
+            "created_at": "2025-11-27T10:00:00Z",
+            "updated_at": "2025-11-27T10:00:00Z"
+        }
+    },
+    {
+        "model": "trueAlign.lettertemplate",
+        "pk": 14,
+        "fields": {
+            "name": "Training Completion Letter",
+            "type": "TRAINING",
+            "content": "<p><strong>Date:</strong> {{ date }}</p><p><strong>To,</strong><br><strong>{{ employee_name }}</strong></p><p><strong>Subject: Completion of Training</strong></p><p>Dear {{ employee_name }},</p><p>This is to certify that you have successfully completed the training program on <strong>{{ training_topic }}</strong> held from {{ start_date }} to {{ end_date }}.</p><p>We hope this training helps you in your professional growth.</p><p>Sincerely,<br><strong>For Ardur Technology Private Limited</strong><br><br>Authorized Signatory</p>",
+            "placeholders": [
+                "date",
+                "employee_name",
+                "training_topic",
+                "start_date",
+                "end_date"
+            ],
+            "is_active": true,
+            "created_at": "2025-11-27T10:00:00Z",
+            "updated_at": "2025-11-27T10:00:00Z"
+        }
+    },
+    {
+        "model": "trueAlign.lettertemplate",
+        "pk": 15,
+        "fields": {
+            "name": "Remote Work Approval",
+            "type": "REMOTE_WORK",
+            "content": "<p><strong>Date:</strong> {{ date }}</p><p><strong>To,</strong><br><strong>{{ employee_name }}</strong></p><p><strong>Subject: Approval for Remote Work</strong></p><p>Dear {{ employee_name }},</p><p>Your request for remote work has been approved for the period <strong>{{ start_date }}</strong> to <strong>{{ end_date }}</strong>.</p><p>Please ensure you remain accessible during working hours and adhere to the remote work policy.</p><p>Sincerely,<br><strong>For Ardur Technology Private Limited</strong><br><br>Authorized Signatory</p>",
+            "placeholders": [
+                "date",
+                "employee_name",
+                "start_date",
+                "end_date"
+            ],
+            "is_active": true,
+            "created_at": "2025-11-27T10:00:00Z",
+            "updated_at": "2025-11-27T10:00:00Z"
+        }
+    },
+    {
+        "model": "trueAlign.lettertemplate",
+        "pk": 16,
+        "fields": {
+            "name": "Policy Violation Advisory",
+            "type": "POLICY_VIOLATION",
+            "content": "<p><strong>Date:</strong> {{ date }}</p><p><strong>To,</strong><br><strong>{{ employee_name }}</strong></p><p><strong>Subject: Advisory Note - Policy Violation</strong></p><p>Dear {{ employee_name }},</p><p>It has been noted that you have violated the {{ policy_name }} by {{ violation_details }}.</p><p>We advise you to strictly adhere to company policies to maintain a professional work environment.</p><p>Sincerely,<br><strong>For Ardur Technology Private Limited</strong><br><br>Authorized Signatory</p>",
+            "placeholders": [
+                "date",
+                "employee_name",
+                "policy_name",
+                "violation_details"
+            ],
+            "is_active": true,
+            "created_at": "2025-11-27T10:00:00Z",
+            "updated_at": "2025-11-27T10:00:00Z"
+        }
+    },
+    {
+        "model": "trueAlign.lettertemplate",
+        "pk": 17,
+        "fields": {
+            "name": "Leave Approval / Rejection",
+            "type": "LEAVE_ACTION",
+            "content": "<p><strong>Date:</strong> {{ date }}</p><p><strong>To,</strong><br><strong>{{ employee_name }}</strong></p><p><strong>Subject: Update on Leave Application</strong></p><p>Dear {{ employee_name }},</p><p>Your leave application for the period {{ start_date }} to {{ end_date }} has been <strong>{{ status }}</strong> (Approved/Rejected).</p><p><strong>Comments:</strong> {{ comments }}</p><p>Sincerely,<br><strong>For Ardur Technology Private Limited</strong><br><br>Authorized Signatory</p>",
+            "placeholders": [
+                "date",
+                "employee_name",
+                "start_date",
+                "end_date",
+                "status",
+                "comments"
+            ],
+            "is_active": true,
+            "created_at": "2025-11-27T10:00:00Z",
+            "updated_at": "2025-11-27T10:00:00Z"
+        }
+    },
+    {
+        "model": "trueAlign.lettertemplate",
+        "pk": 18,
+        "fields": {
+            "name": "Certificate of Appreciation",
+            "type": "CERT_APPRECIATION",
+            "content": "<div style='text-align: center; border: 5px double #333; padding: 40px; margin: 20px;'><h1>Certificate of Appreciation</h1><p style='font-size: 14pt;'>This certificate is proudly presented to</p><h2 style='font-size: 24pt; color: #003366;'>{{ employee_name }}</h2><p>In recognition of your outstanding contribution and dedication towards <strong>{{ project_or_reason }}</strong>.</p><p><strong>Date:</strong> {{ date }}</p><br><br><p><strong>Authorized Signatory</strong></p></div>",
+            "placeholders": [
+                "employee_name",
+                "project_or_reason",
+                "date"
+            ],
+            "is_active": true,
+            "created_at": "2025-11-27T10:00:00Z",
+            "updated_at": "2025-11-27T10:00:00Z"
+        }
+    },
+    {
+        "model": "trueAlign.lettertemplate",
+        "pk": 19,
+        "fields": {
+            "name": "Certificate of Achievement",
+            "type": "CERT_ACHIEVEMENT",
+            "content": "<div style='text-align: center; border: 5px solid gold; padding: 40px; margin: 20px;'><h1>Certificate of Achievement</h1><p style='font-size: 14pt;'>Awarded to</p><h2 style='font-size: 24pt; color: #003366;'>{{ employee_name }}</h2><p>For achieving <strong>{{ achievement_details }}</strong>.</p><p>We are proud of your success!</p><p><strong>Date:</strong> {{ date }}</p><br><br><p><strong>Authorized Signatory</strong></p></div>",
+            "placeholders": [
+                "employee_name",
+                "achievement_details",
+                "date"
+            ],
+            "is_active": true,
+            "created_at": "2025-11-27T10:00:00Z",
+            "updated_at": "2025-11-27T10:00:00Z"
+        }
+    },
+    {
+        "model": "trueAlign.lettertemplate",
+        "pk": 20,
+        "fields": {
+            "name": "Certificate of Excellence",
+            "type": "CERT_EXCELLENCE",
+            "content": "<div style='text-align: center; border: 5px solid #003366; padding: 40px; margin: 20px;'><h1>Certificate of Excellence</h1><p style='font-size: 14pt;'>Presented to</p><h2 style='font-size: 24pt; color: #003366;'>{{ employee_name }}</h2><p>For demonstrating excellence in <strong>{{ field_or_project }}</strong>.</p><p><strong>Date:</strong> {{ date }}</p><br><br><p><strong>Authorized Signatory</strong></p></div>",
+            "placeholders": [
+                "employee_name",
+                "field_or_project",
+                "date"
+            ],
+            "is_active": true,
+            "created_at": "2025-11-27T10:00:00Z",
+            "updated_at": "2025-11-27T10:00:00Z"
+        }
+    },
+    {
+        "model": "trueAlign.lettertemplate",
+        "pk": 21,
+        "fields": {
+            "name": "Certificate of Participation",
+            "type": "CERT_PARTICIPATION",
+            "content": "<div style='text-align: center; border: 3px solid #666; padding: 40px; margin: 20px;'><h1>Certificate of Participation</h1><p style='font-size: 14pt;'>This is to certify that</p><h2 style='font-size: 24pt; color: #003366;'>{{ employee_name }}</h2><p>Has actively participated in <strong>{{ event_name }}</strong> held on {{ date }}.</p><br><br><p><strong>Authorized Signatory</strong></p></div>",
+            "placeholders": [
+                "employee_name",
+                "event_name",
+                "date"
+            ],
+            "is_active": true,
+            "created_at": "2025-11-27T10:00:00Z",
+            "updated_at": "2025-11-27T10:00:00Z"
+        }
+    },
+    {
+        "model": "trueAlign.lettertemplate",
+        "pk": 22,
+        "fields": {
+            "name": "Certificate for Project Completion",
+            "type": "CERT_PROJECT",
+            "content": "<div style='text-align: center; border: 3px solid #000; padding: 40px; margin: 20px;'><h1>Certificate of Completion</h1><p style='font-size: 14pt;'>Awarded to</p><h2 style='font-size: 24pt; color: #003366;'>{{ employee_name }}</h2><p>For successfully completing the project <strong>{{ project_name }}</strong>.</p><p><strong>Date:</strong> {{ date }}</p><br><br><p><strong>Authorized Signatory</strong></p></div>",
+            "placeholders": [
+                "employee_name",
+                "project_name",
+                "date"
+            ],
+            "is_active": true,
+            "created_at": "2025-11-27T10:00:00Z",
+            "updated_at": "2025-11-27T10:00:00Z"
+        }
+    }
+]

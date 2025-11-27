@@ -26,6 +26,7 @@ urlpatterns = [
     path('shift/', include('trueAlign.shift.urls')),
     path('leave_management/', include('trueAlign.leave_management.urls')),
     path('attendance/', include('trueAlign.attendance.urls')),
+    path('letter/', include('trueAlign.letter.urls')),
     path('notes/', include('trueAlign.notes.urls')),
     path('support/', include('trueAlign.support.urls')),
     path('notifications/', include('trueAlign.notifications.urls')),

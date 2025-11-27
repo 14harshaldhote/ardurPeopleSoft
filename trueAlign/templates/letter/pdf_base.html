@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Letter Generation</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1cm;
+
+            @frame header_frame {
+                -pdf-frame-content: header_content;
+                top: 1cm;
+                left: 1cm;
+                width: 19cm;
+                height: 3cm;
+            }
+
+            @frame footer_frame {
+                -pdf-frame-content: footer_content;
+                bottom: 1cm;
+                left: 1cm;
+                width: 19cm;
+                height: 1cm;
+            }
+
+            @frame content_frame {
+                left: 1cm;
+                width: 19cm;
+                top: 4.5cm;
+                bottom: 2.5cm;
+            }
+        }
+
+        body {
+            font-family: "Helvetica", sans-serif;
+            font-size: 11pt;
+            line-height: 1.6;
+            color: #222;
+        }
+
+        #header_content {
+            text-align: center;
+            border-bottom: 2px solid #003366;
+            padding-bottom: 10px;
+        }
+
+        .logo {
+            height: 50px;
+            margin-bottom: 5px;
+        }
+
+        .company-name {
+            font-size: 16pt;
+            font-weight: bold;
+            color: #003366;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .company-details {
+            font-size: 8pt;
+            color: #555;
+            margin-top: 2px;
+        }
+
+        #footer_content {
+            text-align: center;
+            font-size: 8pt;
+            color: #777;
+            border-top: 1px solid #ccc;
+            padding-top: 5px;
+        }
+
+        /* Utility classes */
+        strong {
+            font-weight: bold;
+            color: #000;
+        }
+
+        ul {
+            margin-left: 20px;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="header_content">
+        <img src="static/images/ardurtech.png" class="logo" alt="Ardur Technology">
+        <div class="company-name">Ardur Technology Private Limited</div>
+        <div class="company-details">
+            Reg. Office: 2nd Floor, XYZ Business Plaza, Pune – 411001<br>
+            CIN: U72900PN2023PTC123456 | Contact: hr@ardurtech.com | +91 9876543210
+        </div>
+    </div>
+
+    <div id="footer_content">
+        Ardur Technology Private Limited | www.ardurtech.com | Confidential
+    </div>
+
+    <div class="content">
+        {{ content|safe }}
+    </div>
+</body>
+
+</html>
