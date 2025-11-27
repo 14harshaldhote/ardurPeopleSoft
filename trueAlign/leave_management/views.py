@@ -20,6 +20,7 @@ from .services.leave_service import apply_leave, approve_leave, reject_leave, ca
 from .services.comp_off_service import request_comp_off, approve_comp_off, reject_comp_off
 from .analytics import get_leave_type_distribution, get_daily_leave_status, get_team_attendance_stats, get_pending_request_stats
 from .mixins import AdminRequiredMixin, HRRequiredMixin, ManagerRequiredMixin, EmployeeRequiredMixin
+from .events import dispatch_leave_event, LEAVE_APPROVED, LEAVE_REJECTED, LEAVE_CANCELLED, DATES_SUGGESTED
 
 User = get_user_model()
 
@@ -154,16 +155,40 @@ class LeaveActionView(EmployeeRequiredMixin, View):
         action = request.POST.get('action')
         reason = request.POST.get('reason')
         
+        
         try:
+            leave_request = get_object_or_404(LeaveRequest, pk=pk)
+            
             if action == 'approve':
                 approve_leave(pk, request.user)
+                dispatch_leave_event(LEAVE_APPROVED, leave_request, request.user)
                 messages.success(request, "Leave request approved.")
             elif action == 'reject':
                 reject_leave(pk, request.user, reason)
+                dispatch_leave_event(LEAVE_REJECTED, leave_request, request.user, reason=reason)
                 messages.success(request, "Leave request rejected.")
             elif action == 'cancel':
                 cancel_leave(pk, request.user)
+                dispatch_leave_event(LEAVE_CANCELLED, leave_request, request.user)
                 messages.success(request, "Leave request cancelled.")
+            elif action == 'suggest_dates':
+                start_date = request.POST.get('suggested_start_date')
+                end_date = request.POST.get('suggested_end_date')
+                
+                if start_date and end_date:
+                    leave_request.suggested_dates = {
+                        'start_date': start_date,
+                        'end_date': end_date,
+                        'reason': reason,
+                        'suggested_by': request.user.id,
+                        'suggested_at': timezone.now().isoformat()
+                    }
+                    leave_request.save(update_fields=['suggested_dates'])
+                    
+                    dispatch_leave_event(DATES_SUGGESTED, leave_request, request.user, suggested_dates=leave_request.suggested_dates)
+                    messages.success(request, "Dates suggested successfully.")
+                else:
+                    messages.error(request, "Please provide both start and end dates.")
             else:
                 messages.error(request, "Invalid action.")
         except ValidationError as e:
@@ -265,7 +290,7 @@ class TeamLeavesView(ManagerRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         # Get team members where current user is the approver
         context['team_members'] = User.objects.filter(
-            leaverequest__approver=self.request.user
+            leave_requests__approver=self.request.user
         ).distinct()
         context['leave_types'] = LeaveType.objects.filter(is_active=True)
         

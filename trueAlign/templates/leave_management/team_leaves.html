@@ -44,8 +44,7 @@
                             class="w-full px-3 py-2 bg-white/20 border border-white/20 rounded-lg text-sm">
                             <option value="">All Team Members</option>
                             {% for member in team_members %}
-                            <option value="{{ member.id }}" {% if request.GET.employee==member.id|stringformat:"s"
-                                %}selected{% endif %}>
+                            <option value="{{ member.id }}" {% if request.GET.employee == member.id|stringformat:"s" %}selected{% endif %}>
                                 {{ member.get_full_name|default:member.username }}
                             </option>
                             {% endfor %}
@@ -57,11 +56,11 @@
                         <select name="status"
                             class="w-full px-3 py-2 bg-white/20 border border-white/20 rounded-lg text-sm">
                             <option value="">All Statuses</option>
-                            <option value="Pending" {% if request.GET.status=='Pending' %}selected{% endif %}>Pending
+                            <option value="Pending" {% if request.GET.status == 'Pending' %}selected{% endif %}>Pending
                             </option>
-                            <option value="Approved" {% if request.GET.status=='Approved' %}selected{% endif %}>Approved
+                            <option value="Approved" {% if request.GET.status == 'Approved' %}selected{% endif %}>Approved
                             </option>
-                            <option value="Rejected" {% if request.GET.status=='Rejected' %}selected{% endif %}>Rejected
+                            <option value="Rejected" {% if request.GET.status == 'Rejected' %}selected{% endif %}>Rejected
                             </option>
                         </select>
                     </div>
@@ -72,8 +71,7 @@
                             class="w-full px-3 py-2 bg-white/20 border border-white/20 rounded-lg text-sm">
                             <option value="">All Types</option>
                             {% for type in leave_types %}
-                            <option value="{{ type.id }}" {% if request.GET.leave_type==type.id|stringformat:"s"
-                                %}selected{% endif %}>{{ type.name }}</option>
+                            <option value="{{ type.id }}" {% if request.GET.leave_type == type.id|stringformat:"s" %}selected{% endif %}>{{ type.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -174,16 +172,14 @@
                                         </span>
                                     </div>
                                     <p class="text-sm text-zinc-600">
-                                        {{ leave.start_date|date:"M d" }} - {{ leave.end_date|date:"M d, Y" }} ({{
-                                        leave.leave_days }} days)
+                                        {{ leave.start_date|date:"M d" }} - {{ leave.end_date|date:"M d, Y" }} ({{ leave.leave_days }} day{{ leave.leave_days|floatformat:0|pluralize }})
                                     </p>
                                     <p class="text-xs text-zinc-500 mt-1 line-clamp-1">{{ leave.reason }}</p>
                                     <div class="mt-2 flex items-center text-xs text-zinc-500 space-x-3">
                                         <span>Applied {{ leave.created_at|timesince }} ago</span>
                                         {% if leave.approver %}
                                         <span>•</span>
-                                        <span>Approver: {{ leave.approver.get_full_name|default:leave.approver.username
-                                            }}</span>
+                                        <span>Approver: {{ leave.approver.get_full_name|default:leave.approver.username }}</span>
                                         {% endif %}
                                     </div>
                                 </div>

@@ -61,8 +61,7 @@
                         </div>
                         <div>
                             <p class="text-zinc-600 text-xs sm:text-sm mb-1">Pending Approvals</p>
-                            <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">{{
-                                pending_approvals|length }}</p>
+                            <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">{{ pending_approvals|length }}</p>
                         </div>
                     </div>
                 </div>
@@ -83,8 +82,7 @@
                         </div>
                         <div>
                             <p class="text-zinc-600 text-xs sm:text-sm mb-1">Team Members</p>
-                            <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">{{
-                                team_attendance_stats.total_team_members|default:0 }}</p>
+                            <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">{{ team_attendance_stats.total_team_members|default:0 }}</p>
                         </div>
                     </div>
                 </div>
@@ -105,8 +103,7 @@
                         </div>
                         <div>
                             <p class="text-zinc-600 text-xs sm:text-sm mb-1">On Leave Today</p>
-                            <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">{{
-                                today_leaves|length|default:0 }}</p>
+                            <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">{{ today_leaves|length|default:0 }}</p>
                         </div>
                     </div>
                 </div>
@@ -127,8 +124,7 @@
                         </div>
                         <div>
                             <p class="text-zinc-600 text-xs sm:text-sm mb-1">Present Today</p>
-                            <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">{{
-                                team_attendance_stats.present_count|default:0 }}</p>
+                            <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">{{ team_attendance_stats.present_count|default:0 }}</p>
                         </div>
                     </div>
                 </div>
@@ -179,8 +175,7 @@
                                         </span>
                                     </div>
                                     <p class="text-sm text-zinc-600">
-                                        {{ leave.start_date|date:"M d" }} - {{ leave.end_date|date:"M d, Y" }} ({{
-                                        leave.leave_days }} days)
+                                        {{ leave.start_date|date:"M d" }} - {{ leave.end_date|date:"M d, Y" }} ({{ leave.leave_days }} days)
                                     </p>
                                     <p class="text-xs text-zinc-500 mt-1 line-clamp-1">{{ leave.reason }}</p>
                                 </div>
@@ -236,14 +231,12 @@
                             </div>
                         </div>
                         <div class="ml-3 flex-1">
-                            <p class="text-sm font-medium text-zinc-900">{{
-                                leave.user.get_full_name|default:leave.user.username }}</p>
+                            <p class="text-sm font-medium text-zinc-900">{{ leave.user.get_full_name|default:leave.user.username }}</p>
                             <p class="text-xs text-zinc-600">{{ leave.leave_type.name }}</p>
                         </div>
                     </div>
                     <div class="text-right">
-                        <p class="text-sm text-zinc-900">{{ leave.start_date|date:"M d" }} - {{ leave.end_date|date:"M
-                            d, Y" }}</p>
+                        <p class="text-sm text-zinc-900">{{ leave.start_date|date:"M d" }} - {{ leave.end_date|date:"M d, Y" }}</p>
                         <span
                             class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {% if leave.status == 'Approved' %}bg-green-100/80 text-green-800{% else %}bg-yellow-100/80 text-yellow-800{% endif %}">
                             {{ leave.status }}
