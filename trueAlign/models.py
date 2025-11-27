@@ -9,6 +9,7 @@ import logging
 from django.db.models import JSONField
 from django.db.models import Q
 from django.db import transaction
+from simple_history.models import HistoricalRecords
 
 import uuid
 import json
@@ -20,7 +21,7 @@ from django.core.exceptions import ValidationError
 from django.core.cache import cache
 from django.core.validators import MinValueValidator, MaxValueValidator
 from decimal import Decimal
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save 
 from django.dispatch import receiver
 
 # Try importing geoip2, but make it optional
@@ -3649,6 +3650,7 @@ from datetime import timedelta
 from django.contrib.auth.models import User
 
 class LeavePolicy(models.Model):
+    # history = HistoricalRecords()
     """
     Defines leave policies for different groups/departments
     """
@@ -3717,6 +3719,7 @@ class LeaveType(models.Model):
         return str(self.name)  # type: ignore
 
 class LeaveAllocation(models.Model):
+    # history = HistoricalRecords()
     """
     Defines how many leaves are allocated per leave type in a policy
     """
@@ -3744,13 +3747,15 @@ class LeaveAllocation(models.Model):
 
     def clean(self):
         """Validate allocation data"""
-        if self.carryforward_limit > self.annual_days:
-            raise ValidationError("Carryforward limit cannot exceed annual allocation")
+        if self.carryforward_limit is not None and self.annual_days is not None:
+            if self.carryforward_limit > self.annual_days:
+                raise ValidationError("Carryforward limit cannot exceed annual allocation")
 
     def __str__(self):
         return f"{self.leave_type.name} allocation for {self.policy.name}"
 
 class UserLeaveBalance(models.Model):
+    # history = HistoricalRecords()
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='leave_balances')
     leave_type = models.ForeignKey(LeaveType, on_delete=models.CASCADE)
     year = models.IntegerField()
@@ -3780,6 +3785,7 @@ class UserLeaveBalance(models.Model):
         return f"{self.user.username}'s {self.leave_type.name} balance for {self.year}"  # type: ignore
 
 class LeaveRequest(models.Model):
+    # history = HistoricalRecords()
     """
     Enhanced leave request model with dynamic leave types
     """
@@ -3828,10 +3834,21 @@ class LeaveRequest(models.Model):
             )
         ]
 
+    def _get_user_safely(self):
+        """
+        Safely get user without raising RelatedObjectDoesNotExist.
+        Returns None if user is not set or relationship doesn't exist yet.
+        """
+        try:
+            return self.user if hasattr(self, 'user_id') and self.user_id else None
+        except ObjectDoesNotExist:
+            return None
+
     def clean(self):
         # Only validate user when saving to database (not during form validation)
         if self.pk is not None or (hasattr(self, '_state') and not self._state.adding):
-            if not self.user:
+            user = self._get_user_safely()
+            if not user:
                 raise ValidationError("User is required")
 
         # Check if end date is after start date
@@ -3847,7 +3864,8 @@ class LeaveRequest(models.Model):
             raise ValidationError(f"{self.leave_type.name} requires supporting documentation")
 
         # Check for advance notice requirement (only if user is set)
-        if self.user:
+        user = self._get_user_safely()
+        if user:
             user_policy = self.get_user_policy()
             if user_policy and self.leave_type:
                 try:
@@ -3870,13 +3888,13 @@ class LeaveRequest(models.Model):
                     pass
 
         # Check for overlapping leaves - include both Approved and Pending (only if user is set)
-        if self.user and self.start_date and self.end_date:
+        if user and self.start_date and self.end_date:
             overlap_statuses = ['Approved', 'Pending']
             overlapping_leaves = LeaveRequest.objects.filter(
                 status__in=overlap_statuses,
                 start_date__lte=self.end_date,
                 end_date__gte=self.start_date,
-                user=self.user,
+                user=user,
                 is_deleted=False
             )
             if self.pk is not None:
@@ -3886,7 +3904,7 @@ class LeaveRequest(models.Model):
                 raise ValidationError("You already have approved or pending leave during this period")
 
         # Check leave balance (only if user and leave_type are set)
-        if self.user and self.leave_type and self.start_date:
+        if user and self.leave_type and self.start_date:
             if not self.has_sufficient_balance():
                 raise ValidationError(f"Insufficient {self.leave_type.name} balance")
 
@@ -3941,8 +3959,15 @@ class LeaveRequest(models.Model):
 
     def has_sufficient_balance(self):
         """Check if user has sufficient leave balance"""
-        if not self.user:
-            logger.debug("has_sufficient_balance - no user")
+        try:
+            # Try to access user - this will fail on unsaved instances
+            user = self.user
+            if not user:
+                logger.debug("has_sufficient_balance - no user")
+                return False
+        except ObjectDoesNotExist:
+            # Instance not saved yet, can't check balance
+            logger.debug("has_sufficient_balance - unsaved instance, cannot check balance")
             return False
 
         # Skip balance check for unpaid leave types
@@ -3953,7 +3978,7 @@ class LeaveRequest(models.Model):
         year = self.start_date.year
         try:
             balance = UserLeaveBalance.objects.get(
-                user=self.user,
+                user=user,
                 leave_type=self.leave_type,
                 year=year,
                 is_deleted=False
@@ -4287,7 +4312,7 @@ class LeaveRequest(models.Model):
 
     def get_appropriate_approvers(self):
         """Get list of appropriate approvers based on workflow"""
-        from trueAlign.leave_management.utils import get_potential_approvers
+        from trueAlign.leave_management.selectors import get_potential_approvers
         return get_potential_approvers(self.user)
 
     def is_past_leave(self):
@@ -4327,10 +4352,11 @@ class LeaveRequest(models.Model):
     
     def get_approvers(self):
         """Get list of users who can approve this leave request"""
-        from .leave_management.utils import get_potential_approvers
+        from .leave_management.selectors import get_potential_approvers
         return get_potential_approvers(self.user)
 
 class CompOffRequest(models.Model):
+    # history = HistoricalRecords()
     """
     Model to track comp-off requests and approvals
     """

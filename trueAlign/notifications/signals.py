@@ -184,7 +184,7 @@ def leave_notification(sender, instance, created, **kwargs):
                 message=f'Leave request from {instance.user.get_full_name()}',
                 module='leave',
                 reference_id=str(instance.id),
-                url=f'/leave/request/{instance.id}/'
+                url=f'/leave_management/request/{instance.id}/'
             )
     elif hasattr(instance, 'status_changed') and instance.status_changed:
         if instance.status in ['approved', 'rejected']:
@@ -194,7 +194,7 @@ def leave_notification(sender, instance, created, **kwargs):
                 message=f'Your leave request has been {instance.status}',
                 module='leave',
                 reference_id=str(instance.id),
-                url=f'/leave/request/{instance.id}/'
+                url=f'/leave_management/request/{instance.id}/'
             )
 
 # Shift Management Signals

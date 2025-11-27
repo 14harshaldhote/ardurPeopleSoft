@@ -34,7 +34,7 @@ urlpatterns = [
     path('finance/', include('trueAlign.finance.urls')),
 
     # API endpoints
-    path('api/', include('trueAlign.leave_management.api_urls')),
+    # path('api/', include('trueAlign.leave_management.api_urls')),
     path('api/attendance/', include('trueAlign.attendance.api_urls')),
 
     # The session endpoints will be handled by core.urls directly

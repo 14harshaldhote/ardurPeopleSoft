@@ -1,240 +1,170 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}Apply for Leave - Leave Management{% endblock %}
+
+{% block title %}Apply Leave - TrueAlign{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <div class="bg-white shadow-sm border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center py-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <h1 class="text-2xl font-bold text-gray-900">Apply for Leave</h1>
-                        <p class="text-sm text-gray-500">Submit a new leave request</p>
-                    </div>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="{% url 'leave_management:dashboard' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                        </svg>
-                        Back to Dashboard
-                    </a>
-                </div>
+<div class="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-6 w-full max-w-full overflow-x-hidden">
+    <!-- Header Section -->
+    <div
+        class="relative overflow-hidden mb-3 sm:mb-6 rounded-[16px] sm:rounded-[20px] lg:rounded-[28px] bg-white/10 border border-white/40 shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:scale-[1.005] sm:hover:scale-[1.015] transition-all duration-500">
+        <!-- Gradient Background -->
+        <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-white/10 rounded-[28px]"></div>
+
+        <!-- Soft Orbs -->
+        <div class="absolute inset-0 overflow-hidden">
+            <div
+                class="absolute -top-8 sm:-top-16 -left-8 sm:-left-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-br from-emerald-300/30 to-emerald-400/10 rounded-full">
             </div>
+            <div
+                class="absolute -bottom-8 sm:-bottom-16 -right-8 sm:-right-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-tr from-teal-400/30 to-teal-500/10 rounded-full">
+            </div>
+        </div>
+
+        <!-- Header Content -->
+        <div class="relative p-3 sm:p-6 md:p-8 lg:p-12 z-10 w-full">
+            <!-- Top Navigation -->
+            <nav
+                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-md p-2 sm:p-3 mb-3 sm:mb-6 flex flex-col sm:flex-row gap-3 sm:gap-0 justify-between items-center">
+                <div
+                    class="px-3 sm:px-4 lg:px-5 py-2 sm:py-3 backdrop-blur-sm bg-white/20 rounded-lg sm:rounded-xl border border-white/10">
+                    <span class="text-zinc-900 font-bold text-sm sm:text-base lg:text-lg">Leave Application</span>
+                </div>
+
+                <a href="{% url 'leave_management:employee_dashboard' %}"
+                    class="inline-flex items-center px-4 py-2 backdrop-blur-sm bg-white/20 rounded-xl border border-white/10 text-sm font-medium text-gray-700 hover:bg-white/30 hover:scale-105 transition-all duration-200">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Back to Dashboard
+                </a>
+            </nav>
         </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Leave Balance Sidebar -->
-            <div class="lg:col-span-1">
-                <div class="bg-white shadow-sm rounded-lg border border-gray-200 sticky top-8">
-                    <div class="px-6 py-4 border-b border-gray-200">
-                        <h3 class="text-lg font-medium text-gray-900 flex items-center">
-                            <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
-                            </svg>
-                            Your Leave Balance
-                        </h3>
-                    </div>
-                    <div class="p-6">
-                        {% if balances %}
-                            <div class="space-y-4">
-                                {% for balance in balances %}
-                                    <div class="p-4 bg-gray-50 rounded-lg">
-                                        <div class="flex justify-between items-start mb-2">
-                                            <h4 class="text-sm font-medium text-gray-900">{{ balance.leave_type }}</h4>
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                                                {% if balance.is_paid %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %}">
-                                                {% if balance.is_paid %}Paid{% else %}Unpaid{% endif %}
-                                            </span>
-                                        </div>
-                                        <div class="space-y-1">
-                                            <div class="flex justify-between text-sm">
-                                                <span class="text-gray-500">Available:</span>
-                                                <span class="font-medium text-gray-900">{{ balance.available|floatformat:1 }} days</span>
-                                            </div>
-                                            <div class="flex justify-between text-sm">
-                                                <span class="text-gray-500">Used:</span>
-                                                <span class="text-gray-600">{{ balance.used|floatformat:1 }} / {{ balance.allocated|floatformat:1 }}</span>
-                                            </div>
-                                            {% if balance.carried_forward > 0 %}
-                                                <div class="flex justify-between text-sm">
-                                                    <span class="text-gray-500">Carried Forward:</span>
-                                                    <span class="text-blue-600">{{ balance.carried_forward|floatformat:1 }}</span>
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            <div class="text-center py-8">
-                                <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
-                                </svg>
-                                <p class="text-gray-500 text-sm">No leave balance information available</p>
-                            </div>
+    <!-- Application Form -->
+    <div class="max-w-3xl mx-auto">
+        <div
+            class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner overflow-hidden">
+            <div class="px-4 sm:px-6 py-4 sm:py-6 border-b border-white/10 bg-white/10">
+                <h3 class="text-lg sm:text-xl font-bold text-zinc-900">Apply for Leave</h3>
+                <p class="mt-1 text-xs sm:text-sm text-zinc-600">Fill in the details below to submit your leave request
+                </p>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" class="px-4 sm:px-6 py-6">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                <div class="mb-4 p-4 rounded-lg bg-red-100/80 border border-red-200/50">
+                    {% for error in form.non_field_errors %}
+                    <p class="text-sm text-red-800">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="space-y-4 sm:space-y-6">
+                    <!-- Leave Type -->
+                    <div>
+                        <label for="id_leave_type" class="block text-sm font-medium text-zinc-900 mb-2">
+                            Leave Type <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.leave_type }}
+                        {% if form.leave_type.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.leave_type.errors.0 }}</p>
                         {% endif %}
                     </div>
-                </div>
-            </div>
 
-            <!-- Leave Application Form -->
-            <div class="lg:col-span-2">
-                <div class="bg-white shadow-sm rounded-lg border border-gray-200">
-                    <div class="px-6 py-4 border-b border-gray-200">
-                        <h3 class="text-lg font-medium text-gray-900">Leave Application Form</h3>
-                        <p class="text-sm text-gray-500 mt-1">Fill in the details for your leave request</p>
-                    </div>
-                    <div class="p-6">
-                        <form method="post" enctype="multipart/form-data" class="space-y-6">
-                            {% csrf_token %}
-                            
-                            <!-- Display form errors -->
-                            {% if form.non_field_errors %}
-                                <div class="bg-red-50 border border-red-200 rounded-md p-4">
-                                    <div class="flex">
-                                        <svg class="w-5 h-5 text-red-400 mr-2 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                        <div>
-                                            <h3 class="text-sm font-medium text-red-800">Please correct the following errors:</h3>
-                                            <div class="mt-2 text-sm text-red-700">
-                                                {{ form.non_field_errors }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                    <!-- Date Range -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="id_start_date" class="block text-sm font-medium text-zinc-900 mb-2">
+                                Start Date <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.start_date }}
+                            {% if form.start_date.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.start_date.errors.0 }}</p>
                             {% endif %}
+                        </div>
 
-                            <!-- Leave Type -->
-                            <div>
-                                <label for="{{ form.leave_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Leave Type <span class="text-red-500">*</span>
-                                </label>
-                                {{ form.leave_type }}
-                                {% if form.leave_type.errors %}
-                                    <p class="mt-1 text-sm text-red-600">{{ form.leave_type.errors.0 }}</p>
-                                {% endif %}
-                            </div>
+                        <div>
+                            <label for="id_end_date" class="block text-sm font-medium text-zinc-900 mb-2">
+                                End Date <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.end_date }}
+                            {% if form.end_date.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.end_date.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
 
-                            <!-- Date Range -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label for="{{ form.start_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Start Date <span class="text-red-500">*</span>
-                                    </label>
-                                    {{ form.start_date }}
-                                    {% if form.start_date.errors %}
-                                        <p class="mt-1 text-sm text-red-600">{{ form.start_date.errors.0 }}</p>
-                                    {% endif %}
-                                </div>
-                                <div>
-                                    <label for="{{ form.end_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                        End Date <span class="text-red-500">*</span>
-                                    </label>
-                                    {{ form.end_date }}
-                                    {% if form.end_date.errors %}
-                                        <p class="mt-1 text-sm text-red-600">{{ form.end_date.errors.0 }}</p>
-                                    {% endif %}
-                                </div>
-                            </div>
+                    <!-- Half Day -->
+                    <div class="flex items-center">
+                        <div class="flex items-center h-5">
+                            {{ form.half_day }}
+                        </div>
+                        <div class="ml-3">
+                            <label for="id_half_day" class="text-sm font-medium text-zinc-900">
+                                Half Day Leave
+                            </label>
+                            <p class="text-xs text-zinc-600">Check if this is a half-day leave</p>
+                        </div>
+                    </div>
 
-                            <!-- Half Day and Retroactive Options -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="flex items-center">
-                                    {{ form.half_day }}
-                                    <label for="{{ form.half_day.id_for_label }}" class="ml-2 text-sm text-gray-700">
-                                        Half Day Leave
-                                    </label>
-                                    {% if form.half_day.help_text %}
-                                        <p class="ml-2 text-xs text-gray-500">{{ form.half_day.help_text }}</p>
-                                    {% endif %}
-                                </div>
-                                <div class="flex items-center">
-                                    {{ form.is_retroactive }}
-                                    <label for="{{ form.is_retroactive.id_for_label }}" class="ml-2 text-sm text-gray-700">
-                                        Retroactive Application
-                                    </label>
-                                    {% if form.is_retroactive.help_text %}
-                                        <p class="ml-2 text-xs text-gray-500">{{ form.is_retroactive.help_text }}</p>
-                                    {% endif %}
-                                </div>
-                            </div>
+                    <!-- Reason -->
+                    <div>
+                        <label for="id_reason" class="block text-sm font-medium text-zinc-900 mb-2">
+                            Reason <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.reason }}
+                        {% if form.reason.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.reason.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-xs text-zinc-600">Provide a brief explanation for your leave</p>
+                    </div>
 
-                            <!-- Reason -->
-                            <div>
-                                <label for="{{ form.reason.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Reason for Leave <span class="text-red-500">*</span>
-                                </label>
-                                {{ form.reason }}
-                                {% if form.reason.errors %}
-                                    <p class="mt-1 text-sm text-red-600">{{ form.reason.errors.0 }}</p>
-                                {% endif %}
-                            </div>
+                    <!-- Approver -->
+                    <div>
+                        <label for="id_approver" class="block text-sm font-medium text-zinc-900 mb-2">
+                            Approver <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.approver }}
+                        {% if form.approver.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.approver.errors.0 }}</p>
+                        {% endif %}
+                    </div>
 
-                            <!-- Documentation -->
-                            <div>
-                                <label for="{{ form.documentation.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Supporting Documentation
-                                </label>
-                                {{ form.documentation }}
-                                <p class="mt-1 text-xs text-gray-500">Upload supporting documents if required (PDF, DOC, DOCX, JPG, PNG)</p>
-                                {% if form.documentation.errors %}
-                                    <p class="mt-1 text-sm text-red-600">{{ form.documentation.errors.0 }}</p>
-                                {% endif %}
-                            </div>
-
-                            <!-- Form Actions -->
-                            <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
-                                <a href="{% url 'leave_management:dashboard' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
-                                    Cancel
-                                </a>
-                                <button type="submit" class="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
-                                    </svg>
-                                    Submit Leave Request
-                                </button>
-                            </div>
-                        </form>
+                    <!-- Documentation -->
+                    <div>
+                        <label for="id_documentation" class="block text-sm font-medium text-zinc-900 mb-2">
+                            Supporting Document (if required)
+                        </label>
+                        <input type="file" name="documentation" id="id_documentation"
+                            class="block w-full text-sm text-zinc-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-white/20 file:text-zinc-700 hover:file:bg-white/30 file:cursor-pointer cursor-pointer backdrop-blur-sm">
+                        <p class="mt-1 text-xs text-zinc-600">Upload medical certificate or other supporting documents
+                            if required</p>
                     </div>
                 </div>
-            </div>
+
+                <!-- Submit Button -->
+                <div class="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
+                    <button type="submit"
+                        class="flex-1 inline-flex justify-center items-center px-6 py-3 border border-transparent shadow-lg text-sm font-medium rounded-xl text-white bg-emerald-500/80 hover:bg-emerald-600/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-200">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Submit Leave Request
+                    </button>
+                    <a href="{% url 'leave_management:employee_dashboard' %}"
+                        class="flex-1 inline-flex justify-center items-center px-6 py-3 border-2 border-gray-300 shadow-sm text-sm font-medium rounded-xl text-gray-700 bg-white/20 hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200">
+                        Cancel
+                    </a>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
-<script>
-// Update leave type information when selection changes
-function updateLeaveTypeInfo(leaveTypeId) {
-    // This function can be enhanced to show specific leave type information
-    // For now, it's a placeholder for future enhancements
-    console.log('Leave type selected:', leaveTypeId);
-}
-
-// Date validation
-document.addEventListener('DOMContentLoaded', function() {
-    const startDateInput = document.getElementById('{{ form.start_date.id_for_label }}');
-    const endDateInput = document.getElementById('{{ form.end_date.id_for_label }}');
-    
-    if (startDateInput && endDateInput) {
-        startDateInput.addEventListener('change', function() {
-            endDateInput.min = this.value;
-            if (endDateInput.value && endDateInput.value < this.value) {
-                endDateInput.value = this.value;
-            }
-        });
-    }
-});
-</script>
 {% endblock %}

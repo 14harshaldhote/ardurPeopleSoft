@@ -1,319 +1,192 @@
-"""
-Leave Management Analytics and Monitoring
-"""
-from django.db.models import Count, Sum, Avg, Q
+from django.db.models import Count, Q, Sum, Avg, F, ExpressionWrapper, DurationField, FloatField
+from django.db.models.functions import TruncMonth, TruncDay, ExtractWeekDay, Cast
 from django.utils import timezone
-from django.contrib.auth.models import User
-from datetime import datetime, timedelta
-from typing import Dict, List, Any
-import logging
+from trueAlign.models import LeaveRequest, UserLeaveBalance, LeaveType, LeavePolicy, CompOffRequest
+from django.contrib.auth import get_user_model
+import json
+from datetime import timedelta
 
-from trueAlign.models import LeaveRequest, LeaveType, UserLeaveBalance, CompOffRequest
+User = get_user_model()
 
-analytics_logger = logging.getLogger('leave_management.analytics')
+def get_leave_analytics(filters=None):
+    """
+    Main entry point to get all analytics data based on filters.
+    """
+    if filters is None:
+        filters = {}
 
-class LeaveAnalytics:
-    """Comprehensive analytics for leave management"""
-    
-    @staticmethod
-    def get_leave_usage_stats(year: int = None) -> Dict[str, Any]:
-        """Get comprehensive leave usage statistics"""
-        if not year:
-            year = timezone.now().year
-        
-        stats = {
-            'total_requests': LeaveRequest.objects.filter(
-                start_date__year=year
-            ).count(),
-            
-            'approved_requests': LeaveRequest.objects.filter(
-                start_date__year=year,
-                status='Approved'
-            ).count(),
-            
-            'pending_requests': LeaveRequest.objects.filter(
-                start_date__year=year,
-                status='Pending'
-            ).count(),
-            
-            'rejected_requests': LeaveRequest.objects.filter(
-                start_date__year=year,
-                status='Rejected'
-            ).count(),
-            
-            'total_leave_days': LeaveRequest.objects.filter(
-                start_date__year=year,
-                status='Approved'
-            ).aggregate(total=Sum('leave_days'))['total'] or 0,
-            
-            'average_leave_days': LeaveRequest.objects.filter(
-                start_date__year=year,
-                status='Approved'
-            ).aggregate(avg=Avg('leave_days'))['avg'] or 0,
+    # Base QuerySet
+    qs = LeaveRequest.objects.filter(is_deleted=False)
+
+    # Apply Filters
+    if filters.get('start_date'):
+        qs = qs.filter(start_date__gte=filters['start_date'])
+    if filters.get('end_date'):
+        qs = qs.filter(end_date__lte=filters['end_date'])
+    if filters.get('user_id'):
+        qs = qs.filter(user_id=filters['user_id'])
+    if filters.get('leave_type_id'):
+        qs = qs.filter(leave_type_id=filters['leave_type_id'])
+    if filters.get('department_id'): # Assuming group/department link via user or policy
+        # This depends on how User is linked to Department/Group. 
+        # Using LeavePolicy.group as a proxy if available, or User.groups
+        qs = qs.filter(user__groups__id=filters['department_id'])
+    if filters.get('status'):
+        qs = qs.filter(status=filters['status'])
+
+    # Aggregations
+    kpis = get_kpi_metrics(qs)
+    charts = {
+        'type_distribution': get_leaves_by_type(qs),
+        'trend': get_leaves_over_time(qs),
+        'department_distribution': get_leaves_by_department(qs),
+        'heatmap': get_calendar_heatmap_data(qs),
+    }
+    grid_data = get_aggrid_data(qs)
+
+    return {
+        'kpis': kpis,
+        'charts': charts,
+        'grid_data': grid_data
+    }
+
+def get_kpi_metrics(qs):
+    """
+    Calculate high-level KPIs.
+    """
+    total = qs.count()
+    if total == 0:
+        return {
+            'total_requests': 0,
+            'approval_rate': 0,
+            'rejection_rate': 0,
+            'avg_duration': 0,
+            'pending_count': 0
         }
-        
-        # Leave type breakdown
-        leave_type_stats = LeaveRequest.objects.filter(
-            start_date__year=year,
-            status='Approved'
-        ).values('leave_type__name').annotate(
-            count=Count('id'),
-            total_days=Sum('leave_days')
-        ).order_by('-total_days')
-        
-        stats['leave_type_breakdown'] = list(leave_type_stats)
-        
-        # Monthly trends
-        monthly_stats = []
-        for month in range(1, 13):
-            month_data = LeaveRequest.objects.filter(
-                start_date__year=year,
-                start_date__month=month,
-                status='Approved'
-            ).aggregate(
-                count=Count('id'),
-                total_days=Sum('leave_days')
-            )
-            monthly_stats.append({
-                'month': month,
-                'requests': month_data['count'] or 0,
-                'days': float(month_data['total_days'] or 0)
-            })
-        
-        stats['monthly_trends'] = monthly_stats
-        
-        return stats
+
+    stats = qs.aggregate(
+        approved=Count('id', filter=Q(status='Approved')),
+        rejected=Count('id', filter=Q(status='Rejected')),
+        pending=Count('id', filter=Q(status='Pending')),
+        avg_days=Avg('leave_days')
+    )
+
+    return {
+        'total_requests': total,
+        'approval_rate': round((stats['approved'] / total) * 100, 1),
+        'rejection_rate': round((stats['rejected'] / total) * 100, 1),
+        'avg_duration': round(stats['avg_days'] or 0, 1),
+        'pending_count': stats['pending']
+    }
+
+def get_leaves_by_type(qs):
+    """
+    Data for Pie Chart: Leave Type Distribution.
+    """
+    data = qs.values('leave_type__name').annotate(value=Count('id')).order_by('-value')
+    return [{'name': item['leave_type__name'], 'value': item['value']} for item in data]
+
+def get_leaves_over_time(qs):
+    """
+    Data for Line Chart: Leaves over time (Monthly/Daily).
+    """
+    # Group by month for trend
+    data = qs.annotate(month=TruncMonth('start_date')).values('month').annotate(count=Count('id')).order_by('month')
     
-    @staticmethod
-    def get_user_leave_patterns(user: User, year: int = None) -> Dict[str, Any]:
-        """Analyze individual user leave patterns"""
-        if not year:
-            year = timezone.now().year
-        
-        user_requests = LeaveRequest.objects.filter(
-            user=user,
-            start_date__year=year
-        )
-        
-        patterns = {
-            'total_requests': user_requests.count(),
-            'approved_days': user_requests.filter(
-                status='Approved'
-            ).aggregate(total=Sum('leave_days'))['total'] or 0,
-            
-            'pending_requests': user_requests.filter(
-                status='Pending'
-            ).count(),
-            
-            'average_request_size': user_requests.filter(
-                status='Approved'
-            ).aggregate(avg=Avg('leave_days'))['avg'] or 0,
-            
-            'leave_frequency': user_requests.filter(
-                status='Approved'
-            ).count(),
-        }
-        
-        # Leave type preferences
-        type_preferences = user_requests.filter(
-            status='Approved'
-        ).values('leave_type__name').annotate(
-            count=Count('id'),
-            total_days=Sum('leave_days')
-        ).order_by('-total_days')
-        
-        patterns['leave_type_preferences'] = list(type_preferences)
-        
-        # Seasonal patterns (quarters)
-        quarterly_usage = []
-        for quarter in range(1, 5):
-            start_month = (quarter - 1) * 3 + 1
-            end_month = quarter * 3
-            
-            quarter_data = user_requests.filter(
-                status='Approved',
-                start_date__month__gte=start_month,
-                start_date__month__lte=end_month
-            ).aggregate(
-                count=Count('id'),
-                total_days=Sum('leave_days')
-            )
-            
-            quarterly_usage.append({
-                'quarter': quarter,
-                'requests': quarter_data['count'] or 0,
-                'days': float(quarter_data['total_days'] or 0)
-            })
-        
-        patterns['quarterly_usage'] = quarterly_usage
-        
-        return patterns
+    return {
+        'dates': [item['month'].strftime('%Y-%m-%d') for item in data if item['month']],
+        'counts': [item['count'] for item in data if item['month']]
+    }
+
+def get_leaves_by_department(qs):
+    """
+    Data for Bar Chart: Leaves by Department/Group.
+    """
+    # Assuming User has a 'groups' relation or similar. 
+    # If User model has 'department' field, use that.
+    # Fallback to 'user__groups__name'
+    data = qs.values('user__groups__name').annotate(count=Count('id')).order_by('-count')
+    # Filter out None groups if any
+    return [{'name': item['user__groups__name'] or 'Unassigned', 'value': item['count']} for item in data]
+
+def get_calendar_heatmap_data(qs):
+    """
+    Data for ECharts Calendar Heatmap.
+    Returns list of [date, count]
+    """
+    # This is tricky because a leave request spans multiple days.
+    # For a true heatmap, we need to explode the date ranges.
+    # Doing this in Python for simplicity as Django ORM doesn't support generating series easily without specific DB functions.
     
-    @staticmethod
-    def detect_unusual_patterns() -> List[Dict[str, Any]]:
-        """Detect unusual leave patterns that might need attention"""
-        alerts = []
-        current_date = timezone.now().date()
-        
-        # Users with excessive leave requests in short time
-        recent_heavy_users = LeaveRequest.objects.filter(
-            created_at__gte=current_date - timedelta(days=30)
-        ).values('user').annotate(
-            request_count=Count('id')
-        ).filter(request_count__gte=5)
-        
-        for user_data in recent_heavy_users:
-            user = User.objects.get(id=user_data['user'])
-            alerts.append({
-                'type': 'EXCESSIVE_REQUESTS',
-                'user': user.username,
-                'details': f"{user_data['request_count']} requests in last 30 days",
-                'severity': 'MEDIUM'
-            })
-        
-        # Users with high rejection rates
-        users_with_rejections = LeaveRequest.objects.filter(
-            created_at__gte=current_date - timedelta(days=90)
-        ).values('user').annotate(
-            total_requests=Count('id'),
-            rejected_requests=Count('id', filter=Q(status='Rejected'))
-        ).filter(total_requests__gte=3)
-        
-        for user_data in users_with_rejections:
-            rejection_rate = user_data['rejected_requests'] / user_data['total_requests']
-            if rejection_rate > 0.5:  # More than 50% rejection rate
-                user = User.objects.get(id=user_data['user'])
-                alerts.append({
-                    'type': 'HIGH_REJECTION_RATE',
-                    'user': user.username,
-                    'details': f"{rejection_rate:.1%} rejection rate ({user_data['rejected_requests']}/{user_data['total_requests']})",
-                    'severity': 'HIGH'
-                })
-        
-        # Pending requests older than 7 days
-        old_pending = LeaveRequest.objects.filter(
-            status='Pending',
-            created_at__lte=current_date - timedelta(days=7)
-        ).select_related('user', 'leave_type')
-        
-        for request in old_pending:
-            alerts.append({
-                'type': 'STALE_PENDING_REQUEST',
-                'user': request.user.username,
-                'details': f"Request #{request.id} pending for {(current_date - request.created_at.date()).days} days",
-                'severity': 'MEDIUM'
-            })
-        
-        return alerts
+    heatmap_data = {}
+    approved_leaves = qs.filter(status='Approved')
     
-    @staticmethod
-    def get_team_analytics(manager_user: User) -> Dict[str, Any]:
-        """Get analytics for a manager's team"""
-        # For now, assume all employees report to managers
-        # In real implementation, this would use proper reporting structure
-        team_members = User.objects.filter(
-            groups__name='Employee',
-            is_active=True
-        )
-        
-        current_year = timezone.now().year
-        
-        team_stats = {
-            'team_size': team_members.count(),
-            'total_team_requests': LeaveRequest.objects.filter(
-                user__in=team_members,
-                start_date__year=current_year
-            ).count(),
+    for leave in approved_leaves:
+        current_date = leave.start_date
+        while current_date <= leave.end_date:
+            date_str = current_date.strftime('%Y-%m-%d')
+            heatmap_data[date_str] = heatmap_data.get(date_str, 0) + 1
+            current_date += timedelta(days=1)
             
-            'pending_approvals': LeaveRequest.objects.filter(
-                user__in=team_members,
-                status='Pending'
-            ).count(),
-            
-            'team_leave_days': LeaveRequest.objects.filter(
-                user__in=team_members,
-                start_date__year=current_year,
-                status='Approved'
-            ).aggregate(total=Sum('leave_days'))['total'] or 0,
-        }
-        
-        # Individual team member stats
-        member_stats = []
-        for member in team_members:
-            member_data = LeaveRequest.objects.filter(
-                user=member,
-                start_date__year=current_year
-            ).aggregate(
-                total_requests=Count('id'),
-                approved_days=Sum('leave_days', filter=Q(status='Approved')),
-                pending_requests=Count('id', filter=Q(status='Pending'))
-            )
-            
-            member_stats.append({
-                'user': member.username,
-                'name': member.get_full_name(),
-                'total_requests': member_data['total_requests'] or 0,
-                'approved_days': float(member_data['approved_days'] or 0),
-                'pending_requests': member_data['pending_requests'] or 0
-            })
-        
-        team_stats['member_breakdown'] = member_stats
-        
-        return team_stats
+    return [[date, count] for date, count in heatmap_data.items()]
+
+def get_aggrid_data(qs):
+    """
+    Flat JSON data for AG Grid.
+    """
+    data = qs.select_related('user', 'leave_type', 'approver').values(
+        'id',
+        'user__username',
+        'user__email',
+        'leave_type__name',
+        'start_date',
+        'end_date',
+        'leave_days',
+        'status',
+        'reason',
+        'approver__username',
+        'created_at'
+    ).order_by('-created_at')
     
-    @staticmethod
-    def generate_compliance_report(year: int = None) -> Dict[str, Any]:
-        """Generate compliance and audit report"""
-        if not year:
-            year = timezone.now().year
-        
-        report = {
-            'report_generated': timezone.now().isoformat(),
-            'year': year,
-            'total_employees': User.objects.filter(is_active=True).count(),
-        }
-        
-        # Leave utilization rates
-        all_users = User.objects.filter(is_active=True)
-        utilization_data = []
-        
-        for user in all_users:
-            balances = UserLeaveBalance.objects.filter(user=user, year=year)
-            total_allocated = sum(float(b.allocated) for b in balances)
-            total_used = sum(float(b.used) for b in balances)
-            
-            if total_allocated > 0:
-                utilization_rate = (total_used / total_allocated) * 100
-            else:
-                utilization_rate = 0
-            
-            utilization_data.append({
-                'user': user.username,
-                'allocated': total_allocated,
-                'used': total_used,
-                'utilization_rate': round(utilization_rate, 2)
-            })
-        
-        report['utilization_analysis'] = utilization_data
-        
-        # Policy compliance
-        policy_violations = []
-        
-        # Check for requests exceeding policy limits
-        excessive_requests = LeaveRequest.objects.filter(
-            start_date__year=year,
-            leave_days__gt=30  # Assuming 30 days is a reasonable limit
-        ).select_related('user', 'leave_type')
-        
-        for request in excessive_requests:
-            policy_violations.append({
-                'type': 'EXCESSIVE_LEAVE_DAYS',
-                'user': request.user.username,
-                'request_id': request.id,
-                'days': float(request.leave_days),
-                'leave_type': request.leave_type.name
-            })
-        
-        report['policy_violations'] = policy_violations
-        
-        return report
+    # Format for frontend
+    formatted_data = []
+    for item in data:
+        formatted_data.append({
+            'id': item['id'],
+            'employee': item['user__username'],
+            'email': item['user__email'],
+            'type': item['leave_type__name'],
+            'start_date': item['start_date'].strftime('%Y-%m-%d'),
+            'end_date': item['end_date'].strftime('%Y-%m-%d'),
+            'days': float(item['leave_days']),
+            'status': item['status'],
+            'reason': item['reason'],
+            'approver': item['approver__username'] or 'N/A',
+            'applied_on': item['created_at'].strftime('%Y-%m-%d %H:%M')
+        })
+    return formatted_data
+
+# --- Legacy Support (Keep existing functions if used elsewhere, or refactor them to use new logic) ---
+
+def get_leave_type_distribution(user_queryset=None):
+    qs = LeaveRequest.objects.filter(status='Approved', is_deleted=False)
+    if user_queryset:
+        qs = qs.filter(user__in=user_queryset)
+    return list(qs.values('leave_type__name').annotate(count=Count('id')).order_by('-count'))
+
+def get_daily_leave_status(date=None):
+    if date is None:
+        date = timezone.localdate()
+    return LeaveRequest.objects.filter(
+        status='Approved',
+        start_date__lte=date,
+        end_date__gte=date,
+        is_deleted=False
+    ).select_related('user', 'leave_type')
+
+def get_team_attendance_stats(manager):
+    team_leaves = LeaveRequest.objects.filter(approver=manager, status='Approved', is_deleted=False)
+    return list(team_leaves.values('user__username').annotate(total_leaves=Count('id')).order_by('-total_leaves'))
+
+def get_pending_request_stats():
+    return LeaveRequest.objects.filter(status='Pending', is_deleted=False).values('leave_type__name').annotate(count=Count('id'))
