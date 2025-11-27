@@ -36,4 +36,8 @@ urlpatterns = [
     
     # HR - Balance Adjustment
     path('balance/adjust/', views.ManualBalanceAdjustmentView.as_view(), name='balance_adjust'),
+    
+    # Analytics
+    path('analytics/', views.LeaveAnalyticsView.as_view(), name='leave_analytics'),
+    path('api/analytics-data/', views.LeaveAnalyticsDataView.as_view(), name='leave_analytics_data'),
 ]

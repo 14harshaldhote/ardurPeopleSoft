@@ -79,8 +79,7 @@
                             <p class="text-zinc-600 text-xs sm:text-sm mb-1">{{ balance.leave_type.name }}</p>
                             <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">{{ balance.available }}
                             </p>
-                            <p class="text-xs text-zinc-500">of {{
-                                balance.allocated|add:balance.carried_forward|add:balance.additional }} days</p>
+                            <p class="text-xs text-zinc-500">of {{ balance.allocated|add:balance.carried_forward|add:balance.additional }} days</p>
                         </div>
                     </div>
                 </div>
@@ -143,13 +142,11 @@
                                     <div
                                         class="mt-2 sm:mt-3 flex items-center text-xs text-zinc-500 space-x-3 sm:space-x-4">
                                         <div class="flex items-center">
-                                            <span>{{ leave.leave_days }} day{{ leave.leave_days|floatformat:0|pluralize
-                                                }}</span>
+                                            <span>{{ leave.leave_days }} day{{ leave.leave_days|floatformat:0|pluralize }}</span>
                                         </div>
                                         {% if leave.approver %}
                                         <span>•</span>
-                                        <span>Approver: {{ leave.approver.get_full_name|default:leave.approver.username
-                                            }}</span>
+                                        <span>Approver: {{ leave.approver.get_full_name|default:leave.approver.username }}</span>
                                         {% endif %}
                                     </div>
                                 </div>

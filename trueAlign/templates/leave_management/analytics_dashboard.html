@@ -1,0 +1,477 @@
+{% extends 'base.html' %}
+
+{% block title %}Leave Analytics{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-zinc-900">Leave Analytics</h1>
+            <p class="text-zinc-600 mt-1">Comprehensive insights into leave trends and usage</p>
+        </div>
+        <div class="mt-4 md:mt-0 flex space-x-3">
+            <button onclick="fetchData()"
+                class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                    </path>
+                </svg>
+                Refresh Data
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-xl shadow-sm border border-zinc-200 p-6 mb-8">
+        <h3 class="text-lg font-semibold text-zinc-900 mb-4">Filters</h3>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-zinc-700 mb-1">Start Date</label>
+                <input type="date" id="filter-start-date"
+                    class="w-full rounded-lg border-zinc-300 focus:ring-emerald-500 focus:border-emerald-500 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-zinc-700 mb-1">End Date</label>
+                <input type="date" id="filter-end-date"
+                    class="w-full rounded-lg border-zinc-300 focus:ring-emerald-500 focus:border-emerald-500 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-zinc-700 mb-1">Leave Type</label>
+                <select id="filter-leave-type"
+                    class="w-full rounded-lg border-zinc-300 focus:ring-emerald-500 focus:border-emerald-500 text-sm">
+                    <option value="">All Types</option>
+                    {% for type in leave_types %}
+                    <option value="{{ type.id }}">{{ type.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-zinc-700 mb-1">Status</label>
+                <select id="filter-status"
+                    class="w-full rounded-lg border-zinc-300 focus:ring-emerald-500 focus:border-emerald-500 text-sm">
+                    <option value="">All Statuses</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Rejected">Rejected</option>
+                    <option value="Cancelled">Cancelled</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+        <div onclick="filterGrid('All')"
+            class="bg-white p-6 rounded-xl shadow-sm border border-zinc-200 cursor-pointer hover:border-emerald-500 transition-all group">
+            <p class="text-sm font-medium text-zinc-500">Total Requests</p>
+            <p class="text-2xl font-bold text-zinc-900 mt-2" id="kpi-total">0</p>
+            <div class="mt-2 text-xs text-emerald-600 group-hover:underline">View All &rarr;</div>
+        </div>
+        <div onclick="filterGrid('Approved')"
+            class="bg-white p-6 rounded-xl shadow-sm border border-zinc-200 cursor-pointer hover:border-emerald-500 transition-all group">
+            <p class="text-sm font-medium text-zinc-500">Approved</p>
+            <p class="text-2xl font-bold text-emerald-600 mt-2" id="kpi-approved-rate">0%</p>
+            <div class="mt-2 text-xs text-emerald-600 group-hover:underline">Filter Grid &rarr;</div>
+        </div>
+        <div onclick="filterGrid('Rejected')"
+            class="bg-white p-6 rounded-xl shadow-sm border border-zinc-200 cursor-pointer hover:border-red-500 transition-all group">
+            <p class="text-sm font-medium text-zinc-500">Rejected</p>
+            <p class="text-2xl font-bold text-red-600 mt-2" id="kpi-rejected-rate">0%</p>
+            <div class="mt-2 text-xs text-red-600 group-hover:underline">Filter Grid &rarr;</div>
+        </div>
+        <div onclick="filterGrid('Pending')"
+            class="bg-white p-6 rounded-xl shadow-sm border border-zinc-200 cursor-pointer hover:border-yellow-500 transition-all group">
+            <p class="text-sm font-medium text-zinc-500">Pending</p>
+            <p class="text-2xl font-bold text-yellow-600 mt-2" id="kpi-pending">0</p>
+            <div class="mt-2 text-xs text-yellow-600 group-hover:underline">Filter Grid &rarr;</div>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-zinc-200">
+            <p class="text-sm font-medium text-zinc-500">Avg Duration</p>
+            <p class="text-2xl font-bold text-blue-600 mt-2" id="kpi-duration">0 Days</p>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Trend Line -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-zinc-200">
+            <h3 class="text-lg font-semibold text-zinc-900 mb-4">Leave Trends</h3>
+            <div id="trendChart" style="height: 350px;"></div>
+        </div>
+        <!-- Type Pie -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-zinc-200">
+            <h3 class="text-lg font-semibold text-zinc-900 mb-4">Distribution by Type</h3>
+            <div id="typeChart" style="height: 350px;"></div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Department Bar -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-zinc-200">
+            <h3 class="text-lg font-semibold text-zinc-900 mb-4">Leaves by Department</h3>
+            <div id="deptChart" style="height: 350px;"></div>
+        </div>
+        <!-- Calendar Heatmap -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-zinc-200">
+            <h3 class="text-lg font-semibold text-zinc-900 mb-4">Leave Heatmap (Approved)</h3>
+            <div id="heatmapChart" style="height: 350px;"></div>
+        </div>
+    </div>
+
+    <!-- Data Grid -->
+    <div class="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden">
+        <div class="p-6 border-b border-zinc-200 flex justify-between items-center">
+            <h3 class="text-lg font-semibold text-zinc-900">Detailed Records</h3>
+            <button onclick="exportGrid()"
+                class="text-sm text-emerald-600 hover:text-emerald-700 font-medium flex items-center transition-colors">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                </svg>
+                Export CSV
+            </button>
+        </div>
+        <div id="myGrid" style="height: 500px; width: 100%;" class="ag-theme-alpine"></div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay"
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden transition-opacity duration-300 opacity-0">
+    <div class="bg-white p-6 rounded-2xl shadow-2xl flex flex-col items-center">
+        <div class="animate-spin rounded-full h-10 w-10 border-4 border-emerald-500 border-t-transparent mb-4"></div>
+        <p class="text-zinc-700 font-medium">Loading Analytics...</p>
+    </div>
+</div>
+
+<!-- Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.0/dist/ag-grid-community.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.0/styles/ag-grid.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.0/styles/ag-theme-alpine.css">
+
+<script>
+    // Chart instances - initialize after DOM is ready
+    let trendChart, typeChart, deptChart, heatmapChart;
+
+    // Grid API reference
+    let gridApi = null;
+
+    // Grid Options
+    const gridOptions = {
+        columnDefs: [
+            { field: "id", headerName: "ID", width: 80, pinned: 'left' },
+            { field: "employee", headerName: "Employee", sortable: true, filter: true, minWidth: 150 },
+            { field: "type", headerName: "Type", sortable: true, filter: true },
+            { field: "start_date", headerName: "Start Date", sortable: true },
+            { field: "end_date", headerName: "End Date", sortable: true },
+            { field: "days", headerName: "Days", sortable: true, width: 90 },
+            {
+                field: "status", headerName: "Status", sortable: true, filter: true,
+                cellClassRules: {
+                    'text-emerald-600 font-medium': params => params.value === 'Approved',
+                    'text-red-600 font-medium': params => params.value === 'Rejected',
+                    'text-yellow-600 font-medium': params => params.value === 'Pending',
+                    'text-zinc-500': params => params.value === 'Cancelled',
+                },
+                cellRenderer: params => {
+                    const status = params.value;
+                    let colorClass = 'bg-gray-100 text-gray-800';
+                    if (status === 'Approved') colorClass = 'bg-emerald-100 text-emerald-800';
+                    else if (status === 'Rejected') colorClass = 'bg-red-100 text-red-800';
+                    else if (status === 'Pending') colorClass = 'bg-yellow-100 text-yellow-800';
+
+                    return `<span class="px-2 py-1 rounded-full text-xs font-semibold ${colorClass}">${status}</span>`;
+                }
+            },
+            { field: "reason", headerName: "Reason", flex: 1, minWidth: 200 },
+            { field: "approver", headerName: "Approver", sortable: true }
+        ],
+        defaultColDef: {
+            resizable: true,
+            sortable: true,
+            filter: true,
+            floatingFilter: true
+        },
+        pagination: true,
+        paginationPageSize: 20,
+        rowData: [],
+        animateRows: true,
+        rowSelection: 'single'
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('Initializing Analytics Dashboard...');
+
+        // Initialize Charts
+        trendChart = echarts.init(document.getElementById('trendChart'));
+        typeChart = echarts.init(document.getElementById('typeChart'));
+        deptChart = echarts.init(document.getElementById('deptChart'));
+        heatmapChart = echarts.init(document.getElementById('heatmapChart'));
+
+        console.log('Charts initialized:', { trendChart, typeChart, deptChart, heatmapChart });
+
+        // Initialize Grid with new API
+        const gridDiv = document.getElementById('myGrid');
+        gridApi = agGrid.createGrid(gridDiv, gridOptions);
+
+        // Set default dates (Current Year)
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), 0, 1);
+        const lastDay = new Date(today.getFullYear(), 11, 31);
+
+        // Format dates for input value (YYYY-MM-DD)
+        const formatDate = (date) => {
+            const d = new Date(date);
+            let month = '' + (d.getMonth() + 1);
+            let day = '' + d.getDate();
+            const year = d.getFullYear();
+
+            if (month.length < 2) month = '0' + month;
+            if (day.length < 2) day = '0' + day;
+
+            return [year, month, day].join('-');
+        };
+
+        document.getElementById('filter-start-date').value = formatDate(firstDay);
+        document.getElementById('filter-end-date').value = formatDate(lastDay);
+
+        // Fetch initial data
+        fetchData();
+
+        // Add event listeners
+        ['filter-start-date', 'filter-end-date', 'filter-leave-type', 'filter-status'].forEach(id => {
+            document.getElementById(id).addEventListener('change', fetchData);
+        });
+
+        // Handle resize
+        window.addEventListener('resize', () => {
+            trendChart.resize();
+            typeChart.resize();
+            deptChart.resize();
+            heatmapChart.resize();
+        });
+    });
+
+    function showLoading() {
+        const overlay = document.getElementById('loadingOverlay');
+        overlay.classList.remove('hidden');
+        // Small delay to allow display:block to apply before opacity transition
+        setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+    }
+
+    function hideLoading() {
+        const overlay = document.getElementById('loadingOverlay');
+        overlay.classList.add('opacity-0');
+        setTimeout(() => overlay.classList.add('hidden'), 300);
+    }
+
+    function fetchData() {
+        showLoading();
+        const params = new URLSearchParams({
+            start_date: document.getElementById('filter-start-date').value,
+            end_date: document.getElementById('filter-end-date').value,
+            leave_type: document.getElementById('filter-leave-type').value,
+            status: document.getElementById('filter-status').value
+        });
+
+        fetch(`{% url 'leave_management:leave_analytics_data' %}?${params}`)
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => {
+                console.log('Received analytics data:', data);
+                updateKPIs(data.kpis);
+                updateCharts(data.charts);
+                updateGrid(data.grid_data);
+                hideLoading();
+            })
+            .catch(error => {
+                console.error('Error fetching analytics:', error);
+                hideLoading();
+                alert('Failed to load analytics data. Please try again.');
+            });
+    }
+
+    function updateKPIs(kpis) {
+        console.log('Updating KPIs:', kpis);
+        // Animate numbers
+        animateValue('kpi-total', parseInt(document.getElementById('kpi-total').textContent), kpis.total_requests, 1000);
+        document.getElementById('kpi-approved-rate').textContent = kpis.approval_rate + '%';
+        document.getElementById('kpi-rejected-rate').textContent = kpis.rejection_rate + '%';
+        animateValue('kpi-pending', parseInt(document.getElementById('kpi-pending').textContent), kpis.pending_count, 1000);
+        document.getElementById('kpi-duration').textContent = kpis.avg_duration + ' Days';
+    }
+
+    function animateValue(id, start, end, duration) {
+        if (start === end) return;
+        const range = end - start;
+        let current = start;
+        const increment = end > start ? 1 : -1;
+        const stepTime = Math.abs(Math.floor(duration / range));
+        const obj = document.getElementById(id);
+        const timer = setInterval(function () {
+            obj.textContent = current;
+            if (current == end) {
+                clearInterval(timer);
+            }
+            current += increment;
+        }, stepTime);
+    }
+
+    function updateCharts(charts) {
+        console.log('Updating charts with data:', charts);
+
+        if (!trendChart || !typeChart || !deptChart || !heatmapChart) {
+            console.error('Charts not initialized!');
+            return;
+        }
+
+        // Trend Chart
+        console.log('Setting trend chart...', charts.trend);
+        try {
+            trendChart.setOption({
+                tooltip: { trigger: 'axis' },
+                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: { type: 'category', data: charts.trend.dates },
+                yAxis: { type: 'value' },
+                series: [{
+                    data: charts.trend.counts,
+                    type: 'line',
+                    smooth: true,
+                    symbol: 'circle',
+                    symbolSize: 8,
+                    lineStyle: { width: 3, color: '#10b981' },
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: 'rgba(16, 185, 129, 0.5)' },
+                            { offset: 1, color: 'rgba(16, 185, 129, 0.0)' }
+                        ])
+                    },
+                    itemStyle: { color: '#10b981' }
+                }]
+            });
+            console.log('Trend chart updated successfully');
+        } catch (e) {
+            console.error('Error updating trend chart:', e);
+        }
+
+        // Type Chart
+        console.log('Setting type chart...', charts.type_distribution);
+        try {
+            typeChart.setOption({
+                tooltip: { trigger: 'item' },
+                legend: { top: '5%', left: 'center' },
+                series: [{
+                    name: 'Leave Type',
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    avoidLabelOverlap: false,
+                    itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
+                    label: { show: false, position: 'center' },
+                    emphasis: { label: { show: true, fontSize: 18, fontWeight: 'bold' } },
+                    data: charts.type_distribution
+                }]
+            });
+            console.log('Type chart updated successfully');
+        } catch (e) {
+            console.error('Error updating type chart:', e);
+        }
+
+        // Department Chart
+        console.log('Setting department chart...', charts.department_distribution);
+        try {
+            deptChart.setOption({
+                tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: { type: 'category', data: charts.department_distribution.map(i => i.name), axisLabel: { rotate: 45 } },
+                yAxis: { type: 'value' },
+                series: [{
+                    data: charts.department_distribution.map(i => i.value),
+                    type: 'bar',
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: '#3b82f6' },
+                            { offset: 1, color: '#2563eb' }
+                        ]),
+                        borderRadius: [5, 5, 0, 0]
+                    }
+                }]
+            });
+            console.log('Department chart updated successfully');
+        } catch (e) {
+            console.error('Error updating department chart:', e);
+        }
+
+        // Heatmap Chart
+        console.log('Setting heatmap chart...', charts.heatmap);
+        try {
+            heatmapChart.setOption({
+                tooltip: { position: 'top' },
+                visualMap: {
+                    min: 0,
+                    max: 5,
+                    calculable: true,
+                    orient: 'horizontal',
+                    left: 'center',
+                    top: 'top',
+                    inRange: { color: ['#f0fdf4', '#15803d'] }
+                },
+                calendar: {
+                    top: 60,
+                    left: 30,
+                    right: 30,
+                    cellSize: ['auto', 13],
+                    range: new Date().getFullYear(),
+                    itemStyle: { borderWidth: 0.5, borderColor: '#ccc' },
+                    yearLabel: { show: false }
+                },
+                series: [{
+                    type: 'heatmap',
+                    coordinateSystem: 'calendar',
+                    data: charts.heatmap
+                }]
+            });
+            console.log('Heatmap chart updated successfully');
+        } catch (e) {
+            console.error('Error updating heatmap chart:', e);
+        }
+    }
+
+    function updateGrid(data) {
+        if (gridApi) {
+            gridApi.setGridOption('rowData', data);
+        }
+    }
+
+    function filterGrid(status) {
+        if (!gridApi) return;
+
+        if (status === 'All') {
+            gridApi.setFilterModel(null);
+        } else {
+            gridApi.setFilterModel({
+                status: {
+                    filterType: 'text',
+                    type: 'equals',
+                    filter: status
+                }
+            });
+        }
+        gridApi.onFilterChanged();
+
+        // Scroll to grid
+        document.getElementById('myGrid').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function exportGrid() {
+        if (gridApi) {
+            gridApi.exportDataAsCsv();
+        }
+    }
+</script>
+{% endblock %}

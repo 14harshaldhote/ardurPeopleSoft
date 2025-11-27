@@ -30,6 +30,15 @@
                 </div>
 
                 <div class="flex items-center space-x-2">
+                    <a href="{% url 'leave_management:leave_analytics' %}"
+                        class="px-3 py-2 backdrop-blur-sm bg-white/20 rounded-lg border border-white/10 hover:bg-white/30 transition text-sm text-zinc-900 font-medium flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                            </path>
+                        </svg>
+                        Analytics
+                    </a>
                     <a href="{% url 'leave_management:apply_leave' %}"
                         class="px-3 py-2 backdrop-blur-sm bg-emerald-500/80 rounded-lg border border-white/10 hover:bg-emerald-600/80 transition text-sm text-white font-medium">
                         Apply Leave
@@ -129,7 +138,8 @@
                         </div>
                         <div>
                             <p class="text-zinc-600 text-xs sm:text-sm mb-1">Pending Requests</p>
-                            <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">{{ pending_stats.total_pending|default:0 }}</p>
+                            <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">{{
+                                pending_stats.total_pending|default:0 }}</p>
                         </div>
                     </div>
                 </div>
