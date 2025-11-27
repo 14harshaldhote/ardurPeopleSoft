@@ -240,7 +240,7 @@ class ConferenceRoom(models.Model):
     )
     
     # Additional Information
-    description = models.TextField(blank=True, help_text="Additional room description or special instructions")
+    description = models.TextField(blank=True, help_text="Additional room description or special instructions", null=True)
     image = models.ImageField(upload_to='conference_rooms/', blank=True, null=True, help_text="Room image")
     
     # Timestamps
@@ -351,7 +351,7 @@ class RoomBooking(models.Model):
     
     # Cancellation
     cancelled_at = models.DateTimeField(null=True, blank=True, help_text="When the booking was cancelled")
-    cancellation_reason = models.TextField(blank=True, help_text="Reason for cancellation")
+    cancellation_reason = models.TextField(blank=True, help_text="Reason for cancellation", null=True)
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
@@ -2084,8 +2084,8 @@ class SessionActivity(models.Model):
     Separate model for tracking user activities to improve performance
     """
     # Link to session
-    session = models.ForeignKey(UserSession, on_delete=models.CASCADE, related_name='activities')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='session_activities')
+    session = models.ForeignKey(UserSession, on_delete=models.CASCADE, related_name='activities', null=True, blank=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='session_activities' , null=True)
 
     # Activity timing
     created_at = models.DateTimeField(auto_now_add=True)
@@ -2940,7 +2940,9 @@ class LayoutPreference(models.Model):
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
-        related_name='layout_preference'
+        related_name='layout_preference',
+        null=True,
+        blank=True
     )
     layout = JSONField(
         default=dict,
@@ -2998,7 +3000,7 @@ class ShiftMaster(models.Model):
     
     # Enhanced fields for better management
     color_code = models.CharField(max_length=7, default='#3B82F6', help_text="Hex color code for UI")
-    description = models.TextField(blank=True, help_text="Shift description")
+    description = models.TextField(blank=True, help_text="Shift description", null=True)
     requires_approval = models.BooleanField(default=False, help_text="Requires approval for assignments")
     min_rest_hours = models.DecimalField(
         max_digits=4, 
@@ -3380,7 +3382,7 @@ class ShiftAssignment(models.Model):
     )
     notes = models.TextField(
         blank=True,
-        help_text="Additional notes about this assignment"
+        help_text="Additional notes about this assignment", null=True
     )
     
     # Enhanced fields for approval workflow
@@ -4607,7 +4609,7 @@ class LeaveRequestHistory(models.Model):
         ('attendance_updated', 'Attendance Updated'),
     ]
 
-    leave_request = models.ForeignKey(LeaveRequest, on_delete=models.CASCADE, related_name='history')
+    leave_request = models.ForeignKey(LeaveRequest, on_delete=models.CASCADE, related_name='history', null=True, blank=True)
     action = models.CharField(max_length=20, choices=ACTION_CHOICES)
     performed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
@@ -5902,8 +5904,8 @@ class Support(models.Model):
     due_date = models.DateTimeField(null=True, blank=True)
 
     # Additional Fields
-    location = models.CharField(max_length=100, blank=True)
-    asset_id = models.CharField(max_length=50, blank=True, help_text="Related hardware/software asset ID")
+    location = models.CharField(max_length=100, blank=True, null=True)
+    asset_id = models.CharField(max_length=50, blank=True, help_text="Related hardware/software asset ID", null=True)
 
     # Related Issues
     parent_ticket = models.ForeignKey(
@@ -6300,7 +6302,7 @@ class TicketAttachment(models.Model):
     file_type = models.CharField(
         max_length=100,
         blank=True,
-        help_text="MIME type of the file"
+        help_text="MIME type of the file", null=True
     )
 
     is_deleted = models.BooleanField(
