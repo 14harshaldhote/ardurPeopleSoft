@@ -37,12 +37,20 @@ class LetterGenerationForm(forms.Form):
         
         if template and template.placeholders:
             for placeholder in template.placeholders:
-                # Skip standard placeholders that are auto-filled
-                if placeholder in ['employee_name', 'designation', 'department', 'date', 'joining_date']:
+                # Skip 'date' as it is handled by date_of_generation
+                if placeholder == 'date':
                     continue
-                    
-                self.fields[placeholder] = forms.CharField(
-                    label=placeholder.replace('_', ' ').title(),
-                    widget=forms.TextInput(attrs={'class': 'form-control'}),
-                    required=True
-                )
+
+                # Determine field type based on placeholder name
+                if 'date' in placeholder or 'day' in placeholder:
+                    self.fields[placeholder] = forms.DateField(
+                        label=placeholder.replace('_', ' ').title(),
+                        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+                        required=True
+                    )
+                else:
+                    self.fields[placeholder] = forms.CharField(
+                        label=placeholder.replace('_', ' ').title(),
+                        widget=forms.TextInput(attrs={'class': 'form-control'}),
+                        required=True
+                    )

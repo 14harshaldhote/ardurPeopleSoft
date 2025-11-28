@@ -20,9 +20,17 @@ class LetterDashboardView(LoginRequiredMixin, HRRequiredMixin, ListView):
 
     def get_queryset(self):
         queryset = LetterService.get_active_templates()
+        
+        # Search by name
         query = self.request.GET.get('q')
         if query:
             queryset = queryset.filter(name__icontains=query)
+            
+        # Filter by type
+        type_filter = self.request.GET.get('type')
+        if type_filter:
+            queryset = queryset.filter(type=type_filter)
+            
         return queryset
 
 class LetterDetailView(LoginRequiredMixin, HRRequiredMixin, DetailView):

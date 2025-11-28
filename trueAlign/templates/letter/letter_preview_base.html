@@ -1,7 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ardur Technology Letterhead</title>
     <style>
         body {
             font-family: "Helvetica", sans-serif;
@@ -10,48 +13,32 @@
             color: #222;
             margin: 0;
             padding: 0;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            padding-top: 20px;
+            padding-bottom: 20px;
         }
 
-        .header {
-            text-align: center;
-            border-bottom: 2px solid #003366;
-            padding-bottom: 15px;
-            margin-bottom: 30px;
-        }
-
-        .logo {
-            height: 60px;
-            margin-bottom: 10px;
-        }
-
-        .company-name {
-            font-size: 18pt;
-            font-weight: bold;
-            color: #003366;
-            margin: 0;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .company-details {
-            font-size: 9pt;
-            color: #555;
-            margin-top: 5px;
+        .letter-container {
+            width: 210mm;
+            min-height: 297mm;
+            background-image: url('/static/images/lettreHead.jpg');
+            background-size: 100% 100%;
+            background-position: center;
+            background-repeat: no-repeat;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
+            position: relative;
+            box-sizing: border-box;
+            /* Adjust padding to ensure text fits within the safe area of the letterhead image */
+            padding: 5cm 2.5cm 4cm 2.5cm;
+            background-color: white;
+            margin: auto;
+            /* Ensure it centers itself in the flex container */
         }
 
         .content {
-            margin-top: 20px;
             text-align: justify;
-            min-height: 400px;
-        }
-
-        .footer {
-            text-align: center;
-            font-size: 8pt;
-            color: #777;
-            border-top: 1px solid #ccc;
-            padding-top: 10px;
-            margin-top: 40px;
         }
 
         strong {
@@ -70,21 +57,10 @@
 </head>
 
 <body>
-    <div class="header">
-        <img src="/static/images/ardurtech.png" class="logo" alt="Ardur Technology">
-        <div class="company-name">Ardur Technology Private Limited</div>
-        <div class="company-details">
-            Reg. Office: 2nd Floor, XYZ Business Plaza, Pune – 411001<br>
-            CIN: U72900PN2023PTC123456 | Contact: hr@ardurtech.com | +91 9876543210
+    <div class="letter-container">
+        <div class="content">
+            {{ content|safe }}
         </div>
-    </div>
-
-    <div class="content">
-        {{ content|safe }}
-    </div>
-
-    <div class="footer">
-        Ardur Technology Private Limited | www.ardurtech.com | Confidential
     </div>
 </body>
 
