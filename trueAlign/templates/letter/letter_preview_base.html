@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ardur Technology Letterhead</title>
+    <style>
+        body {
+            font-family: "Helvetica", sans-serif;
+            font-size: 11pt;
+            line-height: 1.6;
+            color: #222;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            padding-top: 20px;
+            padding-bottom: 20px;
+        }
+
+        .letter-container {
+            width: 210mm;
+            min-height: 297mm;
+            background-image: url('/static/images/lettreHead.jpg');
+            background-size: 100% 100%;
+            background-position: center;
+            background-repeat: no-repeat;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
+            position: relative;
+            box-sizing: border-box;
+            /* Adjust padding to ensure text fits within the safe area of the letterhead image */
+            padding: 5cm 2.5cm 4cm 2.5cm;
+            background-color: white;
+            margin: auto;
+            /* Ensure it centers itself in the flex container */
+        }
+
+        .content {
+            text-align: justify;
+        }
+
+        strong {
+            font-weight: bold;
+            color: #000;
+        }
+
+        ul {
+            margin-left: 20px;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="letter-container">
+        <div class="content">
+            {{ content|safe }}
+        </div>
+    </div>
+</body>
+
+</html>
