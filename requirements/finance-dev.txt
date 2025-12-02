@@ -1,0 +1,88 @@
+# ============================================
+# FINANCE MODULE - DEVELOPMENT REQUIREMENTS
+# For local development, testing, and VPS/cloud deployments
+# ============================================
+# Install with: pip install -r requirements/finance-dev.txt
+
+# First install production requirements
+-r finance-production.txt
+
+# ============================================
+# HEAVY / OPTIONAL LIBRARIES
+# ============================================
+
+# NLP - Heavy but useful for advanced features
+spacy==3.7.2
+# After install: python -m spacy download en_core_web_sm
+
+# Analytics - For offline analysis and advanced forecasting
+statsmodels==0.14.1         # Time-series forecasting (ARIMA)
+matplotlib==3.8.2           # Plotting (for dev analysis)
+seaborn==0.13.0             # Statistical visualization
+
+# Accounting - Optional CLI tool
+beancount==2.3.6            # For exporting to accounting format
+
+# ============================================
+# SYSTEM-DEPENDENT (VPS/Cloud Only)
+# ============================================
+# These require system packages - DO NOT use on GoDaddy cPanel
+
+# PDF Processing with System Dependencies
+tabula-py==2.9.0            # Requires: Java JRE
+camelot-py[cv]==0.11.0      # Requires: Ghostscript + OpenCV
+
+# OCR
+pytesseract==0.3.10         # Requires: Tesseract OCR binary
+# Install Tesseract:
+# - Ubuntu: sudo apt-get install tesseract-ocr
+# - Mac: brew install tesseract
+
+# Background Tasks & Caching
+celery==5.3.4               # Requires: Long-running worker processes
+redis==5.0.1                # Requires: Redis server
+django-redis==5.4.0         # Requires: Redis server
+
+# System Dependencies Setup:
+# Java (for tabula): 
+#   - Ubuntu: sudo apt-get install default-jre
+#   - Mac: brew install openjdk
+#
+# Ghostscript (for camelot):
+#   - Ubuntu: sudo apt-get install ghostscript
+#   - Mac: brew install ghostscript
+#
+# Redis:
+#   - Ubuntu: sudo apt-get install redis-server
+#   - Mac: brew install redis
+#   - Start: redis-server
+
+# ============================================
+# DEVELOPMENT TOOLS
+# ============================================
+django-debug-toolbar==4.2.0  # SQL query profiling
+django-silk==5.0.4           # Performance profiling
+django-extensions==3.2.3     # Management command helpers
+
+# Testing
+pytest-django==4.7.0
+pytest-cov==4.1.0
+factory-boy==3.3.0          # Test data generation
+
+# Code Quality
+black==23.12.1              # Code formatting
+flake8==7.0.0               # Linting
+mypy==1.8.0                 # Type checking
+
+# ============================================
+# USAGE
+# ============================================
+# Development environment:
+#   pip install -r requirements/finance-dev.txt
+#
+# Production (cPanel):
+#   pip install -r requirements/finance-production.txt
+#
+# VPS/Cloud (with system packages):
+#   1. Install system dependencies (Java, Redis, etc.)
+#   2. pip install -r requirements/finance-dev.txt

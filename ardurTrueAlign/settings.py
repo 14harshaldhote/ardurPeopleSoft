@@ -93,13 +93,34 @@ ENHANCED_SESSION_CONFIG = {
     'MAX_EVENTS_PER_SESSION': 1000,
 }
 
-# Caching Configuration (for rate limiting and session management)
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
+# Caching Configuration 
+# For cPanel: Use database cache (no Redis required)
+# For local dev: Use locmem
+# For VPS/Cloud: Use Redis
+
+USE_DATABASE_CACHE = get_env_variable('USE_DATABASE_CACHE', 'False').lower() in ('true', '1', 'yes')
+
+if USE_DATABASE_CACHE:
+    # Database cache for cPanel (create table: python manage.py createcachetable finance_cache)
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+            'LOCATION': 'finance_cache',
+            'TIMEOUT': 3600,  # 1 hour default
+            'OPTIONS': {
+                'MAX_ENTRIES': 1000,
+            }
+        }
     }
-}
+else:
+    # Local memory cache for development
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'unique-snowflake',
+        }
+    }
+
 
 
 INSTALLED_APPS = [
@@ -127,7 +148,37 @@ INSTALLED_APPS = [
     'crispy_forms',
     'crispy_tailwind',
     'simple_history',
+    'djmoney',  # Multi-currency support for finance
+    'django_iban',  # IBAN validation for international banking
 ]
+
+# ============================================
+# FINANCE MODULE CONFIGURATION
+# ============================================
+
+# Django-Money Settings
+CURRENCIES = ('INR', 'USD', 'EUR', 'GBP', 'AED', 'SGD', 'JPY', 'CNY')
+DEFAULT_CURRENCY = 'INR'
+CURRENCY_CHOICES = [
+    ('INR', 'Indian Rupee (₹)'),
+    ('USD', 'US Dollar ($)'),
+    ('EUR', 'Euro (€)'),
+    ('GBP', 'British Pound (£)'),
+    ('AED', 'UAE Dirham (د.إ)'),
+    ('SGD', 'Singapore Dollar (S$)'),
+]
+
+# Finance-specific settings
+FINANCE_CONFIG = {
+    'ENABLE_MULTI_CURRENCY': True,
+    'DEFAULT_CURRENCY': 'INR',
+    'FX_CACHE_TTL': 3600,  # 1 hour
+    'MAX_EXPENSE_AMOUNT': 1000000,  # ₹10 Lakh
+    'REQUIRE_APPROVAL_ABOVE': 50000,  # ₹50,000
+    'ENABLE_NLP_ANALYSIS': True,
+    'ENABLE_RISK_SCORING': True,
+}
+
 
 # Crispy Forms Settings
 CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
@@ -435,6 +486,23 @@ LOGGING = {
             'class': 'django.utils.log.AdminEmailHandler',
             'formatter': 'verbose'
         },
+        # Finance Module - JSON Logging
+        'finance_json': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'finance.json'),
+            'maxBytes': 1024 * 1024 * 15,  # 15MB
+            'backupCount': 10,
+            'formatter': 'json',  # Use JSON formatter for structured logging
+        },
+        'finance_errors': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'finance_errors.log'),
+            'maxBytes': 1024 * 1024 * 15,
+            'backupCount': 5,
+            'formatter': 'detailed',
+        },
     },
 
     'loggers': {
@@ -449,6 +517,32 @@ LOGGING = {
         },
         'django.server': {
             'handlers': ['console', 'support_error_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        # Finance Module Logging
+        'finance': {
+            'handlers': ['finance_json', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.finance': {
+            'handlers': ['finance_json', 'finance_errors', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.finance.services': {
+            'handlers': ['finance_json', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.finance.views': {
+            'handlers': ['finance_json', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.finance.nlp': {
+            'handlers': ['finance_json'],
             'level': 'INFO',
             'propagate': False,
         },

@@ -2,7 +2,8 @@ from django import forms
 from django.contrib.contenttypes.models import ContentType
 from trueAlign.models import (
     FinancialParameter, DailyExpense, Voucher, VoucherDetail,
-    BankAccount, BankPayment, Subscription, ClientInvoice, ChartOfAccount
+    BankAccount, BankPayment, Subscription, ClientInvoice, ChartOfAccount,
+    CashBox, CashTransaction, PaymentAllocation, BankStatement, PayrollAdjustment
 )
 
 
@@ -290,6 +291,82 @@ class InvoiceFilterForm(forms.Form):
     )
     billing_model = forms.ChoiceField(
         choices=[('', 'All Billing Models')] + list(ClientInvoice.BILLING_MODELS),
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    date_from = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
+    )
+    date_to = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
+    )
+class CashBoxForm(forms.ModelForm):
+    class Meta:
+        model = CashBox
+        fields = ['name', 'location', 'managed_by', 'is_active']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'location': forms.TextInput(attrs={'class': 'form-control'}),
+            'managed_by': forms.Select(attrs={'class': 'form-select'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+class CashTransactionForm(forms.ModelForm):
+    class Meta:
+        model = CashTransaction
+        fields = ['box', 'type', 'amount', 'description', 'attachments']
+        widgets = {
+            'box': forms.Select(attrs={'class': 'form-select'}),
+            'type': forms.Select(attrs={'class': 'form-select'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'attachments': forms.FileInput(attrs={'class': 'form-control'}),
+        }
+
+class PaymentAllocationForm(forms.ModelForm):
+    class Meta:
+        model = PaymentAllocation
+        fields = ['payment_source_type', 'bank_payment', 'cash_transaction', 'expense', 'voucher', 'amount_allocated']
+        widgets = {
+            'payment_source_type': forms.Select(attrs={'class': 'form-select'}),
+            'bank_payment': forms.Select(attrs={'class': 'form-select'}),
+            'cash_transaction': forms.Select(attrs={'class': 'form-select'}),
+            'expense': forms.Select(attrs={'class': 'form-select'}),
+            'voucher': forms.Select(attrs={'class': 'form-select'}),
+            'amount_allocated': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+        }
+
+class BankStatementUploadForm(forms.ModelForm):
+    file = forms.FileField(widget=forms.FileInput(attrs={'class': 'form-control', 'accept': '.csv'}))
+    
+    class Meta:
+        model = BankStatement
+        fields = ['bank_account', 'period_start', 'period_end']
+        widgets = {
+            'bank_account': forms.Select(attrs={'class': 'form-select'}),
+            'period_start': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'period_end': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        }
+
+class PayrollAdjustmentForm(forms.ModelForm):
+    class Meta:
+        model = PayrollAdjustment
+        fields = ['employee', 'month', 'formal_salary_payable', 'actual_payout_bank', 'actual_payout_cash', 'cash_returned_by_employee', 'adjustment_reason']
+        widgets = {
+            'employee': forms.Select(attrs={'class': 'form-select'}),
+            'month': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'formal_salary_payable': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'actual_payout_bank': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'actual_payout_cash': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'cash_returned_by_employee': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'adjustment_reason': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+class ReconciliationFilterForm(forms.Form):
+    status = forms.ChoiceField(
+        choices=[('', 'All Statuses'), ('reconciled', 'Reconciled'), ('unreconciled', 'Unreconciled')],
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'})
     )

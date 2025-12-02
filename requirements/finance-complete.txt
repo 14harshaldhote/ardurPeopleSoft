@@ -1,0 +1,141 @@
+# ============================================
+# FINANCE MODULE - COMPLETE LIBRARY SUITE
+# 32 Production-Grade Libraries for Enterprise Finance
+# ============================================
+# Installation: pip install -r requirements/finance-complete.txt
+
+# ============================================
+# 1. MONEY & CURRENCY (5 libraries)
+# ============================================
+django-money==3.4.1
+py-moneyed==3.0
+forex-python==1.8
+Babel==2.13.1
+# decimal is Python stdlib - no install needed
+
+# ============================================
+# 2. ACCOUNTING & COMPLIANCE (4 libraries)
+# ============================================
+django-iban==0.3.4
+python-stdnum==1.19
+# double-entry-accounting==0.5.0  # Optional
+beancount==2.3.6
+
+# ============================================
+# 3. PDF & OCR (6 libraries)
+# ============================================
+tabula-py==2.9.0
+camelot-py[cv]==0.11.0
+pdfplumber==0.11.0
+PyPDF2==3.0.1
+pytesseract==0.3.10
+Pillow==10.1.0
+dateparser==1.2.0
+
+# ============================================
+# 4. NLP & RULES (6 libraries)
+# ============================================
+nltk==3.8.1
+spacy==3.7.2
+# After install, run: python -m spacy download en_core_web_sm
+rapidfuzz==3.5.2
+business-rules==1.0.1
+Cerberus==1.3.5
+regex==2023.10.3
+
+# ============================================
+# 5. ANALYTICS & VISUALIZATION (6 libraries)
+# ============================================
+pandas==2.1.4
+numpy==1.26.2
+statsmodels==0.14.1
+plotly==5.18.0
+matplotlib==3.8.2
+seaborn==0.13.0
+
+# ============================================
+# 6. SECURITY (4 libraries)
+# ============================================
+django-axes==6.1.1
+django-defender==0.9.7
+django-encrypted-model-fields==0.6.5
+python-keyring==24.3.0
+cryptography==41.0.7
+
+# ============================================
+# 7. UTILITIES (3 libraries)
+# ============================================
+arrow==1.3.0
+python-json-logger==2.0.7
+PyYAML==6.0.1
+
+# ============================================
+# 8. DJANGO EXTENSIONS (Core from original plan)
+# ============================================
+django-fsm==2.8.1
+django-auditlog==2.3.0
+django-import-export==3.3.1
+django-simple-history==3.4.0
+django-concurrency==2.5
+
+# ============================================
+# 9. ASYNC & CACHING
+# ============================================
+celery==5.3.4
+redis==5.0.1
+django-redis==5.4.0
+
+# ============================================
+# 10. DEVELOPMENT & DEBUGGING (Dev only)
+# ============================================
+django-debug-toolbar==4.2.0
+django-silk==5.0.4
+django-extensions==3.2.3
+
+# ============================================
+# SYSTEM DEPENDENCIES NOTES
+# ============================================
+# The following require system-level installation:
+#
+# 1. Tesseract OCR (for pytesseract):
+#    - Ubuntu/Debian: sudo apt-get install tesseract-ocr
+#    - MacOS: brew install tesseract
+#    - Windows: Download from https://github.com/UB-Mannheim/tesseract/wiki
+#
+# 2. Java JRE (for tabula-py):
+#    - Ubuntu/Debian: sudo apt-get install default-jre
+#    - MacOS: brew install openjdk
+#    - Windows: Download from https://www.java.com/
+#
+# 3. Redis (for caching & celery):
+#    - Ubuntu/Debian: sudo apt-get install redis-server
+#    - MacOS: brew install redis
+#    - Windows: Use WSL or download from https://redis.io/
+#
+# 4. Ghostscript (for camelot-py):
+#    - Ubuntu/Debian: sudo apt-get install ghostscript
+#    - MacOS: brew install ghostscript
+#
+# ============================================
+# POST-INSTALLATION COMMANDS
+# ============================================
+# Run these after pip install:
+#
+# 1. Download spaCy language model:
+#    python -m spacy download en_core_web_sm
+#
+# 2. Download NLTK data (optional, for advanced NLP):
+#    python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
+#
+# 3. Generate encryption key for django-encrypted-model-fields:
+#    python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+#    # Add to settings: FIELD_ENCRYPTION_KEY = 'generated_key_here'
+#
+# ============================================
+# INSTALLATION ORDER (for clean install)
+# ============================================
+# 1. Install system dependencies first (see above)
+# 2. pip install -r requirements/finance-complete.txt
+# 3. Run post-installation commands
+# 4. Run migrations: python manage.py migrate
+# 5. Verify: python manage.py check
