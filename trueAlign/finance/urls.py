@@ -73,4 +73,27 @@ urlpatterns = [
     path('chart-of-accounts/', views.chart_of_account_list, name='chart_of_account_list'),
     path('chart-of-accounts/create/', views.chart_of_account_create, name='chart_of_account_create'),
     path('chart-of-accounts/<int:pk>/edit/', views.chart_of_account_edit, name='chart_of_account_edit'),
+    
+    # ==================== CASH MANAGEMENT ====================
+    path('cash/', views.cash_box_dashboard, name='cash_box_dashboard'),
+    path('cash/boxes/create/', views.cash_box_create, name='cash_box_create'),
+    path('cash/boxes/<int:pk>/edit/', views.cash_box_edit, name='cash_box_edit'),
+    path('cash/boxes/<int:pk>/', views.cash_box_detail, name='cash_box_detail'),
+    path('cash/transactions/', views.cash_transaction_list, name='cash_transaction_list'),
+    path('cash/transactions/create/', views.cash_transaction_create, name='cash_transaction_create'),
+    
+    # ==================== PAYMENT ALLOCATION ====================
+    path('allocations/', views.payment_allocation_list, name='payment_allocation_list'),
+    path('allocations/create/', views.payment_allocation_create, name='payment_allocation_create'),
+    path('allocations/expense/<str:expense_id>/', views.expense_allocations_view, name='expense_allocations_view'),
+    path('allocations/quick-allocate/<str:expense_id>/', views.quick_allocate_expense, name='quick_allocate_expense'),
+    
+    # ==================== BANK RECONCILIATION ====================
+    path('reconciliation/', views.bank_reconciliation_dashboard, name='bank_reconciliation_dashboard'),
+    path('reconciliation/upload/', views.bank_statement_upload, name='bank_statement_upload'),
+    path('reconciliation/statement/<int:pk>/', views.statement_detail, name='statement_detail'),
+    path('reconciliation/statement/<int:pk>/auto-reconcile/', views.auto_reconcile_statement, name='auto_reconcile_statement'),
+    
+    # ==================== INTELLIGENCE ====================
+    path('intelligence/', views.intelligence_dashboard, name='intelligence_dashboard'),
 ]

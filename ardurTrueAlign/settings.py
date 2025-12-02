@@ -127,6 +127,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'crispy_tailwind',
     'simple_history',
+    'djmoney',  # Multi-currency support for finance
 ]
 
 # Crispy Forms Settings

@@ -15,17 +15,23 @@ from decimal import Decimal
 
 from trueAlign.models import (
     FinancialParameter, DailyExpense, Voucher, VoucherDetail,
-    BankAccount, BankPayment, Subscription, ClientInvoice, ChartOfAccount
+    BankAccount, BankPayment, Subscription, ClientInvoice, ChartOfAccount,
+    CashBox, CashTransaction, PaymentAllocation, PayrollAdjustment, ShadowEntry,
+    BankStatement, BankStatementLine
 )
 from .forms import (
     FinancialParameterForm, DailyExpenseForm, ExpenseApprovalForm,
     VoucherForm, VoucherDetailFormSet, BankAccountForm, BankPaymentForm, BankPaymentApprovalForm,
     SubscriptionForm, ClientInvoiceForm, ChartOfAccountForm,
-    ExpenseFilterForm, VoucherFilterForm, BankPaymentFilterForm, InvoiceFilterForm
+    ExpenseFilterForm, VoucherFilterForm, BankPaymentFilterForm, InvoiceFilterForm,
+    CashBoxForm, CashTransactionForm, PaymentAllocationForm, PayrollAdjustmentForm,
+    BankStatementUploadForm, ReconciliationFilterForm
 )
 from .services import (
     FinancialParameterService, ExpenseService, VoucherService,
-    BankPaymentService, SubscriptionService, InvoiceService
+    BankPaymentService, SubscriptionService, InvoiceService,
+    CashService, PaymentAllocationService, PayrollRealityService,
+    ReconciliationService, FinanceIntelligenceService
 )
 from .decorators import (
     finance_manager_required, department_head_required, can_approve_expense,
@@ -1137,3 +1143,447 @@ def chart_of_account_edit(request, pk):
     
     context = {'form': form, 'account': account}
     return render(request, 'finance/chart_of_accounts/form.html', context)
+"""
+Cash Management Views - To be appended to trueAlign/finance/views.py
+"""
+
+# ==================== CASH MANAGEMENT ====================
+
+@login_required
+def cash_box_dashboard(request):
+    """Cash management dashboard with all cash boxes and recent transactions"""
+    cash_boxes = CashBox.objects.filter(is_active=True).select_related('managed_by')
+    
+    # Calculate totals
+    from django.db.models import Sum
+    total_cash = cash_boxes.aggregate(
+        total=Sum('balance')
+    )['total'] or 0
+    
+    # Recent transactions across all boxes
+    recent_transactions = CashTransaction.objects.select_related(
+        'box', 'performed_by'
+    ).order_by('-date')[:10]
+    
+    # This month's cash flow
+    today = timezone.now().date()
+    month_start = today.replace(day=1)
+    
+    month_deposits = CashTransaction.objects.filter(
+        date__gte=month_start,
+        type='DEPOSIT'
+    ).aggregate(total=Sum('amount'))['total'] or 0
+    
+    month_withdrawals = CashTransaction.objects.filter(
+        date__gte=month_start,
+        type__in=['WITHDRAWAL', 'EXPENSE']
+    ).aggregate(total=Sum('amount'))['total'] or 0
+    
+    context = {
+        'cash_boxes': cash_boxes,
+        'total_cash': total_cash,
+        'recent_transactions': recent_transactions,
+        'month_deposits': month_deposits,
+        'month_withdrawals': month_withdrawals,
+        'month_net': month_deposits - month_withdrawals,
+    }
+    
+    return render(request, 'finance/cash/dashboard.html', context)
+
+
+@login_required
+@finance_manager_required
+def cash_box_create(request):
+    """Create a new cash box"""
+    if request.method == 'POST':
+        form = CashBoxForm(request.POST)
+        if form.is_valid():
+            box = form.save()
+            messages.success(request, f"Cash box '{box.name}' created successfully.")
+            return redirect('finance:cash_box_dashboard')
+    else:
+        form = CashBoxForm()
+    
+    context = {'form': form}
+    return render(request, 'finance/cash/box_form.html', context)
+
+
+@login_required
+@finance_manager_required
+def cash_box_edit(request, pk):
+    """Edit a cash box"""
+    box = get_object_or_404(CashBox, pk=pk)
+    
+    if request.method == 'POST':
+        form = CashBoxForm(request.POST, instance=box)
+        if form.is_valid():
+            box = form.save()
+            messages.success(request, f"Cash box '{box.name}' updated successfully.")
+            return redirect('finance:cash_box_dashboard')
+    else:
+        form = CashBoxForm(instance=box)
+    
+    context = {'form': form, 'box': box}
+    return render(request, 'finance/cash/box_form.html', context)
+
+
+@login_required
+def cash_box_detail(request, pk):
+    """View cash box details with transaction history"""
+    box = get_object_or_404(CashBox.objects.select_related('managed_by'), pk=pk)
+    
+    # Get transactions for this box
+    transactions = box.transactions.select_related('performed_by').order_by('-date')
+    
+    # Pagination
+    paginator = Paginator(transactions, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Analytics for this box
+    total_deposits = box.transactions.filter(type='DEPOSIT').aggregate(
+        total=Sum('amount')
+    )['total'] or 0
+    
+    total_withdrawals = box.transactions.filter(
+        type__in=['WITHDRAWAL', 'EXPENSE']
+    ).aggregate(total=Sum('amount'))['total'] or 0
+    
+    context = {
+        'box': box,
+        'page_obj': page_obj,
+        'total_deposits': total_deposits,
+        'total_withdrawals': total_withdrawals,
+    }
+    
+    return render(request, 'finance/cash/box_detail.html', context)
+
+
+@login_required
+def cash_transaction_create(request):
+    """Create a new cash transaction"""
+    if request.method == 'POST':
+        form = CashTransactionForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                txn = CashService.record_transaction(
+                    box_id=form.cleaned_data['box'].id,
+                    txn_type=form.cleaned_data['type'],
+                    amount=form.cleaned_data['amount'].amount,  # Extract amount from Money object
+                    performed_by=request.user,
+                    description=form.cleaned_data['description'],
+                    related_bank_payment_id=None
+                )
+                messages.success(request, f"Cash transaction recorded successfully. New balance: {txn.box.balance}")
+                return redirect('finance:cash_box_detail', pk=txn.box.pk)
+            except ValueError as e:
+                messages.error(request, f"Error: {str(e)}")
+    else:
+        form = CashTransactionForm()
+    
+    context = {'form': form}
+    return render(request, 'finance/cash/transaction_form.html', context)
+
+
+@login_required
+def cash_transaction_list(request):
+    """List all cash transactions with filters"""
+    transactions = CashTransaction.objects.select_related('box', 'performed_by').all()
+    
+    # Filters
+    box_id = request.GET.get('box')
+    type_filter = request.GET.get('type')
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    
+    if box_id:
+        transactions = transactions.filter(box_id=box_id)
+    if type_filter:
+        transactions = transactions.filter(type=type_filter)
+    if date_from:
+        transactions = transactions.filter(date__gte=date_from)
+    if date_to:
+        transactions = transactions.filter(date__lte=date_to)
+    
+    transactions = transactions.order_by('-date', '-created_at')
+    
+    paginator = Paginator(transactions, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # For filter dropdown
+    cash_boxes = CashBox.objects.filter(is_active=True)
+    
+    context = {
+        'page_obj': page_obj,
+        'cash_boxes': cash_boxes,
+        'transaction_types': CashTransaction.TRANSACTION_TYPES,
+    }
+    
+    return render(request, 'finance/cash/transaction_list.html', context)
+"""
+Payment Allocation Views - To be appended to trueAlign/finance/views.py
+"""
+
+# ==================== PAYMENT ALLOCATION ====================
+
+@login_required
+def payment_allocation_list(request):
+    """List all payment allocations with details"""
+    allocations = PaymentAllocation.objects.select_related(
+        'bank_payment', 'cash_transaction', 'expense', 'voucher'
+    ).all().order_by('-allocation_date', '-created_at')
+    
+    # Filters
+    expense_id = request.GET.get('expense')
+    payment_type = request.GET.get('payment_type')
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    
+    if expense_id:
+        allocations = allocations.filter(expense_id=expense_id)
+    if payment_type:
+        allocations = allocations.filter(payment_source_type=payment_type)
+    if date_from:
+        allocations = allocations.filter(allocation_date__gte=date_from)
+    if date_to:
+        allocations = allocations.filter(allocation_date__lte=date_to)
+    
+    paginator = Paginator(allocations, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'payment_types': PaymentAllocation.PAYMENT_SOURCES,
+    }
+    
+    return render(request, 'finance/allocations/list.html', context)
+
+
+@login_required
+def payment_allocation_create(request):
+    """Create a new payment allocation"""
+    if request.method == 'POST':
+        form = PaymentAllocationForm(request.POST)
+        if form.is_valid():
+            try:
+                # Extract data
+                payment_type = form.cleaned_data['payment_source_type']
+                bank_payment = form.cleaned_data.get('bank_payment')
+                cash_txn = form.cleaned_data.get('cash_transaction')
+                expense = form.cleaned_data.get('expense')
+                voucher = form.cleaned_data.get('voucher')
+                amount = form.cleaned_data['amount_allocated'].amount  # Extract from Money object
+                
+                # Determine source_id
+                source_id = bank_payment.id if payment_type == 'BANK' else cash_txn.id
+                
+                # Use service to create allocation
+                allocation = PaymentAllocationService.allocate_payment(
+                    expense_id=expense.expense_id if expense else None,
+                    amount=amount,
+                    payment_source_type=payment_type,
+                    source_id=source_id
+                )
+                
+                messages.success(request, f"Payment allocated successfully. Amount: {allocation.amount_allocated}")
+                return redirect('finance:payment_allocation_list')
+            except ValueError as e:
+                messages.error(request, f"Error: {str(e)}")
+    else:
+        form = PaymentAllocationForm()
+    
+    context = {'form': form}
+    return render(request, 'finance/allocations/form.html', context)
+
+
+@login_required
+def expense_allocations_view(request, expense_id):
+    """View all allocations for a specific expense"""
+    expense = get_object_or_404(DailyExpense, expense_id=expense_id)
+    
+    allocations = PaymentAllocation.objects.filter(expense=expense).select_related(
+        'bank_payment', 'cash_transaction'
+    )
+    
+    # Calculate total allocated vs expense amount
+    from django.db.models import Sum
+    total_allocated = allocations.aggregate(
+        total=Sum('amount_allocated')
+    )['total'] or 0
+    
+    remaining = expense.amount - total_allocated
+    
+    context = {
+        'expense': expense,
+        'allocations': allocations,
+        'total_allocated': total_allocated,
+        'remaining': remaining,
+        'is_fully_paid': expense.status == 'paid',
+    }
+    
+    return render(request, 'finance/allocations/expense_detail.html', context)
+
+
+@login_required
+def quick_allocate_expense(request, expense_id):
+    """Quick allocation form for an expense from its detail page"""
+    expense = get_object_or_404(DailyExpense, expense_id=expense_id)
+    
+    if request.method == 'POST':
+        form = PaymentAllocationForm(request.POST)
+        if form.is_valid():
+            try:
+                payment_type = form.cleaned_data['payment_source_type']
+                bank_payment = form.cleaned_data.get('bank_payment')
+                cash_txn = form.cleaned_data.get('cash_transaction')
+                amount = form.cleaned_data['amount_allocated'].amount
+                
+                source_id = bank_payment.id if payment_type == 'BANK' else cash_txn.id
+                
+                allocation = PaymentAllocationService.allocate_payment(
+                    expense_id=expense.expense_id,
+                    amount=amount,
+                    payment_source_type=payment_type,
+                    source_id=source_id
+                )
+                
+                messages.success(request, f"Allocated {allocation.amount_allocated} to expense {expense.expense_id}")
+                return redirect('finance:expense_detail', pk=expense.pk)
+            except ValueError as e:
+                messages.error(request, f"Error: {str(e)}")
+    else:
+        # Pre-populate expense
+        form = PaymentAllocationForm(initial={'expense': expense})
+    
+    context = {
+        'form': form,
+        'expense': expense,
+    }
+    
+    return render(request, 'finance/allocations/quick_form.html', context)
+
+
+# ==================== BANK RECONCILIATION ====================
+
+@login_required
+@finance_manager_required
+def bank_statement_upload(request):
+    """Upload a bank statement for reconciliation"""
+    if request.method == 'POST':
+        form = BankStatementUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                # Save statement file
+                statement = form.save(commit=False)
+                statement.uploaded_by = request.user
+                statement.save()
+                
+                # Import and process
+                ReconciliationService.import_statement(
+                    bank_account_id=statement.bank_account.id,
+                    file_path=statement.file.path,
+                    uploaded_by=request.user
+                )
+                
+                messages.success(request, f"Bank statement uploaded successfully. {statement.total_lines} lines imported.")
+                return redirect('finance:bank_reconciliation_dashboard')
+            except Exception as e:
+                messages.error(request, f"Error importing statement: {str(e)}")
+    else:
+        form = BankStatementUploadForm()
+    
+    context = {'form': form}
+    return render(request, 'finance/reconciliation/upload.html', context)
+
+
+@login_required
+@finance_manager_required
+def bank_reconciliation_dashboard(request):
+    """Main reconciliation dashboard"""
+    statements = BankStatement.objects.select_related('bank_account', 'uploaded_by').order_by('-uploaded_at')[:10]
+    
+    # Summary stats
+    from django.db.models import Count, Q
+    unreconciled_count = BankStatementLine.objects.filter(is_reconciled=False).count()
+    
+    context = {
+        'statements': statements,
+        'unreconciled_count': unreconciled_count,
+    }
+    
+    return render(request, 'finance/reconciliation/dashboard.html', context)
+
+
+@login_required
+@finance_manager_required
+def statement_detail(request, pk):
+    """View statement lines and reconciliation status"""
+    statement = get_object_or_404(BankStatement.objects.select_related('bank_account'), pk=pk)
+    
+    lines = statement.lines.all().order_by('-date')
+    
+    # Filter
+    reconciled_filter = request.GET.get('is_reconciled')
+    if reconciled_filter == 'true':
+        lines = lines.filter(is_reconciled=True)
+    elif reconciled_filter == 'false':
+        lines = lines.filter(is_reconciled=False)
+    
+    paginator = Paginator(lines, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'statement': statement,
+        'page_obj': page_obj,
+    }
+    
+    return render(request, 'finance/reconciliation/statement_detail.html', context)
+
+
+@login_required
+@finance_manager_required
+def auto_reconcile_statement(request, pk):
+    """Trigger auto-reconciliation for a statement"""
+    statement = get_object_or_404(BankStatement, pk=pk)
+    
+    if request.method == 'POST':
+        try:
+            matches_found = ReconciliationService.auto_reconcile(statement.id)
+            messages.success(request, f"Auto-reconciliation complete! {matches_found} matches found.")
+        except Exception as e:
+            messages.error(request, f"Error during reconciliation: {str(e)}")
+        
+        return redirect('finance:statement_detail', pk=pk)
+    
+    context = {'statement': statement}
+    return render(request, 'finance/reconciliation/auto_reconcile_confirm.html', context)
+
+
+# ==================== INTELLIGENCE DASHBOARD ====================
+
+@login_required
+@finance_manager_required
+def intelligence_dashboard(request):
+    """Finance Intelligence & Anomaly Detection Dashboard"""
+    
+    # Run pattern detection
+    round_anomalies = FinanceIntelligenceService.detect_round_number_anomalies(threshold=1000)
+    duplicate_payments = FinanceIntelligenceService.detect_duplicate_vendor_payments(days_window=7)
+    
+    # This month's high cash volume
+    today = timezone.now().date()
+    month_start = today.replace(day=1)
+    high_cash_employees = FinanceIntelligenceService.detect_high_cash_volume_employees(
+        month_start, today, threshold=50000
+    )
+    
+    context = {
+        'round_anomalies': round_anomalies,
+        'duplicate_payments': duplicate_payments,
+        'high_cash_employees': high_cash_employees,
+    }
+    
+    return render(request, 'finance/intelligence/dashboard.html', context)

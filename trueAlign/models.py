@@ -7160,3 +7160,264 @@ class GeneratedLetter(models.Model):
 
     def __str__(self):
         return f"{self.template.name if self.template else 'Unknown'} - {self.employee.get_full_name()}"
+
+
+'''------------------------- ADVANCED FINANCE (REAL WORLD) --------------------'''
+
+from djmoney.models.fields import MoneyField
+
+class CashBox(models.Model):
+    """
+    Represents a physical location where cash is stored (e.g., Office Safe, Petty Cash Box).
+    This allows tracking of 'Cash on Hand' separate from Bank Accounts.
+    """
+    name = models.CharField(max_length=100, help_text="Name of the cash box (e.g., 'Main Safe', 'Petty Cash')")
+    location = models.CharField(max_length=255, help_text="Physical location")
+    balance = MoneyField(
+        max_digits=15,
+        decimal_places=2,
+        default_currency='INR',
+        default=0,
+        help_text="Current cash balance"
+    )
+    managed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='managed_cash_boxes', help_text="Person responsible for this cash box")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.balance})"
+
+class CashTransaction(models.Model):
+    """
+    Tracks money moving in/out of a CashBox.
+    """
+    TRANSACTION_TYPES = [
+        ('DEPOSIT', 'Deposit (In)'),
+        ('WITHDRAWAL', 'Withdrawal (Out)'),
+        ('EXPENSE', 'Direct Expense Payment'),
+        ('TRANSFER', 'Transfer to another Box/Bank'),
+    ]
+
+    box = models.ForeignKey(CashBox, on_delete=models.PROTECT, related_name='transactions')
+    type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
+    amount = MoneyField(
+        max_digits=15,
+        decimal_places=2,
+        default_currency='INR'
+    )
+    date = models.DateTimeField(default=timezone.now)
+    description = models.TextField(help_text="Reason for transaction")
+    performed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='performed_cash_txns')
+    
+    # Link to Bank Payment if this was a withdrawal from Bank -> Cash
+    related_bank_payment = models.ForeignKey('BankPayment', on_delete=models.SET_NULL, null=True, blank=True, related_name='related_cash_txns', help_text="If this cash came from a bank withdrawal")
+    
+    attachments = models.FileField(upload_to='cash_receipts/', null=True, blank=True)
+    
+    # NLP & Intelligence Fields
+    nlp_data = models.JSONField(default=dict, blank=True, help_text="Extracted tags, entities, and analysis data")
+    risk_score = models.IntegerField(default=0, help_text="Risk score (0-100)")
+    risk_factors = models.JSONField(default=list, blank=True, help_text="List of risk factors identified")
+    normalized_description = models.TextField(blank=True, help_text="Normalized text for searching and matching")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.type} - {self.amount} - {self.box.name}"
+
+class PaymentAllocation(models.Model):
+    """
+    The 'Bridge' Model.
+    Solves the M:N problem between Expenses/Vouchers and Payments.
+    Allows:
+    1. One Payment covering multiple Expenses.
+    2. One Expense split across multiple Payments (Part Bank, Part Cash).
+    """
+    PAYMENT_SOURCES = [
+        ('BANK', 'Bank Payment'),
+        ('CASH', 'Cash Transaction'),
+    ]
+
+    payment_source_type = models.CharField(max_length=10, choices=PAYMENT_SOURCES)
+    
+    # The Source of Money
+    bank_payment = models.ForeignKey('BankPayment', on_delete=models.CASCADE, null=True, blank=True, related_name='allocations')
+    cash_transaction = models.ForeignKey(CashTransaction, on_delete=models.CASCADE, null=True, blank=True, related_name='allocations')
+
+    # The Liability being settled
+    expense = models.ForeignKey('DailyExpense', on_delete=models.SET_NULL, null=True, blank=True, related_name='allocations')
+    voucher = models.ForeignKey('Voucher', on_delete=models.SET_NULL, null=True, blank=True, related_name='allocations')
+    
+    amount_allocated = MoneyField(
+        max_digits=15,
+        decimal_places=2,
+        default_currency='INR',
+        help_text="Amount of this payment assigned to this expense"
+    )
+    allocation_date = models.DateField(default=timezone.now)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if not self.bank_payment and not self.cash_transaction:
+            raise ValidationError("Must link to either a Bank Payment or Cash Transaction.")
+        if not self.expense and not self.voucher:
+            raise ValidationError("Must allocate to either an Expense or a Voucher.")
+
+    def __str__(self):
+        return f"Allocated {self.amount_allocated}"
+
+class PayrollAdjustment(models.Model):
+    """
+    Handles the 'Real' vs 'Formal' payroll reality.
+    Tracks actual payouts, cash components, and returns.
+    """
+    employee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='payroll_adjustments')
+    month = models.DateField(help_text="First day of the salary month")
+    
+    # The Formal Picture
+    formal_salary_payable = MoneyField(
+        max_digits=15,
+        decimal_places=2,
+        default_currency='INR',
+        help_text="Net salary as per Payslip"
+    )
+    
+    # The Actual Payout
+    actual_payout_bank = MoneyField(
+        max_digits=15,
+        decimal_places=2,
+        default_currency='INR',
+        default=0,
+        help_text="Amount actually transferred via Bank"
+    )
+    actual_payout_cash = MoneyField(
+        max_digits=15,
+        decimal_places=2,
+        default_currency='INR',
+        default=0,
+        help_text="Amount paid in Cash"
+    )
+    
+    # The 'Shadow' Flows
+    cash_returned_by_employee = MoneyField(
+        max_digits=15,
+        decimal_places=2,
+        default_currency='INR',
+        default=0,
+        help_text="Cash returned by employee to company (Kickback/Adjustment)"
+    )
+    loan_recovery_deduction = MoneyField(
+        max_digits=15,
+        decimal_places=2,
+        default_currency='INR',
+        default=0,
+        help_text="Deducted for loan recovery (often not on payslip)"
+    )
+    
+    adjustment_reason = models.TextField(blank=True, help_text="Explanation for the difference")
+    is_shadow_record = models.BooleanField(default=True, help_text="If True, this is for internal 'Real' tracking only")
+    
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='created_payroll_adjs')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    # NLP & Intelligence Fields
+    nlp_data = models.JSONField(default=dict, blank=True, help_text="Extracted tags, entities, and analysis data")
+    risk_score = models.IntegerField(default=0, help_text="Risk score (0-100)")
+    risk_factors = models.JSONField(default=list, blank=True, help_text="List of risk factors identified")
+    normalized_description = models.TextField(blank=True, help_text="Normalized text for searching and matching")
+
+    class Meta:
+        unique_together = ['employee', 'month']
+
+    def __str__(self):
+        return f"Payroll Adj - {self.employee.get_full_name()} - {self.month.strftime('%b %Y')}"
+
+class ShadowEntry(models.Model):
+    """
+    For tracking 'Off-Book' or 'Grey' transactions that need to be visible 
+    for 'True Cost' analysis but hidden from formal reports.
+    """
+    ENTRY_TYPES = [
+        ('INCOME', 'Shadow Income'),
+        ('EXPENSE', 'Shadow Expense'),
+        ('ADJUSTMENT', 'Book Adjustment'),
+    ]
+    
+    date = models.DateField()
+    type = models.CharField(max_length=20, choices=ENTRY_TYPES)
+    amount = MoneyField(
+        max_digits=15,
+        decimal_places=2,
+        default_currency='INR'
+    )
+    description = models.TextField()
+    category = models.CharField(max_length=100, help_text="Internal category for analysis")
+    
+    related_cash_box = models.ForeignKey(CashBox, on_delete=models.SET_NULL, null=True, blank=True, help_text="If this affected a cash box balance")
+    
+    is_secret = models.BooleanField(default=True, help_text="High security clearance required")
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Shadow {self.type} - {self.amount}"
+
+
+'''------------------------- RECONCILIATION & INTELLIGENCE --------------------'''
+
+class BankStatement(models.Model):
+    """
+    Represents an uploaded bank statement file (CSV/PDF/Excel).
+    """
+    bank_account = models.ForeignKey(BankAccount, on_delete=models.CASCADE, related_name='statements')
+    file = models.FileField(upload_to='bank_statements/')
+    period_start = models.DateField()
+    period_end = models.DateField()
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    
+    # Status
+    is_processed = models.BooleanField(default=False, help_text="True if lines have been extracted")
+    total_lines = models.IntegerField(default=0)
+    reconciled_lines = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"Stmt: {self.bank_account.bank_name} ({self.period_start} to {self.period_end})"
+
+class BankStatementLine(models.Model):
+    """
+    A single line item from a bank statement.
+    The 'Truth' from the Bank's perspective.
+    """
+    statement = models.ForeignKey(BankStatement, on_delete=models.CASCADE, related_name='lines')
+    date = models.DateField()
+    description = models.TextField(help_text="Raw description from bank")
+    reference_no = models.CharField(max_length=100, null=True, blank=True, help_text="UTR / Ref No")
+    
+    # Amount logic: +ve for Credit (Deposit), -ve for Debit (Withdrawal)
+    amount = models.DecimalField(max_digits=15, decimal_places=2)
+    balance_after = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    
+    # Reconciliation Status
+    is_reconciled = models.BooleanField(default=False)
+    reconciled_at = models.DateTimeField(null=True, blank=True)
+    
+    # Link to System Entry (The 'Formal' record)
+    matched_payment = models.ForeignKey(BankPayment, on_delete=models.SET_NULL, null=True, blank=True, related_name='reconciled_lines')
+    
+    # For fuzzy matching confidence
+    match_confidence = models.FloatField(default=0.0, help_text="0.0 to 1.0 score")
+    match_notes = models.TextField(blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['date', 'amount']),
+            models.Index(fields=['reference_no']),
+        ]
+
+    def __str__(self):
+        return f"{self.date} | {self.amount} | {self.description[:30]}"

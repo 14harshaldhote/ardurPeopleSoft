@@ -8,9 +8,12 @@ from django.db import transaction
 from decimal import Decimal
 from trueAlign.models import (
     FinancialParameter, DailyExpense, Voucher, VoucherDetail,
-    BankAccount, BankPayment, Subscription, ClientInvoice
+    BankAccount, BankPayment, Subscription, ClientInvoice,
+    CashBox, CashTransaction, PaymentAllocation, PayrollAdjustment, ShadowEntry,
+    BankStatement, BankStatementLine
 )
 from .utils import generate_unique_id, calculate_invoice_totals, update_subscription_next_payment
+from trueAlign.finance.nlp.core import FinanceNLPProcessor
 
 
 class FinancialParameterService:
@@ -56,6 +59,9 @@ class ExpenseService:
         """Create a new expense claim"""
         expense_id = generate_unique_id('EXP', DailyExpense, 'expense_id')
         
+        # Run NLP Analysis
+        nlp_result = FinanceNLPProcessor.analyze_transaction(description, amount)
+        
         expense = DailyExpense.objects.create(
             expense_id=expense_id,
             department=department,
@@ -65,7 +71,12 @@ class ExpenseService:
             amount=amount,
             paid_by=paid_by,
             attachments=attachments,
-            status='draft'
+            status='draft',
+            # NLP Fields
+            nlp_data=nlp_result,
+            risk_score=nlp_result['risk_score'],
+            risk_factors=nlp_result['risk_factors'],
+            normalized_description=nlp_result['normalized_text']
         )
         return expense
     
@@ -452,3 +463,379 @@ class InvoiceService:
             invoice.save(update_fields=['status', 'updated_at'])
         
         return overdue_invoices.count()
+
+
+class CashService:
+    """Service for managing Cash Boxes and Transactions"""
+
+    @staticmethod
+    def create_cash_box(name, location, managed_by):
+        """Create a new cash box"""
+        return CashBox.objects.create(
+            name=name,
+            location=location,
+            managed_by=managed_by,
+            balance=0
+        )
+
+    @staticmethod
+    @transaction.atomic
+    def record_transaction(box_id, txn_type, amount, performed_by, description, related_bank_payment_id=None):
+        """
+        Record a cash transaction (Deposit, Withdrawal, Expense).
+        Updates the box balance automatically.
+        """
+        
+        box = CashBox.objects.select_for_update().get(id=box_id)
+        
+        # Validate Balance for Outflows
+        if txn_type in ['WITHDRAWAL', 'EXPENSE', 'TRANSFER'] and box.balance < amount:
+            raise ValueError(f"Insufficient cash balance in {box.name}. Current: {box.balance}, Required: {amount}")
+
+        # Run NLP Analysis
+        nlp_result = FinanceNLPProcessor.analyze_transaction(description, amount)
+
+        # Create Transaction
+        txn = CashTransaction.objects.create(
+            box=box,
+            type=txn_type,
+            amount=amount,
+            performed_by=performed_by,
+            description=description,
+            related_bank_payment_id=related_bank_payment_id,
+            # NLP Fields
+            nlp_data=nlp_result,
+            risk_score=nlp_result['risk_score'],
+            risk_factors=nlp_result['risk_factors'],
+            normalized_description=nlp_result['normalized_text']
+        )
+
+        # Update Balance
+        if txn_type == 'DEPOSIT':
+            box.balance += amount
+        else:
+            box.balance -= amount
+        
+        box.save()
+        return txn
+
+    @staticmethod
+    @transaction.atomic
+    def withdraw_from_bank_to_cash(bank_payment_id, target_box_id, performed_by):
+        """
+        Special workflow: Withdraw cash from Bank -> Put into Cash Box.
+        1. Verify BankPayment is 'executed'.
+        2. Create CashTransaction (DEPOSIT) linked to BankPayment.
+        """
+        
+        payment = BankPayment.objects.get(id=bank_payment_id)
+        if payment.status != 'executed':
+            raise ValueError("Bank payment must be executed before cash can be received.")
+        
+        # Create the deposit in cash box
+        return CashService.record_transaction(
+            box_id=target_box_id,
+            txn_type='DEPOSIT',
+            amount=payment.amount,
+            performed_by=performed_by,
+            description=f"Cash withdrawal from Bank (Ref: {payment.payment_id})",
+            related_bank_payment_id=bank_payment_id
+        )
+
+
+class PaymentAllocationService:
+    """
+    Service for the 'Bridge' logic (Allocating Payments to Expenses).
+    """
+
+    @staticmethod
+    @transaction.atomic
+    def allocate_payment(expense_id, amount, payment_source_type, source_id):
+        """
+        Allocate a payment (Bank or Cash) to an Expense.
+        """
+        
+        expense = DailyExpense.objects.get(expense_id=expense_id)
+        
+        # Validate Source
+        bank_payment = None
+        cash_txn = None
+        
+        if payment_source_type == 'BANK':
+            bank_payment = BankPayment.objects.get(id=source_id)
+        elif payment_source_type == 'CASH':
+            cash_txn = CashTransaction.objects.get(id=source_id)
+        else:
+            raise ValueError("Invalid payment source type")
+
+        # Create Allocation
+        allocation = PaymentAllocation.objects.create(
+            payment_source_type=payment_source_type,
+            bank_payment=bank_payment,
+            cash_transaction=cash_txn,
+            expense=expense,
+            amount_allocated=amount
+        )
+
+        # Update Expense Status logic
+        # Check total allocated vs expense amount
+        total_allocated = sum(a.amount_allocated for a in expense.allocations.all()) # type: ignore
+        
+        if total_allocated >= expense.amount:
+            expense.status = 'paid'
+            expense.save(update_fields=['status'])
+            
+        return allocation
+
+
+class PayrollRealityService:
+    """Service for Real vs Formal Payroll tracking"""
+
+    @staticmethod
+    def record_payroll_adjustment(employee, month, formal_amount, actual_bank, actual_cash, returned_cash, reason, created_by):
+        """
+        Record the complex reality of a payroll month for an employee.
+        """
+        
+        adj, created = PayrollAdjustment.objects.update_or_create(
+            employee=employee,
+            month=month,
+            defaults={
+                'formal_salary_payable': formal_amount,
+                'actual_payout_bank': actual_bank,
+                'actual_payout_cash': actual_cash,
+                'cash_returned_by_employee': returned_cash,
+                'adjustment_reason': reason,
+                'created_by': created_by,
+                'is_shadow_record': True
+            }
+        )
+        return adj
+
+
+class ReconciliationService:
+    """
+    Service for Bank Reconciliation and Intelligence.
+    """
+
+    @staticmethod
+    def import_statement(bank_account_id, file_path, uploaded_by):
+        """
+        Import a Bank Statement (CSV) and create StatementLines.
+        Assumes CSV format: Date, Description, Reference, Amount (Credit/Debit)
+        """
+        import csv
+        from datetime import datetime
+        from decimal import Decimal
+        from django.utils import timezone
+        from trueAlign.models import BankStatement, BankStatementLine, BankAccount
+        
+        account = BankAccount.objects.get(id=bank_account_id)
+        
+        # Create Statement Header
+        # For simplicity, we'll set period based on first/last date in CSV later
+        statement = BankStatement.objects.create(
+            bank_account=account,
+            file=file_path,
+            period_start=timezone.now().date(), # Placeholder
+            period_end=timezone.now().date(),   # Placeholder
+            uploaded_by=uploaded_by
+        )
+        
+        lines_created = 0
+        min_date = None
+        max_date = None
+        
+        # Read CSV
+        with open(file_path, 'r') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                # Basic parsing logic - customizable per bank format
+                try:
+                    date_str = row.get('Date')
+                    desc = row.get('Description')
+                    ref = row.get('Reference')
+                    amount_str = row.get('Amount')
+                    
+                    if not (date_str and amount_str):
+                        continue
+                        
+                    txn_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                    amount = Decimal(amount_str)
+                    
+                    # Run NLP Analysis
+                    nlp_result = FinanceNLPProcessor.analyze_transaction(description=desc, amount=amount)
+                    
+                    BankStatementLine.objects.create(
+                        statement=statement,
+                        date=txn_date,
+                        description=desc,
+                        amount=amount,
+                        reference_no=ref,
+                        # NLP Fields
+                        nlp_data=nlp_result,
+                        risk_score=nlp_result['risk_score'],
+                        risk_factors=nlp_result['risk_factors'],
+                        normalized_description=nlp_result['normalized_text']
+                    )
+                    
+                    lines_created += 1
+                    
+                    if not min_date or txn_date < min_date:
+                        min_date = txn_date
+                    if not max_date or txn_date > max_date:
+                        max_date = txn_date
+                        
+                except Exception as e:
+                    print(f"Error parsing row {row}: {e}")
+                    continue
+        
+        # Update Statement Meta
+        if min_date and max_date:
+            statement.period_start = min_date
+            statement.period_end = max_date
+            
+        statement.total_lines = lines_created
+        statement.is_processed = True
+        statement.save()
+        
+        return statement
+
+    @staticmethod
+    def auto_reconcile(statement_id):
+        """
+        The 'Intelligence' Engine.
+        Matches StatementLines to BankPayments.
+        Logic:
+        1. Exact Amount Match AND
+        2. Date Match (+/- 3 days buffer)
+        """
+        from datetime import timedelta
+        from django.utils import timezone
+        from trueAlign.models import BankStatement, BankPayment
+        from django.db.models import Q
+        
+        statement = BankStatement.objects.get(id=statement_id)
+        unreconciled_lines = statement.lines.filter(is_reconciled=False)
+        
+        matches_found = 0
+        
+        for line in unreconciled_lines:
+            # Define search window
+            date_min = line.date - timedelta(days=3)
+            date_max = line.date + timedelta(days=3)
+            
+            # Find candidate payments
+            # Note: Statement Amount is -ve for Debit (Withdrawal), +ve for Credit (Deposit)
+            # BankPayment Amount is always +ve.
+            # So if Line is -ve (Withdrawal), we look for Payment of abs(amount).
+            
+            target_amount = abs(line.amount)
+            
+            # We only reconcile Withdrawals against BankPayments for now
+            if line.amount < 0:
+                candidates = BankPayment.objects.filter(
+                    bank_account=statement.bank_account,
+                    amount=target_amount,
+                    payment_date__range=(date_min, date_max),
+                    status='executed'
+                ).exclude(reconciled_lines__isnull=False) # Exclude already matched
+                
+                if candidates.exists():
+                    # Match found!
+                    # If multiple, we pick the closest date (simple logic for now)
+                    match = candidates.first() # Improvement: Pick closest date
+                    
+                    line.matched_payment = match
+                    line.is_reconciled = True
+                    line.reconciled_at = timezone.now()
+                    line.match_confidence = 1.0
+                    line.match_notes = "Auto-matched by Amount & Date (+/- 3 days)"
+                    line.save()
+                    
+                    matches_found += 1
+        
+        statement.reconciled_lines += matches_found
+        statement.save()
+        
+        return matches_found
+
+
+class FinanceIntelligenceService:
+    """
+    Service for Pattern Detection and Anomaly Analysis.
+    """
+
+    @staticmethod
+    def detect_round_number_anomalies(threshold=1000):
+        """
+        Find transactions with round numbers (e.g., 5000.00, 10000.00) 
+        that are often indicative of estimates or potential fraud in certain contexts.
+        """
+        from trueAlign.models import DailyExpense, CashTransaction
+        from django.db.models import F
+        
+        # Expenses ending in .00 and > threshold
+        round_expenses = DailyExpense.objects.filter(
+            amount__gt=threshold,
+            amount__iregex=r'\.00$' # Simple regex for round numbers
+        ).values('expense_id', 'amount', 'description', 'paid_by__username')
+        
+        # Cash Txns ending in .00
+        round_cash = CashTransaction.objects.filter(
+            amount__gt=threshold,
+            amount__iregex=r'\.00$'
+        ).values('id', 'type', 'amount', 'description', 'performed_by__username')
+        
+        return {
+            'expenses': list(round_expenses),
+            'cash_txns': list(round_cash)
+        }
+
+    @staticmethod
+    def detect_high_cash_volume_employees(month_start, month_end, threshold=50000):
+        """
+        Identify employees handling excessive cash.
+        """
+        from trueAlign.models import CashTransaction
+        from django.db.models import Sum
+        
+        high_volume = CashTransaction.objects.filter(
+            date__range=(month_start, month_end)
+        ).values('performed_by__username').annotate(
+            total_cash=Sum('amount')
+        ).filter(total_cash__gt=threshold).order_by('-total_cash')
+        
+        return list(high_volume)
+
+    @staticmethod
+    def detect_duplicate_vendor_payments(days_window=7):
+        """
+        Find payments to same vendor with same amount within a short window.
+        """
+        from trueAlign.models import BankPayment
+        from django.db import connection
+        
+        # Complex query, easier with raw SQL or window functions
+        # Using self-join logic via ORM
+        
+        duplicates = []
+        payments = BankPayment.objects.filter(status='executed').order_by('party_name', 'amount', 'payment_date')
+        
+        # Naive iteration for simplicity (O(N) since sorted)
+        # For production with millions of rows, use Window functions
+        
+        prev = None
+        for p in payments:
+            if prev and p.party_name == prev.party_name and p.amount == prev.amount:
+                delta = p.payment_date - prev.payment_date
+                if delta.days <= days_window:
+                    duplicates.append({
+                        'vendor': p.party_name,
+                        'amount': p.amount,
+                        'payment1': {'id': prev.payment_id, 'date': prev.payment_date},
+                        'payment2': {'id': p.payment_id, 'date': p.payment_date}
+                    })
+            prev = p
+            
+        return duplicates

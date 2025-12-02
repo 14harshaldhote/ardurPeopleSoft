@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Create Payment Allocation - Finance{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="max-w-2xl mx-auto">
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+                Allocate Payment
+            </h1>
+            <p class="text-gray-600 mt-2">Link a bank/cash payment to an expense or voucher</p>
+        </div>
+
+        <div class="backdrop-blur-xl bg-white/20 rounded-2xl border border-gray-200/50 shadow-lg p-8">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+
+                {% if form.errors %}
+                <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p class="text-red-800 font-medium">Please correct the following errors:</p>
+                    <ul class="mt-2 list-disc list-inside text-red-700 text-sm">
+                        {% for field in form %}
+                        {% for error in field.errors %}
+                        <li>{{ field.label }}: {{ error }}</li>
+                        {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <!-- Payment Source Section -->
+                <div class="p-4 bg-blue-50/50 rounded-lg border border-blue-200">
+                    <h3 class="font-semibold text-blue-900 mb-4">Payment Source</h3>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Source Type *</label>
+                            {{ form.payment_source_type }}
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Bank Payment</label>
+                            {{ form.bank_payment }}
+                            <p class="mt-1 text-sm text-gray-500">Select if allocating from a bank payment</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Cash Transaction</label>
+                            {{ form.cash_transaction }}
+                            <p class="mt-1 text-sm text-gray-500">Select if allocating from a cash transaction</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Allocation Target Section -->
+                <div class="p-4 bg-purple-50/50 rounded-lg border border-purple-200">
+                    <h3 class="font-semibold text-purple-900 mb-4">Allocate To</h3>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Expense</label>
+                            {{ form.expense }}
+                            <p class="mt-1 text-sm text-gray-500">Select the expense to allocate payment to</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Voucher</label>
+                            {{ form.voucher }}
+                            <p class="mt-1 text-sm text-gray-500">Or select a voucher instead</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Amount -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Amount to Allocate *</label>
+                    {{ form.amount_allocated }}
+                    <p class="mt-1 text-sm text-gray-500">Enter the amount being allocated (can be partial)</p>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex items-center justify-end gap-4 pt-6 border-t border-gray-200">
+                    <a href="{% url 'finance:payment_allocation_list' %}"
+                        class="px-6 py-2.5 bg-white/30 text-gray-700 rounded-lg hover:bg-white/40 transition-all duration-200 font-medium border border-gray-200/50">
+                        Cancel
+                    </a>
+                    <button type="submit"
+                        class="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all duration-200 font-medium shadow-md">
+                        Create Allocation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

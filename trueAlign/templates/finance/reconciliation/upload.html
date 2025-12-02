@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Bank Statement - Finance{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="max-w-2xl mx-auto">
+        <div class="mb-6">
+            <a href="{% url 'finance:bank_reconciliation_dashboard' %}"
+                class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 mb-4">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Reconciliation
+            </a>
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                Upload Bank Statement
+            </h1>
+            <p class="text-gray-600 mt-2">Upload a CSV bank statement for automatic reconciliation</p>
+        </div>
+
+        <!-- Instructions -->
+        <div class="backdrop-blur-xl bg-blue-50/50 border border-blue-200 rounded-2xl p-6 mb-6">
+            <h3 class="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                CSV Format Requirements
+            </h3>
+            <ul class="list-disc list-inside text-sm text-blue-800 space-y-1">
+                <li>File must be in CSV format</li>
+                <li>Required columns: Date, Description, Amount, Reference (optional)</li>
+                <li>Date format: YYYY-MM-DD</li>
+                <li>Amount: Positive for credits (deposits), negative for debits (withdrawals)</li>
+            </ul>
+        </div>
+
+        <!-- Upload Form -->
+        <div class="backdrop-blur-xl bg-white/20 rounded-2xl border border-gray-200/50 shadow-lg p-8">
+            <form method="post" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+
+                {% if form.errors %}
+                <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p class="text-red-800 font-medium">Please correct the following errors:</p>
+                    <ul class="mt-2 list-disc list-inside text-red-700 text-sm">
+                        {% for field in form %}
+                        {% for error in field.errors %}
+                        <li>{{ field.label }}: {{ error }}</li>
+                        {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Bank Account *</label>
+                    {{ form.bank_account }}
+                    <p class="mt-1 text-sm text-gray-500">Select the bank account for this statement</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Statement File (CSV) *</label>
+                    {{ form.file }}
+                    <p class="mt-1 text-sm text-gray-500">Upload the CSV file downloaded from your bank</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Period Start *</label>
+                        {{ form.period_start }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Period End *</label>
+                        {{ form.period_end }}
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex items-center justify-end gap-4 pt-6 border-t border-gray-200">
+                    <a href="{% url 'finance:bank_reconciliation_dashboard' %}"
+                        class="px-6 py-2.5 bg-white/30 text-gray-700 rounded-lg hover:bg-white/40 transition-all duration-200 font-medium border border-gray-200/50">
+                        Cancel
+                    </a>
+                    <button type="submit"
+                        class="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg hover:from-indigo-700 hover:to-indigo-800 transition-all duration-200 font-medium shadow-md">
+                        Upload & Process Statement
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

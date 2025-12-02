@@ -1,0 +1,16 @@
+{% if nlp_data %}
+<div class="flex flex-wrap gap-1 mt-1">
+    {% if risk_score > 50 %}
+    <span class="px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700 border border-red-200"
+        title="Risk Score: {{ risk_score }}">
+        Risk: {{ risk_score }}
+    </span>
+    {% endif %}
+
+    {% for tag in nlp_data.tags %}
+    <span class="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
+        {{ tag }}
+    </span>
+    {% endfor %}
+</div>
+{% endif %}

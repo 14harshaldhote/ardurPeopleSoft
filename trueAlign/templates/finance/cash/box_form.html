@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}{% if box %}Edit Cash Box{% else %}New Cash Box{% endif %} - Finance{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="max-w-2xl mx-auto">
+        <!-- Page Header -->
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                {% if box %}Edit Cash Box{% else %}Create Cash Box{% endif %}
+            </h1>
+            <p class="text-gray-600 mt-2">{% if box %}Update cash box details{% else %}Add a new cash storage location{%
+                endif %}</p>
+        </div>
+
+        <!-- Form -->
+        <div class="backdrop-blur-xl bg-white/20 rounded-2xl border border-gray-200/50 shadow-lg p-8">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+
+                {% if form.errors %}
+                <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p class="text-red-800 font-medium">Please correct the following errors:</p>
+                    <ul class="mt-2 list-disc list-inside text-red-700 text-sm">
+                        {% for field in form %}
+                        {% for error in field.errors %}
+                        <li>{{ field.label }}: {{ error }}</li>
+                        {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">{{ form.name.label }}</label>
+                    {{ form.name }}
+                    {% if form.name.help_text %}
+                    <p class="mt-1 text-sm text-gray-500">{{ form.name.help_text }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">{{ form.location.label }}</label>
+                    {{ form.location }}
+                    {% if form.location.help_text %}
+                    <p class="mt-1 text-sm text-gray-500">{{ form.location.help_text }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">{{ form.managed_by.label }}</label>
+                    {{ form.managed_by }}
+                    {% if form.managed_by.help_text %}
+                    <p class="mt-1 text-sm text-gray-500">{{ form.managed_by.help_text }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        {{ form.is_active }}
+                        <span class="text-sm font-semibold text-gray-700">{{ form.is_active.label }}</span>
+                    </label>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex items-center justify-end gap-4 pt-6 border-t border-gray-200">
+                    <a href="{% url 'finance:cash_box_dashboard' %}"
+                        class="px-6 py-2.5 bg-white/30 text-gray-700 rounded-lg hover:bg-white/40 transition-all duration-200 font-medium border border-gray-200/50">
+                        Cancel
+                    </a>
+                    <button type="submit"
+                        class="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all duration-200 font-medium shadow-md">
+                        {% if box %}Update Cash Box{% else %}Create Cash Box{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
