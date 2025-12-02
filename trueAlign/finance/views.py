@@ -1567,23 +1567,70 @@ def auto_reconcile_statement(request, pk):
 @login_required
 @finance_manager_required
 def intelligence_dashboard(request):
-    """Finance Intelligence & Anomaly Detection Dashboard"""
+    """Finance Intelligence & Anomaly Detection Dashboard with NLP Insights"""
+    from .integration_service import FinanceIntegrationService
+    from datetime import timedelta
     
-    # Run pattern detection
-    round_anomalies = FinanceIntelligenceService.detect_round_number_anomalies(threshold=1000)
-    duplicate_payments = FinanceIntelligenceService.detect_duplicate_vendor_payments(days_window=7)
+    service = FinanceIntegrationService()
     
-    # This month's high cash volume
-    today = timezone.now().date()
-    month_start = today.replace(day=1)
-    high_cash_employees = FinanceIntelligenceService.detect_high_cash_volume_employees(
-        month_start, today, threshold=50000
+    # Get all expenses from this year for comprehensive analysis
+    current_year = timezone.now().year
+    expenses = DailyExpense.objects.filter(date__year=current_year).values(
+        'date', 'amount', 'category', 'department', 'description', 'expense_id'
     )
     
+    # Generate Advanced Analytics (Charts, Trends, Anomalies)
+    analytics = service.generate_expense_analytics(list(expenses))
+    
+    # Get high risk items (Legacy + New)
+    thirty_days_ago = timezone.now().date() - timedelta(days=30)
+    
+    # High risk expenses (Legacy NLP)
+    high_risk_expenses = DailyExpense.objects.filter(
+        date__gte=thirty_days_ago,
+        risk_score__gte=50
+    ).order_by('-risk_score')[:10]
+    
+    high_risk_items = []
+    for exp in high_risk_expenses:
+        high_risk_items.append({
+            'date': exp.date,
+            'type': 'Expense',
+            'description': exp.description,
+            'amount': exp.amount,
+            'risk_score': exp.risk_score,
+            'risk_factors': exp.risk_factors,
+            'source': f"Expense {exp.expense_id}"
+        })
+        
+    # Add Statistical Anomalies (New)
+    for anomaly in analytics.get('anomalies', [])[:10]:
+        high_risk_items.append({
+            'date': anomaly['date'],
+            'type': 'Statistical Anomaly',
+            'description': f"Unusual amount for {anomaly['category']}",
+            'amount': anomaly['amount'],
+            'risk_score': min(100, int(anomaly['z_score'] * 20)),  # Convert z-score to 0-100
+            'risk_factors': [f"Z-Score: {round(anomaly['z_score'], 2)}"],
+            'source': 'Analytics Engine'
+        })
+    
+    # Sort combined risk items
+    high_risk_items = sorted(high_risk_items, key=lambda x: x['risk_score'], reverse=True)[:15]
+    
     context = {
-        'round_anomalies': round_anomalies,
-        'duplicate_payments': duplicate_payments,
-        'high_cash_employees': high_cash_employees,
+        # New Analytics
+        'monthly_chart': analytics['charts']['monthly_chart_html'],
+        'category_pie': analytics['charts']['category_pie_html'],
+        'trends': analytics['trends'],
+        'monthly_summary': analytics['monthly_summary'],
+        
+        # Risk & Anomalies
+        'high_risk_items': high_risk_items,
+        'anomalies_count': len(analytics.get('anomalies', [])),
+        
+        # Legacy Stats (kept for compatibility)
+        'total_transactions': len(expenses),
     }
     
     return render(request, 'finance/intelligence/dashboard.html', context)

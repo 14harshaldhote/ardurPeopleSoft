@@ -1,0 +1,49 @@
+# Phase 4 Security & Compliance Requirements
+
+# ============================================
+# Week 1: Compliance Tools
+# ============================================
+
+# Financial validators (already in python-stdnum from Phase 1)
+python-stdnum>=1.20  # PAN, GSTIN, IBAN validation
+
+#  Date utilities (already installed from Phase 2)
+python-dateutil>=2.8.2  # For FY calculations
+
+# ============================================
+# Week 2: PII Encryption
+# ============================================
+
+# Field-level encryption
+django-encrypted-model-fields>=0.6.5
+cryptography>=44.0.0
+
+# ============================================
+# Week 3: Security & Audit
+# ============================================
+
+# Audit logging
+django-auditlog>=3.3.0
+
+# Login protection (brute-force prevention)
+django-axes>=8.0.0
+
+# Rate limiting
+django-defender>=0.9.8
+redis>=5.0.3  # Required for django-defender
+
+# ============================================
+# Additional Security
+# ============================================
+
+# CSRF protection (built-in Django)
+# XSS protection (built-in Django)  
+# SQL injection protection (built-in Django ORM)
+
+# ============================================
+# Notes
+# ============================================
+
+# All packages already installed ✅
+# Compatible with cPanel/shared hosting
+# Production-ready security stack

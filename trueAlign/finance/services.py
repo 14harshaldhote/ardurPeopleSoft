@@ -57,16 +57,40 @@ class ExpenseService:
     @staticmethod
     def create_expense(department, date, category, description, amount, paid_by, attachments=None):
         """Create a new expense claim"""
+        from .integration_service import FinanceIntegrationService
+        
         expense_id = generate_unique_id('EXP', DailyExpense, 'expense_id')
         
-        # Run NLP Analysis
+        # Initialize integration service
+        service = FinanceIntegrationService()
+        
+        # Prepare expense data for processing
+        expense_data = {
+            'description': description,
+            'amount': amount,
+            'department': department,
+            'category': category,
+            'date': date,
+            'attachments': attachments
+        }
+        
+        # Run intelligent processing (Auto-categorize + Rules + NLP)
+        processed = service.process_new_expense(expense_data)
+        
+        # Use auto-categorized value if original category was empty/misc
+        final_category = category
+        if not final_category or final_category.lower() in ['misc', 'miscellaneous', 'other']:
+            if processed.get('category') and processed.get('category_confidence', 0) > 80:
+                final_category = processed['category']
+        
+        # Run Legacy NLP Analysis (keeping for backward compatibility)
         nlp_result = FinanceNLPProcessor.analyze_transaction(description, amount)
         
         expense = DailyExpense.objects.create(
             expense_id=expense_id,
             department=department,
             date=date,
-            category=category,
+            category=final_category,
             description=description,
             amount=amount,
             paid_by=paid_by,
@@ -76,8 +100,19 @@ class ExpenseService:
             nlp_data=nlp_result,
             risk_score=nlp_result['risk_score'],
             risk_factors=nlp_result['risk_factors'],
-            normalized_description=nlp_result['normalized_text']
+            normalized_description=nlp_result['normalized_text'],
+            # New Automation Fields
+            auto_matched=processed.get('auto_approved', False),
+            match_confidence=processed.get('category_confidence', 0)
         )
+        
+        # Apply auto-approval rule if triggered
+        if processed.get('auto_approved'):
+            expense.status = 'approved'
+            expense.approved_by = None  # System approval
+            expense.approved_at = timezone.now()
+            expense.save()
+            
         return expense
     
     @staticmethod
@@ -621,19 +656,19 @@ class ReconciliationService:
     @staticmethod
     def import_statement(bank_account_id, file_path, uploaded_by):
         """
-        Import a Bank Statement (CSV) and create StatementLines.
-        Assumes CSV format: Date, Description, Reference, Amount (Credit/Debit)
+        Import a Bank Statement (CSV or PDF) and create StatementLines.
         """
         import csv
         from datetime import datetime
         from decimal import Decimal
         from django.utils import timezone
         from trueAlign.models import BankStatement, BankStatementLine, BankAccount
+        from .integration_service import FinanceIntegrationService
         
         account = BankAccount.objects.get(id=bank_account_id)
+        service = FinanceIntegrationService()
         
         # Create Statement Header
-        # For simplicity, we'll set period based on first/last date in CSV later
         statement = BankStatement.objects.create(
             bank_account=account,
             file=file_path,
@@ -646,49 +681,84 @@ class ReconciliationService:
         min_date = None
         max_date = None
         
-        # Read CSV
-        with open(file_path, 'r') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                # Basic parsing logic - customizable per bank format
-                try:
-                    date_str = row.get('Date')
-                    desc = row.get('Description')
-                    ref = row.get('Reference')
-                    amount_str = row.get('Amount')
-                    
-                    if not (date_str and amount_str):
-                        continue
-                        
-                    txn_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-                    amount = Decimal(amount_str)
-                    
-                    # Run NLP Analysis
-                    nlp_result = FinanceNLPProcessor.analyze_transaction(description=desc, amount=amount)
-                    
+        # Check file type
+        is_pdf = str(file_path).lower().endswith('.pdf')
+        
+        try:
+            if is_pdf:
+                # Process PDF using new parser
+                result = service.process_bank_statement_pdf(file_path)
+                transactions = result['transactions']
+                
+                for txn in transactions:
                     BankStatementLine.objects.create(
                         statement=statement,
-                        date=txn_date,
-                        description=desc,
-                        amount=amount,
-                        reference_no=ref,
-                        # NLP Fields
-                        nlp_data=nlp_result,
-                        risk_score=nlp_result['risk_score'],
-                        risk_factors=nlp_result['risk_factors'],
-                        normalized_description=nlp_result['normalized_text']
+                        date=txn['date'],
+                        description=txn['description'],
+                        amount=txn['amount'],
+                        reference_no=txn.get('reference_no', ''),
+                        # Enhanced Fields
+                        vendor=txn.get('vendor_normalized'),
+                        category=txn.get('category'),
+                        match_confidence=txn.get('category_confidence', 0)
                     )
-                    
                     lines_created += 1
                     
-                    if not min_date or txn_date < min_date:
-                        min_date = txn_date
-                    if not max_date or txn_date > max_date:
-                        max_date = txn_date
+                    if not min_date or txn['date'] < min_date:
+                        min_date = txn['date']
+                    if not max_date or txn['date'] > max_date:
+                        max_date = txn['date']
                         
-                except Exception as e:
-                    print(f"Error parsing row {row}: {e}")
-                    continue
+            else:
+                # Process CSV (Legacy + Enhanced)
+                with open(file_path, 'r') as f:
+                    reader = csv.DictReader(f)
+                    for row in reader:
+                        try:
+                            date_str = row.get('Date')
+                            desc = row.get('Description')
+                            ref = row.get('Reference')
+                            amount_str = row.get('Amount')
+                            
+                            if not (date_str and amount_str):
+                                continue
+                                
+                            txn_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                            amount = Decimal(amount_str)
+                            
+                            # Run Intelligent Processing
+                            processed = service.process_new_expense({
+                                'description': desc,
+                                'amount': amount,
+                                'date': txn_date
+                            })
+                            
+                            BankStatementLine.objects.create(
+                                statement=statement,
+                                date=txn_date,
+                                description=desc,
+                                amount=amount,
+                                reference_no=ref,
+                                # Enhanced Fields
+                                vendor=processed.get('vendor_normalized'),
+                                category=processed.get('category'),
+                                match_confidence=processed.get('category_confidence', 0)
+                            )
+                            
+                            lines_created += 1
+                            
+                            if not min_date or txn_date < min_date:
+                                min_date = txn_date
+                            if not max_date or txn_date > max_date:
+                                max_date = txn_date
+                                
+                        except Exception as e:
+                            print(f"Error parsing row {row}: {e}")
+                            continue
+        
+        except Exception as e:
+            statement.delete()
+            raise e
         
         # Update Statement Meta
         if min_date and max_date:
@@ -705,55 +775,82 @@ class ReconciliationService:
     def auto_reconcile(statement_id):
         """
         The 'Intelligence' Engine.
-        Matches StatementLines to BankPayments.
-        Logic:
-        1. Exact Amount Match AND
-        2. Date Match (+/- 3 days buffer)
+        Matches StatementLines to BankPayments using advanced matching.
         """
-        from datetime import timedelta
-        from django.utils import timezone
         from trueAlign.models import BankStatement, BankPayment
-        from django.db.models import Q
+        from .integration_service import FinanceIntegrationService
         
         statement = BankStatement.objects.get(id=statement_id)
         unreconciled_lines = statement.lines.filter(is_reconciled=False)
         
+        # Get all executed payments for the period (+ buffer)
+        period_start = statement.period_start
+        period_end = statement.period_end
+        
+        # Fetch candidate payments
+        candidate_payments = list(BankPayment.objects.filter(
+            bank_account=statement.bank_account,
+            status='executed',
+            reconciled_lines__isnull=True  # Not yet reconciled
+        ).values('id', 'payment_date', 'amount', 'party_name', 'payment_reason'))
+        
+        # Map to format expected by matcher
+        internal_records = []
+        payment_map = {}
+        
+        for p in candidate_payments:
+            record = {
+                'date': p['payment_date'],
+                'amount': p['amount'],
+                'description': f"{p['party_name']} {p['payment_reason']}",
+                'id': p['id']
+            }
+            internal_records.append(record)
+            payment_map[p['id']] = p
+            
+        # Run matching
+        service = FinanceIntegrationService()
+        
+        # Convert lines to dicts
+        bank_txns = []
+        line_map = {}
+        for line in unreconciled_lines:
+            # Only reconcile withdrawals (debits) against payments
+            if line.amount < 0:
+                txn = {
+                    'date': line.date,
+                    'amount': abs(line.amount),
+                    'description': line.description,
+                    'id': line.id
+                }
+                bank_txns.append(txn)
+                line_map[line.id] = line
+        
+        # Match
+        results = service.match_bank_to_internal(bank_txns, internal_records)
+        
         matches_found = 0
         
-        for line in unreconciled_lines:
-            # Define search window
-            date_min = line.date - timedelta(days=3)
-            date_max = line.date + timedelta(days=3)
+        # Process matches
+        for match in results['matches']:
+            line_id = match['bank_transaction']['id']
+            best_match = match['best_match']
             
-            # Find candidate payments
-            # Note: Statement Amount is -ve for Debit (Withdrawal), +ve for Credit (Deposit)
-            # BankPayment Amount is always +ve.
-            # So if Line is -ve (Withdrawal), we look for Payment of abs(amount).
-            
-            target_amount = abs(line.amount)
-            
-            # We only reconcile Withdrawals against BankPayments for now
-            if line.amount < 0:
-                candidates = BankPayment.objects.filter(
-                    bank_account=statement.bank_account,
-                    amount=target_amount,
-                    payment_date__range=(date_min, date_max),
-                    status='executed'
-                ).exclude(reconciled_lines__isnull=False) # Exclude already matched
+            if best_match and best_match[1] >= 85:  # High confidence threshold
+                payment_id = best_match[0]['id']
+                confidence = best_match[1]
                 
-                if candidates.exists():
-                    # Match found!
-                    # If multiple, we pick the closest date (simple logic for now)
-                    match = candidates.first() # Improvement: Pick closest date
-                    
-                    line.matched_payment = match
-                    line.is_reconciled = True
-                    line.reconciled_at = timezone.now()
-                    line.match_confidence = 1.0
-                    line.match_notes = "Auto-matched by Amount & Date (+/- 3 days)"
-                    line.save()
-                    
-                    matches_found += 1
+                line = line_map[line_id]
+                payment = BankPayment.objects.get(id=payment_id)
+                
+                line.matched_payment = payment
+                line.is_reconciled = True
+                line.reconciled_at = timezone.now()
+                line.match_confidence = confidence / 100.0
+                line.match_notes = f"Auto-matched (Confidence: {confidence}%)"
+                line.save()
+                
+                matches_found += 1
         
         statement.reconciled_lines += matches_found
         statement.save()
