@@ -3,14 +3,15 @@
 
 {% block content %}
 <div class="mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl">
-    
-  
+
+
 
     <!-- Page Header -->
     <div class="mb-8">
         <h1 class="text-3xl font-extrabold text-gray-900 flex items-center">
-            <svg class="w-8 h-8 mr-3 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            <svg class="w-8 h-8 mr-3 text-blue-600" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             Search Attendance Records
         </h1>
@@ -22,45 +23,48 @@
     <!-- Search Form -->
     <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-8">
         <form method="GET" action="{% url 'attendance:search' %}" class="space-y-6">
-            
+
             <!-- Quick Filters -->
             <div class="flex flex-wrap gap-3 mb-4 pb-4 border-b border-gray-200">
-                <button type="button" onclick="setQuickFilter('today')" 
-                        class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all text-sm font-medium">
-                    <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                <button type="button" onclick="setQuickFilter('today')"
+                    class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all text-sm font-medium">
+                    <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" stroke-width="2"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     Today
                 </button>
-                <button type="button" onclick="setQuickFilter('week')" 
-                        class="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all text-sm font-medium">
+                <button type="button" onclick="setQuickFilter('week')"
+                    class="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all text-sm font-medium">
                     This Week
                 </button>
-                <button type="button" onclick="setQuickFilter('month')" 
-                        class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-all text-sm font-medium">
+                <button type="button" onclick="setQuickFilter('month')"
+                    class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-all text-sm font-medium">
                     This Month
                 </button>
-                <button type="button" onclick="document.querySelector('form').reset()" 
-                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all text-sm font-medium">
+                <button type="button" onclick="setQuickFilter('year')"
+                    class="px-4 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-all text-sm font-medium">
+                    This Year
+                </button>
+                <button type="button" onclick="document.querySelector('form').reset()"
+                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all text-sm font-medium">
                     Clear All
                 </button>
             </div>
 
             <!-- Search Fields -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                
+
                 <!-- Employee Search (if HR/Manager) -->
                 {% if request.user.groups.filter or request.user.is_superuser %}
                 <div>
                     <label for="employee" class="block text-sm font-semibold text-gray-700 mb-2">
                         Employee
                     </label>
-                    <input type="text" 
-                           id="employee" 
-                           name="employee" 
-                           value="{{ form.employee.value|default:'' }}"
-                           placeholder="Search by name or ID"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                    <input type="text" id="employee" name="employee" value="{{ form.employee.value|default:'' }}"
+                        placeholder="Search by name or ID"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
                 </div>
                 {% endif %}
 
@@ -69,11 +73,8 @@
                     <label for="start_date" class="block text-sm font-semibold text-gray-700 mb-2">
                         From Date
                     </label>
-                    <input type="date" 
-                           id="start_date" 
-                           name="start_date" 
-                           value="{{ form.start_date.value|default:'' }}"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                    <input type="date" id="start_date" name="start_date" value="{{ form.start_date.value|default:'' }}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
                 </div>
 
                 <!-- End Date -->
@@ -81,11 +82,8 @@
                     <label for="end_date" class="block text-sm font-semibold text-gray-700 mb-2">
                         To Date
                     </label>
-                    <input type="date" 
-                           id="end_date" 
-                           name="end_date" 
-                           value="{{ form.end_date.value|default:'' }}"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                    <input type="date" id="end_date" name="end_date" value="{{ form.end_date.value|default:'' }}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
                 </div>
 
                 <!-- Status Filter -->
@@ -93,29 +91,33 @@
                     <label for="status" class="block text-sm font-semibold text-gray-700 mb-2">
                         Status
                     </label>
-                    <select id="status" 
-                            name="status"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                    <select id="status" name="status"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
                         <option value="">All Statuses</option>
-                        <option value="Present" {% if form.status.value == 'Present' %}selected{% endif %}>Present</option>
+                        <option value="Present" {% if form.status.value == 'Present' %}selected{% endif %}>Present
+                        </option>
                         <option value="Absent" {% if form.status.value == 'Absent' %}selected{% endif %}>Absent</option>
                         <option value="Leave" {% if form.status.value == 'Leave' %}selected{% endif %}>On Leave</option>
-                        <option value="Holiday" {% if form.status.value == 'Holiday' %}selected{% endif %}>Holiday</option>
-                        <option value="Weekend" {% if form.status.value == 'Weekend' %}selected{% endif %}>Weekend</option>
+                        <option value="Holiday" {% if form.status.value == 'Holiday' %}selected{% endif %}>Holiday
+                        </option>
+                        <option value="Weekend" {% if form.status.value == 'Weekend' %}selected{% endif %}>Weekend
+                        </option>
                     </select>
                 </div>
             </div>
 
             <!-- Search Button -->
             <div class="flex justify-end space-x-3">
-                <a href="{% url 'attendance:search' %}" 
-                   class="px-6 py-2 backdrop-blur-sm bg-gray-100 rounded-lg border border-gray-300 hover:bg-gray-200 transition-all font-medium text-gray-700">
+                <a href="{% url 'attendance:search' %}"
+                    class="px-6 py-2 backdrop-blur-sm bg-gray-100 rounded-lg border border-gray-300 hover:bg-gray-200 transition-all font-medium text-gray-700">
                     Reset
                 </a>
-                <button type="submit" 
-                        class="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:scale-105 transition-all duration-200 shadow-md font-medium">
-                    <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                <button type="submit"
+                    class="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:scale-105 transition-all duration-200 shadow-md font-medium">
+                    <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" stroke-width="2"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                     Search
                 </button>
@@ -126,19 +128,21 @@
     <!-- Results Section -->
     {% if results %}
     <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-        
+
         <!-- Results Header -->
         <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
             <div>
                 <h2 class="text-xl font-bold text-gray-900">Search Results</h2>
-                <p class="text-sm text-gray-600 mt-1">Found {{ results|length }} record{{ results|length|pluralize }}</p>
+                <p class="text-sm text-gray-600 mt-1">Found {{ results|length }} record{{ results|length|pluralize }}
+                </p>
             </div>
-            
+
             <!-- Export Button -->
-            <a href="{% url 'attendance:export_csv' %}?{{ request.GET.urlencode }}" 
-               class="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all shadow-md">
+            <a href="{% url 'attendance:export_csv' %}?{{ request.GET.urlencode }}"
+                class="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all shadow-md">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 Export CSV
             </a>
@@ -180,7 +184,8 @@
                         {% if request.user.groups.filter or request.user.is_superuser %}
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
-                                <div class="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+                                <div
+                                    class="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
                                     {{ record.user.first_name.0 }}{{ record.user.last_name.0 }}
                                 </div>
                                 <div class="ml-3">
@@ -195,13 +200,17 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             {% if record.status == 'Present' %}
-                            <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Present</span>
+                            <span
+                                class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Present</span>
                             {% elif record.status == 'Absent' %}
-                            <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">Absent</span>
+                            <span
+                                class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">Absent</span>
                             {% elif record.status == 'Leave' or record.status == 'On Leave' %}
-                            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">On Leave</span>
+                            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">On
+                                Leave</span>
                             {% elif record.status == 'Holiday' %}
-                            <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-semibold">Holiday</span>
+                            <span
+                                class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-semibold">Holiday</span>
                             {% else %}
                             <span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-semibold">{{ record.status }}</span>
                             {% endif %}
@@ -220,8 +229,8 @@
                             {% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <a href="{% url 'attendance:request_regularization_specific' record.id %}" 
-                               class="text-blue-600 hover:text-blue-900 transition-colors">
+                            <a href="{% url 'attendance:request_regularization_specific' record.id %}"
+                                class="text-blue-600 hover:text-blue-900 transition-colors">
                                 Edit
                             </a>
                         </td>
@@ -239,14 +248,14 @@
             </div>
             <div class="flex space-x-2">
                 {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}" 
-                   class="px-3 py-1 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                <a href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}"
+                    class="px-3 py-1 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm">
                     Previous
                 </a>
                 {% endif %}
                 {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}" 
-                   class="px-3 py-1 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                <a href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}"
+                    class="px-3 py-1 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm">
                     Next
                 </a>
                 {% endif %}
@@ -259,16 +268,18 @@
     <!-- Empty State (after search) -->
     <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-12">
         <div class="text-center">
-            <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <h3 class="mt-4 text-lg font-medium text-gray-900">No records found</h3>
             <p class="mt-2 text-sm text-gray-500">
-                Try adjusting your search criteria or clear filters to see all records.
+                Try adjusting your search criteria.
             </p>
             <div class="mt-6">
-                <a href="{% url 'attendance:search' %}" 
-                   class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all">
+                <a href="{% url 'attendance:search' %}"
+                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all">
                     Clear Filters
                 </a>
             </div>
@@ -278,12 +289,13 @@
     <!-- Initial State (no search yet) -->
     <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 p-12">
         <div class="text-center">
-            <svg class="mx-auto h-16 w-16 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            <svg class="mx-auto h-16 w-16 text-blue-500" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <h3 class="mt-4 text-lg font-medium text-gray-900">Ready to search</h3>
             <p class="mt-2 text-sm text-gray-600">
-                Use the filters above to search attendance records. Try the quick filters for common date ranges.
+                Use the filters above to search attendance records.
             </p>
         </div>
     </div>
@@ -292,26 +304,44 @@
 </div>
 
 <script>
-// Quick filter functions
-function setQuickFilter(type) {
-    const today = new Date();
-    const startDate = document.getElementById('start_date');
-    const endDate = document.getElementById('end_date');
-    
-    // Set end date to today
-    endDate.valueAsDate = today;
-    
-    if (type === 'today') {
-        startDate.valueAsDate = today;
-    } else if (type === 'week') {
-        const weekAgo = new Date(today);
-        weekAgo.setDate(today.getDate() - 7);
-        startDate.valueAsDate = weekAgo;
-    } else if (type === 'month') {
-        const monthAgo = new Date(today);
-        monthAgo.setMonth(today.getMonth() - 1);
-        startDate.valueAsDate = monthAgo;
+    // Quick filter functions
+    function setQuickFilter(type) {
+        const today = new Date();
+        const startDate = document.getElementById('start_date');
+        const endDate = document.getElementById('end_date');
+
+        // Set end date to today
+        endDate.valueAsDate = today;
+
+        if (type === 'today') {
+            startDate.valueAsDate = today;
+        } else if (type === 'week') {
+            // Last 7 days
+            const weekAgo = new Date(today);
+            weekAgo.setDate(today.getDate() - 7);
+            startDate.valueAsDate = weekAgo;
+        } else if (type === 'month') {
+            // Start of current month
+            const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            startDate.valueAsDate = thisMonth;
+        } else if (type === 'year') {
+            // Start of current year
+            const thisYear = new Date(today.getFullYear(), 0, 1);
+            startDate.valueAsDate = thisYear;
+        }
     }
-}
+
+    // Auto-correct dates if range is invalid
+    document.querySelector('form').addEventListener('submit', function (e) {
+        const startDate = document.getElementById('start_date');
+        const endDate = document.getElementById('end_date');
+
+        if (startDate.value && endDate.value && startDate.value > endDate.value) {
+            // Swap values if start > end
+            const temp = startDate.value;
+            startDate.value = endDate.value;
+            endDate.value = temp;
+        }
+    });
 </script>
 {% endblock %}

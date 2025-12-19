@@ -1069,7 +1069,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='compoffrequest',
-            constraint=models.CheckConstraint(condition=models.Q(('hours_worked__gte', Decimal('0.5')), ('hours_worked__lte', Decimal('24.0'))), name='valid_comp_off_hours'),
+            constraint=models.CheckConstraint(check=models.Q(('hours_worked__gte', Decimal('0.5')), ('hours_worked__lte', Decimal('24.0'))), name='valid_comp_off_hours'),
         ),
         migrations.AddIndex(
             model_name='financialparameter',
@@ -1133,11 +1133,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='leaverequest',
-            constraint=models.CheckConstraint(condition=models.Q(('end_date__gte', models.F('start_date'))), name='valid_leave_date_range'),
+            constraint=models.CheckConstraint(check=models.Q(('end_date__gte', models.F('start_date'))), name='valid_leave_date_range'),
         ),
         migrations.AddConstraint(
             model_name='leaverequest',
-            constraint=models.CheckConstraint(condition=models.Q(('leave_days__gte', 0)), name='positive_leave_days'),
+            constraint=models.CheckConstraint(check=models.Q(('leave_days__gte', 0)), name='positive_leave_days'),
         ),
         migrations.AddIndex(
             model_name='leaveallocation',
@@ -1145,7 +1145,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='leaveallocation',
-            constraint=models.CheckConstraint(condition=models.Q(('advance_notice_days__gte', 0), ('annual_days__gte', 0), ('carryforward_limit__gte', 0), ('max_consecutive_days__gte', 0)), name='non_negative_allocation_fields'),
+            constraint=models.CheckConstraint(check=models.Q(('advance_notice_days__gte', 0), ('annual_days__gte', 0), ('carryforward_limit__gte', 0), ('max_consecutive_days__gte', 0)), name='non_negative_allocation_fields'),
         ),
         migrations.AlterUniqueTogether(
             name='leaveallocation',
@@ -1201,7 +1201,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='shiftmaster',
-            constraint=models.CheckConstraint(condition=models.Q(('shift_duration__gte', 0.5), ('shift_duration__lte', 24.0)), name='shift_duration_range'),
+            constraint=models.CheckConstraint(check=models.Q(('shift_duration__gte', 0.5), ('shift_duration__lte', 24.0)), name='shift_duration_range'),
         ),
         migrations.AddConstraint(
             model_name='shiftmaster',
@@ -1229,7 +1229,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='shiftassignment',
-            constraint=models.CheckConstraint(condition=models.Q(('effective_to__isnull', True), ('effective_to__gt', models.F('effective_from')), _connector='OR'), name='valid_date_range'),
+            constraint=models.CheckConstraint(check=models.Q(('effective_to__isnull', True), ('effective_to__gt', models.F('effective_from')), _connector='OR'), name='valid_date_range'),
         ),
         migrations.AddIndex(
             model_name='shiftvalidationrule',
@@ -1305,7 +1305,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='userleavebalance',
-            constraint=models.CheckConstraint(condition=models.Q(('additional__gte', 0), ('allocated__gte', 0), ('carried_forward__gte', 0), ('used__gte', 0)), name='non_negative_balance_fields'),
+            constraint=models.CheckConstraint(check=models.Q(('additional__gte', 0), ('allocated__gte', 0), ('carried_forward__gte', 0), ('used__gte', 0)), name='non_negative_balance_fields'),
         ),
         migrations.AlterUniqueTogether(
             name='userleavebalance',

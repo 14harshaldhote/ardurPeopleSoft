@@ -883,20 +883,20 @@ def dashboard_view(request):
         # Get attendance context for the card
         attendance_context = {}
         try:
-            from trueAlign.attendance.views import _get_or_create_today_attendance, _calculate_monthly_stats
-            import pytz
-            IST = pytz.timezone('Asia/Kolkata')
-            today = timezone.now().astimezone(IST).date()
+            from trueAlign.attendance.views import get_attendance_context_for_user
             
-            attendance_today = _get_or_create_today_attendance(user, today)
-            monthly_stats = _calculate_monthly_stats(user, today)
+            # Use the properly exported function
+            att_data = get_attendance_context_for_user(user)
+            monthly_stats = att_data.get('monthly_stats', {})
             
             attendance_context = {
-                'attendance_today': attendance_today,
+                # Map 'today_attendance' to 'attendance_today' for template compatibility
+                'attendance_today': att_data.get('today_attendance'),
                 'monthly_stats': monthly_stats,
                 'present_days': monthly_stats.get('present_days', 0),
                 'total_days': monthly_stats.get('total_days', 0),
                 'attendance_percentage': monthly_stats.get('percentage', 0),
+                'pending_regularizations': att_data.get('pending_regularizations', 0),
             }
         except Exception as att_error:
             logger.warning(f"Error loading attendance context: {att_error}")
@@ -906,6 +906,7 @@ def dashboard_view(request):
                 'present_days': 0,
                 'total_days': 0,
                 'attendance_percentage': 0,
+                'pending_regularizations': 0,
             }
 
         # Get user role information

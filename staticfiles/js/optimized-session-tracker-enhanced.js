@@ -169,6 +169,8 @@ class OptimizedSessionTrackerEnhanced {
       // If no parent session ID exists, generate one for this browser session
       if (!this.state.parentSessionId) {
         this.state.parentSessionId = this.generateParentSessionId();
+        // Persist to localStorage
+        localStorage.setItem('ardur_parent_session_id', this.state.parentSessionId);
         this.log(
           "Generated new parent session ID: " + this.state.parentSessionId,
           "info",
@@ -177,6 +179,7 @@ class OptimizedSessionTrackerEnhanced {
 
       // Store initial session data
       this.storeSessionData();
+
 
       // Get location if enabled and not already set
       if (
@@ -243,6 +246,26 @@ class OptimizedSessionTrackerEnhanced {
       this.state.sessionId = sessionIdEl;
     }
 
+    // Restore from localStorage if available (persistence across refreshes)
+    if (!this.state.parentSessionId) {
+      const savedParentId = localStorage.getItem('ardur_parent_session_id');
+      if (savedParentId) {
+        this.state.parentSessionId = savedParentId;
+      }
+    }
+
+    if (!this.state.tabId) {
+      // Try to recover tab ID from sessionStorage (it survives refreshes)
+      const savedTabId = sessionStorage.getItem('ardur_tab_id');
+      if (savedTabId) {
+        this.state.tabId = savedTabId;
+      } else {
+        // Save the generated one
+        sessionStorage.setItem('ardur_tab_id', this.state.tabId);
+      }
+    }
+
+
     // Get location from config if available
     if (this.config.location) {
       this.state.location = this.config.location;
@@ -282,8 +305,8 @@ class OptimizedSessionTrackerEnhanced {
       this.state.fingerprint = this.hashString(JSON.stringify(fingerprint));
       this.log(
         "Generated fingerprint: " +
-          this.state.fingerprint.substring(0, 8) +
-          "...",
+        this.state.fingerprint.substring(0, 8) +
+        "...",
         "debug",
       );
     } catch (error) {
@@ -608,6 +631,9 @@ class OptimizedSessionTrackerEnhanced {
   sendHeartbeat() {
     if (!this.state.isActive || !this.state.userId) return;
 
+    // Stop if we encountered a fatal auth error
+    if (this.state.authError) return;
+
     const now = Date.now();
     if (now - this.state.lastHeartbeat < this.config.heartbeatInterval) return;
 
@@ -645,7 +671,7 @@ class OptimizedSessionTrackerEnhanced {
         this.log('Missing required heartbeat data, regenerating...', 'warning');
         heartbeatData.tab_id = heartbeatData.tab_id || this.generateTabId();
         heartbeatData.session_fingerprint = heartbeatData.session_fingerprint || this.generateFingerprint();
-        
+
         // Update state with generated values
         this.state.tabId = heartbeatData.tab_id;
         this.state.fingerprint = heartbeatData.session_fingerprint;
@@ -658,6 +684,14 @@ class OptimizedSessionTrackerEnhanced {
           this.handleHeartbeatResponse(response);
         })
         .catch((error) => {
+          // Check for auth errors (redirects to login or 401/403)
+          if (error.status === 401 || error.status === 403 || (error.message && error.message.includes('login'))) {
+            this.log("Auth error detected, stopping heartbeat", "error");
+            this.state.authError = true;
+            this.state.isActive = false;
+            return;
+          }
+
           // Fallback to legacy endpoint if optimized endpoint fails
           this.makeRequest("/session/heartbeat/", heartbeatData)
             .then((response) => {
@@ -665,6 +699,11 @@ class OptimizedSessionTrackerEnhanced {
               this.handleHeartbeatResponse(response);
             })
             .catch((retryError) => {
+              if (retryError.status === 401 || retryError.status === 403) {
+                this.state.authError = true;
+                this.state.isActive = false;
+                return;
+              }
               this.addToRetryQueue("heartbeat", heartbeatData);
               this.log(
                 "Heartbeat failed on both endpoints: " + error.message,
@@ -1151,8 +1190,17 @@ class OptimizedSessionTrackerEnhanced {
       body: requestBody,
       credentials: "same-origin",
     }).then((response) => {
+      // Check for redirects to login page
+      if (response.redirected && response.url.includes("login")) {
+        const error = new Error("Redirected to login");
+        error.status = 401;
+        throw error;
+      }
+
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
+        error.status = response.status;
+        throw error;
       }
 
       // Try to parse as JSON, but don't fail if not JSON
@@ -1509,23 +1557,23 @@ class OptimizedSessionTrackerEnhanced {
   sanitizeUrl(url) {
     try {
       if (!url || typeof url !== 'string') return '';
-      
+
       // Truncate very long URLs
       if (url.length > 2000) {
         this.log('URL too long, truncating', 'warning');
         url = url.substring(0, 2000);
       }
-      
+
       // Remove sensitive query parameters
       const urlObj = new URL(url);
       const sensitiveParams = ['password', 'token', 'key', 'secret', 'auth'];
-      
+
       for (const param of sensitiveParams) {
         if (urlObj.searchParams.has(param)) {
           urlObj.searchParams.set(param, '[REDACTED]');
         }
       }
-      
+
       return urlObj.toString();
     } catch (error) {
       this.log('Error sanitizing URL: ' + error.message, 'warning');
@@ -1536,16 +1584,16 @@ class OptimizedSessionTrackerEnhanced {
   sanitizeTitle(title) {
     try {
       if (!title || typeof title !== 'string') return '';
-      
+
       // Truncate very long titles
       if (title.length > 500) {
         this.log('Title too long, truncating', 'warning');
         title = title.substring(0, 500);
       }
-      
+
       // Remove potentially sensitive information
       title = title.replace(/password|token|key|secret/gi, '[REDACTED]');
-      
+
       return title.trim();
     } catch (error) {
       this.log('Error sanitizing title: ' + error.message, 'warning');
@@ -1556,16 +1604,16 @@ class OptimizedSessionTrackerEnhanced {
   validateCoordinate(coord, type) {
     try {
       if (coord === null || coord === undefined) return null;
-      
+
       const numCoord = parseFloat(coord);
       if (isNaN(numCoord)) return null;
-      
+
       if (type === 'latitude') {
         return (numCoord >= -90 && numCoord <= 90) ? numCoord : null;
       } else if (type === 'longitude') {
         return (numCoord >= -180 && numCoord <= 180) ? numCoord : null;
       }
-      
+
       return numCoord;
     } catch (error) {
       this.log('Error validating coordinate: ' + error.message, 'warning');
@@ -1576,10 +1624,10 @@ class OptimizedSessionTrackerEnhanced {
   validateAccuracy(accuracy) {
     try {
       if (accuracy === null || accuracy === undefined) return null;
-      
+
       const numAccuracy = parseFloat(accuracy);
       if (isNaN(numAccuracy)) return null;
-      
+
       // Accuracy should be non-negative
       return (numAccuracy >= 0) ? numAccuracy : null;
     } catch (error) {
@@ -1772,7 +1820,6 @@ document.addEventListener("DOMContentLoaded", function () {
         forceSync: () => window.optimizedSessionTrackerEnhanced.forceSync(),
       };
 
-      console.log("Enhanced Optimized Session Tracker initialized successfully");
     } catch (error) {
       console.error("Failed to initialize Enhanced Optimized Session Tracker:", error);
     }

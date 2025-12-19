@@ -14,11 +14,11 @@ from trueAlign.models import (
 class SupportTicketService:
     """Service class for handling support ticket operations"""
 
-    # Group IDs based on requirements
+    # Group IDs based on actual database values
     ADMIN_GROUP_ID = 2
-    EMPLOYEE_GROUP_ID = 5
-    HR_GROUP_ID = 4
-    MANAGER_GROUP_ID = 11
+    EMPLOYEE_GROUP_ID = 6
+    HR_GROUP_ID = 3
+    MANAGER_GROUP_ID = 1
 
     # Groups that can resolve tickets
     RESOLVER_GROUPS = [ADMIN_GROUP_ID, HR_GROUP_ID]

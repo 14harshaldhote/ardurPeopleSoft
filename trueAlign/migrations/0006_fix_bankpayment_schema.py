@@ -8,7 +8,26 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunSQL(
-            sql="ALTER TABLE trueAlign_bankpayment ADD COLUMN bank_account_id bigint NOT NULL DEFAULT 1, ADD COLUMN created_by_id int NOT NULL DEFAULT 1, ADD COLUMN verified_by_id int NULL, ADD COLUMN approved_by_id int NULL",
-            reverse_sql="ALTER TABLE trueAlign_bankpayment DROP COLUMN bank_account_id, DROP COLUMN created_by_id, DROP COLUMN verified_by_id, DROP COLUMN approved_by_id"
+            # Check if column exists before adding
+            sql="""
+                SET @dbname = DATABASE();
+                SET @tablename = 'trueAlign_bankpayment';
+                SET @columnname = 'bank_account_id';
+                SET @preparedStatement = (SELECT IF(
+                  (
+                    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE
+                      (table_name = @tablename)
+                      AND (table_schema = @dbname)
+                      AND (column_name = @columnname)
+                  ) > 0,
+                  'SELECT 1',
+                  CONCAT('ALTER TABLE ', @tablename, ' ADD COLUMN ', @columnname, ' bigint NULL;')
+                ));
+                PREPARE alterIfNotExists FROM @preparedStatement;
+                EXECUTE alterIfNotExists;
+                DEALLOCATE PREPARE alterIfNotExists;
+            """,
+            reverse_sql=migrations.RunSQL.noop
         ),
     ]

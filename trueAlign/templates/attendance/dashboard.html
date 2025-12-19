@@ -184,9 +184,9 @@
                         <p class="text-lg font-bold text-gray-900">{{ record.status }}</p>
                         <div class="text-sm text-gray-600 mt-2 space-y-1">
                             <div class="flex justify-between"><span>In:</span><span>
-                                {{ record.clock_in_time|time:"g:i A"|default:"—" }}</span></div>
+                                    {{ record.clock_in_time|time:"g:i A"|default:"—" }}</span></div>
                             <div class="flex justify-between"><span>Out:</span><span>
-                                {{ record.clock_out_time|time:"g:i A"|default:"—" }}</span></div>
+                                    {{ record.clock_out_time|time:"g:i A"|default:"—" }}</span></div>
                             {% if record.total_hours %}
                             <div class="flex justify-between border-t border-gray-200 pt-1"><span>Total:</span><span
                                     class="text-blue-600 font-semibold">{{ record.total_hours|floatformat:1 }}h</span>
@@ -241,7 +241,7 @@
                         class="block px-4 py-3 bg-blue-50 border border-blue-100 rounded-lg hover:shadow transition text-blue-700 font-medium">
                         Request Correction
                     </a>
-                    <a href="{% url 'attendance:export_csv' %}"
+                    <a href="{% url 'attendance:report' %}"
                         class="block px-4 py-3 bg-green-50 border border-green-100 rounded-lg hover:shadow transition text-green-700 font-medium">
                         Download Report
                     </a>
@@ -389,7 +389,21 @@
             }
         };
     }
+</script>
 
+<!-- Alpine.js for reactive UI -->
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+<!-- ECharts for data visualization -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+
+<!-- Phase 2-4: Shared attendance utilities -->
+<script src="{% static 'attendance/attendance_common.js' %}"></script>
+
+<!-- Dashboard charts and functionality -->
+<script src="{% static 'attendance/dashboard_charts.js' %}"></script>
+
+<script>
     // Handle page visibility / clicks to update activity
     document.addEventListener("visibilitychange", function () {
         if (!document.hidden && window.attendanceDashboard && window.attendanceDashboard.updateActivity) {

@@ -164,13 +164,13 @@ plotly==5.18.0              # Pure Python/JS, perfect for web dashboards
 
 # ⚠️ statsmodels, matplotlib, seaborn - See dev requirements
 
-# ============================================
 # 6. SECURITY ✅ (All Safe)
 # ============================================
 django-axes==6.1.1          # Login attempt protection
 django-defender==0.9.7      # Rate limiting (works with Django cache, no Redis required)
 django-encrypted-model-fields==0.6.5  # PII encryption
-cryptography==41.0.7        # Encryption primitives
+bleach==6.1.0               # HTML sanitization for XSS prevention
+
 # python-keyring - Not needed on cPanel (use env vars)
 
 # ============================================
@@ -178,7 +178,7 @@ cryptography==41.0.7        # Encryption primitives
 # ============================================
 arrow==1.3.0                # Better datetime handling
 python-json-logger==2.0.7   # Structured logging
-PyYAML==6.0.1               # YAML config support
+
 
 # ============================================
 # 8. DJANGO EXTENSIONS ✅ (All Safe)
@@ -186,5 +186,16 @@ PyYAML==6.0.1               # YAML config support
 django-fsm==2.8.1           # Finite state machines
 django-auditlog==2.3.0      # Automatic audit trails
 django-import-export==3.3.1 # CSV/Excel import/export
-django-simple-history==3.4.0 # Model history tracking
+
 django-concurrency==2.5     # Optimistic locking
+django-crispy-forms==2.1
+crispy-tailwind==1.0.2
+
+# Phase 3: API Documentation & Background Jobs
+drf-spectacular==0.27.0
+redis==5.0.1
+celery-progress==0.3.0
+
+# Phase 5: Performance Optimization
+django-redis==5.4.0
+sentry-sdk[django]==1.40.0

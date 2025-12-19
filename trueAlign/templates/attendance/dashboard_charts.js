@@ -27,26 +27,14 @@ function enhancedAttendanceDashboard() {
         async loadDashboardData() {
             this.isLoading = true;
             try {
-                const response = await fetch('/api/attendance/dashboard/', {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': this.getCSRFToken()
-                    }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    this.dashboardData = data.data;
-                    this.updateCharts();
-                    this.lastUpdated = new Date().toLocaleTimeString();
-                } else {
-                    console.error('Failed to load dashboard data');
-                    this.showError('Failed to load dashboard data');
-                }
+                // Use versioned API endpoint
+                const data = await callAttendanceAPI('/dashboard/');
+                this.dashboardData = data;
+                this.updateCharts();
+                this.lastUpdated = new Date().toLocaleTimeString();
             } catch (error) {
                 console.error('Error loading dashboard data:', error);
-                this.showError('Network error while loading dashboard data');
+                showNotification(error.message || 'Failed to load dashboard data', 'error');
             } finally {
                 this.isLoading = false;
             }
@@ -89,20 +77,12 @@ function enhancedAttendanceDashboard() {
 
         async loadChartData() {
             try {
-                const response = await fetch(`/api/attendance/dashboard/charts/?days=${this.chartPeriod}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': this.getCSRFToken()
-                    }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    this.dashboardData.charts = data.data;
-                }
+                // Use versioned API endpoint with query params
+                const data = await callAttendanceAPI(`/dashboard/charts/?days=${this.chartPeriod}`);
+                this.dashboardData.charts = data;
             } catch (error) {
                 console.error('Error loading chart data:', error);
+                showNotification('Failed to load chart data', 'error');
             }
         },
 
@@ -267,7 +247,7 @@ function enhancedAttendanceDashboard() {
                             }
                         },
                         itemStyle: {
-                            color: function(params) {
+                            color: function (params) {
                                 return colorMap[params.name] || '#6b7280';
                             }
                         },
@@ -386,52 +366,35 @@ function enhancedAttendanceDashboard() {
                 const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
                 const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-                const params = new URLSearchParams({
+                const filters = {
                     start_date: firstDay.toISOString().split('T')[0],
-                    end_date: lastDay.toISOString().split('T')[0],
-                    format: format
-                });
+                    end_date: lastDay.toISOString().split('T')[0]
+                };
 
-                const url = format === 'excel'
-                    ? '/api/attendance/export/excel/'
-                    : '/api/attendance/export/csv/';
-
-                const response = await fetch(`${url}?${params}`, {
-                    method: 'GET',
-                    headers: {
-                        'X-CSRFToken': this.getCSRFToken()
-                    }
-                });
-
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const downloadUrl = window.URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = downloadUrl;
-
-                    const contentDisposition = response.headers.get('content-disposition');
-                    let filename = `attendance_report_${new Date().toISOString().split('T')[0]}.${format}`;
-
-                    if (contentDisposition) {
-                        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
-                        if (filenameMatch) {
-                            filename = filenameMatch[1];
-                        }
-                    }
-
-                    link.download = filename;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    window.URL.revokeObjectURL(downloadUrl);
-
-                    this.showSuccess(`Successfully exported ${format.toUpperCase()} file`);
+                // Use the shared export utility from attendance_common.js
+                if (format === 'csv') {
+                    await exportCSV(filters);
                 } else {
-                    throw new Error(`Failed to export ${format} file`);
+                    // Handle Excel export
+                    const data = await callAttendanceAPI('/export/excel/', {
+                        method: 'POST',
+                        body: JSON.stringify(filters),
+                        headers: {
+                            'X-CSRFToken': getCookie('csrftoken')
+                        }
+                    });
+
+                    if (data.download_url) {
+                        window.location.href = data.download_url;
+                        showNotification('Export successful!', 'success');
+                    } else if (data.job_id) {
+                        showNotification('Export started. You will be notified when ready.', 'info');
+                        pollExportStatus(data.job_id);
+                    }
                 }
             } catch (error) {
                 console.error('Export error:', error);
-                this.showError(`Failed to export ${format} file`);
+                showNotification(error.message || `Failed to export ${format} file`, 'error');
             } finally {
                 this.isLoading = false;
             }
@@ -522,7 +485,7 @@ function enhancedAttendanceDashboard() {
 }
 
 // Initialize dashboard when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Set user role globally for Alpine.js
     window.userRole = document.querySelector('meta[name="user-role"]')?.content || 'Employee';
 
@@ -541,7 +504,7 @@ if (typeof window.WebSocket !== 'undefined') {
     try {
         const socket = new WebSocket(wsUrl);
 
-        socket.onmessage = function(e) {
+        socket.onmessage = function (e) {
             const data = JSON.parse(e.data);
             if (data.type === 'attendance_update') {
                 // Trigger dashboard refresh
@@ -550,11 +513,11 @@ if (typeof window.WebSocket !== 'undefined') {
             }
         };
 
-        socket.onclose = function(e) {
+        socket.onclose = function (e) {
             console.log('WebSocket connection closed');
         };
 
-        socket.onerror = function(e) {
+        socket.onerror = function (e) {
             console.log('WebSocket error:', e);
         };
     } catch (error) {

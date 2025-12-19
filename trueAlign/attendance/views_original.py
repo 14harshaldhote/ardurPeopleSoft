@@ -592,16 +592,36 @@ def hr_attendance_dashboard(request):
 
         # Get weekly trends (last 7 days)
         week_ago = today - timedelta(days=7)
+        # OPTIMIZED: Single query instead of 7 queries in loop
+        week_start = today - timedelta(days=6)
+        weekly_attendance = Attendance.objects.filter(
+            date__range=[week_start, today]
+        ).values('date', 'status')
+        
+        # Aggregate by date
+        from collections import defaultdict
+        daily_counts = defaultdict(lambda: {'present': 0, 'absent': 0, 'late': 0})
+        for record in weekly_attendance:
+            date_str = record['date'].strftime('%Y-%m-%d')
+            status = record['status']
+            if status in PRESENT_STATUSES:
+                daily_counts[date_str]['present'] += 1
+            if status == 'Absent':
+                daily_counts[date_str]['absent'] += 1
+            if 'Late' in status:
+                daily_counts[date_str]['late'] += 1
+        
+        # Build weekly data array
         weekly_data = []
         for i in range(7):
             date = today - timedelta(days=6-i)
-            day_attendance = Attendance.objects.filter(date=date)
+            date_str = date.strftime('%Y-%m-%d')
             weekly_data.append({
-                'date': date.strftime('%Y-%m-%d'),
+                'date': date_str,
                 'day': date.strftime('%a'),
-                'present': day_attendance.filter(status__in=PRESENT_STATUSES).count(),
-                'absent': day_attendance.filter(status='Absent').count(),
-                'late': day_attendance.filter(status__contains='Late').count(),
+                'present': daily_counts[date_str]['present'],
+                'absent': daily_counts[date_str]['absent'],
+                'late': daily_counts[date_str]['late'],
             })
         
         # Format weekly stats for chart
@@ -982,28 +1002,33 @@ def export_attendance_csv(request):
 @login_required
 @hr_required()
 def attendance_analytics(request):
-    """Advanced attendance analytics page"""
+    """Advanced attendance analytics page with real data"""
     try:
         analytics_service = AttendanceAnalyticsService()
         today = timezone.now().astimezone(IST).date()
 
-        # Get data for different time periods
-        last_30_days = today - timedelta(days=30)
-        trends_result = analytics_service.get_attendance_trends(last_30_days, today)
+        # Get date range from request or default to last 30 days
+        days = int(request.GET.get('days', 30))
+        start_date = today - timedelta(days=days)
+        
+        # Get all analytics data
+        key_metrics_result = analytics_service.get_key_metrics(start_date, today)
+        trends_result = analytics_service.get_attendance_trends(start_date, today)
         department_result = analytics_service.get_department_analytics(today)
-        late_analysis_result = analytics_service.get_late_arrival_analysis(
-            last_30_days, today
-        )
+        top_performers_result = analytics_service.get_top_performers(start_date, today, limit=10)
+        concerns_result = analytics_service.get_attendance_concerns(start_date, today, limit=10)
+        monthly_summary_result = analytics_service.get_monthly_summary(today.year, today.month)
 
         context = {
+            "key_metrics": key_metrics_result.data if key_metrics_result.success else {},
             "trends_data": trends_result.data if trends_result.success else [],
-            "department_data": department_result.data
-            if department_result.success
-            else [],
-            "late_patterns": late_analysis_result.data
-            if late_analysis_result.success
-            else [],
+            "department_data": department_result.data if department_result.success else [],
+            "top_performers": top_performers_result.data if top_performers_result.success else [],
+            "attendance_concerns": concerns_result.data if concerns_result.success else [],
+            "monthly_summary": monthly_summary_result.data if monthly_summary_result.success else {},
             "today": today,
+            "start_date": start_date,
+            "days": days,
         }
 
         return render(request, "attendance/analytics.html", context)

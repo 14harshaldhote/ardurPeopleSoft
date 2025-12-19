@@ -859,6 +859,12 @@ def export_excel(request):
             start_date = today.replace(day=1)
             end_date = today
 
+        # Get optional filters
+        department = request.GET.get('department')
+        status = request.GET.get('status')
+        user_id = request.GET.get('user_id')
+        employee_search = request.GET.get('employee')
+
         # Base queryset
         queryset = Attendance.objects.filter(date__range=[start_date, end_date])
 
@@ -868,6 +874,24 @@ def export_excel(request):
 
         if user_ids:
             queryset = queryset.filter(user_id__in=user_ids)
+            
+        # Apply optional filters
+        if department and department != 'all':
+            queryset = queryset.filter(user__profile__department__iexact=department)
+            
+        if status and status != 'all':
+            queryset = queryset.filter(status__iexact=status)
+            
+        if user_id and user_id != 'all':
+             queryset = queryset.filter(user_id=user_id)
+             
+        if employee_search:
+            from django.db.models import Q
+            queryset = queryset.filter(
+                Q(user__first_name__icontains=employee_search) | 
+                Q(user__last_name__icontains=employee_search) | 
+                Q(user__username__icontains=employee_search)
+            )
 
         # Create Excel workbook
         wb = openpyxl.Workbook()
@@ -951,12 +975,36 @@ def export_csv(request):
             start_date = today.replace(day=1)
             end_date = today
 
+        # Get optional filters
+        department = request.GET.get('department')
+        status = request.GET.get('status')
+        user_id = request.GET.get('user_id')
+        employee_search = request.GET.get('employee')
+
         # Base queryset
         queryset = Attendance.objects.filter(date__range=[start_date, end_date])
 
         # Apply role-based filtering
         api = RoleBasedAttendanceAPI()
         queryset = api.get_user_accessible_data(request.user, queryset)
+        
+        # Apply optional filters
+        if department and department != 'all':
+            queryset = queryset.filter(user__profile__department__iexact=department)
+            
+        if status and status != 'all':
+            queryset = queryset.filter(status__iexact=status)
+            
+        if user_id and user_id != 'all':
+             queryset = queryset.filter(user_id=user_id)
+             
+        if employee_search:
+            from django.db.models import Q
+            queryset = queryset.filter(
+                Q(user__first_name__icontains=employee_search) | 
+                Q(user__last_name__icontains=employee_search) | 
+                Q(user__username__icontains=employee_search)
+            )
 
         # Create CSV response
         response = HttpResponse(content_type='text/csv')

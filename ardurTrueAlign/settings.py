@@ -99,16 +99,44 @@ ENHANCED_SESSION_CONFIG = {
 # For VPS/Cloud: Use Redis
 
 USE_DATABASE_CACHE = get_env_variable('USE_DATABASE_CACHE', 'False').lower() in ('true', '1', 'yes')
+USE_REDIS_CACHE = get_env_variable('USE_REDIS_CACHE', 'False').lower() in ('true', '1', 'yes')
 
-if USE_DATABASE_CACHE:
-    # Database cache for cPanel (create table: python manage.py createcachetable finance_cache)
+if USE_REDIS_CACHE:
+    # Redis cache for production (recommended for best performance)
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': get_env_variable('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+            'KEY_PREFIX': 'truealign',
+            'TIMEOUT': 300,  # 5 minutes default
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django.core.cache.backends.redis.RedisClient,',
+            }
+        },
+        'attendance': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': get_env_variable('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+            'KEY_PREFIX': 'attendance',
+            'TIMEOUT': 300,  # 5 minutes for rate limiting
+        }
+    }
+elif USE_DATABASE_CACHE:
+    # Database cache for cPanel (create table: python manage.py createcachetable truealign_cache)
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-            'LOCATION': 'finance_cache',
+            'LOCATION': 'truealign_cache',
             'TIMEOUT': 3600,  # 1 hour default
             'OPTIONS': {
                 'MAX_ENTRIES': 1000,
+            }
+        },
+        'attendance': {
+            'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+            'LOCATION': 'attendance_cache',
+            'TIMEOUT': 300,  # 5 minutes for rate limiting
+            'OPTIONS': {
+                'MAX_ENTRIES': 5000,  # Higher limit for attendance data
             }
         }
     }
@@ -117,7 +145,13 @@ else:
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            'LOCATION': 'unique-snowflake',
+            'LOCATION': 'truealign-cache',
+            'TIMEOUT': 300,
+        },
+        'attendance': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'attendance-cache',
+            'TIMEOUT': 300,
         }
     }
 
@@ -141,6 +175,7 @@ INSTALLED_APPS = [
     'trueAlign.apprisal',
     'trueAlign.confrence',  # Conference Room Booking System
     'trueAlign.shift',  # Shift Management System
+    'trueAlign.attendance',  # Attendance Management System
     'rest_framework',
     'django_cron',
     'django_celery_beat',
@@ -150,6 +185,9 @@ INSTALLED_APPS = [
     'simple_history',
     'djmoney',  # Multi-currency support for finance
     'django_iban',  # IBAN validation for international banking
+    
+    # API Documentation (Phase 3)
+    'drf_spectacular',
 ]
 
 # ============================================
@@ -179,6 +217,46 @@ FINANCE_CONFIG = {
     'ENABLE_RISK_SCORING': True,
 }
 
+# ============================================
+# ATTENDANCE MODULE CONFIGURATION
+# ============================================
+
+ATTENDANCE_CONFIG = {
+    # Security Settings (Phase 1.1)
+    'ENABLE_SQL_INJECTION_PROTECTION': True,
+    'ENABLE_XSS_PROTECTION': True,
+    'ENABLE_RATE_LIMITING': True,
+    'ENABLE_INPUT_SANITIZATION': True,
+    'ENABLE_QUERY_COUNT_MONITORING': DEBUG,  # Only in development
+    
+    # Rate Limiting
+    'RATE_LIMIT_REQUESTS_PER_MINUTE': 60,
+    'RATE_LIMIT_CACHE_PREFIX': 'ratelimit',
+    
+    # Input Validation
+    'MAX_DATE_RANGE_DAYS': 365,
+    'MAX_BULK_USERS': 100,
+    'MIN_REASON_LENGTH': 10,
+    'MAX_REASON_LENGTH': 500,
+    'MAX_SEARCH_QUERY_LENGTH': 100,
+    'MAX_PAGINATION_SIZE': 100,
+    
+    # Performance Settings (Phase 1.3)
+    'ENABLE_DATABASE_OPTIMIZATION': True,
+    'QUERY_COUNT_WARNING_THRESHOLD': 10,
+    'CACHE_TIMEOUT': 300,  # 5 minutes
+    
+    # Export Settings
+    'ALLOWED_EXPORT_FORMATS': ['csv', 'excel', 'xlsx', 'xls'],
+    'MAX_EXPORT_RECORDS': 10000,
+    
+    # Security Logging
+    'LOG_SECURITY_EVENTS': True,
+    'LOG_SQL_INJECTION_ATTEMPTS': True,
+    'LOG_XSS_ATTEMPTS': True,
+    'LOG_RATE_LIMIT_VIOLATIONS': True,
+}
+
 
 # Crispy Forms Settings
 CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
@@ -197,6 +275,12 @@ MIDDLEWARE = [
     'trueAlign.core.middleware.OptimizedSessionTrackingMiddleware',
     'trueAlign.core.middleware.OptimizedGlobalAuthenticationMiddleware',
     'simple_history.middleware.HistoryRequestMiddleware',
+    # Attendance Security Middleware (Phase 1.1)
+    'trueAlign.attendance.middleware.AttendanceSecurityMiddleware',
+    'trueAlign.attendance.middleware.RateLimitMiddleware',
+    'trueAlign.attendance.middleware.InputSanitizationMiddleware',
+    # Development only - comment out in production
+    'trueAlign.attendance.middleware.QueryCountMiddleware' if DEBUG else 'django.middleware.common.CommonMiddleware',
 ]
 
 
@@ -938,3 +1022,91 @@ DJANGO_CRON_CACHE_KEY = 'django_cron.last_run'
 CRON_CACHE_TIMEOUT = 3600  # 1 hour
 CRON_FAILURE_EMAIL_RECIPIENTS = []  # Add admin emails if needed
 CRON_EMAIL_SUBJECT_PREFIX = '[TrueAlign Cron] '
+
+# ============================================
+# REST FRAMEWORK & API DOCUMENTATION (Phase 3)
+# ============================================
+
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 50,
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'TrueAlign Attendance API',
+    'DESCRIPTION': 'Comprehensive attendance management system with advanced analytics and reporting',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SCHEMA_PATH_PREFIX': '/api/v1/',
+}
+
+# ============================================
+# CELERY CONFIGURATION (Phase 3.3)
+# ============================================
+
+# Celery Settings
+CELERY_BROKER_URL = get_env_variable('CELERY_BROKER_URL', 'redis://127.0.0.1:6379/0')
+CELERY_RESULT_BACKEND = get_env_variable('CELERY_RESULT_BACKEND', 'redis://127.0.0.1:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Asia/Kolkata'
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
+
+# ============================================
+# CACHING CONFIGURATION (Phase 5.1)
+# ============================================
+
+# Use Redis cache in production, fallback to LocMem for development/testing
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1')
+
+# Try Redis first, fallback to local memory cache
+try:
+    import redis
+    r = redis.from_url(REDIS_URL)
+    r.ping()
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': REDIS_URL,
+            'KEY_PREFIX': 'truealign',
+            'TIMEOUT': 300,
+        }
+    }
+except:
+    # Fallback to local memory cache (for dev/test when Redis not running)
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'truealign-cache',
+            'TIMEOUT': 300,
+        }
+    }
+
+# Cache middleware settings
+CACHE_MIDDLEWARE_ALIAS = 'default'
+CACHE_MIDDLEWARE_SECONDS = 300
+CACHE_MIDDLEWARE_KEY_PREFIX = 'truealign_page'
+
+# ============================================
+# SENTRY ERROR TRACKING (Phase 5.3)
+# ============================================
+
+# Sentry is optional - use os.environ.get to avoid exception
+SENTRY_DSN = os.environ.get('SENTRY_DSN', None)
+
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        traces_sample_rate=0.1,  # 10% of transactions
+        profiles_sample_rate=0.1,
+        send_default_pii=False,
+        environment=get_env_variable('DJANGO_ENV', 'development'),
+    )

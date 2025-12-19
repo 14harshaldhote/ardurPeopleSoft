@@ -383,6 +383,20 @@ class AttendanceSearchForm(forms.Form):
         label="Regularization Status"
     )
 
+    def clean(self):
+        cleaned_data = super().clean()
+        date_from = cleaned_data.get('date_from')
+        date_to = cleaned_data.get('date_to')
+
+        if date_from and date_to:
+            if date_from > date_to:
+                raise ValidationError("Start date cannot be after end date")
+            
+            if (date_to - date_from).days > 365:
+                raise ValidationError("Date range cannot exceed 365 days")
+
+        return cleaned_data
+
 
 # QuickAttendanceForm removed - attendance is now fully automatic based on sessions
 

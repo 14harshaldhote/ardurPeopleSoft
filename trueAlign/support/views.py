@@ -260,7 +260,7 @@ def add_comment(request, ticket_id):
         # Dispatch event
         dispatch_event(
             'ticket_comment_added', 
-            ticket, 
+            comment.ticket, 
             request.user, 
             is_internal=is_internal
         )

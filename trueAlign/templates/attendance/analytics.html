@@ -3,19 +3,26 @@
 
 {% block title %}Attendance Analytics - Ardur Home{% endblock %}
 
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+
 {% block content %}
 <div class="mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl">
-    
+
     <!-- Breadcrumb Navigation -->
     <nav class="flex mb-6 text-sm">
         <a href="{% url 'attendance:dashboard' %}" class="text-blue-600 hover:text-blue-800 transition-colors">
-            <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
             Home
         </a>
         <span class="mx-2 text-gray-400">/</span>
-        <a href="{% url 'attendance:hr_dashboard' %}" class="text-blue-600 hover:text-blue-800 transition-colors">HR Dashboard</a>
+        <a href="{% url 'attendance:hr_dashboard' %}" class="text-blue-600 hover:text-blue-800 transition-colors">HR
+            Dashboard</a>
         <span class="mx-2 text-gray-400">/</span>
         <span class="text-gray-700 font-medium">Analytics</span>
     </nav>
@@ -24,44 +31,44 @@
     <div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
             <h1 class="text-3xl font-extrabold text-gray-900 flex items-center">
-                <svg class="w-8 h-8 mr-3 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                <svg class="w-8 h-8 mr-3 text-blue-600" fill="none" stroke="currentColor" stroke-width="2"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
                 Attendance Analytics
             </h1>
             <p class="mt-2 text-sm text-gray-600">
-                Comprehensive insights and attendance trends for the organization
+                Comprehensive insights for the last {{ days }} days
             </p>
         </div>
-        
-        <!-- Action Buttons -->
-        <div class="flex flex-wrap gap-3">
-            <button onclick="window.location.reload()" 
-                    class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:scale-105 transition-all duration-200 shadow-md">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
-                Refresh
-            </button>
-            <a href="{% url 'attendance:export_csv' %}" 
-               class="inline-flex items-center px-4 py-2 backdrop-blur-sm bg-white/30 rounded-lg border border-gray-300 hover:bg-white/50 transition-all">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-                Export Report
-            </a>
+
+        <!-- Time Range Selector -->
+        <div class="flex flex-wrap gap-2">
+            <a href="?days=7"
+                class="px-4 py-2 {% if days == 7 %}bg-blue-600 text-white{% else %}bg-gray-200 text-gray-700{% endif %} rounded-lg hover:opacity-80 transition-all">7
+                Days</a>
+            <a href="?days=30"
+                class="px-4 py-2 {% if days == 30 %}bg-blue-600 text-white{% else %}bg-gray-200 text-gray-700{% endif %} rounded-lg hover:opacity-80 transition-all">30
+                Days</a>
+            <a href="?days=90"
+                class="px-4 py-2 {% if days == 90 %}bg-blue-600 text-white{% else %}bg-gray-200 text-gray-700{% endif %} rounded-lg hover:opacity-80 transition-all">90
+                Days</a>
         </div>
     </div>
 
     <div class="max-w-7xl mx-auto px-6 py-10">
         <!-- Key Metrics -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-            <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl p-7 border-l-4 border-sky-500 transition-all duration-300 transform hover:-translate-y-1">
+            <!-- Overall Attendance -->
+            <div
+                class="bg-white rounded-2xl shadow-lg hover:shadow-xl p-7 border-l-4 border-sky-500 transition-all duration-300 transform hover:-translate-y-1">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Overall Attendance</p>
-                        <p class="text-4xl font-extrabold text-sky-600 mt-2" x-text="metrics.overallAttendance + '%'"></p>
-                        <p class="text-xs text-green-600 mt-2 font-medium">↗ 2.5% from last period</p>
+                        <p class="text-4xl font-extrabold text-sky-600 mt-2">{{
+                            key_metrics.overall_attendance|default:"0" }}%</p>
+                        <p class="text-xs text-gray-500 mt-2 font-medium">Last {{ days }} days</p>
                     </div>
                     <div class="p-4 bg-sky-100 rounded-xl">
                         <i class="ri-pie-chart-line text-2xl text-sky-600"></i>
@@ -69,12 +76,15 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl p-7 border-l-4 border-green-500 transition-all duration-300 transform hover:-translate-y-1">
+            <!-- On-Time Arrival -->
+            <div
+                class="bg-white rounded-2xl shadow-lg hover:shadow-xl p-7 border-l-4 border-green-500 transition-all duration-300 transform hover:-translate-y-1">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-semibold text-gray-600 uppercase tracking-wide">On-Time Arrival</p>
-                        <p class="text-4xl font-extrabold text-green-600 mt-2" x-text="metrics.onTimeArrival + '%'"></p>
-                        <p class="text-xs text-green-600 mt-2 font-medium">↗ 1.8% from last period</p>
+                        <p class="text-4xl font-extrabold text-green-600 mt-2">{{
+                            key_metrics.on_time_arrival|default:"0" }}%</p>
+                        <p class="text-xs text-gray-500 mt-2 font-medium">Punctuality rate</p>
                     </div>
                     <div class="p-4 bg-green-100 rounded-xl">
                         <i class="ri-time-line text-2xl text-green-600"></i>
@@ -82,12 +92,15 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl p-7 border-l-4 border-amber-500 transition-all duration-300 transform hover:-translate-y-1">
+            <!-- Average Hours -->
+            <div
+                class="bg-white rounded-2xl shadow-lg hover:shadow-xl p-7 border-l-4 border-amber-500 transition-all duration-300 transform hover:-translate-y-1">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Average Hours</p>
-                        <p class="text-4xl font-extrabold text-amber-600 mt-2" x-text="metrics.averageHours"></p>
-                        <p class="text-xs text-red-600 mt-2 font-medium">↘ 0.3h from last period</p>
+                        <p class="text-4xl font-extrabold text-amber-600 mt-2">{{ key_metrics.average_hours|default:"0"
+                            }}h</p>
+                        <p class="text-xs text-gray-500 mt-2 font-medium">Per day average</p>
                     </div>
                     <div class="p-4 bg-amber-100 rounded-xl">
                         <i class="ri-timer-line text-2xl text-amber-600"></i>
@@ -95,327 +108,276 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl p-7 border-l-4 border-purple-500 transition-all duration-300 transform hover:-translate-y-1">
+            <!-- Total Overtime -->
+            <div
+                class="bg-white rounded-2xl shadow-lg hover:shadow-xl p-7 border-l-4 border-purple-500 transition-all duration-300 transform hover:-translate-y-1">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Late Arrivals</p>
-                        <p class="text-4xl font-extrabold text-purple-600 mt-2" x-text="metrics.lateArrivals"></p>
-                        <p class="text-xs text-green-600 mt-2 font-medium">↘ 15% from last period</p>
+                        <p class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Total Overtime</p>
+                        <p class="text-4xl font-extrabold text-purple-600 mt-2">{{
+                            key_metrics.total_overtime|default:"0" }}h</p>
+                        <p class="text-xs text-gray-500 mt-2 font-medium">Extra hours</p>
                     </div>
                     <div class="p-4 bg-purple-100 rounded-xl">
-                        <i class="ri-alarm-warning-line text-2xl text-purple-600"></i>
+                        <i class="ri-flashlight-line text-2xl text-purple-600"></i>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Charts Section -->
+        <!-- Charts Row -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
             <!-- Attendance Trend Chart -->
-            <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl p-8 transition-all duration-300">
+            <div class="bg-white rounded-2xl shadow-lg p-8">
                 <h2 class="text-2xl font-extrabold text-gray-900 mb-6">Attendance Trend</h2>
-                <div class="h-64 bg-gradient-to-br from-sky-50 to-blue-50 rounded-xl flex items-center justify-center border border-sky-100">
-                    <div class="text-center">
-                        <i class="ri-line-chart-line text-6xl text-sky-400 mb-4"></i>
-                        <p class="text-gray-700 font-semibold text-lg">Line Chart</p>
-                        <p class="text-sm text-gray-500 mt-1">Daily attendance percentage over time</p>
-                    </div>
-                </div>
+                <canvas id="trendChart" class="w-full" height="300"></canvas>
             </div>
 
-            <!-- Department Comparison -->
-            <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl p-8 transition-all duration-300">
+            <!-- Department Comparison Chart -->
+            <div class="bg-white rounded-2xl shadow-lg p-8">
                 <h2 class="text-2xl font-extrabold text-gray-900 mb-6">Department Comparison</h2>
-                <div class="h-64 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl flex items-center justify-center border border-green-100">
-                    <div class="text-center">
-                        <i class="ri-bar-chart-line text-6xl text-green-400 mb-4"></i>
-                        <p class="text-gray-700 font-semibold text-lg">Bar Chart</p>
-                        <p class="text-sm text-gray-500 mt-1">Attendance by department</p>
-                    </div>
-                </div>
+                <canvas id="departmentChart" class="w-full" height="300"></canvas>
             </div>
         </div>
 
-        <!-- Department Analytics -->
-        <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl p-8 mb-10 transition-all duration-300">
-            <h2 class="text-2xl font-extrabold text-gray-900 mb-8">Department Analytics</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <template x-for="dept in departmentAnalytics" :key="dept.name">
-                    <div class="border border-gray-200 rounded-xl p-6 hover:shadow-lg hover:border-gray-300 transition-all duration-300 bg-gradient-to-br from-white to-gray-50">
-                        <div class="flex items-center justify-between mb-5">
-                            <h3 class="font-bold text-lg text-gray-900" x-text="dept.name"></h3>
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                                  :class="dept.statusColor"
-                                  x-text="dept.performance"></span>
-                        </div>
-                        
-                        <div class="space-y-4">
-                            <div class="flex justify-between">
-                                <span class="text-sm font-medium text-gray-600">Attendance Rate</span>
-                                <span class="text-sm font-bold text-gray-900" x-text="dept.attendanceRate + '%'"></span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2.5 shadow-inner">
-                                <div class="h-2.5 rounded-full transition-all duration-500 shadow-sm"
-                                     :class="getProgressColor(dept.attendanceRate)"
-                                     :style="`width: ${dept.attendanceRate}%`"></div>
-                            </div>
-                            
-                            <div class="flex justify-between">
-                                <span class="text-sm font-medium text-gray-600">On-Time Rate</span>
-                                <span class="text-sm font-bold text-gray-900" x-text="dept.onTimeRate + '%'"></span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2.5 shadow-inner">
-                                <div class="h-2.5 rounded-full transition-all duration-500 shadow-sm"
-                                     :class="getProgressColor(dept.onTimeRate)"
-                                     :style="`width: ${dept.onTimeRate}%`"></div>
-                            </div>
-                            
-                            <div class="flex justify-between pt-2 border-t border-gray-200">
-                                <span class="text-sm font-medium text-gray-600">Employees</span>
-                                <span class="text-sm font-bold text-gray-900" x-text="dept.employeeCount"></span>
-                            </div>
-                        </div>
-                    </div>
-                </template>
-            </div>
-        </div>
-
-        <!-- Top Performers & Concerns -->
+        <!-- Tables Row -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
             <!-- Top Performers -->
-            <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl p-8 transition-all duration-300">
-                <h2 class="text-2xl font-extrabold text-gray-900 mb-8">Top Performers</h2>
+            <div class="bg-white rounded-2xl shadow-lg p-8">
+                <h2 class="text-2xl font-extrabold text-gray-900 mb-6 flex items-center">
+                    <i class="ri-trophy-line text-yellow-500 mr-3"></i>
+                    Top Performers
+                </h2>
                 <div class="space-y-4">
-                    <template x-for="(performer, index) in topPerformers" :key="performer.id">
-                        <div class="flex items-center justify-between p-5 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-100 hover:shadow-md transition-all duration-200">
-                            <div class="flex items-center space-x-3">
-                                <div class="flex-shrink-0">
-                                    <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-semibold text-sm"
-                                         x-text="index + 1"></div>
-                                </div>
-                                <div class="flex-shrink-0 h-10 w-10">
-                                    <div class="h-10 w-10 rounded-full flex items-center justify-center text-white font-semibold"
-                                         :class="performer.avatarColor"
-                                         x-text="performer.initials"></div>
-                                </div>
-                                <div>
-                                    <p class="font-medium text-gray-900" x-text="performer.name"></p>
-                                    <p class="text-sm text-gray-600" x-text="performer.department"></p>
-                                </div>
+                    {% for performer in top_performers %}
+                    <div
+                        class="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-transparent rounded-xl hover:shadow-md transition-all">
+                        <div class="flex items-center space-x-4">
+                            <div
+                                class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                                {{ forloop.counter }}
                             </div>
-                            <div class="text-right">
-                                <p class="font-semibold text-green-600" x-text="performer.attendanceRate + '%'"></p>
-                                <p class="text-sm text-gray-600">Perfect attendance</p>
+                            <div>
+                                <p class="font-semibold text-gray-900">{{ performer.name }}</p>
+                                <p class="text-sm text-gray-600">{{ performer.present_days }}/{{ performer.total_days }}
+                                    days</p>
                             </div>
                         </div>
-                    </template>
+                        <div class="text-right">
+                            <p class="text-2xl font-bold text-green-600">{{ performer.overall_score }}%</p>
+                            <p class="text-xs text-gray-500">Overall Score</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 text-center py-8">No data available</p>
+                    {% endfor %}
                 </div>
             </div>
 
             <!-- Attendance Concerns -->
-            <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl p-8 transition-all duration-300">
-                <h2 class="text-2xl font-extrabold text-gray-900 mb-8">Attendance Concerns</h2>
+            <div class="bg-white rounded-2xl shadow-lg p-8">
+                <h2 class="text-2xl font-extrabold text-gray-900 mb-6 flex items-center">
+                    <i class="ri-alert-line text-red-500 mr-3"></i>
+                    Attendance Concerns
+                </h2>
                 <div class="space-y-4">
-                    <template x-for="concern in attendanceConcerns" :key="concern.id">
-                        <div class="flex items-center justify-between p-5 bg-gradient-to-r from-red-50 to-orange-50 rounded-xl border border-red-100 hover:shadow-md transition-all duration-200">
-                            <div class="flex items-center space-x-3">
-                                <div class="flex-shrink-0">
-                                    <i class="ri-alert-line text-red-500 text-xl"></i>
-                                </div>
-                                <div class="flex-shrink-0 h-10 w-10">
-                                    <div class="h-10 w-10 rounded-full flex items-center justify-center text-white font-semibold"
-                                         :class="concern.avatarColor"
-                                         x-text="concern.initials"></div>
-                                </div>
-                                <div>
-                                    <p class="font-medium text-gray-900" x-text="concern.name"></p>
-                                    <p class="text-sm text-gray-600" x-text="concern.issue"></p>
-                                </div>
+                    {% for concern in attendance_concerns %}
+                    <div
+                        class="flex items-center justify-between p-4 bg-gradient-to-r from-red-50 to-transparent rounded-xl hover:shadow-md transition-all">
+                        <div class="flex items-center space-x-4">
+                            <div
+                                class="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center text-white font-bold">
+                                <i class="ri-user-line"></i>
                             </div>
-                            <div class="text-right">
-                                <p class="font-semibold text-red-600" x-text="concern.attendanceRate + '%'"></p>
-                                <button @click="contactEmployee(concern)" 
-                                        class="text-sm text-blue-600 hover:text-blue-800">
-                                    Contact
-                                </button>
+                            <div>
+                                <p class="font-semibold text-gray-900">{{ concern.name }}</p>
+                                <p class="text-sm text-red-600">{{ concern.concern_type }}</p>
                             </div>
                         </div>
-                    </template>
+                        <div class="text-right">
+                            <p class="text-sm font-medium text-gray-700">Abs: {{ concern.absent_days }}</p>
+                            <p class="text-sm font-medium text-gray-700">Late: {{ concern.late_days }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 text-center py-8">No concerns - Great!</p>
+                    {% endfor %}
                 </div>
             </div>
         </div>
 
-        <!-- Attendance Patterns -->
-        <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl p-8 transition-all duration-300">
-            <h2 class="text-2xl font-extrabold text-gray-900 mb-8">Attendance Patterns</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="text-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100 hover:shadow-md transition-all duration-200">
-                    <div class="text-3xl font-extrabold text-blue-600" x-text="patterns.mondayAttendance + '%'"></div>
-                    <div class="text-sm font-semibold text-gray-700 mt-2">Monday</div>
-                    <div class="text-xs text-gray-500 mt-1">Lowest attendance day</div>
-                </div>
-                <div class="text-center p-6 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-100 hover:shadow-md transition-all duration-200">
-                    <div class="text-3xl font-extrabold text-green-600" x-text="patterns.tuesdayAttendance + '%'"></div>
-                    <div class="text-sm font-semibold text-gray-700 mt-2">Tuesday</div>
-                    <div class="text-xs text-gray-500 mt-1">Highest attendance day</div>
-                </div>
-                <div class="text-center p-6 bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl border border-amber-100 hover:shadow-md transition-all duration-200">
-                    <div class="text-3xl font-extrabold text-amber-600" x-text="patterns.peakHour"></div>
-                    <div class="text-sm font-semibold text-gray-700 mt-2">Peak Check-in</div>
-                    <div class="text-xs text-gray-500 mt-1">Most common arrival time</div>
-                </div>
-                <div class="text-center p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-100 hover:shadow-md transition-all duration-200">
-                    <div class="text-3xl font-extrabold text-purple-600" x-text="patterns.avgBreakTime"></div>
-                    <div class="text-sm font-semibold text-gray-700 mt-2">Avg Break</div>
-                    <div class="text-xs text-gray-500 mt-1">Average break duration</div>
-                </div>
+        <!-- Department Analytics Table -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-10">
+            <h2 class="text-2xl font-extrabold text-gray-900 mb-6">Department Analytics</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Department</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Employees</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Present</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Absent</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Late</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Attendance %</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for dept in department_data %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{{ dept.department }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-700">{{ dept.total_employees }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-green-600 font-semibold">{{ dept.present }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-red-600 font-semibold">{{ dept.absent }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-yellow-600 font-semibold">{{ dept.late }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-1 bg-gray-200 rounded-full h-2 mr-3">
+                                        <div class="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full"
+                                            style="width: {{ dept.attendance_rate }}%"></div>
+                                    </div>
+                                    <span class="font-bold text-gray-900">{{ dept.attendance_rate }}%</span>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-8 text-center text-gray-500">No department data available
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-function attendanceAnalytics() {
-    return {
-        analyticsFilter: '30days',
-        metrics: {
-            overallAttendance: 87,
-            onTimeArrival: 78,
-            averageHours: '8.2h',
-            lateArrivals: 45
+    // Attendance Trend Chart
+    const trendCtx = document.getElementById('trendChart').getContext('2d');
+    const trendData = {{ trends_data| safe }};
+
+    const trendDates = trendData.map(d => {
+        const date = new Date(d.date);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    });
+    const trendPresent = trendData.map(d => d.present);
+    const trendAbsent = trendData.map(d => d.absent);
+    const trendLate = trendData.map(d => d.late);
+
+    new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: trendDates,
+            datasets: [
+                {
+                    label: 'Present',
+                    data: trendPresent,
+                    borderColor: 'rgb(34, 197, 94)',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Late',
+                    data: trendLate,
+                    borderColor: 'rgb(251, 191, 36)',
+                    backgroundColor: 'rgba(251, 191, 36, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Absent',
+                    data: trendAbsent,
+                    borderColor: 'rgb(239, 68, 68)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }
+            ]
         },
-        departmentAnalytics: [
-            {
-                name: 'Engineering',
-                attendanceRate: 92,
-                onTimeRate: 85,
-                employeeCount: 45,
-                performance: 'Excellent',
-                statusColor: 'bg-green-100 text-green-800'
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                }
             },
-            {
-                name: 'Marketing',
-                attendanceRate: 88,
-                onTimeRate: 82,
-                employeeCount: 25,
-                performance: 'Good',
-                statusColor: 'bg-blue-100 text-blue-800'
-            },
-            {
-                name: 'Sales',
-                attendanceRate: 75,
-                onTimeRate: 70,
-                employeeCount: 35,
-                performance: 'Needs Improvement',
-                statusColor: 'bg-yellow-100 text-yellow-800'
-            },
-            {
-                name: 'HR',
-                attendanceRate: 95,
-                onTimeRate: 92,
-                employeeCount: 15,
-                performance: 'Excellent',
-                statusColor: 'bg-green-100 text-green-800'
-            },
-            {
-                name: 'Finance',
-                attendanceRate: 85,
-                onTimeRate: 88,
-                employeeCount: 20,
-                performance: 'Good',
-                statusColor: 'bg-blue-100 text-blue-800'
-            },
-            {
-                name: 'Operations',
-                attendanceRate: 68,
-                onTimeRate: 65,
-                employeeCount: 30,
-                performance: 'Poor',
-                statusColor: 'bg-red-100 text-red-800'
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
             }
-        ],
-        topPerformers: [
-            {
-                id: 1,
-                name: 'Sarah Johnson',
-                department: 'Engineering',
-                attendanceRate: 100,
-                initials: 'SJ',
-                avatarColor: 'bg-blue-500'
-            },
-            {
-                id: 2,
-                name: 'Michael Chen',
-                department: 'HR',
-                attendanceRate: 98,
-                initials: 'MC',
-                avatarColor: 'bg-green-500'
-            },
-            {
-                id: 3,
-                name: 'Emily Davis',
-                department: 'Finance',
-                attendanceRate: 97,
-                initials: 'ED',
-                avatarColor: 'bg-purple-500'
-            }
-        ],
-        attendanceConcerns: [
-            {
-                id: 1,
-                name: 'David Wilson',
-                issue: '5 consecutive absences',
-                attendanceRate: 45,
-                initials: 'DW',
-                avatarColor: 'bg-red-500'
-            },
-            {
-                id: 2,
-                name: 'Lisa Brown',
-                issue: 'Frequent late arrivals',
-                attendanceRate: 62,
-                initials: 'LB',
-                avatarColor: 'bg-orange-500'
-            },
-            {
-                id: 3,
-                name: 'James Miller',
-                issue: 'Irregular check-outs',
-                attendanceRate: 58,
-                initials: 'JM',
-                avatarColor: 'bg-yellow-500'
-            }
-        ],
-        patterns: {
-            mondayAttendance: 78,
-            tuesdayAttendance: 94,
-            peakHour: '9:15 AM',
-            avgBreakTime: '45min'
-        },
-        
-        updateAnalytics() {
-            console.log('Updating analytics for:', this.analyticsFilter);
-            // Simulate data update
-        },
-        
-        refreshData() {
-            console.log('Refreshing analytics data...');
-            // Simulate data refresh
-        },
-        
-        getProgressColor(percentage) {
-            if (percentage >= 90) return 'bg-green-500';
-            if (percentage >= 80) return 'bg-blue-500';
-            if (percentage >= 70) return 'bg-yellow-500';
-            if (percentage >= 60) return 'bg-orange-500';
-            return 'bg-red-500';
-        },
-        
-        contactEmployee(employee) {
-            console.log('Contacting employee:', employee.name);
-            // Implement contact functionality
         }
-    }
-}
+    });
+
+    // Department Comparison Chart
+    const deptCtx = document.getElementById('departmentChart').getContext('2d');
+    const deptData = {{ department_data| safe }};
+
+    const deptNames = deptData.map(d => d.department);
+    const deptRates = deptData.map(d => d.attendance_rate);
+
+    new Chart(deptCtx, {
+        type: 'bar',
+        data: {
+            labels: deptNames,
+            datasets: [{
+                label: 'Attendance Rate (%)',
+                data: deptRates,
+                backgroundColor: [
+                    'rgba(59, 130, 246, 0.8)',
+                    'rgba(34, 197, 94, 0.8)',
+                    'rgba(251, 191, 36, 0.8)',
+                    'rgba(168, 85, 247, 0.8)',
+                    'rgba(236, 72, 153, 0.8)',
+                    'rgba(14, 165, 233, 0.8)'
+                ],
+                borderColor: [
+                    'rgb(59, 130, 246)',
+                    'rgb(34, 197, 94)',
+                    'rgb(251, 191, 36)',
+                    'rgb(168, 85, 247)',
+                    'rgb(236, 72, 153)',
+                    'rgb(14, 165, 233)'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function (value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
 </script>
 {% endblock %}

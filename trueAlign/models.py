@@ -6355,9 +6355,16 @@ class TicketAttachment(models.Model):
             if not self.file_size and hasattr(self.file, 'size'):
                 self.file_size = self.file.size
 
-            # Update file type
-            if not self.file_type and hasattr(self.file, 'content_type'):
-                self.file_type = self.file.content_type
+            # Update file type - try content_type attribute first, then guess from extension
+            if not self.file_type:
+                if hasattr(self.file, 'content_type') and self.file.content_type:
+                    self.file_type = self.file.content_type
+                else:
+                    # Guess content type from file extension
+                    import mimetypes
+                    filename = self.original_filename or self.file.name
+                    content_type, _ = mimetypes.guess_type(filename)
+                    self.file_type = content_type or 'application/octet-stream'
 
         super().save(*args, **kwargs)
 
