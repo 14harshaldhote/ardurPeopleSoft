@@ -1,99 +1,102 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}Cancel Booking - {{ booking.title }}{% endblock %}
+{% block title %}Cancel Booking{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        <div class="mb-8">
-            <a href="{% url 'conference:booking_detail' booking.id %}" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4">
-                <svg class="w-4 h-4 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
-                Back to Booking
-            </a>
-            <h1 class="text-3xl font-bold text-gray-900">Cancel Booking</h1>
-        </div>
+<div class="px-4 sm:px-6 lg:px-8 py-6 max-w-2xl mx-auto">
 
-        <!-- Warning Box -->
-        <div class="bg-red-50 border-l-4 border-red-500 p-6 mb-6 rounded-lg">
-            <div class="flex">
-                <svg class="w-6 h-6 text-red-600 mr-3" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <div>
-                    <h3 class="text-lg font-semibold text-red-900 mb-2">Are you sure you want to cancel this booking?</h3>
-                    <p class="text-sm text-red-800">This action cannot be undone. The room will become available for others to book.</p>
-                </div>
-            </div>
-        </div>
+    <!-- Header -->
+    <div class="mb-8">
+        <a href="{% url 'conference:my_bookings' %}"
+            class="inline-flex items-center text-sm text-zinc-600 hover:text-cyan-600 mb-4 transition">
+            <svg class="w-4 h-4 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to My Bookings
+        </a>
 
-        <!-- Booking Summary -->
-        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Booking Summary</h3>
-            <div class="space-y-2 text-sm">
-                <div class="flex justify-between">
-                    <span class="text-gray-600">Meeting Title:</span>
-                    <span class="font-medium text-gray-900">{{ booking.title }}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-600">Room:</span>
-                    <span class="font-medium text-gray-900">{{ booking.room.name }}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-600">Location:</span>
-                    <span class="font-medium text-gray-900">{{ booking.room.office_location.name }}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-600">Date:</span>
-                    <span class="font-medium text-gray-900">{{ booking.start_time|date:"F d, Y" }}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-600">Time:</span>
-                    <span class="font-medium text-gray-900">{{ booking.start_time|date:"g:i A" }} - {{ booking.end_time|date:"g:i A" }}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-600">Attendees:</span>
-                    <span class="font-medium text-gray-900">{{ booking.attendee_count }} people</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Cancellation Form -->
-        <div class="bg-white rounded-lg shadow-sm p-6">
-            <form method="post">
-                {% csrf_token %}
-                
-                <div class="mb-6">
-                    <label for="{{ form.cancellation_reason.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                        Cancellation Reason
-                        <span class="text-gray-400 font-normal">(Optional)</span>
-                    </label>
-                    {{ form.cancellation_reason }}
-                    {% if form.cancellation_reason.errors %}
-                    <p class="mt-1 text-sm text-red-600">{{ form.cancellation_reason.errors.0 }}</p>
-                    {% endif %}
-                </div>
-                
-                <div class="flex justify-end gap-4">
-                    <a href="{% url 'conference:booking_detail' booking.id %}" 
-                       class="px-6 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
-                        Keep Booking
-                    </a>
-                    <button type="submit" 
-                            class="px-6 py-3 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition">
-                        <span class="flex items-center">
-                            <svg class="w-5 h-5 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                            Confirm Cancellation
-                        </span>
-                    </button>
-                </div>
-            </form>
-        </div>
-        
+        <h1 class="text-3xl font-bold text-zinc-900">Cancel Booking</h1>
+        <p class="text-zinc-600 mt-2">Confirm cancellation of your conference room booking</p>
     </div>
+
+    <!-- Warning Box -->
+    <div class="bg-red-50 border-l-4 border-red-500 p-6 rounded-lg mb-6">
+        <div class="flex">
+            <svg class="w-6 h-6 text-red-600 mr-3 flex-shrink-0" stroke="currentColor" fill="none" viewBox="0 0 24 24"
+                stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1-1.964-1-2.732 0L4.268 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+                <h3 class="text-lg font-semibold text-red-900 mb-2">Warning: This action cannot be undone</h3>
+                <p class="text-sm text-red-800">Once you cancel this booking, the conference room will become available
+                    for others to book. You will need to create a new booking if you change your mind.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Details -->
+    <div class="glass-panel p-6 mb-6">
+        <h3 class="text-lg font-semibold text-zinc-900 mb-4">Booking Details</h3>
+
+        <div class="space-y-3">
+            <div class="grid grid-cols-3 gap-4">
+                <div class="text-sm font-medium text-zinc-600">Meeting Title:</div>
+                <div class="col-span-2 text-sm text-zinc-900">{{ booking.title }}</div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4">
+                <div class="text-sm font-medium text-zinc-600">Room:</div>
+                <div class="col-span-2 text-sm text-zinc-900">{{ booking.room.name }}</div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4">
+                <div class="text-sm font-medium text-zinc-600">Date:</div>
+                <div class="col-span-2 text-sm text-zinc-900">{{ booking.start_time|date:"F d, Y" }}</div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4">
+                <div class="text-sm font-medium text-zinc-600">Time:</div>
+                <div class="col-span-2 text-sm text-zinc-900">{{ booking.start_time|date:"g:i A" }} - {{
+                    booking.end_time|date:"g:i A" }}</div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4">
+                <div class="text-sm font-medium text-zinc-600">Attendees:</div>
+                <div class="col-span-2 text-sm text-zinc-900">{{ booking.attendee_count }} people</div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4">
+                <div class="text-sm font-medium text-zinc-600">Status:</div>
+                <div class="col-span-2">
+                    <span class="badge badge-amber text-xs">{{ booking.get_status_display }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Form -->
+    <div class="glass-panel p-6">
+        <form method="post">
+            {% csrf_token %}
+
+            <p class="text-sm text-zinc-700 mb-6">Please confirm that you want to cancel this booking. This action is
+                permanent and cannot be reversed.</p>
+
+            <div class="flex flex-col sm:flex-row gap-3">
+                <a href="{% url 'conference:my_bookings' %}" class="flex-1 btn btn-secondary text-center">
+                    No, Keep Booking
+                </a>
+                <button type="submit" class="flex-1 btn btn-red">
+                    <svg class="w-5 h-5" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Yes, Cancel Booking
+                </button>
+            </div>
+        </form>
+    </div>
+
 </div>
 {% endblock %}

@@ -4,241 +4,246 @@
 {% block title %}Book Conference Room{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        <!-- Header -->
-        <div class="mb-8">
-            <a href="{% url 'conference:room_list' %}" 
-               class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4">
-                <svg class="w-4 h-4 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
-                Back to Rooms
-            </a>
-            
-            <h1 class="text-3xl font-bold text-gray-900">Book a Conference Room</h1>
-            <p class="mt-2 text-gray-600">Fill in the details to reserve a conference room</p>
-        </div>
+<div class="px-4 sm:px-6 lg:px-8 py-6 max-w-4xl mx-auto">
 
-        {% if selected_room %}
-        <!-- Selected Room Info -->
-        <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-6 rounded-lg">
-            <div class="flex items-start">
-                <svg class="w-6 h-6 text-blue-600 mt-1 mr-3" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <div class="flex-1">
-                    <h3 class="text-lg font-semibold text-blue-900 mb-2">Selected Room: {{ selected_room.name }}</h3>
-                    <div class="grid grid-cols-2 gap-4 text-sm text-blue-800">
-                        <div><strong>Location:</strong> {{ selected_room.office_location.name }}</div>
-                        <div><strong>Floor:</strong> {{ selected_room.floor }}</div>
-                        <div><strong>Capacity:</strong> {{ selected_room.capacity }} people</div>
-                        <div><strong>Max Duration:</strong> {{ selected_room.max_booking_duration_hours }} hours</div>
-                    </div>
-                    {% if selected_room.amenities %}
-                    <div class="mt-3">
-                        <strong class="text-blue-900">Amenities:</strong>
-                        <span class="text-blue-800">{{ selected_room.amenities_display }}</span>
-                    </div>
-                    {% endif %}
+    <!-- Header -->
+    <div class="mb-8">
+        <a href="{% url 'conference:room_list' %}"
+            class="inline-flex items-center text-sm text-zinc-600 hover:text-cyan-600 mb-4 transition">
+            <svg class="w-4 h-4 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Rooms
+        </a>
+
+        <h1 class="text-3xl font-bold text-zinc-900">Book a Conference Room</h1>
+        <p class="text-zinc-600 mt-2">Fill in the details to reserve a conference room</p>
+    </div>
+
+    {% if selected_room %}
+    <!-- Selected Room Info -->
+    <div class="glass-panel p-6 mb-6 border-l-4 border-cyan-500">
+        <div class="flex items-start">
+            <svg class="w-6 h-6 text-cyan-600 mt-1 mr-3 flex-shrink-0" stroke="currentColor" fill="none"
+                viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div class="flex-1">
+                <h3 class="text-lg font-semibold text-cyan-900 mb-3">Selected Room: {{ selected_room.name }}</h3>
+                <div class="grid grid-cols-2 gap-4 text-sm text-zinc-700">
+                    <div><strong class="text-zinc-900">Location:</strong> {{ selected_room.office_location.name }}</div>
+                    <div><strong class="text-zinc-900">Floor:</strong> {{ selected_room.floor }}</div>
+                    <div><strong class="text-zinc-900">Capacity:</strong> {{ selected_room.capacity }} people</div>
+                    <div><strong class="text-zinc-900">Max Duration:</strong> {{
+                        selected_room.max_booking_duration_hours }} hours</div>
                 </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Booking Form -->
-        <div class="bg-white rounded-lg shadow-sm p-8">
-            <form method="post" enctype="multipart/form-data" id="bookingForm">
-                {% csrf_token %}
-                
-                {% if form.non_field_errors %}
-                <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded">
-                    <div class="flex">
-                        <svg class="w-5 h-5 text-red-500 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <div>
-                            {% for error in form.non_field_errors %}
-                            <p class="text-sm text-red-700">{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                    </div>
+                {% if selected_room.amenities %}
+                <div class="mt-3">
+                    <strong class="text-zinc-900">Amenities:</strong>
+                    <span class="text-zinc-700">{{ selected_room.amenities_display }}</span>
                 </div>
                 {% endif %}
-                
-                <div class="space-y-6">
-                    
-                    <!-- Room Selection -->
-                    <div>
-                        <label for="{{ form.room.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                            Conference Room <span class="text-red-500">*</span>
-                        </label>
-                        {{ form.room }}
-                        {% if form.room.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.room.errors.0 }}</p>
-                        {% endif %}
-                        <p class="mt-1 text-xs text-gray-500">{{ form.room.help_text }}</p>
-                    </div>
-                    
-                    <!-- Meeting Title -->
-                    <div>
-                        <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                            Meeting Title <span class="text-red-500">*</span>
-                        </label>
-                        {{ form.title }}
-                        {% if form.title.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.title.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- Purpose -->
-                    <div>
-                        <label for="{{ form.purpose.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                            Purpose <span class="text-red-500">*</span>
-                        </label>
-                        {{ form.purpose }}
-                        {% if form.purpose.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.purpose.errors.0 }}</p>
-                        {% endif %}
-                        <p class="mt-1 text-xs text-gray-500">Describe the purpose of this meeting</p>
-                    </div>
-                    
-                    <!-- Date and Time Section -->
-                    <div class="border-t pt-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Date & Time</h3>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <!-- Date -->
-                            <div>
-                                <label for="{{ form.booking_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Date <span class="text-red-500">*</span>
-                                </label>
-                                {{ form.booking_date }}
-                                {% if form.booking_date.errors %}
-                                <p class="mt-1 text-sm text-red-600">{{ form.booking_date.errors.0 }}</p>
-                                {% endif %}
-                            </div>
-                            
-                            <!-- Start Time -->
-                            <div>
-                                <label for="{{ form.start_time_field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Start Time <span class="text-red-500">*</span>
-                                </label>
-                                {{ form.start_time_field }}
-                                {% if form.start_time_field.errors %}
-                                <p class="mt-1 text-sm text-red-600">{{ form.start_time_field.errors.0 }}</p>
-                                {% endif %}
-                            </div>
-                            
-                            <!-- End Time -->
-                            <div>
-                                <label for="{{ form.end_time_field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                    End Time <span class="text-red-500">*</span>
-                                </label>
-                                {{ form.end_time_field }}
-                                {% if form.end_time_field.errors %}
-                                <p class="mt-1 text-sm text-red-600">{{ form.end_time_field.errors.0 }}</p>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Attendees Section -->
-                    <div class="border-t pt-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Attendees</h3>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <!-- Attendee Count -->
-                            <div>
-                                <label for="{{ form.attendee_count.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Number of Attendees <span class="text-red-500">*</span>
-                                </label>
-                                {{ form.attendee_count }}
-                                {% if form.attendee_count.errors %}
-                                <p class="mt-1 text-sm text-red-600">{{ form.attendee_count.errors.0 }}</p>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <!-- Attendees List -->
-                        <div>
-                            <label for="{{ form.attendees.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                Attendee Names/Emails <span class="text-red-500">*</span>
-                            </label>
-                            {{ form.attendees }}
-                            {% if form.attendees.errors %}
-                            <p class="mt-1 text-sm text-red-600">{{ form.attendees.errors.0 }}</p>
-                            {% endif %}
-                            <p class="mt-1 text-xs text-gray-500">Enter names or email addresses (one per line or comma-separated)</p>
-                        </div>
-                    </div>
-                    
-                    <!-- Special Requirements -->
-                    <div class="border-t pt-6">
-                        <label for="{{ form.special_requirements.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                            Special Requirements
-                            <span class="text-gray-400 font-normal">(Optional)</span>
-                        </label>
-                        {{ form.special_requirements }}
-                        {% if form.special_requirements.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.special_requirements.errors.0 }}</p>
-                        {% endif %}
-                        <p class="mt-1 text-xs text-gray-500">Any special setup or equipment needed</p>
-                    </div>
-                    
-                </div>
-                
-                <!-- Info Box -->
-                <div class="mt-8 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
-                    <div class="flex">
-                        <svg class="w-5 h-5 text-yellow-600 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <div class="text-sm text-yellow-700">
-                            <p class="font-semibold">Booking Guidelines:</p>
-                            <ul class="list-disc list-inside mt-1 space-y-1">
-                                <li>Bookings must be made at least 15 minutes in advance</li>
-                                <li>There is a 15-minute buffer time between bookings</li>
-                                <li>Maximum booking duration is 3 hours</li>
-                                <li>You will receive a confirmation email once booked</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Action Buttons -->
-                <div class="mt-8 flex justify-end gap-4">
-                    <a href="{% url 'conference:room_list' %}" 
-                       class="px-6 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
-                        Cancel
-                    </a>
-                    <button type="submit" 
-                            class="px-6 py-3 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
-                        <span class="flex items-center">
-                            <svg class="w-5 h-5 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                            Confirm Booking
-                        </span>
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
-        
     </div>
+    {% endif %}
+
+    <!-- Booking Form -->
+    <div class="glass-panel p-8">
+        <form method="post" enctype="multipart/form-data" id="bookingForm">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                <div class="flex">
+                    <svg class="w-5 h-5 text-red-500 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24"
+                        stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                        {% for error in form.non_field_errors %}
+                        <p class="text-sm text-red-700">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="space-y-6">
+
+                <!-- Room Selection -->
+                <div>
+                    <label for="{{ form.room.id_for_label }}" class="form-label">
+                        Conference Room <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.room }}
+                    {% if form.room.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.room.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-zinc-500">{{ form.room.help_text }}</p>
+                </div>
+
+                <!-- Meeting Title -->
+                <div>
+                    <label for="{{ form.title.id_for_label }}" class="form-label">
+                        Meeting Title <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.title.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Purpose -->
+                <div>
+                    <label for="{{ form.purpose.id_for_label }}" class="form-label">
+                        Purpose <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.purpose }}
+                    {% if form.purpose.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.purpose.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-zinc-500">Describe the purpose of this meeting</p>
+                </div>
+
+                <!-- Date and Time Section -->
+                <div class="border-t border-white/20 pt-6">
+                    <h3 class="text-lg font-semibold text-zinc-900 mb-4">Date & Time</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Date -->
+                        <div>
+                            <label for="{{ form.booking_date.id_for_label }}" class="form-label">
+                                Date <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.booking_date }}
+                            {% if form.booking_date.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.booking_date.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Start Time -->
+                        <div>
+                            <label for="{{ form.start_time_field.id_for_label }}" class="form-label">
+                                Start Time <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.start_time_field }}
+                            {% if form.start_time_field.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.start_time_field.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- End Time -->
+                        <div>
+                            <label for="{{ form.end_time_field.id_for_label }}" class="form-label">
+                                End Time <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.end_time_field }}
+                            {% if form.end_time_field.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.end_time_field.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Attendees Section -->
+                <div class="border-t border-white/20 pt-6">
+                    <h3 class="text-lg font-semibold text-zinc-900 mb-4">Attendees</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <!-- Attendee Count -->
+                        <div>
+                            <label for="{{ form.attendee_count.id_for_label }}" class="form-label">
+                                Number of Attendees <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.attendee_count }}
+                            {% if form.attendee_count.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.attendee_count.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Attendees List -->
+                    <div>
+                        <label for="{{ form.attendees.id_for_label }}" class="form-label">
+                            Attendee Names/Emails <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.attendees }}
+                        {% if form.attendees.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.attendees.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-xs text-zinc-500">Enter names or email addresses (one per line or
+                            comma-separated)</p>
+                    </div>
+                </div>
+
+                <!-- Special Requirements -->
+                <div class="border-t border-white/20 pt-6">
+                    <label for="{{ form.special_requirements.id_for_label }}" class="form-label">
+                        Special Requirements
+                        <span class="text-zinc-400 font-normal">(Optional)</span>
+                    </label>
+                    {{ form.special_requirements }}
+                    {% if form.special_requirements.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.special_requirements.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-zinc-500">Any special setup or equipment needed</p>
+                </div>
+
+            </div>
+
+            <!-- Info Box -->
+            <div class="mt-8 bg-sky-50 border-l-4 border-sky-500 p-4 rounded">
+                <div class="flex">
+                    <svg class="w-5 h-5 text-sky-600 mr-2 flex-shrink-0 mt-0.5" stroke="currentColor" fill="none"
+                        viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div class="text-sm text-sky-900">
+                        <p class="font-semibold mb-2">Booking Guidelines:</p>
+                        <ul class="list-disc list-inside space-y-1 text-sky-800">
+                            <li>Bookings must be made at least 15 minutes in advance</li>
+                            <li>There is a 15-minute buffer time between bookings</li>
+                            <li>Maximum booking duration is 3 hours</li>
+                            <li>You will receive a confirmation email once booked</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="mt-8 flex flex-col sm:flex-row justify-end gap-3">
+                <a href="{% url 'conference:room_list' %}" class="btn btn-secondary text-center">
+                    Cancel
+                </a>
+                <button type="submit" class="btn btn-cyan">
+                    <span class="flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Confirm Booking
+                    </span>
+                </button>
+            </div>
+        </form>
+    </div>
+
 </div>
 
 <!-- Simple form validation enhancement -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('bookingForm');
-    
-    form.addEventListener('submit', function(e) {
-        const submitBtn = form.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="flex items-center"><svg class="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Processing...</span>';
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('bookingForm');
+
+        form.addEventListener('submit', function (e) {
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="flex items-center justify-center"><svg class="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Processing...</span>';
+        });
     });
-});
 </script>
 {% endblock %}

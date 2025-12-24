@@ -4,158 +4,158 @@
 {% block title %}Review Appraisal - TrueAlign{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <!-- Navigation -->
-    <div class="mb-6">
-        <a href="{% url 'appraisal:appraisal_list' %}" class="text-indigo-600 hover:text-indigo-800 flex items-center gap-2 hover:gap-3 transition-all">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-            <span>Back to List</span>
-        </a>
-    </div>
+<div class="px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center text-sm text-zinc-600 mb-3">
+        <a href="{% url 'appraisal:appraisal_list' %}" class="hover:text-zinc-900 transition-colors">Appraisals</a>
+        <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+        <span class="text-zinc-900 font-medium">Review</span>
+    </nav>
 
     <!-- Header -->
     <div class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">Review Appraisal</h1>
-        <p class="text-gray-600 mt-1">{{ appraisal.title }}</p>
+        <h1 class="text-3xl font-bold text-zinc-900">Review Appraisal</h1>
+        <p class="text-zinc-600 mt-1">{{ appraisal.title }}</p>
     </div>
 
     <!-- Review Form -->
     <form method="POST" action="{% url 'appraisal:appraisal_review' appraisal.id %}">
         {% csrf_token %}
-        
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Main Content -->
             <div class="lg:col-span-2 space-y-6">
-                <!-- Appraisal Info Card -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h2 class="text-xl font-bold text-gray-900 mb-4">Appraisal Information</h2>
-                    
+                <!-- Appraisal Info -->
+                <div class="glass-panel p-6">
+                    <h3 class="text-lg font-semibold text-zinc-900 mb-4">Appraisal Information</h3>
+
                     <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <dt class="text-sm font-medium text-gray-600">Employee</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.user.get_full_name|default:appraisal.user.username }}</dd>
+                            <dt class="text-xs font-medium text-zinc-600">Employee</dt>
+                            <dd class="mt-1 text-sm text-zinc-900">{{
+                                appraisal.user.get_full_name|default:appraisal.user.username }}</dd>
                         </div>
                         <div>
-                            <dt class="text-sm font-medium text-gray-600">Manager</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.manager.get_full_name|default:appraisal.manager.username }}</dd>
+                            <dt class="text-xs font-medium text-zinc-600">Manager</dt>
+                            <dd class="mt-1 text-sm text-zinc-900">{{
+                                appraisal.manager.get_full_name|default:appraisal.manager.username }}</dd>
                         </div>
                         <div>
-                            <dt class="text-sm font-medium text-gray-600">Period</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.period_start|date:"M d, Y" }} - {{ appraisal.period_end|date:"M d, Y" }}</dd>
+                            <dt class="text-xs font-medium text-zinc-600">Period</dt>
+                            <dd class="mt-1 text-sm text-zinc-900">{{ appraisal.period_start|date:"M d, Y" }} - {{
+                                appraisal.period_end|date:"M d, Y" }}</dd>
                         </div>
                         <div>
-                            <dt class="text-sm font-medium text-gray-600">Status</dt>
+                            <dt class="text-xs font-medium text-zinc-600">Status</dt>
                             <dd class="mt-1">
-                                <span class="px-3 py-1 inline-flex text-xs font-semibold rounded-full 
-                                    {% if appraisal.status == 'submitted' %}bg-blue-100 text-blue-800
-                                    {% elif appraisal.status == 'hr_review' %}bg-purple-100 text-purple-800
-                                    {% elif appraisal.status == 'finance_review' %}bg-yellow-100 text-yellow-800
-                                    {% endif %}">
+                                <span
+                                    class="badge {% if appraisal.status == 'submitted' %}badge-blue{% elif appraisal.status == 'hr_review' %}badge-purple{% elif appraisal.status == 'finance_review' %}badge-amber{% endif %}">
                                     {{ appraisal.get_status_display }}
                                 </span>
                             </dd>
                         </div>
                     </dl>
-                    
-                    <div class="mt-4 pt-4 border-t border-gray-200">
-                        <p class="text-sm font-medium text-gray-600 mb-2">Overview</p>
-                        <p class="text-gray-700 whitespace-pre-line">{{ appraisal.overview }}</p>
+
+                    <div class="mt-4 pt-4 border-t border-white/10">
+                        <p class="text-xs font-medium text-zinc-600 mb-2">Overview</p>
+                        <p class="text-sm text-zinc-700 whitespace-pre-line">{{ appraisal.overview }}</p>
                     </div>
                 </div>
 
                 <!-- Review Items -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-                    <div class="px-6 py-4 border-b border-gray-200">
-                        <h2 class="text-xl font-bold text-gray-900">Review Achievements</h2>
+                <div class="glass-panel overflow-hidden">
+                    <div class="px-6 py-4 border-b border-white/10">
+                        <h3 class="text-lg font-semibold text-zinc-900">Review Achievements</h3>
                         {% if can_rate_items %}
-                        <p class="text-sm text-gray-600 mt-1">Rate each achievement and provide feedback</p>
+                        <p class="text-xs text-zinc-600 mt-1">Rate each achievement and provide feedback</p>
                         {% endif %}
                     </div>
-                    
-                    <div class="p-6 space-y-6">
+
+                    <div class="p-6 space-y-4">
                         {% for item in items %}
-                        <div class="border border-gray-200 rounded-lg p-5">
+                        <div class="bg-white/10 rounded-lg p-5 border border-white/10">
                             <!-- Item Header -->
-                            <div class="mb-4">
-                                <div class="flex items-center gap-3 mb-2">
-                                    <span class="px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">
-                                        {{ item.get_category_display }}
-                                    </span>
+                            <div class="mb-3">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="badge badge-gray text-xs">{{ item.get_category_display }}</span>
                                     {% if item.date %}
-                                    <span class="text-sm text-gray-500">
-                                        <i class="ri-calendar-line"></i> {{ item.date|date:"M d, Y" }}
-                                    </span>
+                                    <span class="text-xs text-zinc-600">{{ item.date|date:"M d, Y" }}</span>
                                     {% endif %}
                                 </div>
-                                <h3 class="text-lg font-semibold text-gray-900">{{ item.title }}</h3>
+                                <h4 class="text-base font-semibold text-zinc-900">{{ item.title }}</h4>
                             </div>
-                            
-                            <p class="text-gray-700 mb-4 whitespace-pre-line">{{ item.description }}</p>
-                            
+
+                            <p class="text-sm text-zinc-700 mb-4 whitespace-pre-line">{{ item.description }}</p>
+
                             <!-- Employee Self-Rating -->
-                            <div class="mb-4 p-4 bg-yellow-50 rounded-lg">
-                                <p class="text-sm font-medium text-gray-700 mb-2">Employee Self-Rating</p>
+                            <div class="mb-4 bg-amber-50 rounded-lg p-3 border border-amber-100">
+                                <p class="text-xs font-medium text-zinc-700 mb-2">Employee Self-Rating</p>
                                 <div class="flex items-center gap-2">
                                     <div class="flex items-center gap-1">
                                         {% for i in "12345" %}
-                                            <i class="ri-star-{% if forloop.counter <= item.employee_rating %}fill text-yellow-400{% else %}line text-gray-300{% endif %} text-lg"></i>
+                                        <svg class="w-4 h-4 {% if forloop.counter <= item.employee_rating %}text-amber-400{% else %}text-zinc-300{% endif %}"
+                                            fill="currentColor" viewBox="0 0 20 20">
+                                            <path
+                                                d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+                                            </path>
+                                        </svg>
                                         {% endfor %}
                                     </div>
-                                    <span class="text-sm text-gray-600">({{ item.employee_rating_display }})</span>
+                                    <span class="text-xs text-zinc-600">({{ item.employee_rating_display }})</span>
                                 </div>
                             </div>
-                            
+
                             {% if can_rate_items %}
                             <!-- Manager Rating Input -->
-                            <div class="p-4 bg-indigo-50 rounded-lg">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <div class="bg-teal-50 rounded-lg p-4 border border-teal-100">
+                                <label class="form-label text-xs mb-2">
                                     Your Rating <span class="text-red-500">*</span>
                                 </label>
-                                <div class="flex items-center gap-4 mb-3">
+                                <div class="flex flex-wrap items-center gap-3 mb-3">
                                     {% for rating_value, rating_label in ratings.items %}
                                     <label class="flex items-center gap-2 cursor-pointer">
-                                        <input type="radio" 
-                                               name="items[{{ item.id }}][manager_rating]" 
-                                               value="{{ rating_value }}"
-                                               {% if item.manager_rating == rating_value %}checked{% endif %}
-                                               class="form-radio text-indigo-600 focus:ring-indigo-500"
-                                               required>
-                                        <span class="text-sm text-gray-700">{{ rating_value }}</span>
+                                        <input type="radio" name="items[{{ item.id }}][manager_rating]"
+                                            value="{{ rating_value }}" {% if item.manager_rating == rating_value %}checked{% endif %}
+                                            class="w-4 h-4 text-teal-600 border-zinc-300 focus:ring-teal-500" required>
+                                        <span class="text-xs text-zinc-700">{{ rating_value }}</span>
                                     </label>
                                     {% endfor %}
                                 </div>
-                                
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
-                                    Your Comments
-                                </label>
-                                <textarea name="items[{{ item.id }}][manager_comments]"
-                                          rows="3"
-                                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                          placeholder="Provide your feedback on this achievement">{{ item.manager_comments }}</textarea>
+
+                                <label class="form-label text-xs mb-2">Your Comments</label>
+                                <textarea name="items[{{ item.id }}][manager_comments]" rows="2"
+                                    class="form-input text-sm"
+                                    placeholder="Provide your feedback">{{ item.manager_comments }}</textarea>
                             </div>
                             {% else %}
                             <!-- Display Existing Manager Rating -->
                             {% if item.manager_rating %}
-                            <div class="p-4 bg-indigo-50 rounded-lg">
-                                <p class="text-sm font-medium text-gray-700 mb-2">Manager Rating</p>
+                            <div class="bg-teal-50 rounded-lg p-3 border border-teal-100">
+                                <p class="text-xs font-medium text-zinc-700 mb-2">Manager Rating</p>
                                 <div class="flex items-center gap-2 mb-2">
                                     <div class="flex items-center gap-1">
                                         {% for i in "12345" %}
-                                            <i class="ri-star-{% if forloop.counter <= item.manager_rating %}fill text-indigo-500{% else %}line text-gray-300{% endif %} text-lg"></i>
+                                        <svg class="w-4 h-4 {% if forloop.counter <= item.manager_rating %}text-teal-500{% else %}text-zinc-300{% endif %}"
+                                            fill="currentColor" viewBox="0 0 20 20">
+                                            <path
+                                                d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+                                            </path>
+                                        </svg>
                                         {% endfor %}
                                     </div>
-                                    <span class="text-sm text-gray-600">({{ item.manager_rating_display }})</span>
+                                    <span class="text-xs text-zinc-600">({{ item.manager_rating_display }})</span>
                                 </div>
                                 {% if item.manager_comments %}
-                                <p class="text-sm text-gray-700 mt-2">"{{ item.manager_comments }}"</p>
+                                <p class="text-xs text-zinc-700 mt-2">"{{ item.manager_comments }}"</p>
                                 {% endif %}
                             </div>
                             {% else %}
-                            <div class="p-4 bg-gray-50 rounded-lg">
-                                <p class="text-sm text-gray-500 text-center">Not yet rated by manager</p>
+                            <div class="bg-zinc-50 rounded-lg p-3 border border-zinc-100">
+                                <p class="text-xs text-zinc-500 text-center">Not yet rated</p>
                             </div>
-                            {% endif %}
-                            {% endif %}
+                            {% endif %} {% endif %}
                         </div>
                         {% endfor %}
                     </div>
@@ -163,96 +163,109 @@
 
                 <!-- Attachments -->
                 {% if attachments %}
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-                    <div class="px-6 py-4 border-b border-gray-200">
-                        <h2 class="text-xl font-bold text-gray-900">Attachments</h2>
+                <div class="glass-panel overflow-hidden">
+                    <div class="px-6 py-4 border-b border-white/10">
+                        <h3 class="text-lg font-semibold text-zinc-900">Attachments</h3>
                     </div>
-                    <div class="p-6">
-                        <div class="space-y-3">
-                            {% for attachment in attachments %}
-                            <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
-                                <div class="flex items-center gap-3">
-                                    <i class="ri-file-line text-2xl text-gray-400"></i>
-                                    <div>
-                                        <p class="font-medium text-gray-900">{{ attachment.title }}</p>
-                                        <p class="text-sm text-gray-500">
-                                            Uploaded by {{ attachment.uploaded_by.get_full_name|default:attachment.uploaded_by.username }} 
-                                            on {{ attachment.uploaded_at|date:"M d, Y" }}
-                                        </p>
-                                    </div>
+                    <div class="p-6 space-y-2">
+                        {% for attachment in attachments %}
+                        <div
+                            class="flex items-center justify-between bg-white/10 rounded-lg p-3 border border-white/10">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                    </path>
+                                </svg>
+                                <div>
+                                    <p class="text-sm font-medium text-zinc-900">{{ attachment.title }}</p>
+                                    <p class="text-xs text-zinc-600">
+                                        By {{
+                                        attachment.uploaded_by.get_full_name|default:attachment.uploaded_by.username }}
+                                    </p>
                                 </div>
-                                <a href="{{ attachment.file.url }}" target="_blank" 
-                                   class="text-indigo-600 hover:text-indigo-800 transition-colors">
-                                    <i class="ri-download-line text-xl"></i>
-                                </a>
                             </div>
-                            {% endfor %}
+                            <a href="{{ attachment.file.url }}" target="_blank"
+                                class="p-2 bg-teal-50 rounded-lg border border-teal-200 hover:bg-teal-100 transition text-teal-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                    </path>
+                                </svg>
+                            </a>
                         </div>
+                        {% endfor %}
                     </div>
                 </div>
                 {% endif %}
 
-                <!-- Review Comments -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <label for="comments" class="block text-lg font-bold text-gray-900 mb-3">
-                        Overall Comments
-                    </label>
-                    <textarea id="comments" name="comments" rows="4"
-                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                              placeholder="Provide any additional feedback or comments about this appraisal"></textarea>
+                <!-- Overall Comments -->
+                <div class="glass-panel p-6">
+                    <label for="comments" class="form-label">Overall Comments</label>
+                    <textarea id="comments" name="comments" rows="4" class="form-input"
+                        placeholder="Provide additional feedback about this appraisal"></textarea>
                 </div>
             </div>
 
             <!-- Sidebar -->
             <div class="space-y-6">
                 <!-- Actions -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h3 class="text-lg font-bold text-gray-900 mb-4">Review Actions</h3>
-                    
+                <div class="glass-panel p-6">
+                    <h4 class="text-base font-semibold text-zinc-900 mb-4">Review Actions</h4>
+
                     <div class="space-y-3">
                         <button type="submit" name="action" value="approve"
-                                onclick="return confirm('Are you sure you want to approve this appraisal?')"
-                                class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
-                            <i class="ri-checkbox-circle-line text-xl"></i>
-                            <span>Approve</span>
+                            onclick="return confirm('Approve this appraisal?')"
+                            class="w-full btn bg-emerald-600 text-white hover:bg-emerald-700 py-3 flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Approve
                         </button>
-                        
+
                         <button type="submit" name="action" value="reject"
-                                onclick="return confirm('Are you sure you want to reject this appraisal? Please provide comments explaining your decision.')"
-                                class="w-full bg-red-600 text-white px-4 py-3 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2">
-                            <i class="ri-close-circle-line text-xl"></i>
-                            <span>Reject</span>
+                            onclick="return confirm('Reject this appraisal? Please provide comments explaining your decision.')"
+                            class="w-full btn bg-red-600 text-white hover:bg-red-700 py-3 flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Reject
                         </button>
-                        
+
                         <a href="{% url 'appraisal:appraisal_list' %}"
-                           class="w-full bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
-                            <i class="ri-arrow-left-line"></i>
-                            <span>Back to List</span>
+                            class="w-full btn btn-secondary py-3 flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                            </svg>
+                            Back to List
                         </a>
                     </div>
                 </div>
 
                 <!-- Workflow History -->
                 {% if workflow_history %}
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h3 class="text-lg font-bold text-gray-900 mb-4">Workflow History</h3>
+                <div class="glass-panel p-6">
+                    <h4 class="text-base font-semibold text-zinc-900 mb-4">Workflow History</h4>
                     <div class="space-y-4">
                         {% for history in workflow_history %}
-                        <div class="relative pl-6 pb-4 border-l-2 border-gray-200 last:pb-0">
-                            <div class="absolute left-[-9px] top-0 w-4 h-4 rounded-full bg-white border-2 
-                                {% if history.to_status == 'approved' %}border-green-500
-                                {% elif history.to_status == 'rejected' %}border-red-500
-                                {% else %}border-blue-500{% endif %}">
+                        <div
+                            class="relative pl-6 pb-4 border-l-2 {% if history.to_status == 'approved' %}border-emerald-500{% elif history.to_status == 'rejected' %}border-red-500{% else %}border-blue-500{% endif %} last:pb-0">
+                            <div
+                                class="absolute left-[-5px] top-0 w-3 h-3 rounded-full bg-white border-2 {% if history.to_status == 'approved' %}border-emerald-500{% elif history.to_status == 'rejected' %}border-red-500{% else %}border-blue-500{% endif %}">
                             </div>
                             <div class="text-sm">
-                                <p class="font-medium text-gray-900">{{ history.action_display }}</p>
-                                <p class="text-gray-600 mt-1">
+                                <p class="font-medium text-zinc-900">{{ history.action_display }}</p>
+                                <p class="text-xs text-zinc-600 mt-1">
                                     by {{ history.action_by.get_full_name|default:history.action_by.username }}
                                 </p>
                                 {% if history.comments %}
-                                <p class="text-gray-500 mt-1 italic">"{{ history.comments }}"</p>
+                                <p class="text-xs text-zinc-600 mt-1 italic">"{{ history.comments }}"</p>
                                 {% endif %}
-                                <p class="text-xs text-gray-400 mt-1">{{ history.timestamp|date:"M d, Y - h:i A" }}</p>
+                                <p class="text-xs text-zinc-400 mt-1">{{ history.timestamp|date:"M d, Y - h:i A" }}</p>
                             </div>
                         </div>
                         {% endfor %}
@@ -260,28 +273,47 @@
                 </div>
                 {% endif %}
 
-                <!-- Review Guidelines -->
+                <!-- Guidelines -->
                 <div class="bg-blue-50 rounded-xl border border-blue-200 p-6">
-                    <h3 class="text-lg font-bold text-blue-900 mb-3 flex items-center gap-2">
-                        <i class="ri-information-line"></i>
-                        <span>Review Guidelines</span>
-                    </h3>
+                    <h4 class="text-base font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Review Guidelines
+                    </h4>
                     <ul class="space-y-2 text-sm text-blue-800">
                         <li class="flex items-start gap-2">
-                            <i class="ri-checkbox-circle-line mt-1"></i>
-                            <span>Review each achievement carefully</span>
+                            <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            Review each achievement carefully
                         </li>
                         <li class="flex items-start gap-2">
-                            <i class="ri-checkbox-circle-line mt-1"></i>
-                            <span>Provide constructive feedback</span>
+                            <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            Provide constructive feedback
                         </li>
                         <li class="flex items-start gap-2">
-                            <i class="ri-checkbox-circle-line mt-1"></i>
-                            <span>Be fair and objective in your ratings</span>
+                            <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            Be fair and objective
                         </li>
                         <li class="flex items-start gap-2">
-                            <i class="ri-checkbox-circle-line mt-1"></i>
-                            <span>Add comments to explain your decisions</span>
+                            <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            Explain your decisions
                         </li>
                     </ul>
                 </div>

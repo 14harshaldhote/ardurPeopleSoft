@@ -1,111 +1,148 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}{{ action }} Conference Room - Admin{% endblock %}
+{% block title %}{% if room.id %}Edit{% else %}Create{% endif %} Room - Admin{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        <div class="mb-8">
-            <a href="{% url 'conference:admin_room_list' %}" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4">
-                <svg class="w-4 h-4 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
-                Back to Rooms
-            </a>
-            <h1 class="text-3xl font-bold text-gray-900">{{ action }} Conference Room</h1>
-        </div>
+<div class="px-4 sm:px-6 lg:px-8 py-6 max-w-4xl mx-auto">
 
-        <div class="bg-white rounded-lg shadow-sm p-8">
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                
-                <div class="space-y-6">
-                    <!-- Room Name -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Room Name *</label>
-                        {{ form.name }}
-                        {% if form.name.errors %}<p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>{% endif %}
-                    </div>
-                    
-                    <!-- Office Location -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Office Location *</label>
-                        {{ form.office_location }}
-                        {% if form.office_location.errors %}<p class="mt-1 text-sm text-red-600">{{ form.office_location.errors.0 }}</p>{% endif %}
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Floor *</label>
-                            {{ form.floor }}
-                            {% if form.floor.errors %}<p class="mt-1 text-sm text-red-600">{{ form.floor.errors.0 }}</p>{% endif %}
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Capacity *</label>
-                            {{ form.capacity }}
-                            {% if form.capacity.errors %}<p class="mt-1 text-sm text-red-600">{{ form.capacity.errors.0 }}</p>{% endif %}
-                        </div>
-                    </div>
-                    
-                    <!-- Amenities -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Amenities</label>
-                        {{ form.amenities_input }}
-                        {% if form.amenities_input.errors %}<p class="mt-1 text-sm text-red-600">{{ form.amenities_input.errors.0 }}</p>{% endif %}
-                    </div>
-                    
-                    <!-- Booking Rules -->
-                    <div class="border-t pt-6">
-                        <h3 class="text-lg font-semibold mb-4">Booking Rules</h3>
-                        <div class="grid grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Buffer Time (min)</label>
-                                {{ form.buffer_time_minutes }}
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Lead Time (min)</label>
-                                {{ form.min_lead_time_minutes }}
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Max Duration (hrs)</label>
-                                {{ form.max_booking_duration_hours }}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Description -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                        {{ form.description }}
-                    </div>
-                    
-                    <!-- Image -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Room Image</label>
-                        {{ form.image }}
-                    </div>
-                    
-                    <!-- Active Status -->
-                    <div class="flex items-center">
-                        {{ form.is_active }}
-                        <label for="{{ form.is_active.id_for_label }}" class="ml-2 text-sm font-medium text-gray-700">
-                            Room is active and available for booking
-                        </label>
-                    </div>
-                </div>
-                
-                <div class="mt-8 flex justify-end gap-4">
-                    <a href="{% url 'conference:admin_room_list' %}" class="px-6 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
-                        Cancel
-                    </a>
-                    <button type="submit" class="px-6 py-3 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
-                        Save Room
-                    </button>
-                </div>
-            </form>
-        </div>
-        
+    <!-- Header -->
+    <div class="mb-8">
+        <a href="{% url 'conference:room_admin_list' %}"
+            class="inline-flex items-center text-sm text-zinc-600 hover:text-cyan-600 mb-4 transition">
+            <svg class="w-4 h-4 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Room Management
+        </a>
+
+        <h1 class="text-3xl font-bold text-zinc-900">{% if room.id %}Edit Room{% else %}Create New Room{% endif %}</h1>
+        <p class="text-zinc-600 mt-2">Manage conference room settings and details</p>
     </div>
+
+    <!-- Form -->
+    <div class="glass-panel p-8">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="space-y-6">
+
+                <!-- Room Name -->
+                <div>
+                    <label for="{{ form.name.id_for_label }}" class="form-label">
+                        Room Name <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Location & Floor -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.office_location.id_for_label }}" class="form-label">
+                            Office Location <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.office_location }}
+                        {% if form.office_location.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.office_location.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.floor.id_for_label }}" class="form-label">
+                            Floor <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.floor }}
+                        {% if form.floor.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.floor.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Capacity & Duration -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.capacity.id_for_label }}" class="form-label">
+                            Capacity (People) <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.capacity }}
+                        {% if form.capacity.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.capacity.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.max_booking_duration_hours.id_for_label }}" class="form-label">
+                            Max Booking Duration (Hours) <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.max_booking_duration_hours }}
+                        {% if form.max_booking_duration_hours.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.max_booking_duration_hours.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label for="{{ form.description.id_for_label }}" class="form-label">
+                        Description
+                    </label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Amenities -->
+                <div>
+                    <label for="{{ form.amenities.id_for_label }}" class="form-label">
+                        Amenities <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.amenities }}
+                    {% if form.amenities.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.amenities.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-zinc-500">Select all available amenities</p>
+                </div>
+
+                <!-- Image Upload -->
+                <div>
+                    <label for="{{ form.image.id_for_label }}" class="form-label">
+                        Room Image
+                    </label>
+                    {{ form.image }}
+                    {% if form.image.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.image.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-zinc-500">Upload an image of the conference room</p>
+                </div>
+
+                <!-- Active Status -->
+                <div class="flex items-center gap-3">
+                    {{ form.is_active }}
+                    <label for="{{ form.is_active.id_for_label }}" class="text-sm font-medium text-zinc-900">
+                        Room is Active
+                    </label>
+                </div>
+
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="mt-8 flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-white/20">
+                <a href="{% url 'conference:room_admin_list' %}" class="btn btn-secondary text-center">
+                    Cancel
+                </a>
+                <button type="submit" class="btn btn-cyan">
+                    <svg class="w-5 h-5" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    {% if room.id %}Update Room{% else %}Create Room{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+
 </div>
 {% endblock %}

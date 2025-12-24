@@ -4,467 +4,106 @@
 {% block title %}Process Regularization - TrueAlign{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-purple-50" x-data="processRegularization()">
+<div class="px-4 sm:px-6 lg:px-8 py-6 max-w-4xl mx-auto" x-data="{ processing: false }">
     <!-- Header -->
-    <div class="bg-white shadow-xl border-b border-gray-200">
-        <div class="max-w-5xl mx-auto px-6 py-8">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">Process Regularization Request</h1>
-                    <p class="text-gray-600 mt-2 text-lg">Review and approve/reject attendance regularization</p>
-                </div>
-                <a href="{% url 'attendance:hr_regularization_requests' %}" 
-                   class="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white px-6 py-2.5 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all duration-200">
-                    <i class="ri-arrow-left-line mr-2"></i>Back to Requests
-                </a>
-            </div>
-        </div>
+    <div class="glass-panel p-6 mb-8">
+        <h1 class="text-3xl font-bold text-zinc-900 flex items-center gap-3">
+            <svg class="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Review Regularization Request
+        </h1>
+        <p class="text-zinc-600 mt-2">Approve or reject attendance correction requests</p>
     </div>
 
-    <div class="max-w-5xl mx-auto px-6 py-10">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Request Details -->
-        <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl p-10 mb-10 transition-all duration-300">
-            <div class="flex items-center justify-between mb-8">
-                <h2 class="text-2xl font-extrabold text-gray-900">Request Details</h2>
-                <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full"
-                      :class="getStatusColor(request.status)"
-                      x-text="request.status"></span>
-            </div>
+        <div class="lg:col-span-2 glass-panel p-6">
+            <h2 class="text-lg font-semibold text-zinc-900 mb-6">Request Information</h2>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <!-- Employee Information -->
-                <div class="space-y-8">
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <h3 class="text-xl font-bold text-gray-900 mb-5">Employee Information</h3>
-                        <div class="bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl p-6 space-y-4 border border-gray-200">
-                            <div class="flex items-center space-x-4">
-                                <div class="h-20 w-20 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg"
-                                     :class="request.avatarColor"
-                                     x-text="request.initials"></div>
-                                <div>
-                                    <h4 class="text-xl font-bold text-gray-900" x-text="request.employeeName"></h4>
-                                    <p class="text-gray-600 font-medium" x-text="request.employeeId"></p>
-                                    <p class="text-sm text-gray-500 font-medium" x-text="request.department"></p>
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-2 gap-6 pt-5 border-t border-gray-300">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-600">Position</p>
-                                    <p class="font-semibold text-gray-900" x-text="request.position"></p>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-600">Manager</p>
-                                    <p class="font-semibold text-gray-900" x-text="request.manager"></p>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-600">Join Date</p>
-                                    <p class="font-semibold text-gray-900" x-text="request.joinDate"></p>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-600">Attendance Score</p>
-                                    <div class="flex items-center space-x-2">
-                                        <span class="font-bold text-gray-900" x-text="request.attendanceScore + '%'"></span>
-                                        <div class="w-20 bg-gray-200 rounded-full h-2.5 shadow-inner">
-                                            <div class="h-2.5 rounded-full transition-all duration-500 shadow-sm"
-                                                 :class="getScoreColor(request.attendanceScore)"
-                                                 :style="`width: ${request.attendanceScore}%`"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <label class="text-sm font-medium text-zinc-600">Employee</label>
+                        <p class="text-lg font-semibold text-zinc-900">{{ request.user.get_full_name }}</p>
                     </div>
-
-                    <!-- Request Information -->
                     <div>
-                        <h3 class="text-xl font-bold text-gray-900 mb-5">Request Information</h3>
-                        <div class="bg-gradient-to-br from-gray-50 to-indigo-50 rounded-xl p-6 space-y-4 border border-gray-200">
-                            <div class="grid grid-cols-2 gap-6">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-600">Request Date</p>
-                                    <p class="font-semibold text-gray-900" x-text="request.requestDate"></p>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-600">Attendance Date</p>
-                                    <p class="font-semibold text-gray-900" x-text="request.attendanceDate"></p>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-600">Request Type</p>
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                                          :class="request.typeColor"
-                                          x-text="request.type"></span>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-600">Priority</p>
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                                          :class="request.priorityColor"
-                                          x-text="request.priority"></span>
-                                </div>
-                            </div>
-                        </div>
+                        <label class="text-sm font-medium text-zinc-600">Date</label>
+                        <p class="text-lg font-semibold text-zinc-900">{{ request.date|date:"M d, Y" }}</p>
                     </div>
                 </div>
 
-                <!-- Attendance Comparison -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm font-medium text-zinc-600">Type</label>
+                        <p class="text-lg font-semibold text-zinc-900">{{ request.regularization_type }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-zinc-600">Status</label>
+                        <span class="badge badge-amber">Pending</span>
+                    </div>
+                </div>
+
                 <div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-5">Attendance Comparison</h3>
-                    <div class="space-y-5">
-                        <!-- Current Record -->
-                        <div class="bg-gradient-to-br from-red-50 to-orange-50 border-2 border-red-200 rounded-xl p-6 shadow-sm">
-                            <h4 class="text-base font-bold text-red-800 mb-4">Current Record</h4>
-                            <div class="grid grid-cols-2 gap-6">
-                                <div>
-                                    <p class="text-xs font-semibold text-red-600 uppercase tracking-wide">Check In</p>
-                                    <p class="text-xl font-bold text-red-900 mt-1" x-text="request.currentCheckIn"></p>
-                                </div>
-                                <div>
-                                    <p class="text-xs font-semibold text-red-600 uppercase tracking-wide">Check Out</p>
-                                    <p class="text-xl font-bold text-red-900 mt-1" x-text="request.currentCheckOut"></p>
-                                </div>
-                                <div>
-                                    <p class="text-xs font-semibold text-red-600 uppercase tracking-wide">Total Hours</p>
-                                    <p class="text-xl font-bold text-red-900 mt-1" x-text="request.currentHours"></p>
-                                </div>
-                                <div>
-                                    <p class="text-xs font-semibold text-red-600 uppercase tracking-wide">Status</p>
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold bg-red-100 text-red-800 rounded-full" x-text="request.currentStatus"></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Requested Changes -->
-                        <div class="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-6 shadow-sm">
-                            <h4 class="text-base font-bold text-green-800 mb-4">Requested Changes</h4>
-                            <div class="grid grid-cols-2 gap-6">
-                                <div>
-                                    <p class="text-xs font-semibold text-green-600 uppercase tracking-wide">Check In</p>
-                                    <p class="text-xl font-bold text-green-900 mt-1" x-text="request.requestedCheckIn"></p>
-                                </div>
-                                <div>
-                                    <p class="text-xs font-semibold text-green-600 uppercase tracking-wide">Check Out</p>
-                                    <p class="text-xl font-bold text-green-900 mt-1" x-text="request.requestedCheckOut"></p>
-                                </div>
-                                <div>
-                                    <p class="text-xs font-semibold text-green-600 uppercase tracking-wide">Total Hours</p>
-                                    <p class="text-xl font-bold text-green-900 mt-1" x-text="request.requestedHours"></p>
-                                </div>
-                                <div>
-                                    <p class="text-xs font-semibold text-green-600 uppercase tracking-wide">New Status</p>
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full" x-text="request.requestedStatus"></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Time Difference -->
-                        <div class="bg-gradient-to-br from-blue-50 to-sky-50 border-2 border-blue-200 rounded-xl p-6 shadow-sm">
-                            <h4 class="text-base font-bold text-blue-800 mb-4">Impact Analysis</h4>
-                            <div class="grid grid-cols-2 gap-6">
-                                <div>
-                                    <p class="text-xs font-semibold text-blue-600 uppercase tracking-wide">Time Adjustment</p>
-                                    <p class="text-xl font-bold text-blue-900 mt-1" x-text="request.timeAdjustment"></p>
-                                </div>
-                                <div>
-                                    <p class="text-xs font-semibold text-blue-600 uppercase tracking-wide">Hours Difference</p>
-                                    <p class="text-xl font-bold text-blue-900 mt-1" x-text="request.hoursDifference"></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <label class="text-sm font-medium text-zinc-600">Reason</label>
+                    <p class="text-zinc-900 bg-white/20 p-4 rounded-lg">{{ request.reason }}</p>
                 </div>
-            </div>
-        </div>
 
-        <!-- Request Reason -->
-        <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl p-10 mb-10 transition-all duration-300">
-            <h2 class="text-2xl font-extrabold text-gray-900 mb-6">Request Reason</h2>
-            <div class="bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl p-8 border border-gray-200">
-                <p class="text-gray-700 leading-relaxed" x-text="request.reason"></p>
-            </div>
-        </div>
-
-        <!-- Supporting Documents -->
-        <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl p-10 mb-10 transition-all duration-300" x-show="request.documents.length > 0">
-            <h2 class="text-2xl font-extrabold text-gray-900 mb-6">Supporting Documents</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <template x-for="doc in request.documents" :key="doc.id">
-                    <div class="flex items-center justify-between bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-5 hover:shadow-md border border-gray-200 hover:border-blue-300 transition-all duration-200">
-                        <div class="flex items-center space-x-3">
-                            <i class="ri-file-line text-2xl text-gray-500"></i>
-                            <div>
-                                <p class="font-medium text-gray-900" x-text="doc.name"></p>
-                                <p class="text-sm text-gray-500" x-text="doc.size"></p>
-                            </div>
-                        </div>
-                        <button @click="viewDocument(doc)" class="text-blue-600 hover:text-blue-800">
-                            <i class="ri-eye-line text-lg"></i>
-                        </button>
-                    </div>
-                </template>
-            </div>
-        </div>
-
-        <!-- Previous Requests History -->
-        <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl p-10 mb-10 transition-all duration-300">
-            <h2 class="text-2xl font-extrabold text-gray-900 mb-6">Previous Requests (Last 6 months)</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full">
-                    <thead>
-                        <tr class="bg-gradient-to-r from-gray-50 to-gray-100">
-                            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
-                            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
-                            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Reason</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        <template x-for="history in request.history" :key="history.id">
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 text-sm text-gray-900" x-text="history.date"></td>
-                                <td class="px-4 py-3">
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                                          :class="history.typeColor"
-                                          x-text="history.type"></span>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                                          :class="history.statusColor"
-                                          x-text="history.status"></span>
-                                </td>
-                                <td class="px-4 py-3 text-sm text-gray-600 max-w-xs truncate" x-text="history.reason"></td>
-                            </tr>
-                        </template>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- HR Decision Section -->
-        <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl p-10 transition-all duration-300" x-show="request.status === 'Pending'">
-            <h2 class="text-2xl font-extrabold text-gray-900 mb-8">HR Decision</h2>
-            
-            <!-- Decision Options -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                <label class="relative cursor-pointer">
-                    <input type="radio" x-model="decision.action" value="approve" class="sr-only">
-                    <div class="border-2 rounded-xl p-8 transition-all duration-300 shadow-sm hover:shadow-md"
-                         :class="decision.action === 'approve' ? 'border-green-500 bg-green-50' : 'border-gray-300 hover:border-green-300'">
-                        <div class="flex items-center space-x-3">
-                            <div class="p-2 bg-green-100 rounded-lg">
-                                <i class="ri-check-line text-2xl text-green-600"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-semibold text-gray-900">Approve Request</h3>
-                                <p class="text-sm text-gray-600">Accept the regularization request and update attendance record</p>
-                            </div>
-                        </div>
-                    </div>
-                </label>
-
-                <label class="relative cursor-pointer">
-                    <input type="radio" x-model="decision.action" value="reject" class="sr-only">
-                    <div class="border-2 rounded-xl p-8 transition-all duration-300 shadow-sm hover:shadow-md"
-                         :class="decision.action === 'reject' ? 'border-red-500 bg-red-50' : 'border-gray-300 hover:border-red-300'">
-                        <div class="flex items-center space-x-3">
-                            <div class="p-2 bg-red-100 rounded-lg">
-                                <i class="ri-close-line text-2xl text-red-600"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-semibold text-gray-900">Reject Request</h3>
-                                <p class="text-sm text-gray-600">Decline the regularization request with reason</p>
-                            </div>
-                        </div>
-                    </div>
-                </label>
-            </div>
-
-            <!-- HR Comments -->
-            <div class="mb-8">
-                <label class="block text-base font-bold text-gray-900 mb-3">
-                    HR Comments <span class="text-red-500">*</span>
-                </label>
-                <textarea x-model="decision.comments" 
-                          rows="4" 
-                          placeholder="Add your comments about this decision..."
-                          class="w-full border border-gray-300 rounded-xl px-5 py-4 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none shadow-sm text-gray-700"></textarea>
-                <p class="text-sm text-gray-500 mt-1">
-                    Characters: <span x-text="decision.comments.length"></span>/500
-                </p>
-            </div>
-
-            <!-- Notification Options -->
-            <div class="mb-8">
-                <h3 class="text-base font-bold text-gray-900 mb-4">Notification Options</h3>
-                <div class="space-y-3 bg-gray-50 p-5 rounded-xl border border-gray-200">
-                    <label class="flex items-center">
-                        <input type="checkbox" x-model="decision.notifyEmployee" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                        <span class="ml-2 text-sm text-gray-700">Notify employee via email</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" x-model="decision.notifyManager" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                        <span class="ml-2 text-sm text-gray-700">Notify reporting manager</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" x-model="decision.updateAttendance" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" checked disabled>
-                        <span class="ml-2 text-sm text-gray-700">Update attendance record (automatic)</span>
-                    </label>
+                {% if request.comments %}
+                <div>
+                    <label class="text-sm font-medium text-zinc-600">Additional Comments</label>
+                    <p class="text-zinc-900 bg-white/20 p-4 rounded-lg">{{ request.comments }}</p>
                 </div>
+                {% endif %}
             </div>
 
-            <!-- Action Buttons -->
-            <div class="flex justify-end space-x-4">
-                <button @click="saveAsDraft()" 
-                        class="bg-gray-500 hover:bg-gray-600 text-white px-7 py-3.5 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200">
-                    Save as Draft
-                </button>
-                <button @click="processRequest()" 
-                        :disabled="!isDecisionValid()"
-                        class="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-10 py-3.5 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60">
-                    <i class="ri-send-plane-line mr-2"></i>
-                    <span x-text="decision.action === 'approve' ? 'Approve Request' : 'Reject Request'"></span>
-                </button>
+            <!-- Actions -->
+            <div class="flex gap-4 mt-8 pt-8 border-t border-white/10">
+                <form method="post" action="{% url 'attendance:approve_regularization' request.id %}" class="flex-1">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full btn btn-emerald" :disabled="processing"
+                        @click="processing=true">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
+                        </svg>
+                        Approve
+                    </button>
+                </form>
+                <form method="post" action="{% url 'attendance:reject_regularization' request.id %}" class="flex-1">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full btn btn-red" :disabled="processing" @click="processing=true">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                        Reject
+                    </button>
+                </form>
             </div>
         </div>
 
-        <!-- Already Processed Display -->
-        <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl p-10 transition-all duration-300" x-show="request.status !== 'Pending'">
-            <div class="text-center">
-                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4"
-                     :class="request.status === 'Approved' ? 'bg-green-100' : 'bg-red-100'">
-                    <i :class="request.status === 'Approved' ? 'ri-check-line text-green-600' : 'ri-close-line text-red-600'" class="text-2xl"></i>
+        <!-- Current Attendance -->
+        <div class="stat-card bg-gradient-orange p-6 rounded-xl shadow-lg text-white">
+            <h3 class="text-lg font-semibold mb-4">Current Attendance</h3>
+            <div class="space-y-3">
+                <div>
+                    <span class="text-white/80 text-sm">Check-in</span>
+                    <div class="font-medium">{{ attendance.check_in|time:"H:i"|default:"—" }}</div>
                 </div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">
-                    Request <span x-text="request.status"></span>
-                </h3>
-                <p class="text-gray-600 mb-4">This request has already been processed.</p>
-                <div class="bg-gray-50 rounded-lg p-4 text-left max-w-md mx-auto">
-                    <p class="text-sm text-gray-600 mb-2">Processing Details:</p>
-                    <p class="text-sm"><strong>Processed by:</strong> <span x-text="request.processedBy"></span></p>
-                    <p class="text-sm"><strong>Processed on:</strong> <span x-text="request.processedDate"></span></p>
-                    <p class="text-sm"><strong>Comments:</strong> <span x-text="request.hrComments"></span></p>
+                <div>
+                    <span class="text-white/80 text-sm">Check-out</span>
+                    <div class="font-medium">{{ attendance.check_out|time:"H:i"|default:"—" }}</div>
+                </div>
+                <div>
+                    <span class="text-white/80 text-sm">Status</span>
+                    <div class="font-medium">{{ attendance.status }}</div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<script>
-function processRegularization() {
-    return {
-        request: {
-            id: 1,
-            employeeName: 'John Doe',
-            employeeId: 'EMP001',
-            department: 'Engineering',
-            position: 'Senior Developer',
-            manager: 'Sarah Wilson',
-            joinDate: '2022-01-15',
-            attendanceScore: 87,
-            requestDate: '2024-01-16',
-            attendanceDate: '2024-01-15',
-            type: 'Late Arrival',
-            priority: 'Medium',
-            status: 'Pending',
-            reason: 'I was stuck in traffic due to heavy rain and road construction. The usual 30-minute commute took over 2 hours. I have attached photos of the traffic situation as proof. This is an exceptional circumstance and I request regularization of my attendance for this day.',
-            currentCheckIn: '10:30 AM',
-            currentCheckOut: '06:00 PM',
-            currentHours: '7h 30m',
-            currentStatus: 'Late',
-            requestedCheckIn: '09:00 AM',
-            requestedCheckOut: '06:00 PM',
-            requestedHours: '9h 00m',
-            requestedStatus: 'Present',
-            timeAdjustment: '+1h 30m',
-            hoursDifference: '+1h 30m',
-            initials: 'JD',
-            avatarColor: 'bg-blue-500',
-            typeColor: 'bg-orange-100 text-orange-800',
-            priorityColor: 'bg-blue-100 text-blue-800',
-            documents: [
-                { id: 1, name: 'traffic_photo_1.jpg', size: '2.4 MB' },
-                { id: 2, name: 'weather_report.pdf', size: '1.1 MB' }
-            ],
-            history: [
-                {
-                    id: 1,
-                    date: '2023-12-10',
-                    type: 'Missing Punch',
-                    status: 'Approved',
-                    reason: 'Forgot to punch due to urgent meeting',
-                    typeColor: 'bg-red-100 text-red-800',
-                    statusColor: 'bg-green-100 text-green-800'
-                },
-                {
-                    id: 2,
-                    date: '2023-11-22',
-                    type: 'Early Leave',
-                    status: 'Rejected',
-                    reason: 'Personal work',
-                    typeColor: 'bg-purple-100 text-purple-800',
-                    statusColor: 'bg-red-100 text-red-800'
-                }
-            ],
-            processedBy: null,
-            processedDate: null,
-            hrComments: null
-        },
-        decision: {
-            action: '',
-            comments: '',
-            notifyEmployee: true,
-            notifyManager: true,
-            updateAttendance: true
-        },
-        
-        getStatusColor(status) {
-            const colorMap = {
-                'Pending': 'bg-yellow-100 text-yellow-800',
-                'Approved': 'bg-green-100 text-green-800',
-                'Rejected': 'bg-red-100 text-red-800'
-            };
-            return colorMap[status] || 'bg-gray-100 text-gray-800';
-        },
-        
-        getScoreColor(score) {
-            if (score >= 90) return 'bg-green-500';
-            if (score >= 80) return 'bg-blue-500';
-            if (score >= 70) return 'bg-yellow-500';
-            if (score >= 60) return 'bg-orange-500';
-            return 'bg-red-500';
-        },
-        
-        isDecisionValid() {
-            return this.decision.action && this.decision.comments.trim().length > 0;
-        },
-        
-        viewDocument(doc) {
-            console.log('Viewing document:', doc.name);
-            // Implement document viewer
-        },
-        
-        saveAsDraft() {
-            console.log('Saving as draft:', this.decision);
-            alert('Decision saved as draft!');
-        },
-        
-        processRequest() {
-            if (this.isDecisionValid()) {
-                console.log('Processing request:', this.decision);
-                
-                // Update request status
-                this.request.status = this.decision.action === 'approve' ? 'Approved' : 'Rejected';
-                this.request.processedBy = 'Current HR User';
-                this.request.processedDate = new Date().toLocaleDateString();
-                this.request.hrComments = this.decision.comments;
-                
-                alert(`Request ${this.request.status.toLowerCase()} successfully!`);
-                
-                // Redirect after processing
-                setTimeout(() => {
-                    window.location.href = '/attendance/hr/regularization-requests/';
-                }, 2000);
-            }
-        }
-    }
-}
-</script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 {% endblock %}

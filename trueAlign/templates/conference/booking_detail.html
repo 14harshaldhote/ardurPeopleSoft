@@ -1,145 +1,167 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}{{ booking.title }} - Booking Details{% endblock %}
+{% block title %}Booking Details{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        <div class="mb-8">
-            <a href="{% url 'conference:my_bookings' %}" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4">
-                <svg class="w-4 h-4 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
-                Back to My Bookings
-            </a>
-            <h1 class="text-3xl font-bold text-gray-900">Booking Details</h1>
+<div class="px-4 sm:px-6 lg:px-8 py-6 max-w-4xl mx-auto">
+
+    <!-- Header -->
+    <div class="mb-8">
+        <a href="{% url 'conference:my_bookings' %}"
+            class="inline-flex items-center text-sm text-zinc-600 hover:text-cyan-600 mb-4 transition">
+            <svg class="w-4 h-4 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to My Bookings
+        </a>
+
+        <h1 class="text-3xl font-bold text-zinc-900">Booking Details</h1>
+        <p class="text-zinc-600 mt-2">View and manage your conference room reservation</p>
+    </div>
+
+    <!-- Status Banner -->
+    <div
+        class="glass-panel p-6 mb-6 {% if booking.status == 'CONFIRMED' %}border-l-4 border-emerald-500{% elif booking.status == 'PENDING' %}border-l-4 border-amber-500{% else %}border-l-4 border-red-500{% endif %}">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-2xl font-bold text-zinc-900 mb-2">{{ booking.title }}</h2>
+                <p class="text-zinc-600">{{ booking.purpose }}</p>
+            </div>
+            <span
+                class="badge {% if booking.status == 'CONFIRMED' %}badge-emerald{% elif booking.status == 'PENDING' %}badge-amber{% else %}badge-red{% endif %} text-lg px-4 py-2">
+                {{ booking.get_status_display }}
+            </span>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Main Details -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Room Information -->
+            <div class="glass-panel p-6">
+                <h3 class="text-lg font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-cyan-600" stroke="currentColor" fill="none" viewBox="0 0 24 24"
+                        stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    Room Information
+                </h3>
+
+                <div class="space-y-3">
+                    <div class="flex items-start justify-between">
+                        <span class="text-sm font-medium text-zinc-600">Room Name</span>
+                        <span class="text-sm text-zinc-900 font-semibold">{{ booking.room.name }}</span>
+                    </div>
+                    <div class="flex items-start justify-between">
+                        <span class="text-sm font-medium text-zinc-600">Location</span>
+                        <span class="text-sm text-zinc-900">{{ booking.room.office_location.name }}</span>
+                    </div>
+                    <div class="flex items-start justify-between">
+                        <span class="text-sm font-medium text-zinc-600">Floor</span>
+                        <span class="text-sm text-zinc-900">{{ booking.room.floor }}</span>
+                    </div>
+                    <div class="flex items-start justify-between">
+                        <span class="text-sm font-medium text-zinc-600">Capacity</span>
+                        <span class="text-sm text-zinc-900">{{ booking.room.capacity }} people</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Booking Schedule -->
+            <div class="glass-panel p-6">
+                <h3 class="text-lg font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-cyan-600" stroke="currentColor" fill="none" viewBox="0 0 24 24"
+                        stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Schedule
+                </h3>
+
+                <div class="space-y-3">
+                    <div class="flex items-start justify-between">
+                        <span class="text-sm font-medium text-zinc-600">Date</span>
+                        <span class="text-sm text-zinc-900 font-semibold">{{ booking.start_time|date:"F d, Y (l)"}}</span>
+                    </div>
+                    <div class="flex items-start justify-between">
+                        <span class="text-sm font-medium text-zinc-600">Start Time</span>
+                        <span class="text-sm text-zinc-900">{{ booking.start_time|date:"g:i A" }}</span>
+                    </div>
+                    <div class="flex items-start justify-between">
+                        <span class="text-sm font-medium text-zinc-600">End Time</span>
+                        <span class="text-sm text-zinc-900">{{ booking.end_time|date:"g:i A" }}</span>
+                    </div>
+                    <div class="flex items-start justify-between">
+                        <span class="text-sm font-medium text-zinc-600">Duration</span>
+                        <span class="text-sm text-zinc-900">{{ booking.duration }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendees -->
+            <div class="glass-panel p-6">
+                <h3 class="text-lg font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-violet-600" stroke="currentColor" fill="none" viewBox="0 0 24 24"
+                        stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    Attendees ({{ booking.attendee_count }})
+                </h3>
+
+                <div class="bg-white/20 rounded-lg p-4">
+                    <p class="text-sm text-zinc-700 whitespace-pre-line">{{ booking.attendees }}</p>
+                </div>
+            </div>
+
+            {% if booking.special_requirements %}
+            <!-- Special Requirements -->
+            <div class="glass-panel p-6">
+                <h3 class="text-lg font-semibold text-zinc-900 mb-4">Special Requirements</h3>
+                <div class="bg-sky-50 rounded-lg p-4">
+                    <p class="text-sm text-zinc-700">{{ booking.special_requirements }}</p>
+                </div>
+            </div>
+            {% endif %}
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-            <!-- Status Banner -->
-            <div class="px-8 py-4 {% if booking.status == 'CONFIRMED' %}bg-green-50 border-b-4 border-green-500
-                {% elif booking.status == 'CANCELLED' %}bg-red-50 border-b-4 border-red-500
-                {% else %}bg-yellow-50 border-b-4 border-yellow-500{% endif %}">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h2 class="text-xl font-semibold 
-                            {% if booking.status == 'CONFIRMED' %}text-green-900
-                            {% elif booking.status == 'CANCELLED' %}text-red-900
-                            {% else %}text-yellow-900{% endif %}">
-                            {{ booking.title }}
-                        </h2>
-                        <p class="text-sm {% if booking.status == 'CONFIRMED' %}text-green-700
-                            {% elif booking.status == 'CANCELLED' %}text-red-700
-                            {% else %}text-yellow-700{% endif %}">
-                            Status: {{ booking.get_status_display }}
-                        </p>
-                    </div>
-                    {% if booking.is_upcoming and booking.status != 'CANCELLED' %}
-                    <a href="{% url 'conference:booking_cancel' booking.id %}" 
-                       class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700">
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Actions -->
+            <div class="stat-card bg-gradient-cyan rounded-xl p-6 text-white">
+                <h3 class="text-lg font-semibold mb-4">Actions</h3>
+                <div class="space-y-3">
+                    {% if booking.can_be_cancelled %}
+                    <a href="{% url 'conference:booking_cancel' booking.id %}"
+                        class="block w-full text-center px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition">
                         Cancel Booking
                     </a>
                     {% endif %}
+                    <a href="{% url 'conference:room_detail' booking.room.id %}"
+                        class="block w-full text-center px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition">
+                        View Room
+                    </a>
                 </div>
             </div>
-            
-            <!-- Booking Details -->
-            <div class="px-8 py-6 space-y-6">
-                
-                <!-- Room Information -->
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Room Information</h3>
-                    <div class="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                            <span class="text-gray-600">Room:</span>
-                            <span class="ml-2 font-medium text-gray-900">{{ booking.room.name }}</span>
-                        </div>
-                        <div>
-                            <span class="text-gray-600">Location:</span>
-                            <span class="ml-2 font-medium text-gray-900">{{ booking.room.office_location.name }}</span>
-                        </div>
-                        <div>
-                            <span class="text-gray-600">Floor:</span>
-                            <span class="ml-2 font-medium text-gray-900">{{ booking.room.floor }}</span>
-                        </div>
-                        <div>
-                            <span class="text-gray-600">Capacity:</span>
-                            <span class="ml-2 font-medium text-gray-900">{{ booking.room.capacity }} people</span>
-                        </div>
+
+            <!-- Created Info -->
+            <div class="glass-panel p-6">
+                <h3 class="text-lg font-semibold text-zinc-900 mb-4">Booking Info</h3>
+                <div class="space-y-3 text-sm">
+                    <div>
+                        <span class="text-zinc-600">Created by:</span>
+                        <p class="text-zinc-900 font-medium">{{ booking.created_by.get_full_name }}</p>
+                    </div>
+                    <div>
+                        <span class="text-zinc-600">Created on:</span>
+                        <p class="text-zinc-900">{{ booking.created_at|date:"M d, Y g:i A" }}</p>
                     </div>
                 </div>
-                
-                <!-- Time Information -->
-                <div class="border-t pt-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Time & Duration</h3>
-                    <div class="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                            <span class="text-gray-600">Date:</span>
-                            <span class="ml-2 font-medium text-gray-900">{{ booking.start_time|date:"l, F d, Y" }}</span>
-                        </div>
-                        <div>
-                            <span class="text-gray-600">Duration:</span>
-                            <span class="ml-2 font-medium text-gray-900">{{ booking.duration_hours|floatformat:1 }} hours</span>
-                        </div>
-                        <div>
-                            <span class="text-gray-600">Start Time:</span>
-                            <span class="ml-2 font-medium text-gray-900">{{ booking.start_time|date:"g:i A" }}</span>
-                        </div>
-                        <div>
-                            <span class="text-gray-600">End Time:</span>
-                            <span class="ml-2 font-medium text-gray-900">{{ booking.end_time|date:"g:i A" }}</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Meeting Details -->
-                <div class="border-t pt-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Meeting Details</h3>
-                    <div class="space-y-3">
-                        <div>
-                            <span class="text-sm text-gray-600">Purpose:</span>
-                            <p class="mt-1 text-sm text-gray-900 bg-gray-50 p-3 rounded">{{ booking.purpose }}</p>
-                        </div>
-                        <div>
-                            <span class="text-sm text-gray-600">Number of Attendees:</span>
-                            <span class="ml-2 text-sm font-medium text-gray-900">{{ booking.attendee_count }}</span>
-                        </div>
-                        <div>
-                            <span class="text-sm text-gray-600">Attendees:</span>
-                            <p class="mt-1 text-sm text-gray-900 bg-gray-50 p-3 rounded whitespace-pre-line">{{ booking.attendees }}</p>
-                        </div>
-                        {% if booking.special_requirements %}
-                        <div>
-                            <span class="text-sm text-gray-600">Special Requirements:</span>
-                            <p class="mt-1 text-sm text-gray-900 bg-gray-50 p-3 rounded">{{ booking.special_requirements }}</p>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-                
-                <!-- Cancellation Info -->
-                {% if booking.status == 'CANCELLED' %}
-                <div class="border-t pt-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Cancellation Information</h3>
-                    <div class="bg-red-50 p-4 rounded">
-                        <p class="text-sm text-gray-600">Cancelled at: <span class="font-medium">{{ booking.cancelled_at|date:"F d, Y g:i A" }}</span></p>
-                        {% if booking.cancellation_reason %}
-                        <p class="text-sm text-gray-600 mt-2">Reason: <span class="font-medium">{{ booking.cancellation_reason }}</span></p>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endif %}
-                
-                <!-- Metadata -->
-                <div class="border-t pt-6 text-xs text-gray-500">
-                    <p>Booked on: {{ booking.created_at|date:"F d, Y g:i A" }}</p>
-                    <p>Last updated: {{ booking.updated_at|date:"F d, Y g:i A" }}</p>
-                </div>
-                
             </div>
         </div>
-        
     </div>
+
 </div>
 {% endblock %}

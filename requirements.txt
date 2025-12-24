@@ -1,17 +1,28 @@
+aiohappyeyeballs==2.6.1
+aiohttp==3.13.2
+aiosignal==1.4.0
 alembic==1.14.0
 amqp==5.3.1
 arabic-reshaper==3.0.0
-asgiref==3.8.1
+arrow==1.4.0
+asgiref @ file:///home/conda/feedstock_root/build_artifacts/asgiref_1763585112330/work
 asn1crypto==1.5.1
 async-timeout==5.0.1
+attrs==25.4.0
+Automat==25.4.16
+babel==2.17.0
 bcrypt==4.2.1
 billiard==4.2.1
+bleach==6.3.0
 blinker==1.7.0
 Bottleneck==1.3.7
+brotli==1.2.0
+business-rules==1.1.1
 celery==5.4.0
+celery-types==0.23.0
+Cerberus==1.3.8
 certifi==2025.4.26
 cffi==1.17.1
-
 chardet==5.2.0
 charset-normalizer==3.4.2
 click==8.1.7
@@ -19,24 +30,38 @@ click-didyoumean==0.3.1
 click-plugins==1.1.1
 click-repl==0.3.0
 constantly==23.10.4
+crispy-tailwind==1.0.3
 cron-descriptor==1.4.5
 cryptography==44.0.0
 cssselect2==0.8.0
-gunicorn==21.2.0
+dateparser==1.2.2
 defusedxml==0.7.1
+diff-match-patch==20241021
 Django==5.0.2
+django-auditlog==3.3.0
+django-axes==8.0.0
 django-celery-beat==2.7.0
+django-concurrency==2.7
+django-countries==8.2.0
+django-crispy-forms==2.4
 django-cron==0.6.0
 django-debug-toolbar==5.0.1
+django-defender==0.9.8
+django-encrypted-model-fields==0.6.5
 django-environ==0.11.2
+django-fsm==3.0.1
+django-iban==0.3.1
+django-import-export==4.3.14
 django-jsonify==0.3.0
 django-model-utils==5.0.0
+django-money==3.5.4
 django-notifications-hq==1.8.3
+django-simple-history @ file:///home/conda/feedstock_root/build_artifacts/django-simple-history_1750491900352/work
 django-sslserver==0.22
 django-timezone-field==7.0
-django-simple-history==3.5.0
 django-widget-tweaks==1.5.0
 djangorestframework==3.15.2
+drf-spectacular==0.29.0
 et-xmlfile==1.1.0
 Flask==2.3.2
 Flask-Bcrypt==1.0.1
@@ -48,154 +73,113 @@ Flask-Migrate==3.1.0
 Flask-MySQLdb==2.0.0
 Flask-SQLAlchemy==3.0.2
 Flask-WTF==1.2.1
-greenlet==3.0.3
+fonttools==4.60.1
+forex-python==1.9.2
+frozenlist==1.8.0
 geoip2==4.7.0
+greenlet==3.0.3
+gunicorn==21.2.0
 html5lib==1.1
 hyperlink==21.0.0
 idna==3.10
 importlib-metadata==7.0.1
 incremental==24.7.0
+inflection==0.5.1
 itsdangerous==2.1.2
 Jinja2==3.1.2
+joblib==1.5.2
 jsonfield==3.1.0
+jsonschema==4.25.1
+jsonschema-specifications==2025.9.1
 kombu==5.4.2
 lxml==5.4.0
 Mako==1.3.7
 MarkupSafe==2.1.5
+maxminddb==2.8.2
 msgpack==1.0.8
+multidict==6.7.0
 mysql-connector-python==8.3.0
-mysqlclient
+mysqlclient==2.2.7
+narwhals==2.13.0
+nltk==3.9.2
 numexpr==2.8.8
 numpy==1.26.4
 openpyxl==3.1.2
 oscrypto==1.3.0
+packaging==25.0
 pandas==2.2.3
+patsy==1.0.2
+pdfminer.six==20251107
+pdfplumber==0.11.8
 pillow==11.2.1
+plotly==6.5.0
 prompt_toolkit==3.0.48
+propcache==0.4.1
 protobuf==3.20.1
+py-moneyed==3.0
 pyasn1==0.6.1
 pyasn1_modules==0.4.1
 pycparser==2.22
+pydyf==0.11.0
 pyHanko==0.26.0
 pyhanko-certvalidator==0.26.8
 PyJWT==2.10.1
 PyMySQL==1.0.2
 pyOpenSSL==24.3.0
 pypdf==5.4.0
+PyPDF2==3.0.1
+pypdfium2==5.1.0
+pyphen==0.17.2
 python-bidi==0.6.6
 python-crontab==3.2.0
 python-dateutil==2.8.2
 python-dotenv==1.0.1
-pytz==2024.1
+python-json-logger==4.0.0
+python-stdnum==2.1
+pytz==2025.2
 PyYAML==6.0.2
 qrcode==8.2
+RapidFuzz==3.14.3
 redis==5.0.3
+referencing==0.37.0
+regex==2025.11.3
 reportlab==4.4.0
 requests==2.32.3
+rpds-py==0.30.0
+scikit-learn==1.7.2
+scipy==1.15.3
 service-identity==24.2.0
+simplejson==3.20.2
 six==1.16.0
 SQLAlchemy==2.0.28
 sqlparse==0.4.4
+statsmodels==0.14.5
 svglib==1.5.1
 swapper==1.4.0
+tablib==3.9.0
+threadpoolctl==3.6.0
 tinycss2==1.4.0
+tinyhtml5==2.0.0
 tomli==2.0.1
+tqdm==4.67.1
 Twisted==24.11.0
 txaio==23.1.1
 typing_extensions==4.10.0
 tzdata==2023.3
 tzlocal==5.3.1
+uritemplate==4.2.0
 uritools==5.0.0
 urllib3==2.4.0
 vine==5.1.0
 wcwidth==0.2.13
+weasyprint==66.0
 webencodings==0.5.1
 Werkzeug==2.3.7
 whitenoise==6.9.0
 WTForms==3.1.2
 xhtml2pdf==0.2.17
 xlwt==1.3.0
+yarl==1.22.0
 zipp==3.17.0
 zope.interface==7.2
-django-money==3.4.1
-py-moneyed==3.0
-forex-python==1.8           # Calls external APIs, no system deps
-Babel==2.13.1
-# decimal is Python stdlib - no install needed
-
-# ============================================
-# 2. ACCOUNTING & COMPLIANCE ✅ (All Safe)
-# ============================================
-django-iban==0.3.1
-python-stdnum==1.19         # GOLD for PAN/GSTIN/VAT validation
-# beancount - Optional, install separately if needed
-
-# ============================================
-# 3. PDF PROCESSING ✅ (cPanel-Safe Only)
-# ============================================
-# ✅ These work without system dependencies
-pdfplumber==0.11.0          # Best for unstructured PDFs
-PyPDF2==3.0.1               # Basic PDF text extraction
-Pillow>=10.1.0              # Image processing (11.2.1 installed)
-dateparser==1.2.0           # Flexible date parsing
-
-# ⛔ EXCLUDED - Need system packages (Java, Ghostscript, Tesseract)
-# tabula-py - Requires Java JRE
-# camelot-py[cv] - Requires Ghostscript + OpenCV
-# pytesseract - Requires Tesseract OCR binary
-
-# ============================================
-# 4. NLP & RULES ✅ (Mostly Safe)
-# ============================================
-nltk==3.8.1                 # Download corpora locally, ship with project
-rapidfuzz==3.5.2            # Fast fuzzy string matching (has wheels)
-business-rules==1.0.1       # Rule engine
-Cerberus==1.3.5             # Data validation
-regex==2023.10.3            # Advanced regex
-
-# ⚠️ spaCy - See dev requirements (heavy wheels, optional for rule-based NLP)
-
-# ============================================
-# 5. ANALYTICS ✅ (Core libraries only)
-# ============================================
-pandas>=2.1.4               # Essential for data analysis (2.2.3 installed)
-numpy>=1.26.2               # Pandas dependency (1.26.4 installed)
-plotly==5.18.0              # Pure Python/JS, perfect for web dashboards
-
-# ⚠️ statsmodels, matplotlib, seaborn - See dev requirements
-
-# 6. SECURITY ✅ (All Safe)
-# ============================================
-django-axes==6.1.1          # Login attempt protection
-django-defender==0.9.7      # Rate limiting (works with Django cache, no Redis required)
-django-encrypted-model-fields==0.6.5  # PII encryption
-bleach==6.1.0               # HTML sanitization for XSS prevention
-
-# python-keyring - Not needed on cPanel (use env vars)
-
-# ============================================
-# 7. UTILITIES ✅ (All Safe)
-# ============================================
-arrow==1.3.0                # Better datetime handling
-python-json-logger==2.0.7   # Structured logging
-
-
-# ============================================
-# 8. DJANGO EXTENSIONS ✅ (All Safe)
-# ============================================
-django-fsm==2.8.1           # Finite state machines
-django-auditlog==2.3.0      # Automatic audit trails
-django-import-export==3.3.1 # CSV/Excel import/export
-
-django-concurrency==2.5     # Optimistic locking
-django-crispy-forms==2.1
-crispy-tailwind==1.0.2
-
-# Phase 3: API Documentation & Background Jobs
-drf-spectacular==0.27.0
-redis==5.0.1
-celery-progress==0.3.0
-
-# Phase 5: Performance Optimization
-django-redis==5.4.0
-sentry-sdk[django]==1.40.0
+zopfli==0.4.0

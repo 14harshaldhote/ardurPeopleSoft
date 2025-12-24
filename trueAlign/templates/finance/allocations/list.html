@@ -65,8 +65,7 @@
                         <tbody class="divide-y divide-gray-100">
                             {% for allocation in page_obj %}
                             <tr class="hover:bg-gray-50 transition-colors duration-150">
-                                <td class="px-6 py-4 text-sm text-gray-900">{{ allocation.allocation_date|date:"M d, Y"
-                                    }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-900">{{ allocation.allocation_date|date:"M d, Y"}}</td>
                                 <td class="px-6 py-4 text-sm">
                                     <span
                                         class="px-3 py-1 rounded-md text-xs font-semibold {% if allocation.payment_source_type == 'BANK' %}bg-blue-100 text-blue-700{% else %}bg-emerald-100 text-emerald-700{% endif %}">
@@ -76,8 +75,7 @@
                                         {% if allocation.bank_payment %}
                                         Bank: {{ allocation.bank_payment.payment_id }}
                                         {% elif allocation.cash_transaction %}
-                                        Cash: {{ allocation.cash_transaction.box.name }}
-                                        {% endif %}
+                                        Cash: {{ allocation.cash_transaction.box.name }}{% endif %}
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 text-sm">

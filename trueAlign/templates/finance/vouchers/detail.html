@@ -96,8 +96,7 @@
                             endif %}
                         </td>
                         <td class="px-6 py-4 text-sm text-right font-semibold text-gray-900">
-                            {% if detail.credit_amount %}₹ {{ detail.credit_amount|floatformat:2|intcomma }}{% else
-                            %}-{% endif %}
+                            {% if detail.credit_amount %}₹ {{ detail.credit_amount|floatformat:2|intcomma }}{% else %}-{% endif %}
                         </td>
                     </tr>
                     {% endfor %}

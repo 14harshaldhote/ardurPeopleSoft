@@ -3,15 +3,15 @@
 {% block title %}Dashboard - Ardur Home{% endblock %}
 {% block content %}
 
-<div class="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-6 w-full max-w-full overflow-x-hidden">
+<div class="mx-auto px-2 sm:px-3 md:px-4 py-2 sm:py-3 w-full max-w-full overflow-x-hidden">
     <!-- Header Section -->
     <div
-        class="relative overflow-hidden mb-3 sm:mb-6 rounded-[16px] sm:rounded-[20px] lg:rounded-[28px] bg-white/10 border border-white/40 shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:scale-[1.005] sm:hover:scale-[1.015] transition-all duration-500">
+        class="relative mb-3 sm:mb-6 rounded-[16px] sm:rounded-[20px] lg:rounded-[28px] bg-white/10 border border-white/40 shadow-[0_10px_30px_rgba(0,0,0,0.15)]">
         <!-- Gradient Background -->
         <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-white/10 rounded-[28px]"></div>
 
         <!-- Soft Orbs -->
-        <div class="absolute inset-0 overflow-hidden">
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
             <div
                 class="absolute -top-8 sm:-top-16 -left-8 sm:-left-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-br from-teal-300/30 to-teal-400/10 rounded-full">
             </div>
@@ -25,265 +25,101 @@
         </div>
 
         <!-- Header Content -->
-        <div class="relative p-3 sm:p-6 md:p-8 lg:p-12 z-10 w-full">
-            <!-- Top Navigation -->
-            <nav
-                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-md p-2 sm:p-3 mb-3 sm:mb-6 flex flex-col sm:flex-row gap-3 sm:gap-0 justify-between items-center relative z-[10000]">
-                <!-- Time -->
-                <div
-                    class="px-3 sm:px-4 lg:px-5 py-2 sm:py-3 backdrop-blur-sm bg-white/20 rounded-lg sm:rounded-xl border border-white/10">
-                    <span class="text-zinc-900 font-semibold text-xs sm:text-sm lg:text-md" id="time">12:34:56</span>
-                    <span class="text-zinc-600 font-medium text-xs sm:text-sm lg:text-md" id="time-ampm">AM</span>
+        <div class="relative p-2 sm:p-3 md:p-4 lg:p-5 z-10 w-full">
+
+            <!-- Main Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
+                <!-- Left: Welcome + Cards -->
+                <div class="lg:col-span-2 space-y-3 sm:space-y-4 lg:space-y-6">
+                    <!-- Welcome Card -->
+                    <div
+                        class="backdrop-blur-xl bg-white/20 p-3 sm:p-4 lg:p-6 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner">
+                        <h1 class="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-zinc-900 mb-1 sm:mb-2">
+                            Welcome, {{ user.first_name }} {{ user.last_name }}!
+                        </h1>
+                        <p class="text-zinc-600 text-xs sm:text-sm lg:text-base">
+                            Last login: {{ user.last_login|date:"F j, Y, g:i a" }}
+                        </p>
+                    </div>
+
+                    <!-- Role Based Cards Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-3 lg:gap-4 xl:gap-6 ">
+                        {% if is_admin or is_manager %}
+                        {% include 'dashboard/attendace_card.html' %}
+                        {% include 'dashboard/conferenceBooking_card.html' %}
+                        {% include 'dashboard/performance_card.html' %}
+                        {% elif is_hr %}
+                        {% include 'dashboard/performance_card.html' %}
+                        {% include 'dashboard/conferenceBooking_card.html' %}
+                        {% include 'dashboard/attendace_card.html' %}
+                        {% elif is_employee %}
+                        {% include 'dashboard/performance_card.html' %}
+                        {% include 'dashboard/conferenceBooking_card.html' %}
+                        {% include 'dashboard/attendace_card.html' %}
+                        {% elif is_client %}
+                        {% include 'dashboard/billingSummary_card.html' %}
+                        {% include 'dashboard/supportTickets_card.html' %} {% endif %}
+                    </div>
+
+                    <!-- Full Width Cards -->
+                    {% if is_admin or is_manager or is_employee %}
+                    <div class="w-full">
+                        {% include 'dashboard/teamUpdate_card.html' %}
+                    </div>
+                    {% endif %}
                 </div>
 
-                <!-- Status & Notification -->
-                <div class="flex items-center space-x-2 sm:space-x-4 mt-0">
-                    <span
-                        class="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 lg:px-4 py-1.5 sm:py-2 backdrop-blur-sm bg-white/20 rounded-lg sm:rounded-xl border border-white/10">
-                        <span class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span class="text-xs sm:text-sm text-zinc-700">Active</span>
-                    </span>
-                    <!-- Notifications Dropdown -->
-                    <div class="relative" data-dropdown="notifications" x-data="{ open: false }">
-                        <button @click="open = !open" @click.away="open = false"
-                            class="relative p-3 rounded-xl bg-white/80 backdrop-blur-xl border border-white/80 shadow-md hover:shadow-lg transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
-                            <i
-                                class="ri-notification-3-line text-xl text-gray-600 group-hover:text-primary-600 transition-colors"></i>
-                            <!-- Badge -->
-                            <span id="notification-badge"
-                                class="notification-badge hidden absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white transform scale-100 transition-transform duration-200">
-                            </span>
-                        </button>
-
-                        <!-- Dropdown Panel -->
-                        <div x-show="open" x-transition:enter="transition ease-out duration-200"
-                            x-transition:enter-start="opacity-0 scale-95 -translate-y-2"
-                            x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                            x-transition:leave="transition ease-in duration-150"
-                            x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-                            class="absolute right-0 mt-3 w-80 sm:w-96 bg-white/95 backdrop-blur-xl rounded-2xl border border-white/80 shadow-2xl z-50 overflow-hidden origin-top-right"
-                            style="display: none;">
-
-                            <!-- Header -->
+                <!-- Right: Stats Column -->
+                <div class="space-y-3 sm:space-y-4 lg:space-y-6">
+                    {% if not is_admin %}
+                    <div
+                        class="backdrop-blur-xl bg-white/20 p-3 sm:p-4 lg:p-6 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner">
+                        <h3 class="text-zinc-900 font-bold mb-2 sm:mb-3 lg:mb-4 text-sm sm:text-base lg:text-lg">
+                            Quick Stats
+                        </h3>
+                        <div class="grid grid-cols-2 gap-2 sm:gap-3 lg:gap-4">
                             <div
-                                class="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                                <h3 class="font-semibold text-gray-900">Notifications</h3>
-                                <button
-                                    class="mark-all-read text-xs font-medium text-primary-600 hover:text-primary-700 transition-colors">
-                                    Mark all read
-                                </button>
+                                class="backdrop-blur-sm bg-gradient-to-tr from-teal-300/20 to-teal-400/10 p-3 sm:p-4 lg:p-5 rounded-lg sm:rounded-xl border border-white/10 shadow">
+                                <p class="text-teal-900 text-xs sm:text-sm mb-1">
+                                    Active Projects
+                                </p>
+                                <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-teal-700">
+                                    {{ projects|length }}
+                                </p>
                             </div>
-
-                            <!-- List -->
-                            <div id="notification-list"
-                                class="notification-list max-h-[32rem] overflow-y-auto custom-scrollbar">
-                                <!-- Loading State -->
-                                <div class="p-8 text-center text-gray-500">
-                                    <div
-                                        class="animate-spin inline-block w-6 h-6 border-[3px] border-current border-t-transparent text-primary-600 rounded-full mb-2">
-                                    </div>
-                                    <p class="text-sm">Loading notifications...</p>
-                                </div>
-                            </div>
-
-                            <!-- Footer -->
-                            <div class="px-4 py-2 bg-gray-50/50 border-t border-gray-100 text-center">
-                                <a href="#"
-                                    class="text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors">
-                                    View all notifications
-                                </a>
+                            <div
+                                class="backdrop-blur-sm bg-gradient-to-tr from-rose-300/20 to-rose-400/10 p-3 sm:p-4 lg:p-5 rounded-lg sm:rounded-xl border border-white/10 shadow">
+                                <p class="text-rose-900 text-xs sm:text-sm mb-1">
+                                    Present Today
+                                </p>
+                                <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-rose-700">
+                                    {{ present_employees_count }}
+                                </p>
                             </div>
                         </div>
                     </div>
+                    {% endif %}
 
-
+                    <!-- Global Updates Card -->
+                    {% if is_admin or is_manager or is_hr or is_employee or is_client %}
+                    <div class="h-full"> {% include 'dashboard/globalUpdate_card.html' %} </div>
+                    {% endif %}
                 </div>
-
-
-
-        </div>
-        </nav>
-
-        <!-- Main Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 px-5">
-            <!-- Left: Welcome + Cards -->
-            <div class="lg:col-span-2 space-y-3 sm:space-y-4 lg:space-y-6">
-                <!-- Welcome Card -->
-                <div
-                    class="backdrop-blur-xl bg-white/20 p-3 sm:p-4 lg:p-6 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 hover:bg-white/25 transition shadow-inner">
-                    <h1 class="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-zinc-900 mb-1 sm:mb-2">
-                        Welcome, {{ user.first_name }} {{ user.last_name }}!
-                    </h1>
-                    <p class="text-zinc-600 text-xs sm:text-sm lg:text-base">
-                        Last login: {{ user.last_login|date:"F j, Y, g:i a" }}
-                    </p>
-                </div>
-
-                <!-- Role Based Cards Grid -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-3 lg:gap-4 xl:gap-6 ">
-                    {% if is_admin or is_manager %}
-                    {% include 'dashboard/attendace_card.html' %}
-                    {% include 'dashboard/conferenceBooking_card.html' %}
-                    {% include 'dashboard/performance_card.html' %}
-                    {% elif is_hr %}
-                    {% include 'dashboard/performance_card.html' %}
-                    {% include 'dashboard/conferenceBooking_card.html' %}
-                    {% include 'dashboard/attendace_card.html' %}
-                    {% elif is_employee %}
-                    {% include 'dashboard/performance_card.html' %}
-                    {% include 'dashboard/conferenceBooking_card.html' %}
-                    {% include 'dashboard/attendace_card.html' %}
-                    {% elif is_client %}
-                    {% include 'dashboard/billingSummary_card.html' %}
-                    {% include 'dashboard/supportTickets_card.html' %} {% endif %}
-                </div>
-
-                <!-- Full Width Cards -->
-                {% if is_admin or is_manager or is_employee %}
-                <div class="w-full">
-                    {% include 'dashboard/teamUpdate_card.html' %}
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- Right: Stats Column -->
-            <div class="space-y-3 sm:space-y-4 lg:space-y-6">
-                {% if not is_admin %}
-                <div
-                    class="backdrop-blur-xl bg-white/20 p-3 sm:p-4 lg:p-6 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner">
-                    <h3 class="text-zinc-900 font-bold mb-2 sm:mb-3 lg:mb-4 text-sm sm:text-base lg:text-lg">
-                        Quick Stats
-                    </h3>
-                    <div class="grid grid-cols-2 gap-2 sm:gap-3 lg:gap-4">
-                        <div
-                            class="backdrop-blur-sm bg-gradient-to-tr from-teal-300/20 to-teal-400/10 p-3 sm:p-4 lg:p-5 rounded-lg sm:rounded-xl border border-white/10 hover:bg-teal-400/20 transition shadow">
-                            <p class="text-teal-900 text-xs sm:text-sm mb-1">
-                                Active Projects
-                            </p>
-                            <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-teal-700">
-                                {{ projects|length }}
-                            </p>
-                        </div>
-                        <div
-                            class="backdrop-blur-sm bg-gradient-to-tr from-rose-300/20 to-rose-400/10 p-3 sm:p-4 lg:p-5 rounded-lg sm:rounded-xl border border-white/10 hover:bg-rose-400/20 transition shadow">
-                            <p class="text-rose-900 text-xs sm:text-sm mb-1">
-                                Present Today
-                            </p>
-                            <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-rose-700">
-                                {{ present_employees_count }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Global Updates Card -->
-                {% if is_admin or is_manager or is_hr or is_employee or is_client %}
-                <div class="h-full"> {% include 'dashboard/globalUpdate_card.html' %} </div>
-                {% endif %}
             </div>
         </div>
     </div>
 </div>
-</div>
 
-<!-- CSS for buttons and smooth scrolling -->
-<style>
-    html {
-        scroll-behavior: smooth;
-    }
-
-    .btn-primary {
-        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 text-xs sm:text-sm lg:text-base;
-    }
-
-    .btn-secondary {
-        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-300 text-xs sm:text-sm lg:text-base;
-    }
-
-    .card {
-        @apply bg-white p-2 sm:p-3 md:p-4 lg:p-6 rounded-lg sm:rounded-xl shadow transition-all duration-300;
-    }
-
-    /* Custom scrollbar */
-    .scrollbar-thin::-webkit-scrollbar {
-        width: 3px;
-    }
-
-    .scrollbar-thin::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-    }
-
-    .scrollbar-thin::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.3);
-        border-radius: 10px;
-    }
-
-    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-        background: rgba(255, 255, 255, 0.5);
-    }
-
-    /* Responsive utilities */
-    @media (max-width: 640px) {
-        .scrollbar-thin {
-            scrollbar-width: thin;
-        }
-
-        .grid {
-            gap: 0.5rem;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .scrollbar-thin::-webkit-scrollbar {
-            width: 2px;
-        }
-    }
-
-    /* Animation for elements */
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .card,
-    .btn-primary,
-    .btn-secondary {
-        animation: fadeIn 0.5s ease-out;
-    }
-
-    /* Pulse animation for notifications */
-    @keyframes pulse {
-        0% {
-            transform: scale(1);
-        }
-
-        50% {
-            transform: scale(1.05);
-        }
-
-        100% {
-            transform: scale(1);
-        }
-    }
-
-    .animate-pulse {
-        animation: pulse 2s infinite;
-    }
-</style>
+<!-- All CSS now in external files: truealign-core.css and components.css -->
 
 <script>
     function updateTime() {
         const timeElement = document.getElementById("time");
         const ampmElement = document.getElementById("time-ampm");
+
+        // Skip if elements don't exist
+        if (!timeElement || !ampmElement) return;
+
         const now = new Date();
         let hours = now.getHours();
         let minutes = now.getMinutes();

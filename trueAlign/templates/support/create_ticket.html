@@ -1,98 +1,145 @@
-{% extends 'base.html' %} {% load static %} {% load crispy_forms_tags %} {% block title %}Create Support Ticket - TrueAlign{% endblock %} {% block extra_head %}
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Create Support Ticket - TrueAlign{% endblock %}
+
+{% block extra_head %}
 <style>
     .form-error {
-        @apply text-red-600 text-sm mt-1;
+        color: var(--red-600);
+        font-size: var(--text-sm);
+        margin-top: var(--space-1);
     }
+
     .form-field,
-    input,
+    input[type="text"],
     select,
     textarea {
-        @apply block w-full px-4 py-3 backdrop-blur-sm bg-white/50 border border-white/40 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all duration-200;
+        display: block;
+        width: 100%;
+        padding: var(--space-3) var(--space-4);
+        background-color: rgba(255, 255, 255, 0.5);
+        backdrop-filter: blur(4px);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-sm);
+        font-size: var(--text-sm);
+        transition: all var(--transition-normal);
     }
+
+    .form-field:focus,
+    input:focus,
+    select:focus,
+    textarea:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px var(--indigo-500);
+        border-color: var(--indigo-500);
+    }
+
     select {
-        @apply appearance-none bg-no-repeat bg-right pr-10;
+        appearance: none;
         background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
         background-position: right 0.5rem center;
         background-size: 1.5em 1.5em;
+        padding-right: 2.5rem;
     }
+
     textarea {
-        @apply resize-none min-h-[120px];
+        resize: none;
+        min-height: 120px;
     }
+
     .form-field-error {
-        @apply border-red-300 focus:ring-red-500 focus:border-red-500;
+        border-color: var(--red-300);
     }
+
+    .form-field-error:focus {
+        box-shadow: 0 0 0 2px var(--red-500);
+        border-color: var(--red-500);
+    }
+
     .form-label {
-        @apply block text-sm font-semibold text-gray-800 mb-2;
+        display: block;
+        font-size: var(--text-sm);
+        font-weight: var(--font-semibold);
+        color: var(--gray-800);
+        margin-bottom: var(--space-2);
     }
+
     .form-help {
-        @apply text-sm text-gray-600 mt-2;
+        font-size: var(--text-sm);
+        color: var(--gray-600);
+        margin-top: var(--space-2);
     }
+
     .section-divider {
-        @apply border-t border-white/20 pt-8 mt-8;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        padding-top: var(--space-8);
+        margin-top: var(--space-8);
     }
+
     .glass-card {
-        @apply backdrop-blur-xl bg-white/20 rounded-[16px] sm:rounded-[20px] lg:rounded-[28px] border border-white/40 shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:scale-[1.005] transition-all duration-500;
+        backdrop-filter: blur(24px);
+        background-color: rgba(255, 255, 255, 0.2);
+        border-radius: 28px;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        transition: all var(--transition-slower);
     }
+
+    .glass-card:hover {
+        transform: scale(1.005);
+    }
+
     .glass-section {
-        @apply backdrop-blur-xl bg-white/20 p-6 rounded-[16px] border border-white/10 hover:bg-white/25 transition shadow-inner;
+        backdrop-filter: blur(24px);
+        background-color: rgba(255, 255, 255, 0.2);
+        padding: var(--space-6);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: var(--shadow-inner);
+        transition: all var(--transition-normal);
+    }
+
+    .glass-section:hover {
+        background-color: rgba(255, 255, 255, 0.25);
     }
 </style>
-{% endblock %} {% block content %}
-<div
-    class="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 rounded-md"
->
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 rounded-md">
     <!-- Header Section -->
-    <div
-        class="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-6 w-full max-w-full"
-    >
+    <div class="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-6 w-full max-w-full">
         <div class="glass-card relative overflow-hidden mb-3 sm:mb-6">
             <!-- Gradient Background -->
-            <div
-                class="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-white/10 rounded-[28px]"
-            ></div>
+            <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-white/10 rounded-[28px]"></div>
 
             <!-- Soft Orbs -->
             <div class="absolute inset-0 overflow-hidden">
                 <div
-                    class="absolute -top-8 sm:-top-16 -left-8 sm:-left-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-br from-indigo-300/30 to-indigo-400/10 rounded-full"
-                ></div>
+                    class="absolute -top-8 sm:-top-16 -left-8 sm:-left-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-br from-indigo-300/30 to-indigo-400/10 rounded-full">
+                </div>
                 <div
-                    class="absolute -bottom-8 sm:-bottom-16 -right-8 sm:-right-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-tr from-sky-400/30 to-sky-500/10 rounded-full"
-                ></div>
+                    class="absolute -bottom-8 sm:-bottom-16 -right-8 sm:-right-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-tr from-sky-400/30 to-sky-500/10 rounded-full">
+                </div>
             </div>
 
             <!-- Header Content -->
             <div class="relative p-3 sm:p-6 md:p-8 lg:p-12 z-10 w-full">
                 <nav
-                    class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-md p-2 sm:p-3 mb-3 sm:mb-6 flex justify-between items-center"
-                >
+                    class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-md p-2 sm:p-3 mb-3 sm:mb-6 flex justify-between items-center">
                     <div>
-                        <h1
-                            class="text-2xl sm:text-3xl font-bold text-gray-900"
-                        >
-                            Create Support Ticket
-                        </h1>
-                        <p class="mt-2 text-gray-600">
-                            Submit a new support request and get help from our
-                            team
-                        </p>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Create Support Ticket</h1>
+                        <p class="mt-2 text-gray-600">Submit a new support request and get help from our team</p>
                     </div>
-                    <a
-                        href="{% url 'support:dashboard' %}"
-                        class="inline-flex items-center px-4 py-2 backdrop-blur-sm bg-white/20 rounded-xl border border-white/10 text-sm font-medium text-gray-700 hover:bg-white/30 hover:scale-105 transition-all duration-200"
-                    >
-                        <svg
-                            class="w-4 h-4 mr-2"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                            ></path>
+                    <a href="{% url 'support:dashboard' %}"
+                        class="inline-flex items-center px-4 py-2 backdrop-blur-sm bg-white/20 rounded-xl border border-white/10 text-sm font-medium text-gray-700 hover:bg-white/30 hover:scale-105 transition-all duration-200">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                         </svg>
                         Back to Dashboard
                     </a>
@@ -107,70 +154,46 @@
                     <!-- Soft Orbs -->
                     <div class="absolute inset-0 overflow-hidden">
                         <div
-                            class="absolute top-1/2 left-1/2 w-24 h-24 sm:w-48 sm:h-48 bg-gradient-to-br from-purple-300/30 to-purple-400/10 rounded-full -translate-x-1/2 -translate-y-1/2"
-                        ></div>
+                            class="absolute top-1/2 left-1/2 w-24 h-24 sm:w-48 sm:h-48 bg-gradient-to-br from-purple-300/30 to-purple-400/10 rounded-full -translate-x-1/2 -translate-y-1/2">
+                        </div>
                     </div>
 
                     <div class="relative px-6 py-8 sm:p-8 z-10">
                         <div class="glass-section mb-8">
-                            <h2
-                                class="text-xl font-semibold text-gray-900 mb-2"
-                            >
-                                Ticket Details
-                            </h2>
-                            <p class="text-gray-600">
-                                Please provide as much detail as possible to
-                                help us resolve your issue quickly.
-                            </p>
+                            <h2 class="text-xl font-semibold text-gray-900 mb-2">Ticket Details</h2>
+                            <p class="text-gray-600">Please provide as much detail as possible to help us resolve your
+                                issue quickly.</p>
                         </div>
 
-                        <form
-                            method="post"
-                            action="{% url 'support:create_ticket' %}"
-                            class="space-y-8"
-                            id="ticketForm"
-                        >
+                        <form method="post" action="{% url 'support:create_ticket' %}" class="space-y-8"
+                            id="ticketForm">
                             {% csrf_token %}
 
                             <!-- Basic Information Section -->
                             <div>
-                                <h3
-                                    class="text-lg font-medium text-gray-900 mb-6"
-                                >
-                                    Basic Information
-                                </h3>
+                                <h3 class="text-lg font-medium text-gray-900 mb-6">Basic Information</h3>
 
-                                <div
-                                    class="grid grid-cols-1 gap-6 sm:grid-cols-2"
-                                >
+                                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                     <!-- Issue Type -->
                                     <div class="sm:col-span-2">
-                                        <label
-                                            for="{{ form.issue_type.id_for_label }}"
-                                            class="form-label"
-                                        >
+                                        <label for="{{ form.issue_type.id_for_label }}" class="form-label">
                                             {{ form.issue_type.label }}
                                             <span class="text-red-500">*</span>
                                         </label>
-                                        {{ form.issue_type }} {% if form.issue_type.errors %}
-                                        <div class="form-error">
-                                            {{ form.issue_type.errors.0 }}
-                                        </div>
+                                        {{ form.issue_type }}
+                                        {% if form.issue_type.errors %}
+                                        <div class="form-error">{{ form.issue_type.errors.0 }}</div>
                                         {% endif %}
                                     </div>
 
                                     <!-- Priority -->
                                     <div class="sm:col-span-2">
-                                        <label
-                                            for="{{ form.priority.id_for_label }}"
-                                            class="form-label"
-                                        >
+                                        <label for="{{ form.priority.id_for_label }}" class="form-label">
                                             {{ form.priority.label }}
                                         </label>
-                                        {{ form.priority }} {% if form.priority.errors %}
-                                        <div class="form-error">
-                                            {{ form.priority.errors.0 }}
-                                        </div>
+                                        {{ form.priority }}
+                                        {% if form.priority.errors %}
+                                        <div class="form-error">{{ form.priority.errors.0 }}</div>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -178,60 +201,39 @@
 
                             <!-- Issue Details Section -->
                             <div class="section-divider">
-                                <h3
-                                    class="text-lg font-medium text-gray-900 mb-6"
-                                >
-                                    Issue Details
-                                </h3>
+                                <h3 class="text-lg font-medium text-gray-900 mb-6">Issue Details</h3>
 
                                 <!-- Subject -->
                                 <div class="mb-6">
-                                    <label
-                                        for="{{ form.subject.id_for_label }}"
-                                        class="form-label"
-                                    >
+                                    <label for="{{ form.subject.id_for_label }}" class="form-label">
                                         {{ form.subject.label }}
                                         <span class="text-red-500">*</span>
                                     </label>
-                                    {{ form.subject }} {% if form.subject.errors %}
-                                    <div class="form-error">
-                                        {{ form.subject.errors.0 }}
-                                    </div>
+                                    {{ form.subject }}
+                                    {% if form.subject.errors %}
+                                    <div class="form-error">{{ form.subject.errors.0 }}</div>
                                     {% endif %}
-                                    <div class="form-help">
-                                        Provide a clear, concise summary of your
-                                        issue (e.g., "Cannot access email on
-                                        laptop")
-                                    </div>
+                                    <div class="form-help">Provide a clear, concise summary of your issue (e.g., "Cannot
+                                        access email on laptop")</div>
                                 </div>
 
                                 <!-- Description -->
                                 <div>
-                                    <label
-                                        for="{{ form.description.id_for_label }}"
-                                        class="form-label"
-                                    >
+                                    <label for="{{ form.description.id_for_label }}" class="form-label">
                                         {{ form.description.label }}
                                         <span class="text-red-500">*</span>
                                     </label>
-                                    {{ form.description }} {% if form.description.errors %}
-                                    <div class="form-error">
-                                        {{ form.description.errors.0 }}
-                                    </div>
+                                    {{ form.description }}
+                                    {% if form.description.errors %}
+                                    <div class="form-error">{{ form.description.errors.0 }}</div>
                                     {% endif %}
                                     <div class="form-help">
                                         Describe the issue in detail. Include:
-                                        <ul
-                                            class="list-disc list-inside mt-1 space-y-1"
-                                        >
+                                        <ul class="list-disc list-inside mt-1 space-y-1">
                                             <li>What you were trying to do</li>
                                             <li>What actually happened</li>
-                                            <li>
-                                                Any error messages you received
-                                            </li>
-                                            <li>
-                                                Steps to reproduce the issue
-                                            </li>
+                                            <li>Any error messages you received</li>
+                                            <li>Steps to reproduce the issue</li>
                                         </ul>
                                     </div>
                                 </div>
@@ -239,96 +241,56 @@
 
                             <!-- Additional Information Section -->
                             <div class="section-divider">
-                                <h3
-                                    class="text-lg font-medium text-gray-900 mb-6"
-                                >
-                                    Additional Information
-                                </h3>
-                                <div
-                                    class="grid grid-cols-1 gap-6 sm:grid-cols-2"
-                                >
+                                <h3 class="text-lg font-medium text-gray-900 mb-6">Additional Information</h3>
+                                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                     <!-- Location -->
                                     <div>
-                                        <label
-                                            for="{{ form.location.id_for_label }}"
-                                            class="form-label"
-                                        >
+                                        <label for="{{ form.location.id_for_label }}" class="form-label">
                                             {{ form.location.label }}
                                         </label>
-                                        {{ form.location }} {% if form.location.errors %}
-                                        <div class="form-error">
-                                            {{ form.location.errors.0 }}
-                                        </div>
+                                        {{ form.location }}
+                                        {% if form.location.errors %}
+                                        <div class="form-error">{{ form.location.errors.0 }}</div>
                                         {% endif %}
-                                        <div class="form-help">
-                                            Your physical location or office
-                                        </div>
+                                        <div class="form-help">Your physical location or office</div>
                                     </div>
 
                                     <!-- Asset ID -->
                                     <div>
-                                        <label
-                                            for="{{ form.asset_id.id_for_label }}"
-                                            class="form-label"
-                                        >
+                                        <label for="{{ form.asset_id.id_for_label }}" class="form-label">
                                             {{ form.asset_id.label }}
                                         </label>
-                                        {{ form.asset_id }} {% if form.asset_id.errors %}
-                                        <div class="form-error">
-                                            {{ form.asset_id.errors.0 }}
-                                        </div>
+                                        {{ form.asset_id }}
+                                        {% if form.asset_id.errors %}
+                                        <div class="form-error">{{ form.asset_id.errors.0 }}</div>
                                         {% endif %}
-                                        <div class="form-help">
-                                            Asset tag or serial number if
-                                            applicable (check sticker on device)
-                                        </div>
+                                        <div class="form-help">Asset tag or serial number if applicable (check sticker
+                                            on device)</div>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Form Actions -->
-                            <div
-                                class="glass-section flex items-center justify-between mt-8"
-                            >
+                            <div class="glass-section flex items-center justify-between mt-8">
                                 <div class="text-sm text-gray-500">
-                                    <span class="text-red-500">*</span> Required
-                                    fields
+                                    <span class="text-red-500">*</span> Required fields
                                 </div>
                                 <div class="flex items-center space-x-4">
-                                    <a
-                                        href="{% url 'support:dashboard' %}"
-                                        class="inline-flex items-center px-6 py-3 backdrop-blur-sm bg-white/20 border border-white/10 text-sm font-medium rounded-xl text-gray-700 hover:bg-white/30 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
-                                    >
+                                    <a href="{% url 'support:dashboard' %}"
+                                        class="inline-flex items-center px-6 py-3 backdrop-blur-sm bg-white/20 border border-white/10 text-sm font-medium rounded-xl text-gray-700 hover:bg-white/30 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200">
                                         Cancel
                                     </a>
-                                    <button
-                                        type="submit"
-                                        id="submitBtn"
-                                        class="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-xl shadow-sm text-white bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                                    >
-                                        <svg
-                                            id="spinner"
-                                            class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <circle
-                                                class="opacity-25"
-                                                cx="12"
-                                                cy="12"
-                                                r="10"
-                                                stroke="currentColor"
-                                                stroke-width="4"
-                                            ></circle>
-                                            <path
-                                                class="opacity-75"
-                                                fill="currentColor"
-                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                            ></path>
+                                    <button type="submit" id="submitBtn"
+                                        class="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-xl shadow-sm text-white bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+                                        <svg id="spinner" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden"
+                                            fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                                stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                            </path>
                                         </svg>
-                                        <span id="submitText"
-                                            >Create Ticket</span
-                                        >
+                                        <span id="submitText">Create Ticket</span>
                                     </button>
                                 </div>
                             </div>
@@ -343,332 +305,221 @@
                 <div class="glass-card relative overflow-hidden">
                     <!-- Soft Orb -->
                     <div
-                        class="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-br from-blue-300/30 to-blue-400/10 rounded-full"
-                    ></div>
+                        class="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-br from-blue-300/30 to-blue-400/10 rounded-full">
+                    </div>
 
                     <div class="relative p-6 z-10">
                         <div class="flex items-center mb-4">
                             <div
-                                class="w-8 h-8 backdrop-blur-sm bg-blue-100/50 rounded-lg flex items-center justify-center mr-3"
-                            >
-                                <svg
-                                    class="h-5 w-5 text-blue-600"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    ></path>
+                                class="w-8 h-8 backdrop-blur-sm bg-blue-100/50 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
                             </div>
-                            <h3 class="text-lg font-semibold text-gray-900">
-                                Priority Guidelines
-                            </h3>
+                            <h3 class="text-lg font-semibold text-gray-900">Priority Guidelines</h3>
                         </div>
                         <div class="space-y-4">
                             <div class="border-l-4 border-red-400 pl-4">
-                                <h4 class="font-semibold text-red-700">
-                                    Critical
-                                </h4>
-                                <p class="text-sm text-red-600">
-                                    System down, security breach, or
-                                    business-stopping issue
+                                <h4 class="font-semibold text-red-700">Critical</h4>
+                                <p class="text-sm text-red-600">System down, security breach, or business-stopping issue
                                 </p>
                             </div>
                             <div class="border-l-4 border-orange-400 pl-4">
-                                <h4 class="font-semibold text-orange-700">
-                                    High
-                                </h4>
-                                <p class="text-sm text-orange-600">
-                                    Major functionality impacted, many users
-                                    affected
-                                </p>
+                                <h4 class="font-semibold text-orange-700">High</h4>
+                                <p class="text-sm text-orange-600">Major functionality impacted, many users affected</p>
                             </div>
                             <div class="border-l-4 border-blue-400 pl-4">
-                                <h4 class="font-semibold text-blue-700">
-                                    Medium
-                                </h4>
-                                <p class="text-sm text-blue-600">
-                                    Important but not urgent, workaround
-                                    available
-                                </p>
+                                <h4 class="font-semibold text-blue-700">Medium</h4>
+                                <p class="text-sm text-blue-600">Important but not urgent, workaround available</p>
                             </div>
                             <div class="border-l-4 border-gray-400 pl-4">
                                 <h4 class="font-semibold text-gray-700">Low</h4>
-                                <p class="text-sm text-gray-600">
-                                    Minor issues, enhancement requests
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Help Section -->
-                    <div class="glass-card relative overflow-hidden">
-                        <!-- Soft Orb -->
-                        <div
-                            class="absolute -bottom-8 -left-8 w-24 h-24 bg-gradient-to-tr from-green-300/30 to-green-400/10 rounded-full"
-                        ></div>
-
-                        <div class="relative p-6 z-10">
-                            <div class="flex items-center mb-4">
-                                <div
-                                    class="w-8 h-8 backdrop-blur-sm bg-green-100/50 rounded-lg flex items-center justify-center mr-3"
-                                >
-                                    <svg
-                                        class="h-5 w-5 text-green-600"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                        ></path>
-                                    </svg>
-                                </div>
-                                <h3 class="text-lg font-semibold text-gray-900">
-                                    Need Help?
-                                </h3>
-                            </div>
-                            <div class="space-y-4">
-                                <div class="flex items-start">
-                                    <div class="flex-shrink-0 mt-1">
-                                        <div
-                                            class="w-2 h-2 bg-green-400 rounded-full"
-                                        ></div>
-                                    </div>
-                                    <div class="ml-3">
-                                        <h4
-                                            class="text-sm font-medium text-gray-900"
-                                        >
-                                            Before submitting
-                                        </h4>
-                                        <p class="text-sm text-gray-600">
-                                            Check if similar issues have been
-                                            reported or if there's a known
-                                            workaround.
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start">
-                                    <div class="flex-shrink-0 mt-1">
-                                        <div
-                                            class="w-2 h-2 bg-green-400 rounded-full"
-                                        ></div>
-                                    </div>
-                                    <div class="ml-3">
-                                        <h4
-                                            class="text-sm font-medium text-gray-900"
-                                        >
-                                            Response time
-                                        </h4>
-                                        <p class="text-sm text-gray-600">
-                                            We aim to respond within 4-48 hours
-                                            depending on priority level.
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start">
-                                    <div class="flex-shrink-0 mt-1">
-                                        <div
-                                            class="w-2 h-2 bg-green-400 rounded-full"
-                                        ></div>
-                                    </div>
-                                    <div class="ml-3">
-                                        <h4
-                                            class="text-sm font-medium text-gray-900"
-                                        >
-                                            Track progress
-                                        </h4>
-                                        <p class="text-sm text-gray-600">
-                                            You'll receive email updates and can
-                                            track progress on your dashboard.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Quick Tips -->
-                        <div
-                            class="glass-card relative overflow-hidden bg-gradient-to-br from-amber-50/80 to-amber-100/40"
-                        >
-                            <!-- Soft Orb -->
-                            <div
-                                class="absolute -bottom-12 -right-12 w-32 h-32 bg-gradient-to-tl from-amber-300/30 to-amber-400/10 rounded-full"
-                            ></div>
-
-                            <div class="relative p-6 z-10">
-                                <div class="flex items-center mb-4">
-                                    <div
-                                        class="w-8 h-8 backdrop-blur-sm bg-amber-100/50 rounded-lg flex items-center justify-center mr-3"
-                                    >
-                                        <svg
-                                            class="h-5 w-5 text-amber-600"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                                            ></path>
-                                        </svg>
-                                    </div>
-                                    <h3
-                                        class="text-lg font-semibold text-amber-900"
-                                    >
-                                        Quick Tips
-                                    </h3>
-                                </div>
-                                <ul class="text-sm text-amber-800 space-y-2">
-                                    <li class="flex items-start">
-                                        <span class="text-amber-500 mr-2"
-                                            >•</span
-                                        >
-                                        <span
-                                            >Take screenshots if you encounter
-                                            visual issues</span
-                                        >
-                                    </li>
-                                    <li class="flex items-start">
-                                        <span class="text-amber-500 mr-2"
-                                            >•</span
-                                        >
-                                        <span
-                                            >Note the exact error message if
-                                            any</span
-                                        >
-                                    </li>
-                                    <li class="flex items-start">
-                                        <span class="text-amber-500 mr-2"
-                                            >•</span
-                                        >
-                                        <span
-                                            >Mention when the issue started
-                                            occurring</span
-                                        >
-                                    </li>
-                                    <li class="flex items-start">
-                                        <span class="text-amber-500 mr-2"
-                                            >•</span
-                                        >
-                                        <span
-                                            >Include your device model and
-                                            operating system</span
-                                        >
-                                    </li>
-                                </ul>
+                                <p class="text-sm text-gray-600">Minor issues, enhancement requests</p>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Help Section -->
+                <div class="glass-card relative overflow-hidden">
+                    <!-- Soft Orb -->
+                    <div
+                        class="absolute -bottom-8 -left-8 w-24 h-24 bg-gradient-to-tr from-green-300/30 to-green-400/10 rounded-full">
+                    </div>
+
+                    <div class="relative p-6 z-10">
+                        <div class="flex items-center mb-4">
+                            <div
+                                class="w-8 h-8 backdrop-blur-sm bg-green-100/50 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                                    </path>
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900">Need Help?</h3>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 mt-1">
+                                    <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                                </div>
+                                <div class="ml-3">
+                                    <h4 class="text-sm font-medium text-gray-900">Before submitting</h4>
+                                    <p class="text-sm text-gray-600">Check if similar issues have been reported or if
+                                        there's a known workaround.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 mt-1">
+                                    <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                                </div>
+                                <div class="ml-3">
+                                    <h4 class="text-sm font-medium text-gray-900">Response time</h4>
+                                    <p class="text-sm text-gray-600">We aim to respond within 4-48 hours depending on
+                                        priority level.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 mt-1">
+                                    <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                                </div>
+                                <div class="ml-3">
+                                    <h4 class="text-sm font-medium text-gray-900">Track progress</h4>
+                                    <p class="text-sm text-gray-600">You'll receive email updates and can track progress
+                                        on your dashboard.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Tips -->
+                <div class="glass-card relative overflow-hidden bg-gradient-to-br from-amber-50/80 to-amber-100/40">
+                    <!-- Soft Orb -->
+                    <div
+                        class="absolute -bottom-12 -right-12 w-32 h-32 bg-gradient-to-tl from-amber-300/30 to-amber-400/10 rounded-full">
+                    </div>
+
+                    <div class="relative p-6 z-10">
+                        <div class="flex items-center mb-4">
+                            <div
+                                class="w-8 h-8 backdrop-blur-sm bg-amber-100/50 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="h-5 w-5 text-amber-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z">
+                                    </path>
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-semibold text-amber-900">Quick Tips</h3>
+                        </div>
+                        <ul class="text-sm text-amber-800 space-y-2">
+                            <li class="flex items-start">
+                                <span class="text-amber-500 mr-2">•</span>
+                                <span>Take screenshots if you encounter visual issues</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-amber-500 mr-2">•</span>
+                                <span>Note the exact error message if any</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-amber-500 mr-2">•</span>
+                                <span>Mention when the issue started occurring</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-amber-500 mr-2">•</span>
+                                <span>Include your device model and operating system</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </div>
+        </div>
 
-            <script>
-                document.addEventListener("DOMContentLoaded", function () {
-                    let submitting = false;
-                    const form = document.getElementById("ticketForm");
-                    const submitBtn = document.getElementById("submitBtn");
-                    const spinner = document.getElementById("spinner");
-                    const submitText = document.getElementById("submitText");
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                let submitting = false;
+                const form = document.getElementById("ticketForm");
+                const submitBtn = document.getElementById("submitBtn");
+                const spinner = document.getElementById("spinner");
+                const submitText = document.getElementById("submitText");
 
-                    console.log("TicketForm initialized");
+                console.log("TicketForm initialized");
 
-                    // Auto-focus on first field for better UX
-                    const firstField = document.querySelector(
-                        'select[name="issue_type"]',
-                    );
-                    if (firstField) {
-                        setTimeout(() => firstField.focus(), 100);
+                // Auto-focus on first field for better UX
+                const firstField = document.querySelector('select[name="issue_type"]');
+                if (firstField) {
+                    setTimeout(() => firstField.focus(), 100);
+                }
+
+                // Add smooth scroll behavior for form validation errors
+                const errorElements = document.querySelectorAll(".form-error");
+                if (errorElements.length > 0) {
+                    errorElements[0].scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                    });
+                }
+
+                // Handle form submission
+                form.addEventListener("submit", function (event) {
+                    console.log("Form submit initiated");
+
+                    // Prevent double submission
+                    if (submitting) {
+                        console.log("Already submitting, preventing duplicate");
+                        event.preventDefault();
+                        return false;
                     }
 
-                    // Add smooth scroll behavior for form validation errors
-                    const errorElements =
-                        document.querySelectorAll(".form-error");
-                    if (errorElements.length > 0) {
-                        errorElements[0].scrollIntoView({
-                            behavior: "smooth",
-                            block: "center",
-                        });
-                    }
+                    // Set submitting state
+                    submitting = true;
+                    console.log("Setting submitting state to true");
 
-                    // Handle form submission
-                    form.addEventListener("submit", function (event) {
-                        console.log("Form submit initiated");
+                    // Update UI
+                    submitBtn.disabled = true;
+                    spinner.classList.remove("hidden");
+                    submitText.textContent = "Creating...";
 
-                        // Prevent double submission
-                        if (submitting) {
-                            console.log(
-                                "Already submitting, preventing duplicate",
-                            );
+                    // Validate form before submission
+                    const formData = new FormData(form);
+                    console.log("Form data:", Object.fromEntries(formData));
+
+                    // Check required fields
+                    const requiredFields = ["issue_type", "subject", "description"];
+                    for (let field of requiredFields) {
+                        if (!formData.get(field)) {
+                            console.error(`Required field missing: ${field}`);
+                            // Reset UI state
+                            submitting = false;
+                            submitBtn.disabled = false;
+                            spinner.classList.add("hidden");
+                            submitText.textContent = "Create Ticket";
                             event.preventDefault();
                             return false;
                         }
+                    }
 
-                        // Set submitting state
-                        submitting = true;
-                        console.log("Setting submitting state to true");
-
-                        // Update UI
-                        submitBtn.disabled = true;
-                        spinner.classList.remove("hidden");
-                        submitText.textContent = "Creating...";
-
-                        // Validate form before submission
-                        const formData = new FormData(form);
-                        console.log("Form data:", Object.fromEntries(formData));
-
-                        // Check required fields
-                        const requiredFields = [
-                            "issue_type",
-                            "subject",
-                            "description",
-                        ];
-                        for (let field of requiredFields) {
-                            if (!formData.get(field)) {
-                                console.error(
-                                    `Required field missing: ${field}`,
-                                );
-                                // Reset UI state
-                                submitting = false;
-                                submitBtn.disabled = false;
-                                spinner.classList.add("hidden");
-                                submitText.textContent = "Create Ticket";
-                                event.preventDefault();
-                                return false;
-                            }
+                    // Add timeout to reset submitting state in case of network issues
+                    setTimeout(() => {
+                        if (submitting) {
+                            console.log("Timeout reached, resetting submitting state");
+                            submitting = false;
+                            submitBtn.disabled = false;
+                            spinner.classList.add("hidden");
+                            submitText.textContent = "Create Ticket";
                         }
+                    }, 30000); // 30 seconds timeout
 
-                        // Add timeout to reset submitting state in case of network issues
-                        setTimeout(() => {
-                            if (submitting) {
-                                console.log(
-                                    "Timeout reached, resetting submitting state",
-                                );
-                                submitting = false;
-                                submitBtn.disabled = false;
-                                spinner.classList.add("hidden");
-                                submitText.textContent = "Create Ticket";
-                            }
-                        }, 30000); // 30 seconds timeout
-
-                        console.log(
-                            "Form validation passed, proceeding with submission",
-                        );
-                        return true;
-                    });
+                    console.log("Form validation passed, proceeding with submission");
+                    return true;
                 });
-            </script>
-            {% endblock %}
-        </div>
+            });
+        </script>
     </div>
 </div>
+{% endblock %}

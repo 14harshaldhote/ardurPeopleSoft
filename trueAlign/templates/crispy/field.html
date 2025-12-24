@@ -17,8 +17,7 @@
                 {% crispy_field field %}
             </div>
         {% else %}
-            {% crispy_field field %}
-        {% endif %}
+            {% crispy_field field %} {% endif %}
     </div>
 
     {% if field.help_text %}

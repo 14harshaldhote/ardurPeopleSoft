@@ -51,8 +51,7 @@
             <div class="space-y-2">
                 <div class="flex justify-between items-center">
                     <span class="text-sm text-gray-600">Amount</span>
-                    <span class="text-lg font-bold text-gray-900">₹ {{ subscription.amount|floatformat:2|intcomma
-                        }}</span>
+                    <span class="text-lg font-bold text-gray-900">₹ {{ subscription.amount|floatformat:2|intcomma }}</span>
                 </div>
                 <div class="flex justify-between items-center">
                     <span class="text-sm text-gray-600">Frequency</span>
@@ -60,8 +59,7 @@
                 </div>
                 <div class="flex justify-between items-center">
                     <span class="text-sm text-gray-600">Next Payment</span>
-                    <span class="text-sm font-semibold text-cyan-700">{{ subscription.next_payment_date|date:"M d, Y"
-                        }}</span>
+                    <span class="text-sm font-semibold text-cyan-700">{{ subscription.next_payment_date|date:"M d, Y"}}</span>
                 </div>
             </div>
 

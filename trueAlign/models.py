@@ -4772,6 +4772,7 @@ class Attendance(models.Model):
     is_holiday = models.BooleanField(default=False)
     is_half_day = models.BooleanField(default=False)
     left_early = models.BooleanField(default=False)
+    is_late = models.BooleanField(default=False, help_text="Whether employee was late for this day")
     is_overtime_approved = models.BooleanField(default=False)
 
     # Holiday information
@@ -5740,6 +5741,105 @@ class Attendance(models.Model):
         """
         self._calculate_time_fields()
         self._update_status_logic()
+
+
+class AttendanceRegularization(models.Model):
+    """
+    Model for handling attendance correction/regularization requests.
+    Employees can request corrections to their attendance records.
+    """
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Approved', 'Approved'),
+        ('Rejected', 'Rejected')
+    ]
+    
+    REQUEST_TYPE_CHOICES = [
+        ('clock_in', 'Clock In Correction'),
+        ('clock_out', 'Clock Out Correction'),
+        ('status_change', 'Status Change'),
+        ('work_from_home', 'Work From Home Request'),
+        ('forgot_punch', 'Forgot to Punch'),
+        ('other', 'Other')
+    ]
+    
+    user = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE,
+        related_name='regularization_requests'
+    )
+    attendance = models.ForeignKey(
+        Attendance, 
+        on_delete=models.CASCADE,
+        related_name='regularizations'
+    )
+    request_type = models.CharField(
+        max_length=20, 
+        choices=REQUEST_TYPE_CHOICES,
+        default='forgot_punch'
+    )
+    original_status = models.CharField(max_length=20, blank=True)
+    requested_status = models.CharField(max_length=20)
+    original_clock_in = models.DateTimeField(null=True, blank=True)
+    requested_clock_in = models.DateTimeField(null=True, blank=True)
+    original_clock_out = models.DateTimeField(null=True, blank=True)
+    requested_clock_out = models.DateTimeField(null=True, blank=True)
+    reason = models.TextField(help_text="Reason for regularization request")
+    supporting_document = models.FileField(
+        upload_to='regularization_docs/',
+        null=True, 
+        blank=True
+    )
+    status = models.CharField(
+        max_length=20, 
+        choices=STATUS_CHOICES, 
+        default='Pending',
+        db_index=True
+    )
+    reviewed_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='regularization_reviews'
+    )
+    review_comment = models.TextField(blank=True)
+    requested_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-requested_at']
+        verbose_name = "Attendance Regularization"
+        verbose_name_plural = "Attendance Regularizations"
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.attendance.date} - {self.status}"
+    
+    def approve(self, reviewer, comment=''):
+        """Approve the regularization request and update attendance."""
+        self.status = 'Approved'
+        self.reviewed_by = reviewer
+        self.review_comment = comment
+        self.reviewed_at = timezone.now()
+        self.save()
+        
+        # Update the attendance record
+        attendance = self.attendance
+        if self.requested_status:
+            attendance.status = self.requested_status
+        if self.requested_clock_in:
+            attendance.clock_in_time = self.requested_clock_in
+        if self.requested_clock_out:
+            attendance.clock_out_time = self.requested_clock_out
+        attendance.save()
+    
+    def reject(self, reviewer, comment=''):
+        """Reject the regularization request."""
+        self.status = 'Rejected'
+        self.reviewed_by = reviewer
+        self.review_comment = comment
+        self.reviewed_at = timezone.now()
+        self.save()
 
 
 class GlobalUpdate(models.Model):

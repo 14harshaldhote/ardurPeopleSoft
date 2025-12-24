@@ -3,43 +3,43 @@
 {% block page_title %}Shift Calendar{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50">
+<div class="min-h-screen bg-zinc-50">
     <!-- Header Section -->
     <div class="bg-white shadow-sm border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between py-6">
+        <div class="max-w-7xl mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
-                    <div class="flex-shrink-0">
-                        <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                        </div>
+                    <div
+                        class="w-12 h-12 bg-gradient-to-r from-cyan-500 to-cyan-600 rounded-xl flex items-center justify-center">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
                     </div>
                     <div>
-                        <h1 class="text-3xl font-bold text-gray-900">Shift Calendar</h1>
-                        <p class="text-gray-600">{{ target_date|date:"F d, Y" }} - Schedule overview</p>
+                        <h1 class="text-3xl font-bold text-zinc-900">Shift Calendar</h1>
+                        <p class="text-zinc-600">{{ target_date|date:"F d, Y" }} - Schedule overview</p>
                     </div>
                 </div>
-                
+
                 <div class="flex items-center space-x-3">
                     <!-- Date Navigation -->
                     <form method="get" class="flex items-center space-x-2">
-                        <input type="date" name="date" value="{{ target_date|date:'Y-m-d' }}" 
-                               class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-purple-500 focus:ring-purple-500">
-                        <button type="submit" 
-                                class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white text-sm font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200">
-                            <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        <input type="date" name="date" value="{{ target_date|date:'Y-m-d' }}" class="form-input">
+                        <button type="submit" class="btn btn-teal">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                             View
                         </button>
                     </form>
-                    
-                    <a href="{% url 'shift:dashboard' %}" 
-                       class="inline-flex items-center px-4 py-3 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-xl shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200">
-                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+
+                    <a href="{% url 'shift:dashboard' %}" class="btn btn-secondary">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
                         </svg>
                         Dashboard
                     </a>
@@ -48,97 +48,94 @@
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-7xl mx-auto px-4 py-8">
         <!-- Summary Stats -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <div class="glass-panel p-6">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                            </svg>
-                        </div>
+                    <div
+                        class="w-10 h-10 bg-gradient-to-r from-teal-500 to-teal-600 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Total Assignments</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ total_assignments }}</p>
+                        <p class="text-sm font-medium text-zinc-600">Total Assignments</p>
+                        <p class="text-2xl font-bold text-zinc-900">{{ total_assignments }}</p>
                     </div>
                 </div>
             </div>
-            
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+
+            <div class="glass-panel p-6">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-10 h-10 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
+                    <div
+                        class="w-10 h-10 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Active Shifts</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ shift_assignments|length }}</p>
+                        <p class="text-sm font-medium text-zinc-600">Active Shifts</p>
+                        <p class="text-2xl font-bold text-zinc-900">{{ shift_assignments|length }}</p>
                     </div>
                 </div>
             </div>
-            
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+
+            <div class="glass-panel p-6">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                        </div>
+                    <div
+                        class="w-10 h-10 bg-gradient-to-r from-cyan-500 to-cyan-600 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Date</p>
-                        <p class="text-lg font-bold text-gray-900">{{ target_date|date:"M d" }}</p>
+                        <p class="text-sm font-medium text-zinc-600">Date</p>
+                        <p class="text-lg font-bold text-zinc-900">{{ target_date|date:"M d" }}</p>
                     </div>
                 </div>
             </div>
-            
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+
+            <div class="glass-panel p-6">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-10 h-10 bg-gradient-to-r from-amber-500 to-amber-600 rounded-lg flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                            </svg>
-                        </div>
+                    <div
+                        class="w-10 h-10 bg-gradient-to-r from-amber-500 to-amber-600 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Coverage</p>
-                        <p class="text-lg font-bold text-gray-900">
-                            {% if total_assignments > 0 %}100%{% else %}0%{% endif %}
-                        </p>
+                        <p class="text-sm font-medium text-zinc-600">Coverage</p>
+                        <p class="text-lg font-bold text-zinc-900">{% if total_assignments > 0 %}100%{% else %}0%{%
+                            endif %}</p>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Quick Navigation -->
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
+        <div class="glass-panel p-6 mb-8">
             <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-900">Quick Navigation</h3>
+                <h3 class="text-lg font-semibold text-zinc-900">Quick Navigation</h3>
                 <div class="flex items-center space-x-2">
-                    <a href="?date={{ target_date|date:'Y-m-d'|add_days:-1 }}" 
-                       class="inline-flex items-center px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors duration-200">
-                        <svg class="-ml-1 mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                    <a href="#" onclick="navigateDay(-1)" class="btn btn-secondary">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
                         </svg>
                         Previous
                     </a>
-                    <a href="?date={{ 'today'|date:'Y-m-d' }}" 
-                       class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white text-sm font-medium rounded-lg transition-all duration-200">
-                        Today
-                    </a>
-                    <a href="?date={{ target_date|date:'Y-m-d'|add_days:1 }}" 
-                       class="inline-flex items-center px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors duration-200">
+                    <a href="?date={{ today_date|date:'Y-m-d' }}" class="btn btn-teal">Today</a>
+                    <a href="#" onclick="navigateDay(1)" class="btn btn-secondary">
                         Next
-                        <svg class="-mr-1 ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                         </svg>
                     </a>
                 </div>
@@ -148,71 +145,65 @@
         <!-- Shift Schedule -->
         <div class="space-y-6">
             {% for shift_name, shift_data in shift_assignments.items %}
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="glass-panel overflow-hidden">
                 <!-- Shift Header -->
-                <div class="px-6 py-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100">
+                <div class="px-6 py-4 bg-gradient-to-r from-teal-50 to-cyan-50 border-b border-teal-100">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-4">
-                            <div class="w-10 h-10 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            <div
+                                class="w-10 h-10 bg-gradient-to-r from-teal-500 to-teal-600 rounded-xl flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="text-lg font-semibold text-gray-900">{{ shift_name }}</h3>
-                                <p class="text-sm text-gray-600">
-                                    {{ shift_data.shift.start_time|time:"H:i" }} - {{ shift_data.shift.end_time|time:"H:i" }}
+                                <h3 class="text-lg font-semibold text-zinc-900">{{ shift_name }}</h3>
+                                <p class="text-sm text-zinc-600">
+                                    {{ shift_data.shift.start_time|time:"H:i" }} - {{
+                                    shift_data.shift.end_time|time:"H:i" }}
                                     <span class="mx-2">•</span>
-                                    {{ shift_data.assignments|length }} employee{{ shift_data.assignments|length|pluralize }}
+                                    {{ shift_data.assignments|length }} employee{{
+                                    shift_data.assignments|length|pluralize }}
                                 </p>
                             </div>
                         </div>
-                        
+
                         <div class="flex items-center space-x-2">
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                                {{ shift_data.shift.work_days }}
-                            </span>
-                            <a href="{% url 'shift:shift_detail' shift_data.shift.pk %}" 
-                               class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
-                                View Details →
-                            </a>
+                            <span class="badge badge-teal">{{ shift_data.shift.work_days }}</span>
+                            <a href="{% url 'shift:shift_detail' shift_data.shift.pk %}"
+                                class="text-teal-600 hover:text-teal-700 text-sm font-medium">View Details →</a>
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Employee Assignments -->
                 <div class="px-6 py-4">
                     {% if shift_data.assignments %}
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {% for assignment in shift_data.assignments %}
-                        <div class="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors duration-150">
+                        <div class="bg-zinc-50 rounded-xl p-4 hover:bg-zinc-100 transition-colors">
                             <div class="flex items-center space-x-3">
-                                <div class="flex-shrink-0">
-                                    <div class="h-10 w-10 rounded-lg bg-gradient-to-r from-gray-200 to-gray-300 flex items-center justify-center">
-                                        <span class="text-sm font-semibold text-gray-700">
-                                            {{ assignment.user.first_name.0|default:assignment.user.username.0 }}{{ assignment.user.last_name.0 }}
-                                        </span>
-                                    </div>
+                                <div
+                                    class="h-10 w-10 rounded-lg bg-gradient-to-r from-zinc-200 to-zinc-300 flex items-center justify-center">
+                                    <span class="text-sm font-semibold text-zinc-700">
+                                        {{ assignment.user.first_name.0|default:assignment.user.username.0 }}{{
+                                        assignment.user.last_name.0 }}
+                                    </span>
                                 </div>
-                                <div class="min-w-0 flex-1">
-                                    <p class="text-sm font-semibold text-gray-900 truncate">
-                                        {{ assignment.user.get_full_name|default:assignment.user.username }}
-                                    </p>
+                                <div class="flex-1">
+                                    <p class="text-sm font-semibold text-zinc-900">{{
+                                        assignment.user.get_full_name|default:assignment.user.username }}</p>
                                     <div class="flex items-center space-x-2">
                                         {% if assignment.status == 'ACTIVE' %}
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                                            Active
-                                        </span>
+                                        <span class="badge badge-emerald">Active</span>
                                         {% elif assignment.status == 'APPROVED' %}
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                            Approved
-                                        </span>
+                                        <span class="badge badge-blue">Approved</span>
                                         {% endif %}
-                                        
-                                        <a href="{% url 'shift:assignment_detail' assignment.pk %}" 
-                                           class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
-                                            View
-                                        </a>
+
+                                        <a href="{% url 'shift:assignment_detail' assignment.pk %}"
+                                            class="text-xs text-teal-600 hover:text-teal-700 font-medium">View</a>
                                     </div>
                                 </div>
                             </div>
@@ -221,40 +212,42 @@
                     </div>
                     {% else %}
                     <div class="text-center py-8">
-                        <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        <svg class="mx-auto h-8 w-8 text-zinc-400" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
-                        <h3 class="mt-2 text-sm font-medium text-gray-900">No assignments</h3>
-                        <p class="mt-1 text-sm text-gray-500">No employees are assigned to this shift today.</p>
+                        <h3 class="mt-2 text-sm font-medium text-zinc-900">No assignments</h3>
+                        <p class="mt-1 text-sm text-zinc-500">No employees are assigned to this shift today.</p>
                     </div>
                     {% endif %}
                 </div>
             </div>
             {% empty %}
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-12 text-center">
-                <div class="w-20 h-20 mx-auto bg-gradient-to-r from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mb-6">
-                    <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            <div class="glass-panel p-12 text-center">
+                <div
+                    class="w-20 h-20 mx-auto bg-gradient-to-r from-zinc-100 to-zinc-200 rounded-2xl flex items-center justify-center mb-6">
+                    <svg class="w-10 h-10 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                 </div>
-                <h3 class="text-xl font-semibold text-gray-900 mb-2">No shifts scheduled</h3>
-                <p class="text-gray-500 mb-8 max-w-md mx-auto">
-                    No shift assignments are scheduled for {{ target_date|date:"F d, Y" }}.
-                </p>
-                
+                <h3 class="text-xl font-semibold text-zinc-900 mb-2">No shifts scheduled</h3>
+                <p class="text-zinc-500 mb-8 max-w-md mx-auto">No shift assignments are scheduled for {{
+                    target_date|date:"F d, Y" }}.</p>
+
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="{% url 'shift:assignment_create' %}" 
-                       class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
-                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    <a href="{% url 'shift:assignment_create' %}" class="btn btn-emerald">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
                         Create Assignment
                     </a>
-                    
-                    <a href="{% url 'shift:shift_list' %}" 
-                       class="inline-flex items-center px-6 py-3 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-xl shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200">
-                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+
+                    <a href="{% url 'shift:shift_list' %}" class="btn btn-secondary">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         View All Shifts
                     </a>
@@ -266,14 +259,27 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Auto-submit date form on change
-    const dateInput = document.querySelector('input[name="date"]');
-    if (dateInput) {
-        dateInput.addEventListener('change', function() {
-            this.form.submit();
-        });
+    // Navigate to previous/next day
+    function navigateDay(offset) {
+        const dateInput = document.querySelector('input[name="date"]');
+        if (dateInput && dateInput.value) {
+            const currentDate = new Date(dateInput.value);
+            currentDate.setDate(currentDate.getDate() + offset);
+            const year = currentDate.getFullYear();
+            const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+            const day = String(currentDate.getDate()).padStart(2, '0');
+            window.location.href = '?date=' + year + '-' + month + '-' + day;
+        }
     }
-});
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Auto-submit date form on change
+        const dateInput = document.querySelector('input[name="date"]');
+        if (dateInput) {
+            dateInput.addEventListener('change', function () {
+                this.form.submit();
+            });
+        }
+    });
 </script>
 {% endblock %}

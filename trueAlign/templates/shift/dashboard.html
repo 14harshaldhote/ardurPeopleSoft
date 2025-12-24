@@ -3,49 +3,49 @@
 {% block page_title %}Shift Management Dashboard{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+<div class="min-h-screen bg-zinc-50">
     <!-- Header Section -->
     <div class="bg-white shadow-sm border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between py-6">
+        <div class="max-w-7xl mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
-                    <div class="flex-shrink-0">
-                        <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
+                    <div
+                        class="w-12 h-12 bg-gradient-to-r from-teal-500 to-teal-600 rounded-xl flex items-center justify-center">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                     </div>
                     <div>
-                        <h1 class="text-3xl font-bold text-gray-900">Shift Management</h1>
-                        <p class="text-gray-600">Manage shifts, assignments, and schedules</p>
+                        <h1 class="text-3xl font-bold text-zinc-900">Shift Management</h1>
+                        <p class="text-zinc-600">Manage shifts, assignments, and schedules</p>
                     </div>
                 </div>
-                
+
                 <!-- Quick Actions -->
                 <div class="flex items-center space-x-3">
-                    <button id="refresh-dashboard" 
-                            class="inline-flex items-center px-3 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200">
-                        <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    <button id="refresh-dashboard" class="btn btn-secondary">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
                         Refresh
                     </button>
                     {% if is_admin or is_hr %}
-                    <a href="{% url 'shift:shift_create' %}" 
-                       class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-medium rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
-                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    <a href="{% url 'shift:shift_create' %}" class="btn btn-teal">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
                         New Shift
                     </a>
                     {% endif %}
-                    
+
                     {% if is_admin or is_hr or is_manager %}
-                    <a href="{% url 'shift:bulk_assignment_create' %}" 
-                       class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-sm font-medium rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
-                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    <a href="{% url 'shift:bulk_assignment_create' %}" class="btn btn-emerald">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
                         Bulk Assign
                     </a>
@@ -55,109 +55,120 @@
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-7xl mx-auto px-4 py-8">
         <!-- Statistics Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <!-- Total Shifts Card -->
-            <div class="bg-white overflow-hidden shadow-xl rounded-2xl border border-gray-100 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+            <div class="glass-panel hover-lift">
                 <div class="p-6">
                     <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-                                <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                            </div>
+                        <div
+                            class="w-12 h-12 bg-gradient-to-r from-teal-500 to-teal-600 rounded-xl flex items-center justify-center">
+                            <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
                         </div>
                         <div class="ml-4 flex-1">
-                            <p class="text-sm font-medium text-gray-600">Total Shifts</p>
-                            <p class="text-3xl font-bold text-gray-900" data-stat="total_shifts">{{ stats.total_shifts }}</p>
+                            <p class="text-sm font-medium text-zinc-600">Total Shifts</p>
+                            <p class="text-3xl font-bold text-zinc-900" data-stat="total_shifts">{{ stats.total_shifts }}</p>
                         </div>
                     </div>
                 </div>
-                <div class="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-3">
+                <div class="bg-gradient-to-r from-teal-50 to-teal-100 px-6 py-3">
                     <div class="flex items-center justify-between">
-                        <span class="text-sm font-semibold text-blue-700">{{ stats.active_shifts }} active</span>
-                        <a href="{% url 'shift:shift_list' %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View all →</a>
+                        <span class="text-sm font-semibold text-teal-700">{{ stats.active_shifts }} active</span>
+                        <a href="{% url 'shift:shift_list' %}"
+                            class="text-teal-600 hover:text-teal-700 text-sm font-medium">View all →</a>
                     </div>
                 </div>
             </div>
 
             <!-- Active Assignments Card -->
-            <div class="bg-white overflow-hidden shadow-xl rounded-2xl border border-gray-100 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+            <div class="glass-panel hover-lift">
                 <div class="p-6">
                     <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <div class="w-12 h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center">
-                                <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                            </div>
+                        <div
+                            class="w-12 h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center">
+                            <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
                         </div>
                         <div class="ml-4 flex-1">
-                            <p class="text-sm font-medium text-gray-600">Active Assignments</p>
-                            <p class="text-3xl font-bold text-gray-900" data-stat="active_assignments">{{ stats.active_assignments }}</p>
+                            <p class="text-sm font-medium text-zinc-600">Active Assignments</p>
+                            <p class="text-3xl font-bold text-zinc-900" data-stat="active_assignments">{{
+                                stats.active_assignments }}</p>
                         </div>
                     </div>
                 </div>
                 <div class="bg-gradient-to-r from-emerald-50 to-emerald-100 px-6 py-3">
                     <div class="flex items-center justify-between">
                         <span class="text-sm font-semibold text-emerald-700">{{ stats.total_assignments }} total</span>
-                        <a href="{% url 'shift:assignment_list' %}" class="text-emerald-600 hover:text-emerald-800 text-sm font-medium">View all →</a>
+                        <a href="{% url 'shift:assignment_list' %}"
+                            class="text-emerald-600 hover:text-emerald-700 text-sm font-medium">View all →</a>
                     </div>
                 </div>
             </div>
 
             <!-- Pending Approvals Card -->
-            <div class="bg-white overflow-hidden shadow-xl rounded-2xl border border-gray-100 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+            <div class="glass-panel hover-lift">
                 <div class="p-6">
                     <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <div class="w-12 h-12 bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl flex items-center justify-center">
-                                <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                            </div>
+                        <div
+                            class="w-12 h-12 bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl flex items-center justify-center">
+                            <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
                         </div>
                         <div class="ml-4 flex-1">
-                            <p class="text-sm font-medium text-gray-600">Pending Approvals</p>
-                            <p class="text-3xl font-bold text-gray-900" data-stat="pending_approvals">{{ stats.pending_approvals }}</p>
+                            <p class="text-sm font-medium text-zinc-600">Pending Approvals</p>
+                            <p class="text-3xl font-bold text-zinc-900" data-stat="pending_approvals">{{
+                                stats.pending_approvals }}</p>
                         </div>
                     </div>
                 </div>
                 <div class="bg-gradient-to-r from-amber-50 to-amber-100 px-6 py-3">
                     <div class="flex items-center justify-between">
                         <span class="text-sm font-semibold text-amber-700">Needs attention</span>
-                        <a href="{% url 'shift:assignment_list' %}?status=PENDING" class="text-amber-600 hover:text-amber-800 text-sm font-medium">Review →</a>
+                        <a href="{% url 'shift:assignment_list' %}?status=PENDING"
+                            class="text-amber-600 hover:text-amber-700 text-sm font-medium">Review →</a>
                     </div>
                 </div>
             </div>
 
             <!-- Conflicts Card -->
-            <div class="bg-white overflow-hidden shadow-xl rounded-2xl border border-gray-100 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+            <div class="glass-panel hover-lift">
                 <div class="p-6">
                     <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <div class="w-12 h-12 bg-gradient-to-r from-rose-500 to-rose-600 rounded-xl flex items-center justify-center">
-                                <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-                                </svg>
-                            </div>
+                        <div
+                            class="w-12 h-12 bg-gradient-to-r from-red-500 to-red-600 rounded-xl flex items-center justify-center">
+                            <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
                         </div>
                         <div class="ml-4 flex-1">
-                            <p class="text-sm font-medium text-gray-600">Unresolved Conflicts</p>
-                            <p class="text-3xl font-bold text-gray-900" data-stat="unresolved_conflicts">{{ stats.unresolved_conflicts }}</p>
+                            <p class="text-sm font-medium text-zinc-600">Unresolved Conflicts</p>
+                            <p class="text-3xl font-bold text-zinc-900" data-stat="unresolved_conflicts">{{
+                                stats.unresolved_conflicts }}</p>
                         </div>
                     </div>
                 </div>
-                <div class="bg-gradient-to-r from-rose-50 to-rose-100 px-6 py-3">
+                <div class="bg-gradient-to-r from-red-50 to-red-100 px-6 py-3">
                     <div class="flex items-center justify-between">
                         {% if is_admin or is_hr %}
-                        <span class="text-sm font-semibold text-rose-700">Requires resolution</span>
-                        <a href="{% url 'shift:conflict_list' %}?is_resolved=false" class="text-rose-600 hover:text-rose-800 text-sm font-medium">Resolve →</a>
+                        <span class="text-sm font-semibold text-red-700">Requires resolution</span>
+                        <a href="{% url 'shift:conflict_list' %}?is_resolved=false"
+                            class="text-red-600 hover:text-red-700 text-sm font-medium">Resolve →</a>
                         {% else %}
-                        <span class="text-sm text-gray-500">Restricted access</span>
-                        <span class="text-gray-400">—</span>
+                        <span class="text-sm text-zinc-500">Restricted access</span>
+                        <span class="text-zinc-400">—</span>
                         {% endif %}
                     </div>
                 </div>
@@ -167,25 +178,36 @@
         <!-- Enhanced Statistics Section -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <!-- Shift Type Breakdown -->
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <div class="glass-panel p-6">
                 <div class="flex items-center justify-between mb-6">
                     <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        <div
+                            class="w-8 h-8 bg-gradient-to-r from-teal-500 to-teal-600 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                             </svg>
                         </div>
-                        <h3 class="text-lg font-semibold text-gray-900">Shift Types</h3>
+                        <h3 class="text-lg font-semibold text-zinc-900">Shift Types</h3>
                     </div>
-                    <span class="text-sm text-gray-500">Distribution</span>
+                    <span class="text-sm text-zinc-500">Distribution</span>
                 </div>
-                
+
                 <div class="space-y-4">
                     {% for stat in shift_type_stats %}
-                    <div class="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl">
+                    <div class="flex items-center justify-between p-3 bg-gradient-to-r 
+                        {% if 'Day' in stat.name %}from-sky-50 to-sky-100
+                        {% elif 'Evening' in stat.name %}from-indigo-50 to-indigo-100
+                        {% elif 'Night' in stat.name %}from-violet-50 to-violet-100
+                        {% else %}from-amber-50 to-amber-100{% endif %} rounded-xl">
                         <div class="flex items-center space-x-3">
-                            <div class="w-3 h-3 bg-purple-500 rounded-full"></div>
-                            <span class="font-medium text-gray-900">
+                            <div class="w-3 h-3 rounded-full 
+                                {% if 'Day' in stat.name %}bg-sky-500
+                                {% elif 'Evening' in stat.name %}bg-indigo-500
+                                {% elif 'Night' in stat.name %}bg-violet-600
+                                {% else %}bg-amber-500{% endif %}"></div>
+                            <span class="font-medium text-zinc-900">
                                 {% if 'Day' in stat.name %}🌅 {{ stat.name }}
                                 {% elif 'Night' in stat.name %}🌙 {{ stat.name }}
                                 {% elif 'Evening' in stat.name %}🌆 {{ stat.name }}
@@ -193,14 +215,20 @@
                             </span>
                         </div>
                         <div class="flex items-center space-x-2">
-                            <span class="text-2xl font-bold text-purple-600">{{ stat.count }}</span>
-                            <span class="text-sm text-gray-500">shifts</span>
+                            <span class="text-2xl font-bold 
+                                {% if 'Day' in stat.name %}text-sky-600
+                                {% elif 'Evening' in stat.name %}text-indigo-600
+                                {% elif 'Night' in stat.name %}text-violet-600
+                                {% else %}text-amber-600{% endif %}">{{ stat.count }}</span>
+                            <span class="text-sm text-zinc-500">shifts</span>
                         </div>
                     </div>
                     {% empty %}
-                    <div class="text-center py-8 text-gray-500">
-                        <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                    <div class="text-center py-8 text-zinc-500">
+                        <svg class="w-12 h-12 mx-auto mb-4 text-zinc-300" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                         </svg>
                         <p>No shift types found</p>
                     </div>
@@ -209,35 +237,38 @@
             </div>
 
             <!-- Assignment Status Breakdown -->
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <div class="glass-panel p-6">
                 <div class="flex items-center justify-between mb-6">
                     <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                        <div
+                            class="w-8 h-8 bg-gradient-to-r from-cyan-500 to-cyan-600 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                             </svg>
                         </div>
-                        <h3 class="text-lg font-semibold text-gray-900">Assignment Status</h3>
+                        <h3 class="text-lg font-semibold text-zinc-900">Assignment Status</h3>
                     </div>
-                    <span class="text-sm text-gray-500">Current</span>
+                    <span class="text-sm text-zinc-500">Current</span>
                 </div>
-                
+
                 <div class="space-y-4">
                     {% for stat in assignment_status_stats %}
                     <div class="flex items-center justify-between p-3 rounded-xl
-                        {% if stat.status == 'ACTIVE' %}bg-gradient-to-r from-green-50 to-green-100
-                        {% elif stat.status == 'PENDING' %}bg-gradient-to-r from-yellow-50 to-yellow-100
+                        {% if stat.status == 'ACTIVE' %}bg-gradient-to-r from-emerald-50 to-emerald-100
+                        {% elif stat.status == 'PENDING' %}bg-gradient-to-r from-amber-50 to-amber-100
                         {% elif stat.status == 'APPROVED' %}bg-gradient-to-r from-blue-50 to-blue-100
                         {% elif stat.status == 'REJECTED' %}bg-gradient-to-r from-red-50 to-red-100
-                        {% else %}bg-gradient-to-r from-gray-50 to-gray-100{% endif %}">
+                        {% else %}bg-gradient-to-r from-zinc-50 to-zinc-100{% endif %}">
                         <div class="flex items-center space-x-3">
                             <div class="w-3 h-3 rounded-full
-                                {% if stat.status == 'ACTIVE' %}bg-green-500
-                                {% elif stat.status == 'PENDING' %}bg-yellow-500
+                                {% if stat.status == 'ACTIVE' %}bg-emerald-600
+                                {% elif stat.status == 'PENDING' %}bg-amber-500
                                 {% elif stat.status == 'APPROVED' %}bg-blue-500
-                                {% elif stat.status == 'REJECTED' %}bg-red-500
-                                {% else %}bg-gray-500{% endif %}"></div>
-                            <span class="font-medium text-gray-900">
+                                {% elif stat.status == 'REJECTED' %}bg-red-600
+                                {% else %}bg-zinc-500{% endif %}"></div>
+                            <span class="font-medium text-zinc-900">
                                 {% if stat.status == 'ACTIVE' %}✅ Active
                                 {% elif stat.status == 'PENDING' %}⏳ Pending
                                 {% elif stat.status == 'APPROVED' %}👍 Approved
@@ -247,18 +278,20 @@
                         </div>
                         <div class="flex items-center space-x-2">
                             <span class="text-2xl font-bold 
-                                {% if stat.status == 'ACTIVE' %}text-green-600
-                                {% elif stat.status == 'PENDING' %}text-yellow-600
+                                {% if stat.status == 'ACTIVE' %}text-emerald-600
+                                {% elif stat.status == 'PENDING' %}text-amber-600
                                 {% elif stat.status == 'APPROVED' %}text-blue-600
                                 {% elif stat.status == 'REJECTED' %}text-red-600
-                                {% else %}text-gray-600{% endif %}">{{ stat.count }}</span>
-                            <span class="text-sm text-gray-500">assignments</span>
+                                {% else %}text-zinc-600{% endif %}">{{ stat.count }}</span>
+                            <span class="text-sm text-zinc-500">assignments</span>
                         </div>
                     </div>
                     {% empty %}
-                    <div class="text-center py-8 text-gray-500">
-                        <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    <div class="text-center py-8 text-zinc-500">
+                        <svg class="w-12 h-12 mx-auto mb-4 text-zinc-300" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
                         <p>No assignments found</p>
                     </div>
@@ -272,16 +305,18 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <!-- Total Users Card -->
             {% if stats.users.total_users %}
-            <div class="bg-gradient-to-r from-cyan-500 to-blue-600 rounded-2xl shadow-lg p-6 text-white">
+            <div class="bg-gradient-to-r from-cyan-500 to-teal-600 rounded-2xl shadow-lg p-6 text-white">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-cyan-100 text-sm font-medium">Total Active Users</p>
                         <p class="text-3xl font-bold" data-stat="total_users">{{ stats.users.total_users }}</p>
                         <p class="text-cyan-200 text-sm mt-1">Available for assignments</p>
                     </div>
-                    <div class="w-16 h-16 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
-                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
+                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                         </svg>
                     </div>
                 </div>
@@ -294,12 +329,15 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-orange-100 text-sm font-medium">Expiring Soon</p>
-                        <p class="text-3xl font-bold" data-stat="expiring_soon">{{ stats.assignments.expiring_soon }}</p>
+                        <p class="text-3xl font-bold" data-stat="expiring_soon">{{ stats.assignments.expiring_soon }}
+                        </p>
                         <p class="text-orange-200 text-sm mt-1">Within 7 days</p>
                     </div>
-                    <div class="w-16 h-16 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
-                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
                 </div>
@@ -310,99 +348,93 @@
 
         <!-- Navigation Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-            <a href="{% url 'shift:shift_list' %}" class="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
+            <a href="{% url 'shift:shift_list' %}" class="glass-panel p-6 hover-lift group">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-10 h-10 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
+                    <div
+                        class="w-10 h-10 bg-gradient-to-r from-teal-500 to-teal-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">All Shifts</p>
-                        <p class="text-xs text-gray-500">Manage shift patterns</p>
+                        <p class="text-sm font-medium text-zinc-900 group-hover:text-teal-600 transition-colors">All
+                            Shifts</p>
+                        <p class="text-xs text-zinc-500">Manage shift patterns</p>
                     </div>
                 </div>
             </a>
-            
-            <a href="{% url 'shift:assignment_list' %}" class="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
+
+            <a href="{% url 'shift:assignment_list' %}" class="glass-panel p-6 hover-lift group">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-10 h-10 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                        </div>
+                    <div
+                        class="w-10 h-10 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition- transform">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-900 group-hover:text-emerald-600 transition-colors">Assignments</p>
-                        <p class="text-xs text-gray-500">View all assignments</p>
+                        <p class="text-sm font-medium text-zinc-900 group-hover:text-emerald-600 transition-colors">
+                            Assignments</p>
+                        <p class="text-xs text-zinc-500">View all assignments</p>
                     </div>
                 </div>
             </a>
-            
-            <a href="{% url 'shift:calendar_view' %}" class="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
+
+            <a href="{% url 'shift:calendar_view' %}" class="glass-panel p-6 hover-lift group">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                        </div>
+                    <div
+                        class="w-10 h-10 bg-gradient-to-r from-cyan-500 to-cyan-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-900 group-hover:text-purple-600 transition-colors">Calendar</p>
-                        <p class="text-xs text-gray-500">Schedule overview</p>
+                        <p class="text-sm font-medium text-zinc-900 group-hover:text-cyan-600 transition-colors">
+                            Calendar</p>
+                        <p class="text-xs text-zinc-500">Schedule overview</p>
                     </div>
                 </div>
             </a>
-            
-            {% if is_admin or is_hr or is_manager%}
-            <a href="{% url 'shift:conflict_list' %}" class="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
+
+            {% if is_admin or is_hr or is_manager %}
+            <a href="{% url 'shift:conflict_list' %}" class="glass-panel p-6 hover-lift group">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-10 h-10 bg-gradient-to-r from-rose-500 to-rose-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-                            </svg>
-                        </div>
+                    <div
+                        class="w-10 h-10 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-900 group-hover:text-rose-600 transition-colors">Conflicts</p>
-                        <p class="text-xs text-gray-500">Resolve issues</p>
+                        <p class="text-sm font-medium text-zinc-900 group-hover:text-red-600 transition-colors">
+                            Conflicts</p>
+                        <p class="text-xs text-zinc-500">Resolve issues</p>
                     </div>
                 </div>
             </a>
-            
-            <a href="{% url 'shift:team_assignments' %}" class="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
+
+            <a href="{% url 'shift:team_assignments' %}" class="glass-panel p-6 hover-lift group">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-10 h-10 bg-gradient-to-r from-teal-500 to-teal-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                            </svg>
-                        </div>
+                    <div
+                        class="w-10 h-10 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-900 group-hover:text-teal-600 transition-colors">Team Assignments</p>
-                        <p class="text-xs text-gray-500">View team schedules</p>
-                    </div>
-                </div>
-            </a>
-            
-            <a href="{% url 'shift:utilization_reports' %}" class="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">Utilization Reports</p>
-                        <p class="text-xs text-gray-500">Analyze performance</p>
+                        <p class="text-sm font-medium text-zinc-900 group-hover:text-indigo-600 transition-colors">Team
+                            Assignments</p>
+                        <p class="text-xs text-zinc-500">View team schedules</p>
                     </div>
                 </div>
             </a>
@@ -412,79 +444,77 @@
         <!-- Recent Activity -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <!-- Recent Assignments -->
-            <div class="bg-white shadow-xl rounded-2xl border border-gray-100 overflow-hidden">
-                <div class="px-6 py-5 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
+            <div class="glass-panel overflow-hidden">
+                <div class="px-6 py-5 bg-gradient-to-r from-teal-50 to-cyan-50 border-b border-teal-100">
                     <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
-                            <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-3">
-                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        <h3 class="text-lg font-semibold text-zinc-900 flex items-center">
+                            <div
+                                class="w-8 h-8 bg-gradient-to-r from-teal-500 to-teal-600 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                             </div>
                             Recent Assignments
                         </h3>
-                        <span class="text-sm text-blue-600 font-medium">{{ recent_assignments|length }} items</span>
+                        <span class="text-sm text-teal-600 font-medium">{{ recent_assignments|length }} items</span>
                     </div>
                 </div>
-                <div class="divide-y divide-gray-100">
+                <div class="divide-y divide-zinc-100">
                     {% for assignment in recent_assignments %}
-                    <div class="px-6 py-4 hover:bg-gray-50 transition-colors duration-150">
+                    <div class="px-6 py-4 hover:bg-zinc-50 transition-colors">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-4">
-                                <div class="flex-shrink-0">
-                                    <div class="h-12 w-12 rounded-xl bg-gradient-to-r from-gray-100 to-gray-200 flex items-center justify-center border-2 border-white shadow-sm">
-                                        <span class="text-sm font-semibold text-gray-700">
-                                            {{ assignment.user.first_name.0|default:assignment.user.username.0 }}{{ assignment.user.last_name.0 }}
-                                        </span>
-                                    </div>
+                                <div
+                                    class="h-12 w-12 rounded-xl bg-gradient-to-r from-zinc-100 to-zinc-200 flex items-center justify-center border-2 border-white shadow-sm">
+                                    <span class="text-sm font-semibold text-zinc-700">
+                                        {{ assignment.user.first_name.0|default:assignment.user.username.0 }}{{
+                                        assignment.user.last_name.0 }}
+                                    </span>
                                 </div>
-                                <div class="min-w-0 flex-1">
-                                    <p class="text-sm font-semibold text-gray-900 truncate">
-                                        {{ assignment.user.get_full_name|default:assignment.user.username }}
-                                    </p>
-                                    <p class="text-sm text-gray-600 truncate flex items-center">
-                                        <span class="inline-block w-2 h-2 bg-blue-400 rounded-full mr-2"></span>
+                                <div>
+                                    <p class="text-sm font-semibold text-zinc-900">{{
+                                        assignment.user.get_full_name|default:assignment.user.username }}</p>
+                                    <p class="text-sm text-zinc-600 flex items-center">
+                                        <span class="inline-block w-2 h-2 bg-teal-400 rounded-full mr-2"></span>
                                         {{ assignment.shift.name }} • {{ assignment.effective_from|date:"M d" }}
                                     </p>
                                 </div>
                             </div>
-                            <div class="flex items-center space-x-2">
+                            <div>
                                 {% if assignment.status == 'ACTIVE' %}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                                    Active
-                                </span>
+                                <span class="badge badge-emerald">Active</span>
                                 {% elif assignment.status == 'PENDING' %}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                                    Pending
-                                </span>
+                                <span class="badge badge-amber">Pending</span>
                                 {% elif assignment.status == 'APPROVED' %}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                    Approved
-                                </span>
+                                <span class="badge badge-blue">Approved</span>
                                 {% else %}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                    {{ assignment.get_status_display }}
-                                </span>
+                                <span class="badge badge-slate">{{ assignment.get_status_display }}</span>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
                     {% empty %}
                     <div class="px-6 py-12 text-center">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        <svg class="mx-auto h-12 w-12 text-zinc-400" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        <h3 class="mt-2 text-sm font-medium text-gray-900">No recent assignments</h3>
-                        <p class="mt-1 text-sm text-gray-500">Get started by creating a new assignment.</p>
+                        <h3 class="mt-2 text-sm font-medium text-zinc-900">No recent assignments</h3>
+                        <p class="mt-1 text-sm text-zinc-500">Get started by creating a new assignment.</p>
                     </div>
                     {% endfor %}
                 </div>
                 {% if recent_assignments %}
-                <div class="px-6 py-4 bg-gray-50 border-t border-gray-100">
-                    <a href="{% url 'shift:assignment_list' %}" class="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center justify-center group">
+                <div class="px-6 py-4 bg-zinc-50 border-t border-zinc-100">
+                    <a href="{% url 'shift:assignment_list' %}"
+                        class="text-sm font-medium text-teal-600 hover:text-teal-700 flex items-center justify-center group">
                         View all assignments
-                        <svg class="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                        <svg class="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                         </svg>
                     </a>
                 </div>
@@ -492,71 +522,71 @@
             </div>
 
             <!-- Recent Conflicts -->
-            <div class="bg-white shadow-xl rounded-2xl border border-gray-100 overflow-hidden">
-                <div class="px-6 py-5 bg-gradient-to-r from-rose-50 to-red-50 border-b border-rose-100">
+            <div class="glass-panel overflow-hidden">
+                <div class="px-6 py-5 bg-gradient-to-r from-red-50 to-rose-50 border-b border-red-100">
                     <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
-                            <div class="w-8 h-8 bg-gradient-to-r from-rose-500 to-rose-600 rounded-lg flex items-center justify-center mr-3">
-                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                        <h3 class="text-lg font-semibold text-zinc-900 flex items-center">
+                            <div
+                                class="w-8 h-8 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                                 </svg>
                             </div>
                             Recent Conflicts
                         </h3>
-                        <span class="text-sm text-rose-600 font-medium">{{ recent_conflicts|length }} items</span>
+                        <span class="text-sm text-red-600 font-medium">{{ recent_conflicts|length }} items</span>
                     </div>
                 </div>
-                <div class="divide-y divide-gray-100">
+                <div class="divide-y divide-zinc-100">
                     {% for conflict in recent_conflicts %}
-                    <div class="px-6 py-4 hover:bg-gray-50 transition-colors duration-150 {% if conflict.severity == 'HIGH' %}border-l-4 border-red-400{% elif conflict.severity == 'MEDIUM' %}border-l-4 border-amber-400{% else %}border-l-4 border-emerald-400{% endif %}">
+                    <div
+                        class="px-6 py-4 hover:bg-zinc-50 transition-colors {% if conflict.severity == 'HIGH' %}border-l-4 border-red-400{% elif conflict.severity == 'MEDIUM' %}border-l-4 border-amber-400{% else %}border-l-4 border-emerald-400{% endif %}">
                         <div class="flex items-center justify-between">
-                            <div class="min-w-0 flex-1">
-                                <p class="text-sm font-semibold text-gray-900 truncate">
-                                    {{ conflict.get_conflict_type_display }}
+                            <div>
+                                <p class="text-sm font-semibold text-zinc-900">{{ conflict.get_conflict_type_display }}
                                 </p>
-                                <p class="text-sm text-gray-600 truncate flex items-center">
-                                    <span class="inline-block w-2 h-2 {% if conflict.severity == 'HIGH' %}bg-red-400{% elif conflict.severity == 'MEDIUM' %}bg-amber-400{% else %}bg-emerald-400{% endif %} rounded-full mr-2"></span>
+                                <p class="text-sm text-zinc-600 flex items-center">
+                                    <span
+                                        class="inline-block w-2 h-2 {% if conflict.severity == 'HIGH' %}bg-red-400{% elif conflict.severity == 'MEDIUM' %}bg-amber-400{% else %}bg-emerald-400{% endif %} rounded-full mr-2"></span>
                                     {{ conflict.assignment.user.get_full_name|default:conflict.assignment.user.username }} • {{ conflict.assignment.shift.name }}
                                 </p>
                             </div>
                             <div class="flex items-center space-x-2">
                                 {% if conflict.severity == 'HIGH' %}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                    High Priority
-                                </span>
+                                <span class="badge badge-red">High Priority</span>
                                 {% elif conflict.severity == 'MEDIUM' %}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                                    Medium
-                                </span>
+                                <span class="badge badge-amber">Medium</span>
                                 {% else %}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                                    Low Priority
-                                </span>
+                                <span class="badge badge-emerald">Low Priority</span>
                                 {% endif %}
                                 {% if not conflict.is_resolved %}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                    Unresolved
-                                </span>
+                                <span class="badge badge-red">Unresolved</span>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
                     {% empty %}
                     <div class="px-6 py-12 text-center">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        <svg class="mx-auto h-12 w-12 text-zinc-400" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <h3 class="mt-2 text-sm font-medium text-gray-900">No recent conflicts</h3>
-                        <p class="mt-1 text-sm text-gray-500">All assignments are running smoothly.</p>
+                        <h3 class="mt-2 text-sm font-medium text-zinc-900">No recent conflicts</h3>
+                        <p class="mt-1 text-sm text-zinc-500">All assignments are running smoothly.</p>
                     </div>
                     {% endfor %}
                 </div>
                 {% if recent_conflicts %}
-                <div class="px-6 py-4 bg-gray-50 border-t border-gray-100">
-                    <a href="{% url 'shift:conflict_list' %}" class="text-sm font-medium text-rose-600 hover:text-rose-800 flex items-center justify-center group">
+                <div class="px-6 py-4 bg-zinc-50 border-t border-zinc-100">
+                    <a href="{% url 'shift:conflict_list' %}"
+                        class="text-sm font-medium text-red-600 hover:text-red-700 flex items-center justify-center group">
                         View all conflicts
-                        <svg class="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                        <svg class="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                         </svg>
                     </a>
                 </div>
@@ -567,151 +597,151 @@
 </div>
 
 <script>
-// API Functions
-async function fetchDashboardStats() {
-    const response = await fetch('{% url "shift:api_dashboard_stats" %}');
-    if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+    // API Functions
+    async function fetchDashboardStats() {
+        const response = await fetch('{% url "shift:api_dashboard_stats" %}');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
     }
-    return await response.json();
-}
 
-async function fetchConflictStats() {
-    const response = await fetch('{% url "shift:conflict_statistics" %}');
-    if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+    async function fetchConflictStats() {
+        const response = await fetch('{% url "shift:conflict_statistics" %}');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
     }
-    return await response.json();
-}
 
-// Dashboard refresh function
-async function refreshDashboard() {
-    try {
-        // Show loading indicator
-        const loadingElements = document.querySelectorAll('[data-stat]');
-        loadingElements.forEach(el => {
-            el.style.opacity = '0.6';
-        });
+    // Dashboard refresh function
+    async function refreshDashboard() {
+        try {
+            // Show loading indicator
+            const loadingElements = document.querySelectorAll('[data-stat]');
+            loadingElements.forEach(el => {
+                el.style.opacity = '0.6';
+            });
 
-        // Fetch updated statistics
-        const stats = await fetchDashboardStats();
-        
-        // Update main statistics cards
-        const updateElement = (selector, value) => {
-            const element = document.querySelector(selector);
-            if (element) {
-                element.textContent = value || '0';
-                element.style.opacity = '1';
-                
-                // Add flash animation
-                element.classList.add('animate-pulse');
-                setTimeout(() => element.classList.remove('animate-pulse'), 1000);
-            }
-        };
+            // Fetch updated statistics
+            const stats = await fetchDashboardStats();
 
-        updateElement('[data-stat="total_shifts"]', stats.total_shifts);
-        updateElement('[data-stat="active_shifts"]', stats.active_shifts);
-        updateElement('[data-stat="active_assignments"]', stats.active_assignments);
-        updateElement('[data-stat="pending_approvals"]', stats.pending_approvals);
-        updateElement('[data-stat="unresolved_conflicts"]', stats.unresolved_conflicts);
+            // Update main statistics cards
+            const updateElement = (selector, value) => {
+                const element = document.querySelector(selector);
+                if (element) {
+                    element.textContent = value || '0';
+                    element.style.opacity = '1';
 
-        // Update additional metrics if they exist
-        updateElement('[data-stat="total_users"]', stats.total_users);
-        updateElement('[data-stat="expiring_soon"]', stats.expiring_soon);
+                    // Add flash animation
+                    element.classList.add('animate-pulse');
+                    setTimeout(() => element.classList.remove('animate-pulse'), 1000);
+                }
+            };
 
-        // Show success indicator
-        showNotification('Dashboard updated successfully', 'success');
-        
-    } catch (error) {
-        console.error('Error refreshing dashboard:', error);
-        showNotification('Failed to refresh dashboard', 'error');
-        
-        // Reset opacity on error
-        const loadingElements = document.querySelectorAll('[data-stat]');
-        loadingElements.forEach(el => {
-            el.style.opacity = '1';
-        });
+            updateElement('[data-stat="total_shifts"]', stats.total_shifts);
+            updateElement('[data-stat="active_shifts"]', stats.active_shifts);
+            updateElement('[data-stat="active_assignments"]', stats.active_assignments);
+            updateElement('[data-stat="pending_approvals"]', stats.pending_approvals);
+            updateElement('[data-stat="unresolved_conflicts"]', stats.unresolved_conflicts);
+
+            // Update additional metrics if they exist
+            updateElement('[data-stat="total_users"]', stats.total_users);
+            updateElement('[data-stat="expiring_soon"]', stats.expiring_soon);
+
+            // Show success indicator
+            showNotification('Dashboard updated successfully', 'success');
+
+        } catch (error) {
+            console.error('Error refreshing dashboard:', error);
+            showNotification('Failed to refresh dashboard', 'error');
+
+            // Reset opacity on error
+            const loadingElements = document.querySelectorAll('[data-stat]');
+            loadingElements.forEach(el => {
+                el.style.opacity = '1';
+            });
+        }
     }
-}
 
-// Notification system
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 px-4 py-2 rounded-lg text-white text-sm font-medium z-50 transition-all duration-300 transform translate-x-full`;
-    
-    if (type === 'success') {
-        notification.classList.add('bg-green-500');
-    } else if (type === 'error') {
-        notification.classList.add('bg-red-500');
-    } else {
-        notification.classList.add('bg-blue-500');
-    }
-    
-    notification.textContent = message;
-    document.body.appendChild(notification);
-    
-    // Animate in
-    setTimeout(() => {
-        notification.classList.remove('translate-x-full');
-    }, 100);
-    
-    // Animate out and remove
-    setTimeout(() => {
-        notification.classList.add('translate-x-full');
+    // Notification system
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 px-4 py-2 rounded-lg text-white text-sm font-medium z-50 transition-all duration-300 transform translate-x-full`;
+
+        if (type === 'success') {
+            notification.classList.add('bg-emerald-500');
+        } else if (type === 'error') {
+            notification.classList.add('bg-red-500');
+        } else {
+            notification.classList.add('bg-teal-500');
+        }
+
+        notification.textContent = message;
+        document.body.appendChild(notification);
+
+        // Animate in
         setTimeout(() => {
-            document.body.removeChild(notification);
-        }, 300);
-    }, 3000);
-}
+            notification.classList.remove('translate-x-full');
+        }, 100);
 
-// Real-time updates for conflict statistics
-async function updateConflictStats() {
-    try {
-        const conflictStats = await fetchConflictStats();
-        
-        // Update conflict-related elements if they exist
-        const updateConflictElement = (selector, value) => {
-            const element = document.querySelector(selector);
-            if (element) {
-                element.textContent = value || '0';
-            }
-        };
-
-        updateConflictElement('[data-conflict="total"]', conflictStats.total_conflicts);
-        updateConflictElement('[data-conflict="unresolved"]', conflictStats.unresolved_count);
-        updateConflictElement('[data-conflict="high_priority"]', conflictStats.high_priority_count);
-        updateConflictElement('[data-conflict="resolved_today"]', conflictStats.resolved_today);
-        
-    } catch (error) {
-        console.error('Error updating conflict stats:', error);
+        // Animate out and remove
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
     }
-}
 
-// Initialize dashboard
-document.addEventListener('DOMContentLoaded', function() {
-    // Add refresh button functionality
-    const refreshButton = document.getElementById('refresh-dashboard');
-    if (refreshButton) {
-        refreshButton.addEventListener('click', function(e) {
-            e.preventDefault();
-            refreshDashboard();
-        });
+    // Real-time updates for conflict statistics
+    async function updateConflictStats() {
+        try {
+            const conflictStats = await fetchConflictStats();
+
+            // Update conflict-related elements if they exist
+            const updateConflictElement = (selector, value) => {
+                const element = document.querySelector(selector);
+                if (element) {
+                    element.textContent = value || '0';
+                }
+            };
+
+            updateConflictElement('[data-conflict="total"]', conflictStats.total_conflicts);
+            updateConflictElement('[data-conflict="unresolved"]', conflictStats.unresolved_count);
+            updateConflictElement('[data-conflict="high_priority"]', conflictStats.high_priority_count);
+            updateConflictElement('[data-conflict="resolved_today"]', conflictStats.resolved_today);
+
+        } catch (error) {
+            console.error('Error updating conflict stats:', error);
+        }
     }
-    
-    // Auto-refresh every 30 seconds
-    setInterval(refreshDashboard, 30000);
-    
-    // Update conflict stats every 60 seconds
-    setInterval(updateConflictStats, 60000);
-    
-    console.log('Dashboard initialized with real-time updates');
-});
 
-// Export functions for global access
-window.dashboardAPI = {
-    refresh: refreshDashboard,
-    updateConflicts: updateConflictStats,
-    showNotification: showNotification
-};
+    // Initialize dashboard
+    document.addEventListener('DOMContentLoaded', function () {
+        // Add refresh button functionality
+        const refreshButton = document.getElementById('refresh-dashboard');
+        if (refreshButton) {
+            refreshButton.addEventListener('click', function (e) {
+                e.preventDefault();
+                refreshDashboard();
+            });
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(refreshDashboard, 30000);
+
+        // Update conflict stats every 60 seconds
+        setInterval(updateConflictStats, 60000);
+
+        console.log('Dashboard initialized with real-time updates');
+    });
+
+    // Export functions for global access
+    window.dashboardAPI = {
+        refresh: refreshDashboard,
+        updateConflicts: updateConflictStats,
+        showNotification: showNotification
+    };
 </script>
 {% endblock %}

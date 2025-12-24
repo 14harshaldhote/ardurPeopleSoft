@@ -41,8 +41,7 @@
                     <select name="box" class="form-select w-full rounded-lg border-gray-300">
                         <option value="">All Boxes</option>
                         {% for box in cash_boxes %}
-                        <option value="{{ box.id }}" {% if request.GET.box==box.id|stringformat:"s" %}selected{% endif
-                            %}>
+                        <option value="{{ box.id }}" {% if request.GET.box == box.id|stringformat:"s" %}selected{% endif %}>
                             {{ box.name }}
                         </option>
                         {% endfor %}
@@ -53,7 +52,7 @@
                     <select name="type" class="form-select w-full rounded-lg border-gray-300">
                         <option value="">All Types</option>
                         {% for value, label in transaction_types %}
-                        <option value="{{ value }}" {% if request.GET.type==value %}selected{% endif %}>{{ label }}
+                        <option value="{{ value }}" {% if request.GET.type == value %}selected{% endif %}>{{ label }}
                         </option>
                         {% endfor %}
                     </select>

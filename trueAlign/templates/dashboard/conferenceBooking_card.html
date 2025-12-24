@@ -1,33 +1,18 @@
 <!-- Conference Room Booking Dashboard Card - Real-time Data -->
 {% if featured_room %}
 <div
-    class="backdrop-blur-xl bg-white/20 p-4 rounded-[16px] border border-black/10 shadow-inner hover:bg-white/25 transition-all duration-300"
->
-    <div
-        class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2"
-    >
+    class="backdrop-blur-xl bg-white/20 p-4 rounded-[16px] border border-black/10 shadow-inner hover:bg-white/25 transition-all duration-300">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
         <div class="flex items-center gap-2 sm:gap-3">
-            <div
-                class="p-2 backdrop-blur-sm bg-white/30 rounded-lg border border-white/20"
-            >
-                <svg
-                    class="h-6 w-6 text-blue-700"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    stroke-width="2"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                    />
+            <div class="p-2 backdrop-blur-sm bg-white/30 rounded-lg border border-white/20">
+                <svg class="h-6 w-6 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                    stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
             </div>
             <div>
-                <h3
-                    class="text-base font-bold text-zinc-900 mb-0"
-                >
+                <h3 class="text-base font-bold text-zinc-900 mb-0">
                     Conference Rooms
                 </h3>
                 <p class="text-xs sm:text-sm text-zinc-600 mb-0">
@@ -38,20 +23,14 @@
         <div class="flex items-center gap-2 mt-2 sm:mt-0">
             {% if is_currently_free %}
             <span
-                class="px-2 sm:px-3 py-0.5 sm:py-1 text-xs font-medium bg-emerald-500/20 text-emerald-700 rounded-md border border-emerald-500/30 flex items-center gap-1"
-            >
-                <span
-                    class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"
-                ></span>
+                class="px-2 sm:px-3 py-0.5 sm:py-1 text-xs font-medium bg-emerald-500/20 text-emerald-700 rounded-md border border-emerald-500/30 flex items-center gap-1">
+                <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
                 Available
             </span>
             {% else %}
             <span
-                class="px-2 sm:px-3 py-0.5 sm:py-1 text-xs font-medium bg-red-500/20 text-red-700 rounded-md border border-red-500/30 flex items-center gap-1"
-            >
-                <span
-                    class="w-2 h-2 bg-red-500 rounded-full animate-pulse"
-                ></span>
+                class="px-2 sm:px-3 py-0.5 sm:py-1 text-xs font-medium bg-red-500/20 text-red-700 rounded-md border border-red-500/30 flex items-center gap-1">
+                <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                 In Use
             </span>
             {% endif %}
@@ -64,46 +43,23 @@
             Current Status
         </h4>
         <div
-            class="backdrop-blur-sm bg-white/30 p-3 rounded-lg border border-white/20 hover:bg-white/40 transition-all duration-200"
-        >
-            <div
-                class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-2 sm:gap-0"
-            >
+            class="backdrop-blur-sm bg-white/30 p-3 rounded-lg border border-white/20 hover:bg-white/40 transition-all duration-200">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-2 sm:gap-0">
                 <div class="flex items-center gap-1 sm:gap-2">
                     {% if is_currently_free %}
-                    <svg
-                        class="w-4 h-4 text-emerald-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        stroke-width="2"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
+                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span class="text-xs sm:text-sm font-medium text-emerald-700"
-                        >Currently Free</span
-                    >
+                    <span class="text-xs sm:text-sm font-medium text-emerald-700">Currently Free</span>
                     {% else %}
-                    <svg
-                        class="w-4 h-4 text-red-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        stroke-width="2"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
+                    <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span class="text-xs sm:text-sm font-medium text-red-700"
-                        >Currently Occupied</span
-                    >
+                    <span class="text-xs sm:text-sm font-medium text-red-700">Currently Occupied</span>
                     {% endif %}
                 </div>
                 {% if free_until %}
@@ -112,52 +68,28 @@
             </div>
             <div class="grid grid-cols-2 gap-2">
                 <div class="text-center">
-                    <div
-                        class="flex items-center justify-center gap-0.5 sm:gap-1 mb-1"
-                    >
-                        <svg
-                            class="w-4 h-4 text-zinc-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            stroke-width="2"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                            />
+                    <div class="flex items-center justify-center gap-0.5 sm:gap-1 mb-1">
+                        <svg class="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
                         <span class="text-xs text-zinc-600">Capacity</span>
                     </div>
-                    <p
-                        class="text-sm sm:text-base lg:text-lg font-bold text-zinc-800"
-                    >
+                    <p class="text-sm sm:text-base lg:text-lg font-bold text-zinc-800">
                         {{ featured_room.capacity }}
                     </p>
                 </div>
                 <div class="text-center">
-                    <div
-                        class="flex items-center justify-center gap-0.5 sm:gap-1 mb-1"
-                    >
-                        <svg
-                            class="w-4 h-4 text-zinc-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            stroke-width="2"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
-                            />
+                    <div class="flex items-center justify-center gap-0.5 sm:gap-1 mb-1">
+                        <svg class="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                         </svg>
                         <span class="text-xs text-zinc-600">Amenities</span>
                     </div>
-                    <p
-                        class="text-sm sm:text-base lg:text-lg font-bold text-zinc-800"
-                    >
+                    <p class="text-sm sm:text-base lg:text-lg font-bold text-zinc-800">
                         {{ featured_room.amenities|length|default:"0" }}
                     </p>
                 </div>
@@ -172,38 +104,23 @@
             Next Booking
         </h4>
         <div
-            class="backdrop-blur-sm bg-amber-500/20 border border-amber-500/30 p-3 rounded-lg hover:bg-amber-500/30 transition-all duration-200"
-        >
+            class="backdrop-blur-sm bg-amber-500/20 border border-amber-500/30 p-3 rounded-lg hover:bg-amber-500/30 transition-all duration-200">
             <div class="flex items-start gap-2">
                 <div
-                    class="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center flex-shrink-0"
-                >
-                    <svg
-                        class="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        stroke-width="2"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
+                    class="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
                 <div class="flex-1">
                     <div
-                        class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-1 gap-1 sm:gap-0"
-                    >
-                        <h5
-                            class="font-bold text-amber-800 text-xs sm:text-sm mb-0"
-                        >
+                        class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-1 gap-1 sm:gap-0">
+                        <h5 class="font-bold text-amber-800 text-xs sm:text-sm mb-0">
                             {{ next_booking.title }}
                         </h5>
-                        <span
-                            class="text-xs font-medium text-amber-700 bg-amber-300/30 px-2 py-1 rounded"
-                        >
+                        <span class="text-xs font-medium text-amber-700 bg-amber-300/30 px-2 py-1 rounded">
                             Upcoming
                         </span>
                     </div>
@@ -222,9 +139,7 @@
         <h4 class="text-xs sm:text-sm font-bold text-zinc-700 mb-2 sm:mb-3">
             Next Booking
         </h4>
-        <div
-            class="backdrop-blur-sm bg-blue-500/10 border border-blue-500/20 p-2.5 rounded-lg text-center"
-        >
+        <div class="backdrop-blur-sm bg-blue-500/10 border border-blue-500/20 p-2.5 rounded-lg text-center">
             <p class="text-xs sm:text-sm text-zinc-600 mb-0">
                 No upcoming bookings for this room
             </p>
@@ -234,97 +149,49 @@
 
     <!-- Action Buttons -->
     <div class="flex flex-col sm:flex-row gap-2">
-        <a
-            href="{% url 'conference:booking_create_room' featured_room.id %}"
-            class="flex-1 inline-flex items-center justify-center px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-md text-sm"
-        >
-            <svg
-                class="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-            >
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
+        <a href="{% url 'conference:booking_create_room' featured_room.id %}"
+            class="flex-1 inline-flex items-center justify-center px-4 py-2 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all duration-200 font-medium shadow-md text-sm">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             Book This Room
         </a>
-        <a
-            href="{% url 'conference:room_detail' featured_room.id %}"
+        <a href="{% url 'conference:room_detail' featured_room.id %}"
             class="inline-flex items-center justify-center px-4 py-2 backdrop-blur-sm bg-white/30 text-zinc-700 rounded-lg hover:bg-white/40 transition-all duration-200 font-medium border border-white/20"
-            title="View Room Details"
-        >
-            <svg
-                class="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-            >
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                />
+            title="View Room Details">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
         </a>
     </div>
 
     <!-- Footer Info -->
     <div
-        class="mt-3 pt-3 border-t border-white/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0"
-    >
+        class="mt-3 pt-3 border-t border-white/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
         <div class="text-xs text-zinc-600">
             <span>Today's bookings: </span>
             <span class="font-medium text-zinc-700">{{ todays_bookings_count }}</span>
         </div>
-        <a
-            href="{% url 'conference:my_bookings' %}"
-            class="text-xs text-blue-700 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1"
-        >
+        <a href="{% url 'conference:my_bookings' %}"
+            class="text-xs text-blue-700 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1">
             My Bookings ({{ user_upcoming_bookings }})
-            <svg
-                class="w-3 h-3 transition-transform duration-200 hover:translate-x-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-            >
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M9 5l7 7-7 7"
-                />
+            <svg class="w-3 h-3 transition-transform duration-200 hover:translate-x-1" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
             </svg>
         </a>
     </div>
 </div>
 {% else %}
 <!-- No Room Available -->
-<div
-    class="backdrop-blur-xl bg-white/20 p-4 rounded-[16px] border border-white/10 shadow-inner text-center"
->
-    <svg
-        class="w-12 h-12 mx-auto text-gray-400 mb-3"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        stroke-width="2"
-    >
-        <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-        />
+<div class="backdrop-blur-xl bg-white/20 p-4 rounded-[16px] border border-white/10 shadow-inner text-center">
+    <svg class="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
     </svg>
     <h3 class="text-sm font-bold text-zinc-700 mb-1">No Conference Rooms</h3>
     <p class="text-xs text-zinc-600">Contact admin to set up conference rooms</p>

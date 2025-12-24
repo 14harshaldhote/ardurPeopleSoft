@@ -4,89 +4,88 @@
 {% block title %}{% if is_update %}Edit{% else %}Create{% endif %} Appraisal - TrueAlign{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8" x-data="appraisalForm()">
-    <!-- Navigation -->
-    <div class="mb-6">
-        <a href="{% url 'appraisal:appraisal_list' %}" class="text-indigo-600 hover:text-indigo-800 flex items-center gap-2 hover:gap-3 transition-all">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-            <span>Back to List</span>
-        </a>
-    </div>
+<div class="px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto" x-data="appraisalForm()">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center text-sm text-zinc-600 mb-3">
+        <a href="{% url 'appraisal:appraisal_list' %}" class="hover:text-zinc-900 transition-colors">Appraisals</a>
+        <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+        <span class="text-zinc-900 font-medium">{% if is_update %}Edit{% else %}Create{% endif %}</span>
+    </nav>
 
     <!-- Header -->
     <div class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">
+        <h1 class="text-3xl font-bold text-zinc-900">
             {% if is_update %}Edit Appraisal{% else %}Create New Appraisal{% endif %}
         </h1>
-        <p class="text-gray-600 mt-1">Fill in the details below to {% if is_update %}update{% else %}create{% endif %} your appraisal</p>
+        <p class="text-zinc-600 mt-1">Fill in the details below to {% if is_update %}update{% else %}create{% endif %}
+            your appraisal</p>
     </div>
 
     <!-- Form -->
     <form id="appraisalForm" @submit.prevent="submitForm" enctype="multipart/form-data">
         {% csrf_token %}
-        
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Main Form -->
             <div class="lg:col-span-2 space-y-6">
                 <!-- Basic Information -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h2 class="text-xl font-bold text-gray-900 mb-4">Basic Information</h2>
-                    
+                <div class="glass-panel p-6">
+                    <h3 class="text-lg font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Basic Information
+                    </h3>
+
                     <div class="space-y-4">
                         <div>
-                            <label for="title" class="block text-sm font-medium text-gray-700 mb-1">
+                            <label for="title" class="form-label">
                                 Appraisal Title <span class="text-red-500">*</span>
                             </label>
-                            <input type="text" id="title" name="title" required
-                                   x-model="formData.title"
-                                   {% if is_update %}value="{{ appraisal.title }}"{% endif %}
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                   placeholder="e.g., Q4 2024 Performance Review">
+                            <input type="text" id="title" name="title" required x-model="formData.title" {% if is_update %}value="{{ appraisal.title }}" {% endif %} class="form-input"
+                                placeholder="e.g., Q4 2024 Performance Review">
                         </div>
-                        
+
                         <div>
-                            <label for="overview" class="block text-sm font-medium text-gray-700 mb-1">
+                            <label for="overview" class="form-label">
                                 Overview <span class="text-red-500">*</span>
                             </label>
-                            <textarea id="overview" name="overview" rows="4" required
-                                      x-model="formData.overview"
-                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                      placeholder="Provide a summary of your performance during this period">{% if is_update %}{{ appraisal.overview }}{% endif %}</textarea>
+                            <textarea id="overview" name="overview" rows="4" required x-model="formData.overview"
+                                class="form-input"
+                                placeholder="Provide a summary of your performance during this period">{% if is_update %}{{ appraisal.overview }}{% endif %}</textarea>
                         </div>
-                        
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label for="period_start" class="block text-sm font-medium text-gray-700 mb-1">
+                                <label for="period_start" class="form-label">
                                     Period Start <span class="text-red-500">*</span>
                                 </label>
                                 <input type="date" id="period_start" name="period_start" required
-                                       x-model="formData.period_start"
-                                       {% if is_update %}value="{{ appraisal.period_start|date:'Y-m-d' }}"{% endif %}
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                    x-model="formData.period_start" {% if is_update %}value="{{ appraisal.period_start|date:'Y-m-d' }}" {% endif %} class="form-input">
                             </div>
-                            
+
                             <div>
-                                <label for="period_end" class="block text-sm font-medium text-gray-700 mb-1">
+                                <label for="period_end" class="form-label">
                                     Period End <span class="text-red-500">*</span>
                                 </label>
                                 <input type="date" id="period_end" name="period_end" required
-                                       x-model="formData.period_end"
-                                       {% if is_update %}value="{{ appraisal.period_end|date:'Y-m-d' }}"{% endif %}
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                    x-model="formData.period_end" {% if is_update %}value="{{ appraisal.period_end|date:'Y-m-d' }}" {% endif %} class="form-input">
                             </div>
                         </div>
-                        
+
                         {% if not is_update %}
                         <div>
-                            <label for="manager" class="block text-sm font-medium text-gray-700 mb-1">
+                            <label for="manager" class="form-label">
                                 Manager <span class="text-red-500">*</span>
                             </label>
-                            <select id="manager" name="manager" required
-                                    x-model="formData.manager"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            <select id="manager" name="manager" required x-model="formData.manager" class="form-input">
                                 <option value="">Select a manager</option>
                                 {% for manager in managers %}
-                                <option value="{{ manager.id }}">{{ manager.get_full_name|default:manager.username }}</option>
+                                <option value="{{ manager.id }}">{{ manager.get_full_name|default:manager.username }}
+                                </option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -95,91 +94,106 @@
                 </div>
 
                 <!-- Achievements & Contributions -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-bold text-gray-900">Achievements & Contributions</h2>
+                <div class="glass-panel p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-zinc-900">Achievements & Contributions</h3>
                         <button type="button" @click="addItem"
-                                class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2">
-                            <i class="ri-add-line"></i>
-                            <span>Add Item</span>
+                            class="btn bg-teal-600 text-white hover:bg-teal-700 text-sm px-4 py-2 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            Add Item
                         </button>
                     </div>
-                    
+
                     <template x-if="items.length === 0">
-                        <div class="text-center py-8 text-gray-500">
-                            <i class="ri-file-list-3-line text-4xl mb-2"></i>
-                            <p>No items added yet. Click "Add Item" to get started.</p>
+                        <div class="text-center py-12">
+                            <div
+                                class="mx-auto w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mb-4">
+                                <svg class="h-8 w-8 text-zinc-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                    </path>
+                                </svg>
+                            </div>
+                            <p class="text-zinc-600">No items added yet. Click "Add Item" to get started.</p>
                         </div>
                     </template>
-                    
+
                     <div class="space-y-4">
                         <template x-for="(item, index) in items" :key="index">
-                            <div class="border border-gray-200 rounded-lg p-4">
-                                <div class="flex justify-between items-start mb-3">
-                                    <h3 class="font-semibold text-gray-900" x-text="'Item ' + (index + 1)"></h3>
+                            <div class="bg-white/10 rounded-lg p-4 border border-white/10">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h4 class="font-semibold text-zinc-900" x-text="'Item ' + (index + 1)"></h4>
                                     <button type="button" @click="removeItem(index)"
-                                            class="text-red-600 hover:text-red-800">
-                                        <i class="ri-delete-bin-line text-xl"></i>
+                                        class="text-red-600 hover:text-red-800 p-1">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                            </path>
+                                        </svg>
                                     </button>
                                 </div>
-                                
+
                                 <div class="space-y-3">
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                                Category <span class="text-red-500">*</span>
-                                            </label>
-                                            <select x-model="item.category" required
-                                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                            <label class="form-label text-xs">Category <span
+                                                    class="text-red-500">*</span></label>
+                                            <select x-model="item.category" required class="form-input text-sm">
                                                 <option value="">Select category</option>
                                                 {% for value, label in categories.items %}
                                                 <option value="{{ value }}">{{ label }}</option>
                                                 {% endfor %}
                                             </select>
                                         </div>
-                                        
+
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                                            <input type="date" x-model="item.date"
-                                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                            <label class="form-label text-xs">Date</label>
+                                            <input type="date" x-model="item.date" class="form-input text-sm">
                                         </div>
                                     </div>
-                                    
+
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Title <span class="text-red-500">*</span>
-                                        </label>
-                                        <input type="text" x-model="item.title" required
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                                               placeholder="Brief title for this achievement">
+                                        <label class="form-label text-xs">Title <span
+                                                class="text-red-500">*</span></label>
+                                        <input type="text" x-model="item.title" required class="form-input text-sm"
+                                            placeholder="Brief title for this achievement">
                                     </div>
-                                    
+
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Description <span class="text-red-500">*</span>
-                                        </label>
-                                        <textarea x-model="item.description" required rows="3"
-                                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                                                  placeholder="Describe your achievement in detail"></textarea>
+                                        <label class="form-label text-xs">Description <span
+                                                class="text-red-500">*</span></label>
+                                        <textarea x-model="item.description" required rows="2"
+                                            class="form-input text-sm"
+                                            placeholder="Describe your achievement in detail"></textarea>
                                     </div>
-                                    
+
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Self-Rating <span class="text-red-500">*</span>
-                                        </label>
+                                        <label class="form-label text-xs">Self-Rating <span
+                                                class="text-red-500">*</span></label>
                                         <div class="flex items-center gap-4">
                                             <template x-for="rating in [1, 2, 3, 4, 5]" :key="rating">
                                                 <button type="button" @click="item.employee_rating = rating"
-                                                        class="focus:outline-none">
-                                                    <i :class="rating <= item.employee_rating ? 'ri-star-fill text-yellow-400' : 'ri-star-line text-gray-300'"
-                                                       class="text-2xl"></i>
+                                                    class="focus:outline-none">
+                                                    <svg :class="rating <= item.employee_rating ? 'text-amber-400' : 'text-zinc-300'"
+                                                        class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path
+                                                            d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+                                                        </path>
+                                                    </svg>
                                                 </button>
                                             </template>
-                                            <span class="text-sm text-gray-600" x-show="item.employee_rating">
+                                            <span class="text-xs text-zinc-600" x-show="item.employee_rating">
                                                 <template x-if="item.employee_rating === 1">Needs Improvement</template>
-                                                <template x-if="item.employee_rating === 2">Below Expectations</template>
-                                                <template x-if="item.employee_rating === 3">Meets Expectations</template>
-                                                <template x-if="item.employee_rating === 4">Exceeds Expectations</template>
+                                                <template x-if="item.employee_rating === 2">Below
+                                                    Expectations</template>
+                                                <template x-if="item.employee_rating === 3">Meets
+                                                    Expectations</template>
+                                                <template x-if="item.employee_rating === 4">Exceeds
+                                                    Expectations</template>
                                                 <template x-if="item.employee_rating === 5">Outstanding</template>
                                             </span>
                                         </div>
@@ -191,30 +205,33 @@
                 </div>
 
                 <!-- Attachments -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h2 class="text-xl font-bold text-gray-900 mb-4">Attachments</h2>
-                    
+                <div class="glass-panel p-6">
+                    <h3 class="text-lg font-semibold text-zinc-900 mb-4">Attachments</h3>
+
                     {% if is_update and attachments %}
                     <div class="mb-4 space-y-2">
-                        <p class="text-sm font-medium text-gray-700">Existing Attachments:</p>
+                        <p class="text-sm font-medium text-zinc-700">Existing Attachments:</p>
                         {% for attachment in attachments %}
-                        <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                            <span class="text-sm text-gray-700">{{ attachment.title }}</span>
-                            <a href="{{ attachment.file.url }}" target="_blank" class="text-indigo-600 hover:text-indigo-800">
-                                <i class="ri-external-link-line"></i>
+                        <div
+                            class="flex items-center justify-between bg-white/10 rounded-lg p-3 border border-white/10">
+                            <span class="text-sm text-zinc-900">{{ attachment.title }}</span>
+                            <a href="{{ attachment.file.url }}" target="_blank"
+                                class="text-teal-600 hover:text-teal-700">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14">
+                                    </path>
+                                </svg>
                             </a>
                         </div>
                         {% endfor %}
                     </div>
                     {% endif %}
-                    
+
                     <div>
-                        <label for="attachments" class="block text-sm font-medium text-gray-700 mb-1">
-                            Add New Attachments
-                        </label>
-                        <input type="file" id="attachments" name="attachments" multiple
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                        <p class="mt-1 text-sm text-gray-500">You can upload certificates, documents, or other supporting files</p>
+                        <label for="attachments" class="form-label">Add New Attachments</label>
+                        <input type="file" id="attachments" name="attachments" multiple class="form-input">
+                        <p class="mt-1 text-xs text-zinc-500">Upload certificates, documents, or supporting files</p>
                     </div>
                 </div>
             </div>
@@ -222,50 +239,83 @@
             <!-- Sidebar -->
             <div class="space-y-6">
                 <!-- Actions -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h3 class="text-lg font-bold text-gray-900 mb-4">Actions</h3>
-                    
+                <div class="glass-panel p-6">
+                    <h4 class="text-base font-semibold text-zinc-900 mb-4">Actions</h4>
+
                     <div class="space-y-3">
-                        <button type="submit"
-                                :disabled="loading"
-                                :class="loading ? 'opacity-50 cursor-not-allowed' : ''"
-                                class="w-full bg-indigo-600 text-white px-4 py-3 rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2">
-                            <i class="ri-save-line" x-show="!loading"></i>
+                        <button type="submit" :disabled="loading"
+                            :class="loading ? 'opacity-50 cursor-not-allowed' : ''"
+                            class="w-full btn bg-teal-600 text-white hover:bg-teal-700 py-3 flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" x-show="!loading" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4">
+                                </path>
+                            </svg>
                             <span x-show="!loading">{% if is_update %}Update{% else %}Save Draft{% endif %}</span>
-                            <i class="ri-loader-4-line animate-spin" x-show="loading"></i>
+                            <svg class="w-5 h-5 animate-spin" x-show="loading" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
                             <span x-show="loading">Saving...</span>
                         </button>
-                        
+
                         <a href="{% url 'appraisal:appraisal_list' %}"
-                           class="w-full bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
-                            <i class="ri-close-line"></i>
-                            <span>Cancel</span>
+                            class="w-full btn btn-secondary py-3 flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            Cancel
                         </a>
                     </div>
                 </div>
 
                 <!-- Tips -->
                 <div class="bg-blue-50 rounded-xl border border-blue-200 p-6">
-                    <h3 class="text-lg font-bold text-blue-900 mb-3 flex items-center gap-2">
-                        <i class="ri-lightbulb-line"></i>
-                        <span>Tips</span>
-                    </h3>
+                    <h4 class="text-base font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z">
+                            </path>
+                        </svg>
+                        Tips
+                    </h4>
                     <ul class="space-y-2 text-sm text-blue-800">
                         <li class="flex items-start gap-2">
-                            <i class="ri-checkbox-circle-line mt-1"></i>
-                            <span>Be specific about your achievements</span>
+                            <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            Be specific about achievements
                         </li>
                         <li class="flex items-start gap-2">
-                            <i class="ri-checkbox-circle-line mt-1"></i>
-                            <span>Include quantifiable results where possible</span>
+                            <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            Include quantifiable results
                         </li>
                         <li class="flex items-start gap-2">
-                            <i class="ri-checkbox-circle-line mt-1"></i>
-                            <span>Upload supporting documents as evidence</span>
+                            <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            Upload supporting documents
                         </li>
                         <li class="flex items-start gap-2">
-                            <i class="ri-checkbox-circle-line mt-1"></i>
-                            <span>Save as draft and submit when ready</span>
+                            <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            Save draft and submit when ready
                         </li>
                     </ul>
                 </div>
@@ -275,94 +325,91 @@
 </div>
 
 <script>
-function appraisalForm() {
-    return {
-        loading: false,
-        formData: {
-            title: {% if is_update %}'{{ appraisal.title|escapejs }}'{% else %}''{% endif %},
-            overview: {% if is_update %}'{{ appraisal.overview|escapejs }}'{% else %}''{% endif %},
-            period_start: {% if is_update %}'{{ appraisal.period_start|date:"Y-m-d" }}'{% else %}''{% endif %},
-            period_end: {% if is_update %}'{{ appraisal.period_end|date:"Y-m-d" }}'{% else %}''{% endif %},
-            manager: {% if is_update and appraisal.manager %}'{{ appraisal.manager.id }}'{% else %}''{% endif %}
-        },
-        items: {% if is_update %}[
-            {% for item in items %}
-            {
-                category: '{{ item.category }}',
-                title: '{{ item.title|escapejs }}',
+    function appraisalForm() {
+        return {
+            loading: false,
+            formData: {
+                title: {% if is_update %}'{{ appraisal.title|escapejs }}'{% else %}''{% endif %},
+        overview: {% if is_update %} '{{ appraisal.overview|escapejs }}'{% else %} ''{% endif %},
+        period_start: {% if is_update %} '{{ appraisal.period_start|date:"Y-m-d" }}'{% else %} ''{% endif %},
+        period_end: {% if is_update %} '{{ appraisal.period_end|date:"Y-m-d" }}'{% else %} ''{% endif %},
+        manager: {% if is_update and appraisal.manager %} '{{ appraisal.manager.id }}'{% else %} ''{% endif %}
+    },
+    items: {% if is_update %} [
+        {% for item in items %}
+    {
+        category: '{{ item.category }}',
+            title: '{{ item.title|escapejs }}',
                 description: '{{ item.description|escapejs }}',
-                date: '{{ item.date|date:"Y-m-d"|default:"" }}',
-                employee_rating: {{ item.employee_rating|default:"null" }}
-            }{% if not forloop.last %},{% endif %}
-            {% endfor %}
-        ]{% else %}[]{% endif %},
-        
-        addItem() {
-            this.items.push({
-                category: '',
-                title: '',
-                description: '',
-                date: '',
-                employee_rating: null
-            });
-        },
-        
-        removeItem(index) {
-            if (confirm('Are you sure you want to remove this item?')) {
-                this.items.splice(index, 1);
-            }
-        },
+                    date: '{{ item.date|date:"Y-m-d"|default:"" }}',
+                        employee_rating: { { item.employee_rating |default: "null" } }
+    } {% if not forloop.last %}, {% endif %} {% endfor %}
+        ]{% else %} []{% endif %},
+
+    addItem() {
+        this.items.push({
+            category: '',
+            title: '',
+            description: '',
+            date: '',
+            employee_rating: null
+        });
+    },
+
+    removeItem(index) {
+        if (confirm('Remove this item?')) {
+            this.items.splice(index, 1);
+        }
+    },
         
         async submitForm() {
-            // Validate items
-            if (this.items.length === 0) {
-                alert('Please add at least one achievement or contribution');
+        if (this.items.length === 0) {
+            alert('Please add at least one achievement');
+            return;
+        }
+
+        for (let i = 0; i < this.items.length; i++) {
+            const item = this.items[i];
+            if (!item.category || !item.title || !item.description || !item.employee_rating) {
+                alert(`Please fill all required fields for Item ${i + 1}`);
                 return;
             }
-            
-            // Check all items have required fields
-            for (let i = 0; i < this.items.length; i++) {
-                const item = this.items[i];
-                if (!item.category || !item.title || !item.description || !item.employee_rating) {
-                    alert(`Please fill all required fields for Item ${i + 1}`);
-                    return;
-                }
-            }
-            
-            this.loading = true;
-            
-            try {
-                const form = document.getElementById('appraisalForm');
-                const formData = new FormData(form);
-                formData.append('items', JSON.stringify(this.items));
-                
-                const response = await fetch(form.action || window.location.href, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    alert(data.message || 'Appraisal saved successfully!');
-                    {% if is_update %}
-                    window.location.href = '{% url "appraisal:appraisal_detail" appraisal.id %}';
-                    {% else %}
-                    window.location.href = '/appraisal/' + data.appraisal_id + '/';
-                    {% endif %}
-                } else {
-                    alert('Error: ' + (data.error || 'An error occurred'));
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('An error occurred while saving the appraisal');
-            } finally {
-                this.loading = false;
-            }
         }
+
+        this.loading = true;
+
+        try {
+            const form = document.getElementById('appraisalForm');
+            const formData = new FormData(form);
+            formData.append('items', JSON.stringify(this.items));
+
+            const response = await fetch(form.action || window.location.href, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert(data.message || 'Appraisal saved successfully!');
+                {% if is_update %}
+                window.location.href = '{% url "appraisal:appraisal_detail" appraisal.id %}';
+                {% else %}
+                window.location.href = '/appraisal/' + data.appraisal_id + '/';
+                {% endif %}
+            } else {
+                alert('Error: ' + (data.error || 'An error occurred'));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while saving');
+        } finally {
+            this.loading = false;
+        }
+    }
     }
 }
 </script>

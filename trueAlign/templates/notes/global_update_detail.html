@@ -1,54 +1,44 @@
-{% extends 'base.html' %} {% load static %} {% block title %}{{ translated_title
-}} - Global Updates{% endblock %} {% block content %}
+{% extends 'base.html' %}
+{% load static %}
 
-<div
-    class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50"
->
+{% block title %}{{ translated_title }} - Global Updates{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-zinc-50">
     <!-- Header Section -->
-    <div class="bg-white shadow-sm border-b border-slate-200">
+    <div class="glass-panel mb-6">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div class="flex items-center justify-between">
                 <!-- Back Button and Title -->
-                <div class="flex items-center space-x-4">
-                    <a
-                        href="{% url 'notes:global_update_list' %}?lang={{ selected_language }}"
-                        class="inline-flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors duration-200"
-                    >
-                        <i class="ri-arrow-left-line mr-2"></i>
+                <div class="flex items-center gap-4">
+                    <a href="{% url 'notes:global_update_list' %}?lang={{ selected_language }}"
+                        class="btn btn-secondary">
+                        <i class="ri-arrow-left-line"></i>
                         Back to Updates
                     </a>
-                    <div class="h-6 w-px bg-slate-300"></div>
-                    <h1 class="text-2xl font-semibold text-slate-900">
+                    <div class="h-6 w-px bg-zinc-300"></div>
+                    <h1 class="text-2xl font-semibold text-zinc-900">
                         Global Update Details
                     </h1>
                 </div>
 
-                <!-- Language Selector -->
-                <div class="flex items-center space-x-4">
+                <!-- Language Selector and Actions -->
+                <div class="flex items-center gap-4">
                     <div class="relative language-dropdown">
-                        <button
-                            id="language-dropdown-button"
-                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                        >
-                            <i class="ri-translate-2 mr-2 text-slate-500"></i>
-                            {% for code, name in available_languages %} {% if code == selected_language %}{{ name }}{% endif %} {% endfor %}
-                            <i
-                                class="ri-arrow-down-s-line ml-2 text-slate-400"
-                            ></i>
+                        <button id="language-dropdown-button" class="btn btn-secondary">
+                            <i class="ri-translate-2 text-zinc-500"></i>
+                            {% for code, name in available_languages %}
+                            {% if code == selected_language %}{{ name }}{% endif %} {% endfor %}
+                            <i class="ri-arrow-down-s-line text-zinc-400"></i>
                         </button>
 
-                        <div
-                            id="language-dropdown-menu"
-                            class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50 hidden"
-                        >
+                        <div id="language-dropdown-menu" class="dropdown-menu hidden">
                             {% for code, name in available_languages %}
-                            <a
-                                href="?lang={{ code }}"
-                                class="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 {% if code == selected_language %}bg-blue-50 text-blue-600{% endif %}"
-                            >
+                            <a href="?lang={{ code }}"
+                                class="dropdown-item {% if code == selected_language %}bg-violet-50 text-violet-600{% endif %}">
                                 <span class="flex-1">{{ name }}</span>
                                 {% if code == selected_language %}
-                                <i class="ri-check-line text-blue-600"></i>
+                                <i class="ri-check-line text-violet-600"></i>
                                 {% endif %}
                             </a>
                             {% endfor %}
@@ -57,19 +47,13 @@
 
                     <!-- Action Buttons for HR -->
                     {% if can_manage %}
-                    <div class="flex items-center space-x-2">
-                        <a
-                            href="{% url 'notes:global_update_edit' update.pk %}"
-                            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
-                        >
-                            <i class="ri-edit-line mr-2"></i>
+                    <div class="flex items-center gap-2">
+                        <a href="{% url 'notes:global_update_edit' update.pk %}" class="btn btn-violet">
+                            <i class="ri-edit-line"></i>
                             Edit
                         </a>
-                        <button
-                            onclick="deleteUpdate({{ update.pk }})"
-                            class="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200"
-                        >
-                            <i class="ri-delete-bin-line mr-2"></i>
+                        <button onclick="deleteUpdate({{ update.pk }})" class="btn btn-red">
+                            <i class="ri-delete-bin-line"></i>
                             Delete
                         </button>
                     </div>
@@ -80,17 +64,13 @@
     </div>
 
     <!-- Main Content -->
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div
-            class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden"
-        >
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+        <div class="glass-panel overflow-hidden">
             <!-- Update Header -->
-            <div class="px-6 py-6 border-b border-slate-200">
+            <div class="px-6 py-6 border-b border-white/20">
                 <div class="flex items-start justify-between">
                     <div class="flex-1">
-                        <h2
-                            class="text-3xl font-bold text-slate-900 mb-3 leading-tight"
-                        >
+                        <h2 class="text-3xl font-bold text-zinc-900 mb-3 leading-tight">
                             {{ translated_title }}
                         </h2>
 
@@ -98,39 +78,33 @@
                         <div class="flex flex-wrap items-center gap-4">
                             <!-- Status Badge -->
                             <span
-                                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {% if update.status == 'released' %} bg-green-100 text-green-800 border border-green-200 {% elif update.status == 'upcoming' %} bg-yellow-100 text-yellow-800 border border-yellow-200 {% elif update.status == 'scheduled' %} bg-blue-100 text-blue-800 border border-blue-200 {% endif %}"
-                            >
+                                class="badge {% if update.status == 'released' %}badge-emerald{% elif update.status == 'upcoming' %}badge-amber{% elif update.status == 'scheduled' %}badge-sky{% endif %}">
                                 {% if update.status == 'released' %}
-                                <i class="ri-checkbox-circle-line mr-1"></i>
+                                <i class="ri-checkbox-circle-line"></i>
                                 {% elif update.status == 'upcoming' %}
-                                <i class="ri-time-line mr-1"></i>
+                                <i class="ri-time-line"></i>
                                 {% elif update.status == 'scheduled' %}
-                                <i class="ri-calendar-line mr-1"></i>
-                                {% endif %} {{ update.get_status_display }}
+                                <i class="ri-calendar-line"></i>
+                                {% endif %}
+                                {{ update.get_status_display }}
                             </span>
 
                             <!-- Translation Status -->
                             {% if has_translation %}
-                            <span
-                                class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200"
-                            >
-                                <i class="ri-translate-line mr-1"></i>
+                            <span class="badge badge-purple text-xs">
+                                <i class="ri-translate-line"></i>
                                 Translated
                             </span>
                             {% else %}
-                            <span
-                                class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200"
-                            >
-                                <i class="ri-translate-line mr-1"></i>
+                            <span class="badge badge-amber text-xs">
+                                <i class="ri-translate-line"></i>
                                 Original Language
                             </span>
                             {% endif %}
 
                             <!-- Primary Language -->
-                            <span
-                                class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-700"
-                            >
-                                Primary: {% if update.primary_language == 'en' %}English {% elif update.primary_language == 'hi' %}Hindi {% elif update.primary_language == 'mr' %}Marathi {% endif %}
+                            <span class="badge badge-slate text-xs">
+                                Primary: {% if update.primary_language == 'en' %}English{% elif update.primary_language == 'hi' %}Hindi{% elif update.primary_language == 'mr' %}Marathi{% endif %}
                             </span>
                         </div>
                     </div>
@@ -138,16 +112,11 @@
 
                 <!-- Scheduled Date (if applicable) -->
                 {% if update.status == 'scheduled' and update.scheduled_date %}
-                <div
-                    class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg"
-                >
-                    <div class="flex items-center text-blue-800">
+                <div class="mt-4 p-4 bg-sky-50 border border-sky-200 rounded-lg">
+                    <div class="flex items-center text-sky-800">
                         <i class="ri-calendar-event-line mr-2"></i>
                         <span class="font-medium">Scheduled for:</span>
-                        <span class="ml-2"
-                            >{{ update.scheduled_date|date:"F d, Y \a\t g:i A"
-                            }}</span
-                        >
+                        <span class="ml-2">{{ update.scheduled_date|date:"F d, Y \a\t g:i A" }}</span>
                     </div>
                 </div>
                 {% endif %}
@@ -156,41 +125,32 @@
             <!-- Update Content -->
             <div class="px-6 py-6">
                 <div class="prose max-w-none">
-                    <div
-                        class="text-slate-700 text-lg leading-relaxed whitespace-pre-wrap"
-                    >
+                    <div class="text-zinc-700 text-lg leading-relaxed whitespace-pre-wrap">
                         {{ translated_description }}
                     </div>
                 </div>
             </div>
 
             <!-- Footer with metadata -->
-            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200">
+            <div class="px-6 py-4 bg-white/10 border-t border-white/20">
                 <div
-                    class="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm text-slate-600 space-y-2 sm:space-y-0"
-                >
-                    <div class="flex items-center space-x-6">
+                    class="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm text-zinc-600 space-y-2 sm:space-y-0">
+                    <div class="flex items-center gap-6">
                         <div class="flex items-center">
                             <i class="ri-time-line mr-2"></i>
-                            <span
-                                >Created: {{ update.created_at|date:"M d, Y \a\tg:i A" }}</span
-                            >
+                            <span>Created: {{ update.created_at|date:"M d, Y \a\t g:i A" }}</span>
                         </div>
                         {% if update.updated_at != update.created_at %}
                         <div class="flex items-center">
                             <i class="ri-edit-2-line mr-2"></i>
-                            <span
-                                >Updated: {{ update.updated_at|date:"M d, Y \a\tg:i A" }}</span
-                            >
+                            <span>Updated: {{ update.updated_at|date:"M d, Y \a\t g:i A" }}</span>
                         </div>
                         {% endif %}
                     </div>
                     {% if update.managed_by %}
                     <div class="flex items-center">
                         <i class="ri-user-line mr-2"></i>
-                        <span
-                            >Managed by: {{ update.managed_by.get_full_name|default:update.managed_by.username }}</span
-                        >
+                        <span>Managed by: {{ update.managed_by.get_full_name|default:update.managed_by.username }}</span>
                     </div>
                     {% endif %}
                 </div>
@@ -205,8 +165,10 @@
                 <div class="text-amber-800">
                     <p class="font-medium mb-1">Translation Not Available</p>
                     <p class="text-sm">
-                        This update is not available in 
-                        {% if selected_language == 'hi' %}Hindi {% elif selected_language == 'mr' %}Marathi {% else %}{{ selected_language|upper }} {% endif %}. Showing content in the original language.
+                        This update is not available in
+                        {% if selected_language == 'hi' %}Hindi{% elif selected_language == 'mr' %}Marathi{% else %}{{
+                        selected_language|upper }}{% endif %}.
+                        Showing content in the original language.
                     </p>
                 </div>
             </div>
@@ -215,57 +177,25 @@
 
         <!-- Additional Actions for HR -->
         {% if can_manage %}
-        <div
-            class="mt-6 bg-white rounded-xl shadow-sm border border-slate-200 p-6"
-        >
-            <h3 class="text-lg font-medium text-slate-900 mb-4">
+        <div class="mt-6 glass-panel p-6">
+            <h3 class="text-lg font-medium text-zinc-900 mb-4">
                 Management Actions
             </h3>
             <div class="flex flex-wrap gap-3">
                 <!-- Status Toggle -->
-                <form
-                    method="post"
-                    action="{% url 'notes:global_update_toggle_status' update.pk %}"
-                    class="inline"
-                >
+                <form method="post" action="{% url 'notes:global_update_toggle_status' update.pk %}" class="inline">
                     {% csrf_token %}
-                    <div class="flex items-center space-x-2">
-                        <label
-                            for="status-select"
-                            class="text-sm font-medium text-slate-700"
-                            >Change Status:</label
-                        >
-                        <select
-                            id="status-select"
-                            name="status"
-                            onchange="this.form.submit()"
-                            class="px-3 py-1 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-                        >
-                            <option
-                                value="upcoming"
-                                {% if update.status == "upcoming" %}selected{% endif %}
-                            >
+                    <div class="flex items-center gap-2">
+                        <label for="status-select" class="text-sm font-medium text-zinc-700">Change Status:</label>
+                        <select id="status-select" name="status" onchange="this.form.submit()"
+                            class="form-select text-sm">
+                            <option value="upcoming" {% if update.status == "upcoming" %}selected{% endif %}>
                                 Upcoming
                             </option>
-                            <option
-                                value="scheduled"
-                                {% if update.status == "scheduled" %}selected{% endif %}
-                            >
+                            <option value="scheduled" {% if update.status == "scheduled" %}selected{% endif %}>
                                 Scheduled
                             </option>
-                            <option
-                                value="released"
-                                {% if update.status == "released" %}selected{% endif %}
-                            >
-                                Released
-                            </option>
-                            <option
-                                value="released"
-                                {% if update.status == "released" %}selected{% endif %}
-                            >
-                                Released
-                            </option>
-                            >
+                            <option value="released" {% if update.status == "released" %}selected{% endif %}>
                                 Released
                             </option>
                         </select>
@@ -273,19 +203,13 @@
                 </form>
 
                 <!-- Quick Actions -->
-                <div class="flex items-center space-x-2">
-                    <button
-                        onclick="window.print()"
-                        class="inline-flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors duration-200"
-                    >
-                        <i class="ri-printer-line mr-1"></i>
+                <div class="flex items-center gap-2">
+                    <button onclick="window.print()" class="btn btn-secondary text-sm">
+                        <i class="ri-printer-line"></i>
                         Print
                     </button>
-                    <button
-                        onclick="copyToClipboard()"
-                        class="inline-flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors duration-200"
-                    >
-                        <i class="ri-clipboard-line mr-1"></i>
+                    <button onclick="copyToClipboard()" class="btn btn-secondary text-sm">
+                        <i class="ri-clipboard-line"></i>
                         Copy Link
                     </button>
                 </div>
@@ -297,42 +221,28 @@
 
 <!-- Delete Confirmation Modal -->
 {% if can_manage %}
-<div
-    id="deleteModal"
-    class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
->
-    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-        <div class="p-6">
-            <div class="flex items-center mb-4">
-                <div
-                    class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100"
-                >
-                    <i class="ri-delete-bin-line text-red-600 text-xl"></i>
-                </div>
+<div id="deleteModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
+    <div class="glass-panel max-w-md mx-4 p-6">
+        <div class="flex items-center mb-4">
+            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <i class="ri-delete-bin-line text-red-600 text-xl"></i>
             </div>
-            <div class="text-center">
-                <h3 class="text-lg font-medium text-slate-900 mb-2">
-                    Delete Global Update
-                </h3>
-                <p class="text-sm text-slate-500 mb-6">
-                    Are you sure you want to delete this update? This action
-                    cannot be undone.
-                </p>
-            </div>
-            <div class="flex space-x-4">
-                <button
-                    onclick="cancelDelete()"
-                    class="flex-1 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 transition-colors duration-200"
-                >
-                    Cancel
-                </button>
-                <button
-                    onclick="confirmDelete()"
-                    class="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors duration-200"
-                >
-                    Delete
-                </button>
-            </div>
+        </div>
+        <div class="text-center">
+            <h3 class="text-lg font-medium text-zinc-900 mb-2">
+                Delete Global Update
+            </h3>
+            <p class="text-sm text-zinc-500 mb-6">
+                Are you sure you want to delete this update? This action cannot be undone.
+            </p>
+        </div>
+        <div class="flex gap-4">
+            <button onclick="cancelDelete()" class="flex-1 btn btn-secondary">
+                Cancel
+            </button>
+            <button onclick="confirmDelete()" class="flex-1 btn btn-red">
+                Delete
+            </button>
         </div>
     </div>
 </div>
@@ -411,13 +321,12 @@
 
     function showNotification(message, type = "info") {
         const notification = document.createElement("div");
-        notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
-            type === "success"
-                ? "bg-green-100 text-green-800 border border-green-200"
+        notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${type === "success"
+                ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
                 : type === "error"
-                  ? "bg-red-100 text-red-800 border border-red-200"
-                  : "bg-blue-100 text-blue-800 border border-blue-200"
-        }`;
+                    ? "bg-red-100 text-red-800 border border-red-200"
+                    : "bg-blue-100 text-blue-800 border border-blue-200"
+            }`;
         notification.textContent = message;
 
         document.body.appendChild(notification);

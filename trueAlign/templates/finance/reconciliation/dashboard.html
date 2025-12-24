@@ -77,8 +77,7 @@
                         <tbody class="divide-y divide-gray-100">
                             {% for stmt in statements %}
                             <tr class="hover:bg-gray-50 transition-colors duration-150">
-                                <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ stmt.bank_account.bank_name
-                                    }} - {{ stmt.bank_account.account_number }}</td>
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ stmt.bank_account.bank_name }} - {{ stmt.bank_account.account_number }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-900">{{ stmt.period_start|date:"M d" }} - {{
                                     stmt.period_end|date:"M d, Y" }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-900">{{ stmt.total_lines }}</td>

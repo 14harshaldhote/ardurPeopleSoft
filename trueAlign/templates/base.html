@@ -13,64 +13,9 @@
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
         as="style">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" as="style">
-    <link rel="preconnect" href="https://cdn.tailwindcss.com">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
-    <!-- Critical CSS inline -->
-    <style>
-        /* Critical above-the-fold styles */
-        [x-cloak] {
-            display: none !important;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            line-height: 1.6;
-            color: #374151;
-            background-color: #f9fafb;
-            overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            text-rendering: optimizeLegibility;
-        }
-
-        /* Performance-optimized animations */
-        .animate-smooth {
-            will-change: transform, opacity;
-            backface-visibility: hidden;
-            perspective: 1000px;
-        }
-
-        .transition-gpu {
-            transform: translateZ(0);
-            will-change: transform, opacity;
-            backface-visibility: hidden;
-        }
-
-        /* Loading skeleton */
-        .skeleton {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-        }
-
-        @keyframes loading {
-            0% {
-                background-position: 200% 0;
-            }
-
-            100% {
-                background-position: -200% 0;
-            }
-        }
-    </style>
+    <!-- Critical CSS now in external files -->
 
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
@@ -177,7 +122,7 @@
             user: {
                 id: '{{ user.id|default:"" }}',
                 username: '{{ user.username|default:"" }}',
-                isAuthenticated: {{ user.is_authenticated|yesno:"true,false" }}
+                isAuthenticated: {{ user.is_authenticated | yesno:"true,false" }}
             },
         location: {
             detected: null,
@@ -191,8 +136,9 @@
         };
     </script>
 
-    <!-- Load Tailwind with optimized config -->
-    <script src="https://unpkg.com/tailwindcss@3.3.0/dist/tailwind.min.js"></script>
+    <!-- TrueAlign Core CSS -->
+    <link rel="stylesheet" href="{% static 'css/truealign-core.css' %}">
+    <link rel="stylesheet" href="{% static 'css/components.css' %}">
 
     <!-- Load Alpine.js with defer for non-blocking -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -219,6 +165,8 @@
         rel="stylesheet" media="print" onload="this.media='all'">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" media="print"
         onload="this.media='all'">
+
+    {% block extra_head %}{% endblock %}
 
     <!-- Main Alpine.js App Controller -->
     <script>
@@ -678,8 +626,6 @@
     <script src="{% static 'js/notifications.js' %}?v=1.5" defer></script>
     {% endif %}
 
-    <!-- Include Base Styles -->
-    {% include 'partials/base_styles.html' %}
 </head>
 <audio id="notification-sound" src="{% static 'audio/msn.mp3' %}" type="audio/mpeg" preload="auto"></audio>
 
@@ -700,7 +646,8 @@
 
         <!-- Header with performance optimizations -->
         <header
-            class="mb-8 bg-white/90 backdrop-blur-xl rounded-2xl p-6 md:p-8 shadow-lg border border-white/60 transition-gpu hover:shadow-xl">
+            class="relative mb-8 bg-white/90 backdrop-blur-xl rounded-2xl p-6 md:p-8 shadow-lg border border-white/60 transition-gpu hover:shadow-xl"
+            style="z-index: 999;">
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
 
                 <!-- Greeting Section -->
@@ -718,36 +665,92 @@
 
 
                 {% if user.is_authenticated %}
-                <div class="relative" data-dropdown>
-                    <button @click="toggleUserDropdown()"
-                        class="flex items-center gap-3 bg-white/80 backdrop-blur-xl px-5 py-3 rounded-xl border border-white/80 shadow-md hover:shadow-lg transition-all duration-200 transition-gpu focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-                        :class="{ 'shadow-lg bg-white/90': dropdowns.user }">
-                        <i class="ri-user-3-line text-xl text-primary-600"></i>
-                        <span class="font-medium text-gray-700">{{ user.username }}</span>
-                        <i class="ri-arrow-down-s-line text-lg text-gray-500 transition-transform duration-200 transition-gpu"
-                            :class="{ 'rotate-180': dropdowns.user }"></i>
-                    </button>
+                <div class="flex items-center gap-3">
+                    <!-- Notification Button -->
+                    <div class="relative" data-dropdown="notifications" x-data="{ open: false }">
+                        <button @click="open = !open" @click.away="open = false"
+                            class="relative p-3 rounded-xl bg-white/80 backdrop-blur-xl border border-white/80 shadow-md hover:shadow-lg transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+                            <i
+                                class="ri-notification-3-line text-xl text-gray-600 group-hover:text-primary-600 transition-colors"></i>
+                            <!-- Badge -->
+                            <span id="notification-badge"
+                                class="notification-badge hidden absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white transform scale-100 transition-transform duration-200">
+                            </span>
+                        </button>
 
-                    <!-- Dropdown Menu with GPU acceleration -->
-                    <div x-show="dropdowns.user" x-transition:enter="transition ease-out duration-200"
-                        x-transition:enter-start="opacity-0 scale-95 -translate-y-2"
-                        x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                        x-transition:leave="transition ease-in duration-150"
-                        x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-                        class="absolute right-0 mt-2 w-56 bg-white/95 backdrop-blur-xl rounded-xl border border-white/80 shadow-2xl z-50 transition-gpu">
+                        <!-- Notification Dropdown Panel -->
+                        <div x-show="open" x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 scale-95 -translate-y-2"
+                            x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                            class="absolute right-0 mt-3 w-80 sm:w-96 bg-white/95 backdrop-blur-xl rounded-2xl border border-white/80 shadow-2xl overflow-hidden origin-top-right"
+                            style="display: none; z-index: 9999;">
 
-                        <div class="py-2">
-                            <a href="{% url 'core:password_reset' %}"
-                                class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-150">
-                                <i class="ri-lock-password-line text-lg text-primary-600"></i>
-                                <span class="text-sm font-medium">Reset Password</span>
-                            </a>
-                            <div class="border-t border-gray-100 my-1"></div>
-                            <a href="{% url 'core:logout' %}"
-                                class="flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors duration-150">
-                                <i class="ri-logout-box-line text-lg"></i>
-                                <span class="text-sm font-medium">Logout</span>
-                            </a>
+                            <!-- Header -->
+                            <div
+                                class="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                                <h3 class="font-semibold text-gray-900">Notifications</h3>
+                                <button
+                                    class="mark-all-read text-xs font-medium text-primary-600 hover:text-primary-700 transition-colors">
+                                    Mark all read
+                                </button>
+                            </div>
+
+                            <!-- List -->
+                            <div id="notification-list"
+                                class="notification-list max-h-[32rem] overflow-y-auto custom-scrollbar">
+                                <!-- Loading State -->
+                                <div class="p-8 text-center text-gray-500">
+                                    <div
+                                        class="animate-spin inline-block w-6 h-6 border-[3px] border-current border-t-transparent text-primary-600 rounded-full mb-2">
+                                    </div>
+                                    <p class="text-sm">Loading notifications...</p>
+                                </div>
+                            </div>
+
+                            <!-- Footer -->
+                            <div class="px-4 py-2 bg-gray-50/50 border-t border-gray-100 text-center">
+                                <a href="#"
+                                    class="text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors">
+                                    View all notifications
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Dropdown -->
+                    <div class="relative" data-dropdown>
+                        <button @click="toggleUserDropdown()"
+                            class="flex items-center gap-3 bg-white/80 backdrop-blur-xl px-5 py-3 rounded-xl border border-white/80 shadow-md hover:shadow-lg transition-all duration-200 transition-gpu focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                            :class="{ 'shadow-lg bg-white/90': dropdowns.user }">
+                            <i class="ri-user-3-line text-xl text-primary-600"></i>
+                            <span class="font-medium text-gray-700">{{ user.username }}</span>
+                            <i class="ri-arrow-down-s-line text-lg text-gray-500 transition-transform duration-200 transition-gpu"
+                                :class="{ 'rotate-180': dropdowns.user }"></i>
+                        </button>
+
+                        <!-- Dropdown Menu with GPU acceleration -->
+                        <div x-show="dropdowns.user" x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 scale-95 -translate-y-2"
+                            x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                            class="absolute right-0 mt-2 w-56 bg-white/95 backdrop-blur-xl rounded-xl border border-white/80 shadow-2xl z-50 transition-gpu">
+
+                            <div class="py-2">
+                                <a href="{% url 'core:password_reset' %}"
+                                    class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-150">
+                                    <i class="ri-lock-password-line text-lg text-primary-600"></i>
+                                    <span class="text-sm font-medium">Reset Password</span>
+                                </a>
+                                <div class="border-t border-gray-100 my-1"></div>
+                                <a href="{% url 'core:logout' %}"
+                                    class="flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors duration-150">
+                                    <i class="ri-logout-box-line text-lg"></i>
+                                    <span class="text-sm font-medium">Logout</span>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -814,128 +817,7 @@
         <img src="{% static 'images/ardurtech.png' %}" alt="Ardur Technology" class="h-6 w-auto" loading="lazy">
     </div>
 
-    <!-- Performance optimized styles -->
-    <style>
-        /* GPU-accelerated animations */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px) translateZ(0);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0) translateZ(0);
-            }
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px) translateZ(0);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0) translateZ(0);
-            }
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px) translateZ(0);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0) translateZ(0);
-            }
-        }
-
-        @keyframes scaleIn {
-            from {
-                opacity: 0;
-                transform: scale(0.95) translateZ(0);
-            }
-
-            to {
-                opacity: 1;
-                transform: scale(1) translateZ(0);
-            }
-        }
-
-        @keyframes bounceSoft {
-
-            0%,
-            20%,
-            53%,
-            80%,
-            100% {
-                transform: translateY(0) translateZ(0);
-            }
-
-            40%,
-            43% {
-                transform: translateY(-10px) translateZ(0);
-            }
-
-            70% {
-                transform: translateY(-5px) translateZ(0);
-            }
-
-            90% {
-                transform: translateY(-2px) translateZ(0);
-            }
-        }
-
-        /* Optimize font rendering */
-        .font-display {
-            font-display: swap;
-        }
-
-        /* Reduce paint complexity */
-        .backdrop-blur-xl {
-            backdrop-filter: blur(16px) saturate(120%);
-            -webkit-backdrop-filter: blur(16px) saturate(120%);
-        }
-
-        /* Contain layout shifts */
-        .transition-gpu {
-            contain: layout;
-        }
-
-        /* Optimize scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: rgba(156, 163, 175, 0.5);
-            border-radius: 3px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(156, 163, 175, 0.7);
-        }
-
-        /* Focus management */
-        *:focus-visible {
-            outline: 2px solid #6366f1;
-            outline-offset: 2px;
-        }
-
-        /* Loading states */
-        .loading-state {
-            pointer-events: none;
-            opacity: 0.7;
-        }
-    </style>
+    <!-- All styles now in external CSS files -->
 
     <!-- Performance monitoring -->
     <script>

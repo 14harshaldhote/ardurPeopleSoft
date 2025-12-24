@@ -7,13 +7,10 @@
     <style>
         @page {
             size: A4;
-            /* Margins define the safe area for text, matching the preview padding */
             margin-top: 5cm;
             margin-bottom: 4cm;
             margin-left: 2.5cm;
             margin-right: 2.5cm;
-
-            /* Background image for the entire page */
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -23,15 +20,14 @@
             font-family: "Helvetica", sans-serif;
             font-size: 11pt;
             line-height: 1.6;
-            color: #222;
+            color: #262626;
             margin: 0;
             padding: 0;
             background-color: white;
         }
 
-        /* Utility classes */
         strong {
-            font-weight: bold;
+            font-weight: 600;
             color: #000;
         }
 
@@ -51,7 +47,6 @@
 </head>
 
 <body>
-    <!-- Content flows directly into the page defined by @page margins -->
     {{ content|safe }}
 </body>
 

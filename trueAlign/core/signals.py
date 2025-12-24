@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 @receiver(user_logged_in)
 def handle_user_login(sender, request, user, **kwargs):
     """
-    Handle user login - create initial session and set up tracking
+    Handle user login - create initial session, set up tracking, and auto-mark attendance
     """
     if not user or not user.is_authenticated:
         return
@@ -39,23 +39,65 @@ def handle_user_login(sender, request, user, **kwargs):
         # Log the login for tracking
         logger.info(f"User {user.username} logged in - session tracking initialized")
 
-        # Optional: Close any existing active sessions for this user
-        if getattr(settings, 'CLOSE_PREVIOUS_SESSIONS_ON_LOGIN', False):
-            try:
-                from trueAlign.models import UserSession
-                UserSession.objects.filter(
-                    user=user,
-                    is_active=True
-                ).update(
-                    is_active=False,
-                    session_end_time=timezone.now(),
-                    end_reason='new_login'
-                )
-            except Exception as e:
-                logger.error(f"Error closing previous sessions: {str(e)}")
+        # Close any existing active sessions for this user
+        try:
+            from trueAlign.models import UserSession, Attendance
+            UserSession.objects.filter(
+                user=user,
+                is_active=True
+            ).update(
+                is_active=False,
+                session_end_time=timezone.now(),
+                end_reason='new_login'
+            )
+            
+            # Create new UserSession for the logged in user
+            session = UserSession.objects.create(
+                user=user,
+                is_active=True,
+                start_time=timezone.now(),
+                last_activity=timezone.now(),
+                ip_address=get_client_ip(request) if request else None,
+                user_agent=request.META.get('HTTP_USER_AGENT', '')[:200] if request else ''
+            )
+            logger.info(f"Created new session {session.id} for user {user.username}")
+            
+            # Auto-create Attendance record for today if not exists
+            today = timezone.now().date()
+            attendance, created = Attendance.objects.get_or_create(
+                user=user,
+                date=today,
+                defaults={
+                    'status': 'Present',
+                    'clock_in_time': timezone.now()
+                }
+            )
+            if created:
+                logger.info(f"Auto-created attendance for user {user.username} on {today}")
+            else:
+                # Update clock-in time if attendance exists but no clock-in
+                if not attendance.clock_in_time:
+                    attendance.clock_in_time = timezone.now()
+                    attendance.status = 'Present'
+                    attendance.save()
+                    logger.info(f"Updated attendance clock-in for user {user.username}")
+            
+        except Exception as e:
+            logger.error(f"Error managing sessions/attendance on login: {str(e)}")
 
     except Exception as e:
         logger.error(f"Error handling user login for {user.username}: {str(e)}")
+
+
+def get_client_ip(request):
+    """Get client IP address from request"""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0].strip()
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
 
 @receiver(user_logged_out)
 def handle_user_logout(sender, request, user, **kwargs):

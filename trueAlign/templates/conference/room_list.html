@@ -4,28 +4,35 @@
 {% block title %}Conference Rooms - Browse & Book{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+<div class="px-4 sm:px-6 lg:px-8 py-6">
+    <div class="max-w-7xl mx-auto">
+
         <!-- Header -->
-        <div class="mb-8">
-            <div class="flex justify-between items-center">
+        <div class="glass-panel p-6 mb-8">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Conference Rooms</h1>
-                    <p class="mt-2 text-gray-600">Browse and book available conference rooms</p>
+                    <h1 class="text-3xl font-bold text-zinc-900 flex items-center gap-3">
+                        <svg class="w-8 h-8 text-cyan-600" stroke="currentColor" fill="none" viewBox="0 0 24 24"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                        Conference Rooms
+                    </h1>
+                    <p class="text-zinc-600 mt-2">Browse and book available conference rooms</p>
                 </div>
-                <div class="flex gap-3">
-                    <a href="{% url 'conference:my_bookings' %}" 
-                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition">
-                        <svg class="w-5 h-5 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                <div class="flex flex-wrap gap-3">
+                    <a href="{% url 'conference:my_bookings' %}" class="btn btn-secondary">
+                        <svg class="w-5 h-5" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                         My Bookings
                     </a>
-                    <a href="{% url 'conference:calendar' %}" 
-                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition">
-                        <svg class="w-5 h-5 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <a href="{% url 'conference:calendar' %}" class="btn btn-sky">
+                        <svg class="w-5 h-5" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                         Calendar View
                     </a>
@@ -34,35 +41,35 @@
         </div>
 
         <!-- Search and Filters -->
-        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div class="glass-panel p-6 mb-6">
             <form method="get" class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <!-- Search -->
                     <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Search Rooms</label>
-                        <input type="text" 
-                               name="search" 
-                               value="{{ search_query }}"
-                               placeholder="Search by name, location..."
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <label class="form-label">Search Rooms</label>
+                        <input type="text" name="search" value="{{ search_query }}"
+                            placeholder="Search by name, location..." class="form-input">
                     </div>
-                    
+
                     <!-- Office Location Filter -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                        <label class="form-label">Location</label>
                         {{ filter_form.office_location }}
                     </div>
-                    
+
                     <!-- Capacity Filter -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Min Capacity</label>
+                        <label class="form-label">Min Capacity</label>
                         {{ filter_form.min_capacity }}
                     </div>
                 </div>
-                
+
                 <div class="flex justify-end">
-                    <button type="submit" 
-                            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+                    <button type="submit" class="btn btn-cyan">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
                         Apply Filters
                     </button>
                 </div>
@@ -71,46 +78,51 @@
 
         <!-- Stats -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <div class="flex items-center">
-                    <div class="p-3 bg-blue-100 rounded-lg">
-                        <svg class="w-6 h-6 text-blue-600" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                        </svg>
+            <div class="stat-card bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-xl p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-semibold text-white/90 uppercase mb-1">Total Rooms</p>
+                        <p class="text-4xl font-bold">{{ total_rooms }}</p>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Total Rooms</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ total_rooms }}</p>
+                    <div class="p-3 bg-white/20 rounded-lg">
+                        <svg class="w-8 h-8 text-white" stroke="currentColor" fill="none" viewBox="0 0 24 24"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
                     </div>
                 </div>
             </div>
-            
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <div class="flex items-center">
-                    <div class="p-3 bg-green-100 rounded-lg">
-                        <svg class="w-6 h-6 text-green-600" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
+
+            <div class="stat-card bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-semibold text-white/90 uppercase mb-1">Available</p>
+                        <p class="text-4xl font-bold">{{ total_rooms }}</p>
+                    </div>
+                    <div class="p-3 bg-white/20 rounded-lg">
+                        <svg class="w-8 h-8 text-white" stroke="currentColor" fill="none" viewBox="0 0 24 24"
+                            stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Available</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ total_rooms }}</p>
-                    </div>
                 </div>
             </div>
-            
+
             {% if user_office %}
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <div class="flex items-center">
-                    <div class="p-3 bg-purple-100 rounded-lg">
-                        <svg class="w-6 h-6 text-purple-600" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <div class="stat-card bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-semibold text-white/90 uppercase mb-1">Your Office</p>
+                        <p class="text-2xl font-bold">{{ user_office.code }}</p>
+                    </div>
+                    <div class="p-3 bg-white/20 rounded-lg">
+                        <svg class="w-8 h-8 text-white" stroke="currentColor" fill="none" viewBox="0 0 24 24"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Your Office</p>
-                        <p class="text-lg font-bold text-gray-900">{{ user_office.code }}</p>
                     </div>
                 </div>
             </div>
@@ -121,72 +133,83 @@
         {% if rooms %}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {% for room in rooms %}
-            <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition overflow-hidden">
+            <div class="glass-panel overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                 <!-- Room Image -->
-                <div class="h-48 bg-gradient-to-br from-blue-500 to-purple-600 relative">
+                <div class="h-48 bg-gradient-to-br from-cyan-500 to-blue-600 relative">
                     {% if room.image %}
                     <img src="{{ room.image.url }}" alt="{{ room.name }}" class="w-full h-full object-cover">
                     {% else %}
                     <div class="flex items-center justify-center h-full">
-                        <svg class="w-20 h-20 text-white opacity-50" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        <svg class="w-20 h-20 text-white opacity-50" stroke="currentColor" fill="none"
+                            viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
                     </div>
                     {% endif %}
-                    
+
                     <!-- Active Badge -->
                     {% if room.is_active %}
-                    <span class="absolute top-4 right-4 px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded-full">
+                    <span class="absolute top-4 right-4 badge badge-emerald animate-pulse">
                         Available
                     </span>
                     {% endif %}
                 </div>
-                
+
                 <!-- Room Info -->
                 <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">{{ room.name }}</h3>
-                    
+                    <h3 class="text-xl font-bold text-zinc-900 mb-3">{{ room.name }}</h3>
+
                     <div class="space-y-2 mb-4">
-                        <div class="flex items-center text-sm text-gray-600">
-                            <svg class="w-4 h-4 mr-2 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <div class="flex items-center text-sm text-zinc-600">
+                            <svg class="w-4 h-4 mr-2 text-slate-500" stroke="currentColor" fill="none"
+                                viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                             {{ room.office_location.name }}
                         </div>
-                        
-                        <div class="flex items-center text-sm text-gray-600">
-                            <svg class="w-4 h-4 mr-2 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16" />
+
+                        <div class="flex items-center text-sm text-zinc-600">
+                            <svg class="w-4 h-4 mr-2 text-slate-500" stroke="currentColor" fill="none"
+                                viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16" />
                             </svg>
                             {{ room.floor }}
                         </div>
-                        
-                        <div class="flex items-center text-sm text-gray-600">
-                            <svg class="w-4 h-4 mr-2 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+
+                        <div class="flex items-center text-sm text-zinc-600">
+                            <svg class="w-4 h-4 mr-2 text-violet-500" stroke="currentColor" fill="none"
+                                viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
-                            Capacity: {{ room.capacity }} people
+                            <span class="font-semibold text-violet-700">{{ room.capacity }}</span> people
                         </div>
-                        
+
                         {% if room.upcoming_bookings > 0 %}
-                        <div class="flex items-center text-sm text-orange-600">
-                            <svg class="w-4 h-4 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        <div class="flex items-center text-sm text-amber-600">
+                            <svg class="w-4 h-4 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24"
+                                stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                             {{ room.upcoming_bookings }} upcoming booking{{ room.upcoming_bookings|pluralize }}
                         </div>
                         {% endif %}
                     </div>
-                    
+
                     <!-- Action Buttons -->
                     <div class="flex gap-2">
-                        <a href="{% url 'conference:room_detail' room.id %}" 
-                           class="flex-1 text-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                        <a href="{% url 'conference:room_detail' room.id %}"
+                            class="flex-1 btn btn-secondary text-center">
                             View Details
                         </a>
-                        <a href="{% url 'conference:booking_create_room' room.id %}" 
-                           class="flex-1 text-center px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+                        <a href="{% url 'conference:booking_create_room' room.id %}"
+                            class="flex-1 btn btn-cyan text-center">
                             Book Now
                         </a>
                     </div>
@@ -194,51 +217,53 @@
             </div>
             {% endfor %}
         </div>
-        
+
         <!-- Pagination -->
         {% if rooms.has_other_pages %}
         <div class="flex justify-center">
-            <nav class="inline-flex rounded-lg shadow-sm">
+            <nav class="glass-panel inline-flex rounded-lg overflow-hidden">
                 {% if rooms.has_previous %}
-                <a href="?page=1{{ request.GET.urlencode }}" 
-                   class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-50">
+                <a href="?page=1{{ request.GET.urlencode }}"
+                    class="px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-white/60 border-r border-white/20">
                     First
                 </a>
-                <a href="?page={{ rooms.previous_page_number }}{{ request.GET.urlencode }}" 
-                   class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border-t border-b border-gray-300 hover:bg-gray-50">
+                <a href="?page={{ rooms.previous_page_number }}{{ request.GET.urlencode }}"
+                    class="px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-white/60 border-r border-white/20">
                     Previous
                 </a>
                 {% endif %}
-                
-                <span class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-50 border-t border-b border-gray-300">
+
+                <span class="px-4 py-2 text-sm font-medium text-cyan-700 bg-cyan-50 border-r border-white/20">
                     Page {{ rooms.number }} of {{ rooms.paginator.num_pages }}
                 </span>
-                
+
                 {% if rooms.has_next %}
-                <a href="?page={{ rooms.next_page_number }}{{ request.GET.urlencode }}" 
-                   class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border-t border-b border-gray-300 hover:bg-gray-50">
+                <a href="?page={{ rooms.next_page_number }}{{ request.GET.urlencode }}"
+                    class="px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-white/60 border-r border-white/20">
                     Next
                 </a>
-                <a href="?page={{ rooms.paginator.num_pages }}{{ request.GET.urlencode }}" 
-                   class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-50">
+                <a href="?page={{ rooms.paginator.num_pages }}{{ request.GET.urlencode }}"
+                    class="px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-white/60">
                     Last
                 </a>
                 {% endif %}
             </nav>
         </div>
         {% endif %}
-        
+
         {% else %}
         <!-- No rooms found -->
-        <div class="text-center py-12 bg-white rounded-lg shadow-sm">
-            <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        <div class="glass-panel text-center py-12">
+            <svg class="w-16 h-16 mx-auto text-zinc-400 mb-4" stroke="currentColor" fill="none" viewBox="0 0 24 24"
+                stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
-            <h3 class="text-lg font-medium text-gray-900 mb-2">No conference rooms found</h3>
-            <p class="text-gray-600">Try adjusting your filters or search criteria.</p>
+            <h3 class="text-lg font-medium text-zinc-900 mb-2">No conference rooms found</h3>
+            <p class="text-zinc-600">Try adjusting your filters or search criteria.</p>
         </div>
         {% endif %}
-        
+
     </div>
 </div>
 {% endblock %}

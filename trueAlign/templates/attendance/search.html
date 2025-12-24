@@ -1,347 +1,101 @@
 {% extends 'base.html' %}
-{% block title %}Search Attendance - Ardur Home{% endblock %}
+{% load static %}
+
+{% block title %}Search Attendance - TrueAlign{% endblock %}
 
 {% block content %}
-<div class="mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl">
-
-
-
-    <!-- Page Header -->
-    <div class="mb-8">
-        <h1 class="text-3xl font-extrabold text-gray-900 flex items-center">
-            <svg class="w-8 h-8 mr-3 text-blue-600" fill="none" stroke="currentColor" stroke-width="2"
-                viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+<div class="px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="glass-panel p-6 mb-8">
+        <h1 class="text-3xl font-bold text-zinc-900 flex items-center gap-3">
+            <svg class="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
             </svg>
             Search Attendance Records
         </h1>
-        <p class="mt-2 text-sm text-gray-600">
-            Search and filter attendance records by employee, date range, and status
-        </p>
+        <p class="text-zinc-600 mt-2">Find and filter attendance records</p>
     </div>
 
     <!-- Search Form -->
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-8">
-        <form method="GET" action="{% url 'attendance:search' %}" class="space-y-6">
-
-            <!-- Quick Filters -->
-            <div class="flex flex-wrap gap-3 mb-4 pb-4 border-b border-gray-200">
-                <button type="button" onclick="setQuickFilter('today')"
-                    class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all text-sm font-medium">
-                    <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" stroke-width="2"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    Today
-                </button>
-                <button type="button" onclick="setQuickFilter('week')"
-                    class="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all text-sm font-medium">
-                    This Week
-                </button>
-                <button type="button" onclick="setQuickFilter('month')"
-                    class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-all text-sm font-medium">
-                    This Month
-                </button>
-                <button type="button" onclick="setQuickFilter('year')"
-                    class="px-4 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-all text-sm font-medium">
-                    This Year
-                </button>
-                <button type="button" onclick="document.querySelector('form').reset()"
-                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all text-sm font-medium">
-                    Clear All
-                </button>
+    <div class="glass-panel p-6 mb-8">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="form-label">Employee</label>
+                <input type="text" name="employee" value="{{ request.GET.employee }}" class="form-input"
+                    placeholder="Name or ID">
             </div>
-
-            <!-- Search Fields -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-
-                <!-- Employee Search (if HR/Manager) -->
-                {% if request.user.groups.filter or request.user.is_superuser %}
-                <div>
-                    <label for="employee" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Employee
-                    </label>
-                    <input type="text" id="employee" name="employee" value="{{ form.employee.value|default:'' }}"
-                        placeholder="Search by name or ID"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
-                </div>
-                {% endif %}
-
-                <!-- Start Date -->
-                <div>
-                    <label for="start_date" class="block text-sm font-semibold text-gray-700 mb-2">
-                        From Date
-                    </label>
-                    <input type="date" id="start_date" name="start_date" value="{{ form.start_date.value|default:'' }}"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
-                </div>
-
-                <!-- End Date -->
-                <div>
-                    <label for="end_date" class="block text-sm font-semibold text-gray-700 mb-2">
-                        To Date
-                    </label>
-                    <input type="date" id="end_date" name="end_date" value="{{ form.end_date.value|default:'' }}"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
-                </div>
-
-                <!-- Status Filter -->
-                <div>
-                    <label for="status" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Status
-                    </label>
-                    <select id="status" name="status"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
-                        <option value="">All Statuses</option>
-                        <option value="Present" {% if form.status.value == 'Present' %}selected{% endif %}>Present
-                        </option>
-                        <option value="Absent" {% if form.status.value == 'Absent' %}selected{% endif %}>Absent</option>
-                        <option value="Leave" {% if form.status.value == 'Leave' %}selected{% endif %}>On Leave</option>
-                        <option value="Holiday" {% if form.status.value == 'Holiday' %}selected{% endif %}>Holiday
-                        </option>
-                        <option value="Weekend" {% if form.status.value == 'Weekend' %}selected{% endif %}>Weekend
-                        </option>
-                    </select>
-                </div>
+            <div>
+                <label class="form-label">From Date</label>
+                <input type="date" name="from_date" value="{{ request.GET.from_date }}" class="form-input">
             </div>
-
-            <!-- Search Button -->
-            <div class="flex justify-end space-x-3">
-                <a href="{% url 'attendance:search' %}"
-                    class="px-6 py-2 backdrop-blur-sm bg-gray-100 rounded-lg border border-gray-300 hover:bg-gray-200 transition-all font-medium text-gray-700">
-                    Reset
-                </a>
-                <button type="submit"
-                    class="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:scale-105 transition-all duration-200 shadow-md font-medium">
-                    <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" stroke-width="2"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <div>
+                <label class="form-label">To Date</label>
+                <input type="date" name="to_date" value="{{ request.GET.to_date }}" class="form-input">
+            </div>
+            <div>
+                <label class="form-label">Status</label>
+                <select name="status" class="form-input">
+                    <option value="">All</option>
+                    <option value="Present">Present</option>
+                    <option value="Absent">Absent</option>
+                    <option value="Late">Late</option>
+                    <option value="On Leave">On Leave</option>
+                </select>
+            </div>
+            <div class="md:col-span-4 flex gap-3">
+                <button type="submit" class="btn btn-orange">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
                     Search
                 </button>
+                <a href="{% url 'attendance:search' %}" class="btn btn-secondary">Clear</a>
             </div>
         </form>
     </div>
 
-    <!-- Results Section -->
-    {% if results %}
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-
-        <!-- Results Header -->
-        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
-            <div>
-                <h2 class="text-xl font-bold text-gray-900">Search Results</h2>
-                <p class="text-sm text-gray-600 mt-1">Found {{ results|length }} record{{ results|length|pluralize }}
-                </p>
-            </div>
-
-            <!-- Export Button -->
-            <a href="{% url 'attendance:export_csv' %}?{{ request.GET.urlencode }}"
-                class="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all shadow-md">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Export CSV
-            </a>
+    <!-- Results -->
+    <div class="glass-panel">
+        <div class="p-6 border-b border-white/10">
+            <h2 class="text-lg font-semibold text-zinc-900">Search Results</h2>
         </div>
-
-        <!-- Results Table -->
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+            <table class="min-w-full data-table">
+                <thead>
                     <tr>
-                        {% if request.user.groups.filter or request.user.is_superuser %}
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                            Employee
-                        </th>
-                        {% endif %}
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                            Date
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                            Status
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                            Clock In
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                            Clock Out
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                            Hours
-                        </th>
-                        <th class="px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                            Actions
-                        </th>
+                        <th>Employee</th>
+                        <th>Date</th>
+                        <th>Check-in</th>
+                        <th>Check-out</th>
+                        <th>Hours</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    {% for record in results %}
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        {% if request.user.groups.filter or request.user.is_superuser %}
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center">
-                                <div
-                                    class="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
-                                    {{ record.user.first_name.0 }}{{ record.user.last_name.0 }}
-                                </div>
-                                <div class="ml-3">
-                                    <div class="text-sm font-medium text-gray-900">{{ record.user.get_full_name }}</div>
-                                    <div class="text-xs text-gray-500">{{ record.user.username }}</div>
-                                </div>
-                            </div>
-                        </td>
-                        {% endif %}
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {{ record.date|date:"M d, Y" }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            {% if record.status == 'Present' %}
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td class="px-6 py-4 font-medium text-zinc-900">{{ record.user.get_full_name }}</td>
+                        <td class="px-6 py-4 text-zinc-700">{{ record.date|date:"M d, Y" }}</td>
+                        <td class="px-6 py-4 text-zinc-700">{{ record.check_in|time:"g:i A"|default:"—" }}</td>
+                        <td class="px-6 py-4 text-zinc-700">{{ record.check_out|time:"g:i A"|default:"—" }}</td>
+                        <td class="px-6 py-4 text-zinc-700">{{ record.total_hours|floatformat:1 }}h</td>
+                        <td class="px-6 py-4">
                             <span
-                                class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Present</span>
-                            {% elif record.status == 'Absent' %}
-                            <span
-                                class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">Absent</span>
-                            {% elif record.status == 'Leave' or record.status == 'On Leave' %}
-                            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">On
-                                Leave</span>
-                            {% elif record.status == 'Holiday' %}
-                            <span
-                                class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-semibold">Holiday</span>
-                            {% else %}
-                            <span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-semibold">{{ record.status }}</span>
-                            {% endif %}
+                                class="badge {% if record.status == 'Present' %}badge-emerald{% elif record.status == 'Absent' %}badge-red{% elif 'Late' in record.status %}badge-amber{% elif 'Leave' in record.status %}badge-purple{% else %}badge-gray{% endif %}">
+                                {{ record.status }}
+                            </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {{ record.clock_in_time|date:"h:i A"|default:"—" }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {{ record.clock_out_time|date:"h:i A"|default:"—" }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {% if record.total_hours %}
-                            {{ record.total_hours|floatformat:2 }}h
-                            {% else %}
-                            —
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <a href="{% url 'attendance:request_regularization_specific' record.id %}"
-                                class="text-blue-600 hover:text-blue-900 transition-colors">
-                                Edit
-                            </a>
-                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-8 text-center text-zinc-500">No records found</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-
-        <!-- Pagination -->
-        {% if is_paginated %}
-        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
-            <div class="text-sm text-gray-600">
-                Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ paginator.count }} results
-            </div>
-            <div class="flex space-x-2">
-                {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}"
-                    class="px-3 py-1 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm">
-                    Previous
-                </a>
-                {% endif %}
-                {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}"
-                    class="px-3 py-1 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm">
-                    Next
-                </a>
-                {% endif %}
-            </div>
-        </div>
-        {% endif %}
     </div>
-
-    {% elif form.is_bound %}
-    <!-- Empty State (after search) -->
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-12">
-        <div class="text-center">
-            <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" stroke-width="2"
-                viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <h3 class="mt-4 text-lg font-medium text-gray-900">No records found</h3>
-            <p class="mt-2 text-sm text-gray-500">
-                Try adjusting your search criteria.
-            </p>
-            <div class="mt-6">
-                <a href="{% url 'attendance:search' %}"
-                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all">
-                    Clear Filters
-                </a>
-            </div>
-        </div>
-    </div>
-    {% else %}
-    <!-- Initial State (no search yet) -->
-    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 p-12">
-        <div class="text-center">
-            <svg class="mx-auto h-16 w-16 text-blue-500" fill="none" stroke="currentColor" stroke-width="2"
-                viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <h3 class="mt-4 text-lg font-medium text-gray-900">Ready to search</h3>
-            <p class="mt-2 text-sm text-gray-600">
-                Use the filters above to search attendance records.
-            </p>
-        </div>
-    </div>
-    {% endif %}
-
 </div>
-
-<script>
-    // Quick filter functions
-    function setQuickFilter(type) {
-        const today = new Date();
-        const startDate = document.getElementById('start_date');
-        const endDate = document.getElementById('end_date');
-
-        // Set end date to today
-        endDate.valueAsDate = today;
-
-        if (type === 'today') {
-            startDate.valueAsDate = today;
-        } else if (type === 'week') {
-            // Last 7 days
-            const weekAgo = new Date(today);
-            weekAgo.setDate(today.getDate() - 7);
-            startDate.valueAsDate = weekAgo;
-        } else if (type === 'month') {
-            // Start of current month
-            const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-            startDate.valueAsDate = thisMonth;
-        } else if (type === 'year') {
-            // Start of current year
-            const thisYear = new Date(today.getFullYear(), 0, 1);
-            startDate.valueAsDate = thisYear;
-        }
-    }
-
-    // Auto-correct dates if range is invalid
-    document.querySelector('form').addEventListener('submit', function (e) {
-        const startDate = document.getElementById('start_date');
-        const endDate = document.getElementById('end_date');
-
-        if (startDate.value && endDate.value && startDate.value > endDate.value) {
-            // Swap values if start > end
-            const temp = startDate.value;
-            startDate.value = endDate.value;
-            endDate.value = temp;
-        }
-    });
-</script>
 {% endblock %}

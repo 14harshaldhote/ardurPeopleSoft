@@ -41,8 +41,7 @@
                         </div>
                         <div class="space-y-2">
                             <p class="text-sm"><span class="font-semibold text-gray-700">Amount:</span> <span
-                                    class="text-lg font-bold text-purple-700">₹ {{ expense.amount|floatformat:2|intcomma
-                                    }}</span></p>
+                                    class="text-lg font-bold text-purple-700">₹ {{ expense.amount|floatformat:2|intcomma }}</span></p>
                             <p class="text-sm"><span class="font-semibold text-gray-700">Submitted By:</span> <span
                                     class="text-gray-900">{{
                                     expense.paid_by.get_full_name|default:expense.paid_by.username }}</span></p>

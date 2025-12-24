@@ -1,166 +1,113 @@
 <div
-    class="backdrop-blur-xl bg-white/20 p-4 rounded-[16px] border border-black/10 shadow-inner hover:bg-white/25 transition-all duration-300"
->
+    class="backdrop-blur-xl bg-white/20 p-4 rounded-[16px] border border-black/10 shadow-inner hover:bg-white/25 transition-all duration-300">
     <!-- Header -->
-    <div
-        class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2"
-    >
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
         <div class="flex items-center gap-2 sm:gap-3">
-            <div
-                class="p-2 sm:p-3 backdrop-blur-sm bg-white/30 rounded-lg sm:rounded-xl border border-white/20"
-            >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-indigo-700"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
+            <div class="p-2 sm:p-3 backdrop-blur-sm bg-white/30 rounded-lg sm:rounded-xl border border-white/20">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-indigo-700"
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
             </div>
             <div>
-                <h3
-                    class="text-sm sm:text-base lg:text-lg font-bold text-zinc-900 mb-0"
-                >
+                <h3 class="text-sm sm:text-base lg:text-lg font-bold text-zinc-900 mb-0">
                     Today's Attendance
                 </h3>
-                <div
-                    class="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2 mt-1"
-                >
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2 mt-1">
                     {% if attendance_today %}
                     {% if attendance_today.status == 'Present' or attendance_today.status == 'Present & Late' %}
-                        <span class="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-700 border border-emerald-500/30">
-                            {{ attendance_today.status }}
-                        </span>
+                    <span
+                        class="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-700 border border-emerald-500/30">
+                        {{ attendance_today.status }}
+                    </span>
                     {% elif attendance_today.status == 'Absent' %}
-                        <span class="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-700 border border-red-500/30">
-                            {{ attendance_today.status }}
-                        </span>
+                    <span
+                        class="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-700 border border-red-500/30">
+                        {{ attendance_today.status }}
+                    </span>
                     {% elif attendance_today.status == 'Weekend' or attendance_today.status == 'Holiday' %}
-                        <span class="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-700 border border-purple-500/30">
-                            {{ attendance_today.status }}
-                        </span>
+                    <span
+                        class="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-700 border border-purple-500/30">
+                        {{ attendance_today.status }}
+                    </span>
                     {% else %}
-                        <span class="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-gray-500/20 text-gray-700 border border-gray-500/30">
-                            {{ attendance_today.status }}
-                        </span>
+                    <span
+                        class="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-gray-500/20 text-gray-700 border border-gray-500/30">
+                        {{ attendance_today.status }}
+                    </span>
                     {% endif %}
-                {% else %}
-                    <span class="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-gray-500/20 text-gray-700 border border-gray-500/30">Not Marked</span>
-                {% endif %}
+                    {% else %}
+                    <span
+                        class="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-gray-500/20 text-gray-700 border border-gray-500/30">Not
+                        Marked</span>
+                    {% endif %}
                 </div>
             </div>
         </div>
-        <a
-            href="{% url 'attendance:dashboard' %}"
-            class="text-xs sm:text-sm text-blue-700 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1 mt-2 sm:mt-0"
-        >
+        <a href="{% url 'attendance:dashboard' %}"
+            class="text-xs sm:text-sm text-blue-700 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1 mt-2 sm:mt-0">
             Details
-            <svg
-                class="w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 hover:translate-x-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-            >
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 5l7 7-7 7"
-                />
+            <svg class="w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 hover:translate-x-1" fill="none"
+                stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
         </a>
     </div>
 
     <!-- Time In/Out Section -->
-    <div
-        class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3"
-    >
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
         <div
-            class="backdrop-blur-sm bg-white/30 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-white/20 hover:bg-white/40 transition-all duration-200"
-        >
+            class="backdrop-blur-sm bg-white/30 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-white/20 hover:bg-white/40 transition-all duration-200">
             <div class="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-3 w-3 sm:h-4 sm:w-4 text-emerald-600"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 text-emerald-600" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span
-                    class="text-xs font-medium text-zinc-600 uppercase tracking-wide"
-                >
+                <span class="text-xs font-medium text-zinc-600 uppercase tracking-wide">
                     Time In
                 </span>
             </div>
-            <p
-                class="text-sm sm:text-base lg:text-lg font-bold text-zinc-800 mb-0"
-            >
+            <p class="text-sm sm:text-base lg:text-lg font-bold text-zinc-800 mb-0">
                 {% if attendance_today and attendance_today.clock_in_time %}
-                    {{ attendance_today.clock_in_time|time:"g:i A" }}
+                {{ attendance_today.clock_in_time|time:"g:i A" }}
                 {% else %}
-                    <span class="text-gray-400">Not Started</span>
+                <span class="text-gray-400">Not Started</span>
                 {% endif %}
             </p>
             <p class="text-xs text-zinc-500">
                 {% if attendance_today.late_minutes > 0 %}
-                    {{ attendance_today.late_minutes }} min late
+                {{ attendance_today.late_minutes }} min late
                 {% else %}
-                    On time
+                On time
                 {% endif %}
             </p>
         </div>
         <div
-            class="backdrop-blur-sm bg-white/30 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-white/20 hover:bg-white/40 transition-all duration-200"
-        >
+            class="backdrop-blur-sm bg-white/30 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-white/20 hover:bg-white/40 transition-all duration-200">
             <div class="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-3 w-3 sm:h-4 sm:w-4 text-rose-600"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                    />
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 text-rose-600" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
-                <span
-                    class="text-xs font-medium text-zinc-600 uppercase tracking-wide"
-                >
+                <span class="text-xs font-medium text-zinc-600 uppercase tracking-wide">
                     Time Out
                 </span>
             </div>
-            <p
-                class="text-sm sm:text-base lg:text-lg font-bold text-zinc-800 mb-0"
-            >
+            <p class="text-sm sm:text-base lg:text-lg font-bold text-zinc-800 mb-0">
                 {% if attendance_today and attendance_today.clock_out_time %}
-                    {{ attendance_today.clock_out_time|time:"g:i A" }}
+                {{ attendance_today.clock_out_time|time:"g:i A" }}
                 {% else %}
-                    <span class="text-gray-400">--:-- --</span>
+                <span class="text-gray-400">--:-- --</span>
                 {% endif %}
             </p>
             <p class="text-xs text-zinc-500">
                 {% if attendance_today.clock_out_time %}
-                    Completed
+                Completed
                 {% else %}
-                    In progress
+                In progress
                 {% endif %}
             </p>
         </div>
@@ -168,114 +115,69 @@
 
     <!-- Monthly Stats -->
     <div class="mb-3">
-        <div
-            class="flex justify-between items-center mb-2"
-        >
+        <div class="flex justify-between items-center mb-2">
             <h4 class="text-sm font-semibold text-zinc-700 mb-0">
                 Monthly Overview
             </h4>
             <span
-                class="px-2 py-0.5 sm:py-1 text-xs font-medium bg-emerald-500/20 text-emerald-700 rounded-md border border-emerald-500/30"
-            >
+                class="px-2 py-0.5 sm:py-1 text-xs font-medium bg-emerald-500/20 text-emerald-700 rounded-md border border-emerald-500/30">
                 {{ attendance_percentage|floatformat:0 }}% Present
             </span>
         </div>
-        <div class="grid grid-cols-3 gap-2">
+        <div class="flex flex-col gap-2">
             <div
-                class="backdrop-blur-sm bg-emerald-500/20 border border-emerald-500/30 rounded-lg p-2.5 text-center hover:bg-emerald-500/30 transition-all duration-200"
-            >
-                <div
-                    class="flex items-center justify-center gap-1 mb-1 sm:mb-2"
-                >
-                    <svg
-                        class="w-3 h-3 sm:w-4 sm:h-4 text-emerald-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
+                class="flex items-center justify-between backdrop-blur-sm bg-emerald-500/20 border border-emerald-500/30 rounded-lg px-3 py-2 hover:bg-emerald-500/30 transition-all duration-200">
+                <div class="flex items-center gap-2">
+                    <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <p
-                        class="text-xs font-medium text-emerald-700 uppercase tracking-wide mb-0"
-                    >
+                    <p class="text-xs font-medium text-emerald-700 uppercase tracking-wide mb-0">
                         Present
                     </p>
                 </div>
-                <p
-                    class="text-xl font-bold text-emerald-700 mb-0"
-                >
-                    {{ present_days|default:0 }}
-                </p>
-                <p class="text-xs text-emerald-600">days</p>
+                <div class="flex items-center gap-1">
+                    <p class="text-sm font-bold text-emerald-700 mb-0 px-2">
+                        {{ present_days|default:0 }}
+                    </p>
+                    <span class="text-[10px] text-emerald-600">days</span>
+                </div>
             </div>
             <div
-                class="backdrop-blur-sm bg-amber-500/20 border border-amber-500/30 rounded-lg p-2.5 text-center hover:bg-amber-500/30 transition-all duration-200"
-            >
-                <div
-                    class="flex items-center justify-center gap-1 mb-1 sm:mb-2"
-                >
-                    <svg
-                        class="w-3 h-3 sm:w-4 sm:h-4 text-amber-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
+                class="flex items-center justify-between backdrop-blur-sm bg-amber-500/20 border border-amber-500/30 rounded-lg px-3 py-2 hover:bg-amber-500/30 transition-all duration-200">
+                <div class="flex items-center gap-2">
+                    <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <p
-                        class="text-xs font-medium text-amber-700 uppercase tracking-wide mb-0"
-                    >
+                    <p class="text-xs font-medium text-amber-700 uppercase tracking-wide mb-0">
                         Late
                     </p>
                 </div>
-                <p
-                    class="text-xl font-bold text-amber-700 mb-0"
-                >
-                    {{ monthly_stats.late_days|default:0 }}
-                </p>
-                <p class="text-xs text-amber-600">times</p>
+                <div class="flex items-center gap-1">
+                    <p class="text-sm font-bold text-amber-700 mb-0 px-2">
+                        {{ monthly_stats.late_days|default:0 }}
+                    </p>
+                    <span class="text-[10px] text-amber-600">times</span>
+                </div>
             </div>
             <div
-                class="backdrop-blur-sm bg-violet-500/20 border border-violet-500/30 rounded-lg p-2.5 text-center hover:bg-violet-500/30 transition-all duration-200"
-            >
-                <div
-                    class="flex items-center justify-center gap-1 mb-1 sm:mb-2"
-                >
-                    <svg
-                        class="w-3 h-3 sm:w-4 sm:h-4 text-violet-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
+                class="flex items-center justify-between backdrop-blur-sm bg-violet-500/20 border border-violet-500/30 rounded-lg px-3 py-2 hover:bg-violet-500/30 transition-all duration-200">
+                <div class="flex items-center gap-2">
+                    <svg class="w-3.5 h-3.5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    <p
-                        class="text-xs font-medium text-violet-700 uppercase tracking-wide mb-0"
-                    >
+                    <p class="text-xs font-medium text-violet-700 uppercase tracking-wide mb-0">
                         Leave
                     </p>
                 </div>
-                <p
-                    class="text-xl font-bold text-violet-700 mb-0"
-                >
-                    {{ monthly_stats.leave_days|default:0 }}
-                </p>
-                <p class="text-xs text-violet-600">day{% if monthly_stats.leave_days != 1 %}s{% endif %}</p>
+                <div class="flex items-center gap-1">
+                    <p class="text-sm font-bold text-violet-700 mb-0 px-2">
+                        {{ monthly_stats.leave_days|default:0 }}
+                    </p>
+                    <span class="text-[10px] text-violet-600">day{% if monthly_stats.leave_days != 1 %}s{% endif %}</span>
+                </div>
             </div>
         </div>
     </div>
@@ -284,34 +186,23 @@
     <div class="pt-3 border-t border-white/20">
         <div class="grid grid-cols-2 gap-2">
             <div class="flex justify-between items-center">
-                <span class="text-xs sm:text-sm text-zinc-600"
-                    >Working Days</span
-                >
-                <span class="text-xs sm:text-sm font-bold text-zinc-800"
-                    >{{ total_days|default:0 }}</span
-                >
+                <span class="text-xs sm:text-sm text-zinc-600">Working Days</span>
+                <span class="text-xs sm:text-sm font-bold text-zinc-800">{{ total_days|default:0 }}</span>
             </div>
             <div class="flex justify-between items-center">
                 <span class="text-xs sm:text-sm text-zinc-600">Efficiency</span>
-                <span class="text-xs sm:text-sm font-bold text-emerald-700"
-                    >{{ attendance_percentage|floatformat:0 }}%</span
-                >
+                <span class="text-xs sm:text-sm font-bold text-emerald-700">{{ attendance_percentage|floatformat:0 }}%</span>
             </div>
         </div>
         <div class="mt-2">
             <div class="flex justify-between items-center mb-1">
                 <span class="text-xs text-zinc-600">Attendance Rate</span>
-                <span class="text-xs font-medium text-zinc-700"
-                    >{{ present_days|default:0 }}/{{ total_days|default:0 }} days</span
-                >
+                <span class="text-xs font-medium text-zinc-700">{{ present_days|default:0 }}/{{ total_days|default:0 }}
+                    days</span>
             </div>
-            <div
-                class="w-full bg-white/30 rounded-full h-1.5 sm:h-2 border border-white/20 overflow-hidden"
-            >
-                <div
-                    class="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-1000"
-                    style="width: {{ attendance_percentage|default:0 }}%"
-                ></div>
+            <div class="w-full bg-white/30 rounded-full h-1.5 sm:h-2 border border-white/20 overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-1000"
+                    style="width: {{ attendance_percentage|default:0 }}%"></div>
             </div>
         </div>
     </div>

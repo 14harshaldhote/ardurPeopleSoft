@@ -3,234 +3,87 @@
 
 {% block title %}HR Dashboard - TrueAlign{% endblock %}
 
-{% block extra_css %}
-<style>
-    /* Enhanced readability styles */
-    body {
-        font-size: 16px;
-        line-height: 1.6;
-    }
-
-    .dashboard-card {
-        transition: all 0.3s ease-in-out;
-        border-radius: 16px !important;
-    }
-
-    .dashboard-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-    }
-
-    /* Gradient cards with better contrast */
-    /* Gradient cards with better contrast */
-    .stat-card {
-        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
-    }
-
-    .department-card {
-        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
-    }
-
-    .analytics-card {
-        background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%) !important;
-    }
-
-    .employee-card {
-        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
-    }
-
-    /* Status colors */
-    .status-present {
-        background: linear-gradient(135deg, #10b981, #059669);
-    }
-
-    .status-absent {
-        background: linear-gradient(135deg, #ef4444, #dc2626);
-    }
-
-    .status-late {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-    }
-
-    .status-leave {
-        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-    }
-
-    .chart-container {
-        height: 400px;
-    }
-
-    /* Better typography */
-    h1,
-    h2,
-    h3 {
-        letter-spacing: -0.02em;
-        font-weight: 700;
-    }
-
-    /* Improved table readability */
-    table th {
-        font-size: 0.8rem;
-        font-weight: 700;
-        letter-spacing: 0.05em;
-        padding: 1rem 1.5rem !important;
-    }
-
-    table td {
-        font-size: 0.95rem;
-        padding: 1rem 1.5rem !important;
-    }
-
-    /* Status breakdown cards */
-    .status-breakdown-card {
-        padding: 1.5rem !important;
-        border-radius: 12px !important;
-    }
-
-    .status-breakdown-card .text-3xl {
-        font-size: 2.5rem !important;
-        font-weight: 800 !important;
-        line-height: 1.2;
-    }
-
-    .status-breakdown-card .text-sm {
-        font-size: 0.9rem !important;
-        font-weight: 600;
-        margin-top: 0.5rem;
-    }
-
-    /* Pulse animation */
-    .filter-badge {
-        animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-        0% {
-            transform: scale(1);
-            opacity: 1;
-        }
-
-        50% {
-            transform: scale(1.05);
-            opacity: 0.8;
-        }
-
-        100% {
-            transform: scale(1);
-            opacity: 1;
-        }
-    }
-
-    /* Card content spacing */
-    .metric-value {
-        font-size: 3rem !important;
-        font-weight: 800 !important;
-        color: #ffffff !important;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        line-height: 1.1;
-    }
-
-    .metric-label {
-        font-size: 1rem !important;
-        font-weight: 700 !important;
-        color: rgba(255, 255, 255, 0.95) !important;
-        opacity: 1 !important;
-        letter-spacing: 0.025em;
-        text-transform: uppercase;
-        margin-bottom: 0.25rem;
-    }
-
-    .metric-sublabel {
-        font-size: 0.9rem !important;
-        font-weight: 500 !important;
-        color: rgba(255, 255, 255, 0.9) !important;
-        margin-top: 0.5rem;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8" x-data="hrDashboard()">
+<div class="px-4 sm:px-6 lg:px-8 py-6" x-data="hrDashboard()">
     <!-- Header Section -->
     <div class="max-w-7xl mx-auto mb-8">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="glass-panel p-6">
             <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6">
                 <div class="flex-1">
-                    <h1 class="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-                        <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <h1 class="text-3xl font-bold text-zinc-900 mb-2 flex items-center gap-3">
+                        <svg class="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                            </path>
                         </svg>
                         HR Dashboard
                     </h1>
-                    <p class="text-gray-600 mb-4">Comprehensive attendance management and analytics</p>
+                    <p class="text-zinc-600 mb-4">Comprehensive attendance management and analytics</p>
 
                     <!-- Live Stats Bar -->
                     <div class="flex flex-wrap items-center gap-6 text-sm">
                         <div class="flex items-center gap-2">
-                            <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
-                            <span class="text-gray-700">{{ today|date:"F d, Y" }}</span>
+                            <span class="text-zinc-700">{{ today|date:"F d, Y" }}</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Quick Actions -->
                 <div class="flex flex-wrap gap-3">
-                    <button @click="refreshData()"
-                        class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
-                        :disabled="isRefreshing">
-                        <svg :class="isRefreshing ? 'animate-spin' : ''" class="w-4 h-4 mr-2" fill="none"
+                    <button @click="refreshData()" class="btn btn-orange" :disabled="isRefreshing">
+                        <svg :class="isRefreshing ? 'animate-spin' : ''" class="w-4 h-4" fill="none"
                             stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                            </path>
                         </svg>
                         <span x-text="isRefreshing ? 'Refreshing...' : 'Refresh'"></span>
                     </button>
 
-                    <a href="{% url 'attendance:hr_add_attendance' %}"
-                        class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a href="{% url 'attendance:hr_add_attendance' %}" class="btn btn-emerald">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                         </svg>
                         Add Attendance
                     </a>
 
-                    <a href="{% url 'attendance:bulk_attendance_operations' %}"
-                        class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a href="{% url 'attendance:bulk_attendance_operations' %}" class="btn btn-purple">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                            </path>
                         </svg>
                         Bulk Operations
                     </a>
 
                     <div class="relative" x-data="{ open: false }">
-                        <button @click="open = !open"
-                            class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <button @click="open = !open" class="btn btn-secondary">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                </path>
                             </svg>
                             Export
                             <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7" />
+                                    d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </button>
 
                         <div x-show="open" @click.away="open = false" x-transition
-                            class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                            class="absolute right-0 mt-2 w-48 glass-panel rounded-lg shadow-lg z-10">
                             <a href="{% url 'attendance_api:export_excel' %}"
-                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg">Export to
+                                class="block px-4 py-2 text-sm text-zinc-700 hover:bg-white/60 rounded-t-lg">Export to
                                 Excel</a>
                             <a href="{% url 'attendance_api:export_csv' %}"
-                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Export to CSV</a>
+                                class="block px-4 py-2 text-sm text-zinc-700 hover:bg-white/60">Export to CSV</a>
                             <a href="{% url 'attendance_api:export_pdf' %}"
-                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-b-lg">Export to
+                                class="block px-4 py-2 text-sm text-zinc-700 hover:bg-white/60 rounded-b-lg">Export to
                                 PDF</a>
                         </div>
                     </div>
@@ -242,69 +95,69 @@
     <div class="max-w-7xl mx-auto">
         <!-- Key Metrics Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-            <div class="stat-card dashboard-card rounded-xl shadow-lg p-6 ">
+            <div class="stat-card bg-gradient-orange p-6 rounded-xl shadow-lg">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="metric-label">Total Present</p>
-                        <p class="metric-value">{{ today_stats.present }}</p>
-                        <p class="metric-sublabel">{{ today_stats.present_percentage|floatformat:1 }}% of total</p>
+                        <p class="text-xs font-semibold text-white/90 uppercase mb-1">Total Present</p>
+                        <p class="text-4xl font-bold text-white">{{ today_stats.present }}</p>
+                        <p class="text-xs text-white/80 mt-1">{{ today_stats.present_percentage|floatformat:1 }}% of
+                            total</p>
                     </div>
-                    <div
-                        class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center shadow-inner">
-                        <svg class="w-8 h-8 " fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z">
+                            </path>
                         </svg>
                     </div>
                 </div>
             </div>
 
-            <div class="department-card dashboard-card rounded-xl shadow-lg p-6 ">
+            <div class="stat-card bg-gradient-to-br from-red-500 to-red-600 p-6 rounded-xl shadow-lg">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="metric-label">Absent Today</p>
-                        <p class="metric-value">{{ today_stats.absent }}</p>
-                        <p class="metric-sublabel">{{ today_stats.absent_percentage|floatformat:1 }}% of total</p>
+                        <p class="text-xs font-semibold text-white/90 uppercase mb-1">Absent Today</p>
+                        <p class="text-4xl font-bold text-white">{{ today_stats.absent }}</p>
+                        <p class="text-xs text-white/80 mt-1">{{ today_stats.absent_percentage|floatformat:1 }}% of
+                            total</p>
                     </div>
-                    <div
-                        class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center shadow-inner">
-                        <svg class="w-8 h-8 " fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                                d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728" />
+                                d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728">
+                            </path>
                         </svg>
                     </div>
                 </div>
             </div>
 
-            <div class="analytics-card dashboard-card rounded-xl shadow-lg p-6 ">
+            <div class="stat-card bg-gradient-to-br from-amber-500 to-amber-600 p-6 rounded-xl shadow-lg">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="metric-label">Late Arrivals</p>
-                        <p class="metric-value">{{ today_stats.late }}</p>
-                        <p class="metric-sublabel">Need attention</p>
+                        <p class="text-xs font-semibold text-white/90 uppercase mb-1">Late Arrivals</p>
+                        <p class="text-4xl font-bold text-white">{{ today_stats.late }}</p>
+                        <p class="text-xs text-white/80 mt-1">Need attention</p>
                     </div>
-                    <div
-                        class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center shadow-inner">
-                        <svg class="w-8 h-8 " fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                     </div>
                 </div>
             </div>
 
-            <div class="employee-card dashboard-card rounded-xl shadow-lg p-6 ">
+            <div class="stat-card bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-xl shadow-lg">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="metric-label">On Leave</p>
-                        <p class="metric-value">{{ today_stats.on_leave }}</p>
-                        <p class="metric-sublabel">Approved leaves</p>
+                        <p class="text-xs font-semibold text-white/90 uppercase mb-1">On Leave</p>
+                        <p class="text-4xl font-bold text-white">{{ today_stats.on_leave }}</p>
+                        <p class="text-xs text-white/80 mt-1">Approved leaves</p>
                     </div>
-                    <div
-                        class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center shadow-inner">
-                        <svg class="w-8 h-8 " fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                                d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4m-6 4h12M7 14h10M8 18h8" />
+                                d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4m-6 4h12M7 14h10M8 18h8"></path>
                         </svg>
                     </div>
                 </div>
@@ -315,140 +168,120 @@
             <!-- Main Content -->
             <div class="xl:col-span-2 space-y-8">
                 <!-- Status-wise Breakdown -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="p-6 border-b border-gray-200">
+                <div class="glass-panel overflow-hidden">
+                    <div class="p-6 border-b border-white/10">
                         <div class="flex items-center justify-between">
-                            <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor"
+                            <h2 class="text-lg font-semibold text-zinc-900 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                                    </path>
                                 </svg>
                                 Status-wise Breakdown
                             </h2>
-                            <span class="text-sm text-gray-600">Today's distribution</span>
+                            <span class="text-sm text-zinc-600">Today's distribution</span>
                         </div>
                     </div>
 
                     <div class="p-6">
                         <!-- Status breakdown grid -->
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-5">
-                            <div
-                                class="status-breakdown-card bg-green-50 border-2 border-green-200 rounded-xl p-5 text-center shadow-sm hover:shadow-md transition-shadow">
-                                <div class="text-3xl font-bold text-green-700">{{
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="status-card-present p-4 text-center">
+                                <div class="text-3xl font-bold text-emerald-900">{{
                                     status_breakdown.present_on_time|default:0 }}</div>
-                                <div class="text-sm font-semibold text-green-800 mt-2">Present On Time</div>
+                                <div class="text-xs font-semibold mt-2 text-emerald-700">Present On Time</div>
                             </div>
-                            <div
-                                class="status-breakdown-card bg-yellow-50 border-2 border-yellow-200 rounded-xl p-5 text-center shadow-sm hover:shadow-md transition-shadow">
-                                <div class="text-3xl font-bold text-yellow-700">{{
+                            <div class="status-card-late p-4 text-center">
+                                <div class="text-3xl font-bold text-amber-900">{{
                                     status_breakdown.present_late|default:0 }}</div>
-                                <div class="text-sm font-semibold text-yellow-800 mt-2">Present Late</div>
+                                <div class="text-xs font-semibold mt-2 text-amber-700">Present Late</div>
                             </div>
-                            <div
-                                class="status-breakdown-card bg-blue-50 border-2 border-blue-200 rounded-xl p-5 text-center shadow-sm hover:shadow-md transition-shadow">
-                                <div class="text-3xl font-bold text-blue-700">{{
+                            <div class="status-card-blue p-4 text-center">
+                                <div class="text-3xl font-bold text-blue-900">{{
                                     status_breakdown.work_from_home|default:0 }}</div>
-                                <div class="text-sm font-semibold text-blue-800 mt-2">Work From Home</div>
+                                <div class="text-xs font-semibold mt-2 text-blue-700">Work From Home</div>
                             </div>
-                            <div
-                                class="status-breakdown-card bg-purple-50 border-2 border-purple-200 rounded-xl p-5 text-center shadow-sm hover:shadow-md transition-shadow">
-                                <div class="text-3xl font-bold text-purple-700">{{ status_breakdown.on_leave|default:0
-                                    }}</div>
-                                <div class="text-sm font-semibold text-purple-800 mt-2">On Leave</div>
+                            <div class="status-card-purple p-4 text-center">
+                                <div class="text-3xl font-bold text-purple-900">{{ status_breakdown.on_leave|default:0 }}</div>
+                                <div class="text-xs font-semibold mt-2 text-purple-700">On Leave</div>
                             </div>
-                            <div
-                                class="status-breakdown-card bg-red-50 border-2 border-red-200 rounded-xl p-5 text-center shadow-sm hover:shadow-md transition-shadow">
-                                <div class="text-3xl font-bold text-red-700">{{ status_breakdown.absent|default:0 }}
+                            <div class="status-card-red p-4 text-center">
+                                <div class="text-3xl font-bold text-red-900">{{ status_breakdown.absent|default:0 }}
                                 </div>
-                                <div class="text-sm font-semibold text-red-800 mt-2">Absent</div>
+                                <div class="text-xs font-semibold mt-2 text-red-700">Absent</div>
                             </div>
-                            <div
-                                class="status-breakdown-card bg-gray-100 border-2 border-gray-300 rounded-xl p-5 text-center shadow-sm hover:shadow-md transition-shadow">
-                                <div class="text-3xl font-bold text-gray-700">{{ status_breakdown.not_marked|default:0
-                                    }}</div>
-                                <div class="text-sm font-semibold text-gray-800 mt-2">Not Marked</div>
+                            <div class="status-card-gray p-4 text-center">
+                                <div class="text-3xl font-bold text-zinc-700">{{ status_breakdown.not_marked|default:0 }}</div>
+                                <div class="text-xs font-semibold mt-2 text-zinc-600">Not Marked</div>
                             </div>
-                            <div
-                                class="status-breakdown-card bg-orange-50 border-2 border-orange-200 rounded-xl p-5 text-center shadow-sm hover:shadow-md transition-shadow">
-                                <div class="text-3xl font-bold text-orange-700">{{ status_breakdown.half_day|default:0
-                                    }}</div>
-                                <div class="text-sm font-semibold text-orange-800 mt-2">Half Day</div>
+                            <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
+                                <div class="text-3xl font-bold text-orange-900">{{ status_breakdown.half_day|default:0 }}</div>
+                                <div class="text-xs font-semibold mt-2 text-orange-700">Half Day</div>
                             </div>
-                            <div
-                                class="status-breakdown-card bg-indigo-50 border-2 border-indigo-200 rounded-xl p-5 text-center shadow-sm hover:shadow-md transition-shadow">
-                                <div class="text-3xl font-bold text-indigo-700">{{ total_employees|default:0 }}</div>
-                                <div class="text-sm font-semibold text-indigo-800 mt-2">Total Employees</div>
+                            <div class="bg-rose-50 border border-rose-200 rounded-lg p-4 text-center">
+                                <div class="text-3xl font-bold text-rose-900">{{ total_employees|default:0 }}</div>
+                                <div class="text-xs font-semibold mt-2 text-rose-700">Total Employees</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Pending Regularization Requests -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="p-6 border-b border-gray-200">
+                <div class="glass-panel overflow-hidden">
+                    <div class="p-6 border-b border-white/10">
                         <div class="flex items-center justify-between">
-                            <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                            <h2 class="text-lg font-semibold text-zinc-900 flex items-center gap-2">
                                 <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.268 15.5c-.77.833.192 2.5 1.732 2.5z" />
+                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.268 15.5c-.77.833.192 2.5 1.732 2.5z">
+                                    </path>
                                 </svg>
                                 Pending Regularization Requests
                                 {% if pending_regularizations_count > 0 %}
-                                <span
-                                    class="filter-badge bg-orange-100 text-orange-800 text-xs font-medium px-2 py-1 rounded-full ml-2">{{
+                                <span class="badge badge-amber px-2 py-1 text-xs animate-pulse">{{
                                     pending_regularizations_count }}</span>
                                 {% endif %}
                             </h2>
 
                             <a href="{% url 'attendance:hr_regularization_requests' %}"
-                                class="text-sm text-blue-600 hover:text-blue-800">View All</a>
+                                class="text-sm text-orange-600 hover:text-orange-700">View All</a>
                         </div>
                     </div>
 
                     {% if recent_regularizations %}
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                        <table class="min-w-full data-table">
+                            <thead>
                                 <tr>
-                                    <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Employee</th>
-                                    <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Date</th>
-                                    <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Type</th>
-                                    <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Priority</th>
-                                    <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Actions</th>
+                                    <th>Employee</th>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Priority</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
+                            <tbody>
                                 {% for request in recent_regularizations %}
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-6 py-4 whitespace-nowrap">
+                                <tr>
+                                    <td>
                                         <div class="flex items-center">
                                             <div
-                                                class="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                                class="w-10 h-10 bg-gradient-orange rounded-full flex items-center justify-center text-white font-semibold">
                                                 {{ request.user.get_full_name|first|upper }}
                                             </div>
                                             <div class="ml-4">
-                                                <div class="text-sm font-medium text-gray-900">{{
+                                                <div class="text-sm font-medium text-zinc-900">{{
                                                     request.user.get_full_name }}</div>
-                                                <div class="text-sm text-gray-500">{{ request.user.username }}</div>
+                                                <div class="text-xs text-zinc-500">{{ request.user.username }}</div>
                                             </div>
                                         </div>
                                     </td>
 
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ request.date|date:"M d, Y" }}</div>
-                                        <div class="text-sm text-gray-500">
+                                    <td>
+                                        <div class="text-sm text-zinc-900">{{ request.date|date:"M d, Y" }}</div>
+                                        <div class="text-xs text-zinc-500">
                                             {% if request.last_regularization_date %}
                                             {{ request.last_regularization_date|timesince }} ago
                                             {% else %}
@@ -457,23 +290,20 @@
                                         </div>
                                     </td>
 
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    <td class="text-sm text-zinc-900">
                                         {{ request.regularization_reason|default:"Regularization Request" }}
                                     </td>
 
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span
-                                            class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
-                                            Pending
-                                        </span>
+                                    <td>
+                                        <span class="badge badge-amber text-xs">Pending</span>
                                     </td>
 
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <td>
                                         <div class="flex gap-2">
                                             <button @click="approveRequest({{ request.id }})"
-                                                class="text-green-600 hover:text-green-900 bg-green-100 hover:bg-green-200 px-3 py-1 rounded-full text-xs transition-colors">Approve</button>
+                                                class="text-xs bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-3 py-1 rounded-full">Approve</button>
                                             <button @click="viewRequest({{ request.id }})"
-                                                class="text-blue-600 hover:text-blue-900 bg-blue-100 hover:bg-blue-200 px-3 py-1 rounded-full text-xs transition-colors">View</button>
+                                                class="text-xs bg-orange-100 text-orange-700 hover:bg-orange-200 px-3 py-1 rounded-full">View</button>
                                         </div>
                                     </td>
                                 </tr>
@@ -483,34 +313,36 @@
                     </div>
                     {% else %}
                     <div class="p-8 text-center">
-                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <h3 class="text-lg font-medium text-gray-900 mb-2">No Pending Requests</h3>
-                        <p class="text-gray-600">All regularization requests have been processed.</p>
+                        <div class="mx-auto w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mb-4">
+                            <svg class="w-8 h-8 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                </path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-medium text-zinc-900 mb-2">No Pending Requests</h3>
+                        <p class="text-zinc-600">All regularization requests have been processed.</p>
                     </div>
                     {% endif %}
                 </div>
 
                 <!-- Analytics Chart -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="p-6 border-b border-gray-200">
-                        <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                            <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="glass-panel overflow-hidden">
+                    <div class="p-6 border-b border-white/10">
+                        <h2 class="text-lg font-semibold text-zinc-900 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                                </path>
                             </svg>
                             Weekly Attendance Trend
                         </h2>
                     </div>
 
                     <div class="p-6">
-                        <div class="chart-container">
+                        <div style="height: 400px;">
                             <canvas id="attendanceTrendChart" data-present='{{ weekly_stats.present|safe }}'
-                                data-absent='{{ weekly_stats.absent|safe }}'>
-                            </canvas>
+                                data-absent='{{ weekly_stats.absent|safe }}'></canvas>
                         </div>
                     </div>
                 </div>
@@ -519,133 +351,137 @@
             <!-- Sidebar -->
             <div class="space-y-6">
                 <!-- Quick Actions Panel -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="glass-panel p-6">
+                    <h3 class="text-lg font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                         </svg>
                         Quick Actions
                     </h3>
 
                     <div class="space-y-3">
                         <a href="{% url 'attendance:hr_regularization_requests' %}"
-                            class="w-full flex items-center gap-3 p-3 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors duration-200">
+                            class="w-full flex items-center gap-3 p-3 bg-orange-50 hover:bg-orange-100 rounded-lg transition">
                             <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
                                 <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5" />
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5"></path>
                                 </svg>
                             </div>
                             <div>
-                                <div class="font-medium text-gray-900">Process Requests</div>
-                                <div class="text-sm text-gray-600">{{ pending_regularizations_count }} pending</div>
+                                <div class="font-medium text-zinc-900">Process Requests</div>
+                                <div class="text-xs text-zinc-600">{{ pending_regularizations_count }} pending</div>
                             </div>
                         </a>
 
                         <button @click="sendNotifications()"
-                            class="w-full flex items-center gap-3 p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-200">
+                            class="w-full flex items-center gap-3 p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition">
                             <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                                 <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15 17h5l-5 5v-5zM15 17H9a4 4 0 01-4-4V5a4 4 0 014-4h6a4 4 0 014 4v8a4 4 0 01-4 4z" />
+                                        d="M15 17h5l-5 5v-5zM15 17H9a4 4 0 01-4-4V5a4 4 0 014-4h6a4 4 0 014 4v8a4 4 0 01-4 4z">
+                                    </path>
                                 </svg>
                             </div>
                             <div>
-                                <div class="font-medium text-gray-900">Send Reminders</div>
-                                <div class="text-sm text-gray-600">Notify absent employees</div>
+                                <div class="font-medium text-zinc-900">Send Reminders</div>
+                                <div class="text-xs text-zinc-600">Notify absent employees</div>
                             </div>
                         </button>
 
                         <a href="{% url 'attendance:analytics' %}"
-                            class="w-full flex items-center gap-3 p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors duration-200">
+                            class="w-full flex items-center gap-3 p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition">
                             <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
                                 <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10" />
+                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10">
+                                    </path>
                                 </svg>
                             </div>
                             <div>
-                                <div class="font-medium text-gray-900">Detailed Analytics</div>
-                                <div class="text-sm text-gray-600">Advanced reports</div>
+                                <div class="font-medium text-zinc-900">Detailed Analytics</div>
+                                <div class="text-xs text-zinc-600">Advanced reports</div>
                             </div>
                         </a>
 
                         <button @click="runAutoMarking()"
-                            class="w-full flex items-center gap-3 p-3 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-colors duration-200">
-                            <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                                <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor"
+                            class="w-full flex items-center gap-3 p-3 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition">
+                            <div class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                                    </path>
                                 </svg>
                             </div>
                             <div>
-                                <div class="font-medium text-gray-900">Auto Marking</div>
-                                <div class="text-sm text-gray-600">Run attendance sync</div>
+                                <div class="font-medium text-zinc-900">Auto Marking</div>
+                                <div class="text-xs text-zinc-600">Run attendance sync</div>
                             </div>
                         </button>
                     </div>
                 </div>
 
                 <!-- System Health -->
-                <div class="bg-gradient-to-br from-green-400 to-blue-500 rounded-xl shadow-lg p-6 text-white">
+                <div
+                    class="stat-card bg-gradient-to-br from-emerald-500 to-blue-500 p-6 rounded-xl shadow-lg text-white">
                     <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                         System Status
                     </h3>
 
                     <div class="space-y-3">
                         <div class="flex items-center justify-between">
-                            <span class="text-green-100">Database</span>
+                            <span class="text-emerald-100">Database</span>
                             <div class="flex items-center gap-2">
-                                <div class="w-2 h-2 bg-green-300 rounded-full animate-pulse"></div>
-                                <span class="text-sm font-medium">Online</span>
+                                <div class="w-2 h-2 bg-emerald-300 rounded-full animate-pulse"></div>
+                                <span class="text-xs font-medium">Online</span>
                             </div>
                         </div>
 
                         <div class="flex items-center justify-between">
-                            <span class="text-green-100">Auto-sync</span>
+                            <span class="text-emerald-100">Auto-sync</span>
                             <div class="flex items-center gap-2">
-                                <div class="w-2 h-2 bg-green-300 rounded-full animate-pulse"></div>
-                                <span class="text-sm font-medium">Active</span>
+                                <div class="w-2 h-2 bg-emerald-300 rounded-full animate-pulse"></div>
+                                <span class="text-xs font-medium">Active</span>
                             </div>
                         </div>
 
                         <div class="flex items-center justify-between">
-                            <span class="text-green-100">Last Backup</span>
-                            <span class="text-sm font-medium">{{ last_backup|timesince|default:"Unknown" }} ago</span>
+                            <span class="text-emerald-100">Last Backup</span>
+                            <span class="text-xs font-medium">{{ last_backup|timesince|default:"Unknown" }} ago</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Recent Activity Feed -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="glass-panel p-6">
+                    <h3 class="text-lg font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                         Recent Activity
                     </h3>
 
                     <div class="space-y-3 max-h-80 overflow-y-auto">
                         {% for activity in recent_activities %}
-                        <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                            <div class="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <div class="flex items-start gap-3 p-3 bg-white/10 rounded-lg border border-white/10">
+                            <div class="w-2 h-2 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
                             <div class="flex-1 min-w-0">
-                                <p class="text-sm text-gray-900">{{ activity.description }}</p>
-                                <p class="text-xs text-gray-500 mt-1">{{ activity.timestamp|timesince }} ago</p>
+                                <p class="text-sm text-zinc-900">{{ activity.description }}</p>
+                                <p class="text-xs text-zinc-500 mt-1">{{ activity.timestamp|timesince }} ago</p>
                             </div>
                         </div>
                         {% empty %}
-                        <p class="text-sm text-gray-500 text-center py-4">No recent activities</p>
+                        <p class="text-sm text-zinc-500 text-center py-4">No recent activities</p>
                         {% endfor %}
                     </div>
                 </div>
@@ -656,7 +492,6 @@
 
 <!-- JS -->
 <script>
-    /* Utility: get CSRF cookie */
     function getCookie(name) {
         const value = `; ${document.cookie}`;
         const parts = value.split(`; ${name}=`);
@@ -666,13 +501,12 @@
 
     function hrDashboard() {
         return {
-            viewMode: 'department', // 'department' | 'chart'
+            viewMode: 'department',
             isRefreshing: false,
 
             async refreshData() {
                 this.isRefreshing = true;
                 try {
-                    // simple UX delay to show spinner; replace with real fetch if needed
                     await new Promise(resolve => setTimeout(resolve, 800));
                     location.reload();
                 } catch (error) {
@@ -702,8 +536,7 @@
                         this.showNotification('Request approved successfully!', 'success');
                         setTimeout(() => location.reload(), 700);
                     } else {
-                        const errText = await response.text().catch(() => 'Failed to approve request');
-                        this.showNotification(errText || 'Failed to approve request', 'error');
+                        this.showNotification('Failed to approve request', 'error');
                     }
                 } catch (error) {
                     console.error('Error approving request:', error);
@@ -712,13 +545,12 @@
             },
 
             viewRequest(requestId) {
-                // Navigate in same tab, not new tab
                 window.location.href = '{% url "attendance:hr_regularization_requests" %}?id=' + requestId;
             },
 
             async sendNotifications() {
                 try {
-                    const response = await fetch('{% url "attendance_api:api_summary" %}', {
+                    const response = await fetch('{% url  "attendance_api:api_summary" %}', {
                         method: 'POST',
                         headers: {
                             'X-CSRFToken': getCookie('csrftoken') || '',
@@ -765,13 +597,11 @@
 
             showNotification(message, type) {
                 const notification = document.createElement('div');
-                notification.className = `fixed top-4 right-4 z-50 max-w-sm bg-white border-l-4 rounded-r-lg shadow-lg p-4 transform transition-all duration-300 ${type === 'success' ? 'border-green-500' :
-                    type === 'error' ? 'border-red-500' : 'border-blue-500'
-                    }`;
+                notification.className = `fixed top-4 right-4 z-50 max-w-sm glass-panel border-l-4 rounded-r-lg shadow-lg p-4 transform transition-all duration-300 ${type === 'success' ? 'border-emerald-500' : type === 'error' ? 'border-red-500' : 'border-orange-500'}`;
                 notification.innerHTML = `
                     <div class="flex items-center">
-                        <div class="text-sm font-medium text-gray-900">${message}</div>
-                        <button class="ml-auto text-gray-400 hover:text-gray-600" aria-label="close notification">&times;</button>
+                        <div class="text-sm font-medium text-zinc-900">${message}</div>
+                        <button class="ml-auto text-zinc-400 hover:text-zinc-600">×</button>
                     </div>
                 `;
                 notification.querySelector('button').addEventListener('click', () => notification.remove());
@@ -781,12 +611,10 @@
         };
     }
 
-    /* Chart init: reads data-* attributes for safety */
     document.addEventListener('DOMContentLoaded', function () {
         const canvas = document.getElementById('attendanceTrendChart');
-        if (!canvas) return;
+        if (!canvas || typeof Chart === 'undefined') return;
 
-        // parse the data attributes (safe JSON-ish strings)
         const presentRaw = canvas.getAttribute('data-present') || '[0,0,0,0,0,0,0]';
         const absentRaw = canvas.getAttribute('data-absent') || '[0,0,0,0,0,0,0]';
 
@@ -795,7 +623,6 @@
         try {
             presentData = JSON.parse(presentRaw);
         } catch (e) {
-            // fallback: try to parse as CSV
             presentData = presentRaw.replace(/^\[|\]$/g, '').split(',').map(s => Number(s.trim() || 0));
         }
         try {
@@ -804,7 +631,6 @@
             absentData = absentRaw.replace(/^\[|\]$/g, '').split(',').map(s => Number(s.trim() || 0));
         }
 
-        // if Chart.js available, render chart
         if (typeof Chart !== 'undefined') {
             new Chart(canvas.getContext('2d'), {
                 type: 'line',
@@ -813,34 +639,30 @@
                     datasets: [{
                         label: 'Present',
                         data: presentData,
-                        borderColor: 'rgb(59,130,246)',
-                        backgroundColor: 'rgba(59,130,246,0.08)',
-                        tension: 0.4,
-                        fill: true,
-                        pointRadius: 3
+                        borderColor: 'rgb(249,115,22)',
+                        backgroundColor: 'rgba(249,115,22,0.08)',
+                        tension: 0.3,
+                        fill: true
                     }, {
                         label: 'Absent',
                         data: absentData,
                         borderColor: 'rgb(239,68,68)',
                         backgroundColor: 'rgba(239,68,68,0.08)',
-                        tension: 0.4,
-                        fill: true,
-                        pointRadius: 3
+                        tension: 0.3,
+                        fill: true
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'top' }
+                        legend: {
+                            position: 'top'
+                        }
                     },
                     scales: {
                         y: {
-                            beginAtZero: true,
-                            grid: { color: 'rgba(0,0,0,0.06)' }
-                        },
-                        x: {
-                            grid: { color: 'rgba(0,0,0,0.03)' }
+                            beginAtZero: true
                         }
                     }
                 }
@@ -848,4 +670,11 @@
         }
     });
 </script>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+
+<!-- Alpine.js -->
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
 {% endblock %}

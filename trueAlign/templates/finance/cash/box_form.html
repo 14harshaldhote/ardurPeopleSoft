@@ -30,8 +30,7 @@
                         {% for field in form %}
                         {% for error in field.errors %}
                         <li>{{ field.label }}: {{ error }}</li>
-                        {% endfor %}
-                        {% endfor %}
+                        {% endfor %} {% endfor %}
                     </ul>
                 </div>
                 {% endif %}

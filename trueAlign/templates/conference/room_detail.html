@@ -1,197 +1,173 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}{{ room.name }} - Conference Room{% endblock %}
+{% block title %}{{ room.name }} - Room Details{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        <div class="mb-8">
-            <a href="{% url 'conference:room_list' %}" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4">
-                <svg class="w-4 h-4 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+<div class="px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto">
+
+    <!-- Header -->
+    <div class="mb-8">
+        <a href="{% url 'conference:room_list' %}"
+            class="inline-flex items-center text-sm text-zinc-600 hover:text-cyan-600 mb-4 transition">
+            <svg class="w-4 h-4 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Rooms
+        </a>
+
+        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+            <div>
+                <h1 class="text-3xl font-bold text-zinc-900 mb-2">{{ room.name }}</h1>
+                <div class="flex items-center gap-3">
+                    <span class="badge badge-slate">
+                        <svg class="w-4 h-4" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        {{ room.office_location.name }} - {{ room.floor }}
+                    </span>
+                    <span class="badge badge-violet">
+                        <svg class="w-4 h-4" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        {{ room.capacity }} people
+                    </span>
+                    {% if room.is_active %}
+                    <span class="badge badge-emerald animate-pulse">Available</span>
+                    {% else %}
+                    <span class="badge badge-red">Unavailable</span>
+                    {% endif %}
+                </div>
+            </div>
+            <a href="{% url 'conference:booking_create_room' room.id %}" class="btn btn-cyan">
+                <svg class="w-5 h-5" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                Back to All Rooms
+                Book This Room
             </a>
         </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            <!-- Main Content -->
-            <div class="lg:col-span-2 space-y-6">
-                
-                <!-- Room Image & Info -->
-                <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-                    <div class="h-64 bg-gradient-to-br from-blue-500 to-purple-600">
-                        {% if room.image %}
-                        <img src="{{ room.image.url }}" alt="{{ room.name }}" class="w-full h-full object-cover">
-                        {% else %}
-                        <div class="flex items-center justify-center h-full">
-                            <svg class="w-32 h-32 text-white opacity-50" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                            </svg>
-                        </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="p-8">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ room.name }}</h1>
-                                <div class="flex items-center text-gray-600">
-                                    <svg class="w-5 h-5 mr-2" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
-                                    {{ room.office_location.name }}
-                                </div>
-                            </div>
-                            <span class="px-3 py-1 bg-green-100 text-green-800 text-sm font-semibold rounded-full">
-                                Available
-                            </span>
-                        </div>
-                        
-                        <div class="grid grid-cols-2 gap-4 mb-6">
-                            <div class="flex items-center text-gray-700">
-                                <svg class="w-5 h-5 mr-2 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16" />
-                                </svg>
-                                <span class="text-sm">Floor: <strong>{{ room.floor }}</strong></span>
-                            </div>
-                            <div class="flex items-center text-gray-700">
-                                <svg class="w-5 h-5 mr-2 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                </svg>
-                                <span class="text-sm">Capacity: <strong>{{ room.capacity }} people</strong></span>
-                            </div>
-                        </div>
-                        
-                        {% if room.description %}
-                        <div class="mb-6">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-2">About this room</h3>
-                            <p class="text-gray-600">{{ room.description }}</p>
-                        </div>
-                        {% endif %}
-                        
-                        <!-- Amenities -->
-                        {% if amenities %}
-                        <div class="mb-6">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-3">Amenities</h3>
-                            <div class="grid grid-cols-2 gap-3">
-                                {% for amenity in amenities %}
-                                <div class="flex items-center text-sm text-gray-700">
-                                    <svg class="w-4 h-4 mr-2 text-green-500" stroke="currentColor" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    {{ amenity }}
-                                </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                        {% endif %}
-                        
-                        <!-- Booking Rules -->
-                        <div class="bg-blue-50 rounded-lg p-4">
-                            <h3 class="text-sm font-semibold text-blue-900 mb-2">Booking Rules</h3>
-                            <ul class="text-sm text-blue-800 space-y-1">
-                                <li>• Buffer time between bookings: {{ room.buffer_time_minutes }} minutes</li>
-                                <li>• Minimum advance booking: {{ room.min_lead_time_minutes }} minutes</li>
-                                <li>• Maximum booking duration: {{ room.max_booking_duration_hours }} hours</li>
-                            </ul>
-                        </div>
-                        
-                        <div class="mt-6">
-                            <a href="{% url 'conference:booking_create_room' room.id %}" 
-                               class="w-full block text-center px-6 py-3 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
-                                Book This Room
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Today's Schedule -->
-                {% if today_bookings %}
-                <div class="bg-white rounded-lg shadow-sm p-6">
-                    <h2 class="text-xl font-bold text-gray-900 mb-4">Today's Schedule</h2>
-                    <div class="space-y-3">
-                        {% for booking in today_bookings %}
-                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                            <div class="flex-1">
-                                <h4 class="font-medium text-gray-900">{{ booking.title }}</h4>
-                                <p class="text-sm text-gray-600">{{ booking.start_time|date:"g:i A" }} - {{ booking.end_time|date:"g:i A" }}</p>
-                            </div>
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full 
-                                {% if booking.is_active %}bg-green-100 text-green-800
-                                {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                {% if booking.is_active %}Active{% else %}Scheduled{% endif %}
-                            </span>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
-                
-            </div>
-            
-            <!-- Sidebar -->
-            <div class="lg:col-span-1 space-y-6">
-                
-                <!-- Quick Stats -->
-                <div class="bg-white rounded-lg shadow-sm p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Upcoming Bookings</span>
-                            <span class="text-lg font-bold text-blue-600">{{ upcoming_bookings.count }}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Today's Bookings</span>
-                            <span class="text-lg font-bold text-green-600">{{ today_bookings.count }}</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Upcoming Bookings -->
-                {% if upcoming_bookings %}
-                <div class="bg-white rounded-lg shadow-sm p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Upcoming Bookings</h3>
-                    <div class="space-y-3">
-                        {% for booking in upcoming_bookings %}
-                        <div class="border-l-4 border-blue-500 pl-3 py-2">
-                            <div class="text-sm font-medium text-gray-900">{{ booking.title }}</div>
-                            <div class="text-xs text-gray-600">{{ booking.start_time|date:"M d, g:i A" }}</div>
-                            <div class="text-xs text-gray-500">{{ booking.attendee_count }} attendees</div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
-                
-                <!-- Location Info -->
-                <div class="bg-white rounded-lg shadow-sm p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Location Details</h3>
-                    <div class="space-y-3 text-sm">
-                        <div>
-                            <span class="text-gray-600">Office:</span>
-                            <div class="font-medium text-gray-900">{{ room.office_location.name }}</div>
-                        </div>
-                        <div>
-                            <span class="text-gray-600">Address:</span>
-                            <div class="text-gray-900">{{ room.office_location.full_address }}</div>
-                        </div>
-                        {% if room.office_location.phone %}
-                        <div>
-                            <span class="text-gray-600">Phone:</span>
-                            <div class="text-gray-900">{{ room.office_location.phone }}</div>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-                
-            </div>
-            
-        </div>
-        
     </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Room Image -->
+            <div class="glass-panel overflow-hidden">
+                <div class="h-96 bg-gradient-to-br from-cyan-500 to-blue-600 relative">
+                    {% if room.image %}
+                    <img src="{{ room.image.url }}" alt="{{ room.name }}" class="w-full h-full object-cover">
+                    {% else %}
+                    <div class="flex items-center justify-center h-full">
+                        <svg class="w-32 h-32 text-white opacity-50" stroke="currentColor" fill="none"
+                            viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Description -->
+            {% if room.description %}
+            <div class="glass-panel p-6">
+                <h3 class="text-lg font-semibold text-zinc-900 mb-3">Description</h3>
+                <p class="text-zinc-700 leading-relaxed">{{ room.description }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Amenities -->
+            <div class="glass-panel p-6">
+                <h3 class="text-lg font-semibold text-zinc-900 mb-4">Amenities</h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {% for amenity in room.amenities.all %}
+                    <div class="flex items-center gap-2 text-sm">
+                        <div class="w-2 h-2 bg-cyan-500 rounded-full"></div>
+                        <span class="text-zinc-700">{{ amenity.name }}</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-zinc-500 text-sm">No amenities listed</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Availability Calendar Placeholder -->
+            <div class="glass-panel p-6">
+                <h3 class="text-lg font-semibold text-zinc-900 mb-4">Availability</h3>
+                <div class="bg-sky-50 rounded-lg p-8 text-center">
+                    <svg class="w-16 h-16 mx-auto text-cyan-600 mb-3" stroke="currentColor" fill="none"
+                        viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <p class="text-sm text-zinc-700">Availability calendar would be displayed here</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Room Details Card -->
+            <div class="stat-card bg-gradient-cyan rounded-xl p-6 text-white">
+                <h3 class="text-lg font-semibold mb-4">Room Information</h3>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between items-center">
+                        <span class="text-white/80">Capacity</span>
+                        <span class="font-semibold">{{ room.capacity }} people</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-white/80">Max Duration</span>
+                        <span class="font-semibold">{{ room.max_booking_duration_hours }}h</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-white/80">Location</span>
+                        <span class="font-semibold">{{ room.office_location.code }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-white/80">Floor</span>
+                        <span class="font-semibold">{{ room.floor }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="glass-panel p-6">
+                <h3 class="text-lg font-semibold text-zinc-900 mb-4">Quick Actions</h3>
+                <div class="space-y-3">
+                    <a href="{% url 'conference:booking_create_room' room.id %}"
+                        class="block w-full btn btn-cyan text-center">
+                        Book Now
+                    </a>
+                    <a href="{% url 'conference:calendar' %}" class="block w-full btn btn-secondary text-center">
+                        View Calendar
+                    </a>
+                </div>
+            </div>
+
+            <!-- Booking Stats -->
+            <div class="glass-panel p-6">
+                <h3 class="text-lg font-semibold text-zinc-900 mb-4">Booking Stats</h3>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between items-center">
+                        <span class="text-zinc-600">Upcoming Bookings</span>
+                        <span class="badge badge-cyan">{{ room.upcoming_bookings }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-zinc-600">Status</span>
+                        {% if room.is_active %}
+                        <span class="badge badge-emerald">Active</span>
+                        {% else %}
+                        <span class="badge badge-red">Inactive</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 {% endblock %}

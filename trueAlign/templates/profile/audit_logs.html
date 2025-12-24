@@ -2,15 +2,15 @@
 {% block title %}Audit Logs - TrueAlign Portal{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-6">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-zinc-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         <!-- Breadcrumb Navigation -->
         <nav class="flex mb-6" aria-label="Breadcrumb">
-            <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                <li class="inline-flex items-center">
+            <ol class="inline-flex items-center gap-2">
+                <li>
                     <a href="{% url 'profile:dashboard' %}"
-                        class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+                        class="inline-flex items-center text-sm font-medium text-zinc-700 hover:text-rose-600 transition-colors">
                         <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                             <path
                                 d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z">
@@ -19,15 +19,15 @@
                         Dashboard
                     </a>
                 </li>
+                <li>
+                    <svg class="w-5 h-5 text-zinc-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                            d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                            clip-rule="evenodd"></path>
+                    </svg>
+                </li>
                 <li aria-current="page">
-                    <div class="flex items-center">
-                        <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd"
-                                d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                                clip-rule="evenodd"></path>
-                        </svg>
-                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Audit Logs</span>
-                    </div>
+                    <span class="text-sm font-medium text-zinc-500">Audit Logs</span>
                 </li>
             </ol>
         </nav>
@@ -36,19 +36,18 @@
         <div class="mb-8">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                        <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <h1 class="text-3xl font-bold text-zinc-900 flex items-center gap-3">
+                        <svg class="w-8 h-8 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
                             </path>
                         </svg>
                         Audit Logs
                     </h1>
-                    <p class="text-gray-600 mt-1">Track all user actions and system activities</p>
+                    <p class="text-zinc-600 mt-1">Track all user actions and system activities</p>
                 </div>
-                <a href="{% url 'profile:dashboard' %}"
-                    class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <a href="{% url 'profile:dashboard' %}" class="btn btn-secondary">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
@@ -58,10 +57,10 @@
         </div>
 
         <!-- Filters -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="glass-panel mb-6">
+            <div class="px-6 py-4 border-b border-white/20">
+                <h2 class="text-lg font-semibold text-zinc-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z">
                         </path>
@@ -72,9 +71,8 @@
             <div class="p-6">
                 <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Action Type</label>
-                        <select name="action_type"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <label class="form-label">Action Type</label>
+                        <select name="action_type" class="form-select">
                             <option value="">All Actions</option>
                             <option value="create">User Created</option>
                             <option value="update">User Updated</option>
@@ -85,21 +83,18 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">User</label>
-                        <input type="text" name="user" placeholder="Search user..."
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <label class="form-label">User</label>
+                        <input type="text" name="user" placeholder="Search user..." class="form-input">
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
-                        <input type="date" name="date_from"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <label class="form-label">Date Range</label>
+                        <input type="date" name="date_from" class="form-input">
                     </div>
 
                     <div class="md:col-span-3 flex justify-end">
-                        <button type="submit"
-                            class="inline-flex items-center px-6 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-all">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <button type="submit" class="btn btn-rose">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
@@ -111,10 +106,10 @@
         </div>
 
         <!-- Audit Logs Timeline -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="glass-panel">
+            <div class="px-6 py-4 border-b border-white/20">
+                <h2 class="text-lg font-semibold text-zinc-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
@@ -130,17 +125,13 @@
                         <li>
                             <div class="relative pb-8">
                                 {% if not forloop.last %}
-                                <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"
+                                <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-zinc-200"
                                     aria-hidden="true"></span>
                                 {% endif %}
-                                <div class="relative flex space-x-3">
+                                <div class="relative flex gap-3">
                                     <div>
-                                        <span class="h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white
-                                            {% if log.action_type == 'create' %}bg-green-500
-                                            {% elif log.action_type == 'update' %}bg-blue-500
-                                            {% elif log.action_type == 'delete' %}bg-red-500
-                                            {% elif log.action_type == 'status_change' %}bg-yellow-500
-                                            {% else %}bg-gray-500{% endif %}">
+                                        <span
+                                            class="h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white {% if log.action_type == 'create' %}bg-emerald-500{% elif log.action_type == 'update' %}bg-sky-500{% elif log.action_type == 'delete' %}bg-red-500{% elif log.action_type == 'status_change' %}bg-amber-500{% else %}bg-zinc-500{% endif %}">
                                             {% if log.action_type == 'create' %}
                                             <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor"
                                                 viewBox="0 0 24 24">
@@ -171,11 +162,11 @@
                                             {% endif %}
                                         </span>
                                     </div>
-                                    <div class="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
+                                    <div class="flex min-w-0 flex-1 justify-between gap-4 pt-1.5">
                                         <div>
-                                            <p class="text-sm font-medium text-gray-900">{{ log.action_type|title }}</p>
-                                            <p class="text-sm text-gray-500">{{ log.details }}</p>
-                                            <div class="mt-2 flex items-center gap-4 text-xs text-gray-500">
+                                            <p class="text-sm font-medium text-zinc-900">{{ log.action_type|title }}</p>
+                                            <p class="text-sm text-zinc-500">{{ log.details }}</p>
+                                            <div class="mt-2 flex items-center gap-4 text-xs text-zinc-500">
                                                 {% if log.user %}
                                                 <span class="flex items-center">
                                                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor"
@@ -202,7 +193,7 @@
                                                 {% endif %}
                                             </div>
                                         </div>
-                                        <div class="whitespace-nowrap text-right text-sm text-gray-500">
+                                        <div class="whitespace-nowrap text-right text-sm text-zinc-500">
                                             <time datetime="{{ log.timestamp|date:'c' }}">{{ log.timestamp|timesince }}
                                                 ago</time>
                                         </div>
@@ -215,47 +206,43 @@
                 </div>
                 {% else %}
                 <div class="text-center py-12">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="mx-auto h-12 w-12 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
                         </path>
                     </svg>
-                    <h3 class="mt-2 text-sm font-medium text-gray-900">No audit logs</h3>
-                    <p class="mt-1 text-sm text-gray-500">No activities have been recorded yet.</p>
+                    <h3 class="mt-2 text-sm font-medium text-zinc-900">No audit logs</h3>
+                    <p class="mt-1 text-sm text-zinc-500">No activities have been recorded yet.</p>
                 </div>
                 {% endif %}
             </div>
 
             <!-- Pagination -->
             {% if is_paginated %}
-            <div class="px-6 py-4 border-t border-gray-200">
+            <div class="px-6 py-4 border-t border-white/20">
                 <div class="flex items-center justify-between">
-                    <div class="text-sm text-gray-700">
+                    <div class="text-sm text-zinc-700">
                         Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }}
                         results
                     </div>
-                    <div class="flex items-center space-x-2">
+                    <div class="flex items-center gap-2">
                         {% if page_obj.has_previous %}
-                        <a href="?page={{ page_obj.previous_page_number }}"
-                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary p-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M15 19l-7-7 7-7"></path>
                             </svg>
-                            Previous
                         </a>
                         {% endif %}
 
                         <span
-                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-gray-50">
+                            class="px-4 py-2 text-sm font-medium text-rose-600 bg-rose-50 rounded-lg border border-rose-200">
                             Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
                         </span>
 
                         {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}"
-                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                            Next
-                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary p-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
                                 </path>
                             </svg>
